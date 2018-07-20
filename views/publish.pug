@@ -1,0 +1,250 @@
+extends layout
+block page
+	
+block content
+	
+
+	div#vue.centerallwrap
+		include includes/edit.pug
+	script(type="text/javascript").
+		new Vue({
+			el: '#vue',
+			data: function data(){
+				return {
+					menu: this.parseObj(!{JSON.stringify(menu)}),
+					data: this.parseObj(!{JSON.stringify(data)}),
+					doc: this.parseObj(!{JSON.stringify(doc)}),
+					edit: null,
+					dindexes: [],
+					dindex: (this.parseObj(!{JSON.stringify(doc)}) === '' ? 0 : this.parseObj(!{JSON.stringify(doc)}).index),
+					cursor: null,
+					input: '',
+					fixedPug: ''/*,
+					diff: {
+						old: this.parseObj(!{diff}),
+						new: null
+					}*/
+				}
+			},
+			mounted: function(){
+				var self = this;
+				if (self.doc === '') {
+					self.doc = data[0]
+				}
+				self.dindexes = self.data.map(function(doc){
+					return doc.index;
+				})
+				if ( document.getElementById("layouttext")) {
+					var simplemde = new SimpleMDE({
+						element: document.getElementById("layouttext")
+					});
+				}
+				//self.diff.old = $('#diff').html().toString()
+				//console.log(document.getElementById('diff'))
+				//.innerHTML.toString())
+				//console.log(pug.render(self.$el.innerHTML.toString())
+				/*var str = this.$el.innerHTML.toString();
+				var len = str.length;
+				if (!self.cursor) {
+					self.cursor = len - 1;
+				}
+				self.input = str;
+				self.checkPug()
+				*/
+			},
+			beforeDestroy: function(){
+				
+			},
+			methods: {
+				submitForm: function(ind){
+					$('#form_'+ind+'').submit()
+				},
+				/*checkPug: function() {
+					var self = this;
+					var str = self.input;
+					var len = str.length;
+					
+					var parts = [];
+					// from Pug Lexer
+					var captures, captured;
+					console.log(str)
+					if (captures = /^(\w[-:\w]*)(\/?)/.exec(str)) {
+						console.log(captures)
+						//self.consume(captures[0].length);
+						//self.cursor += captures[0].length;
+						self.cursor = len;
+						self.input = str.substr(len)
+						var name = captures[1];
+						var tok;
+						if (':' === name[name.length-1]){
+							name = name.slice(0,-1);
+							tok = name;
+							//parts.push(name)
+							//self.tok = name;
+							while (' ' === self.input[0]) self.cursor--;//self.input = self.input.substr(1);
+						} else {
+							//parts.push(name)
+							//self.tok = name
+							tok = name
+						}
+						if (!captures[2]) {//return false;
+							captured = captures[1].splice(captures[1].split('').indexOf('>'), '/');
+							captures[1] = captured.join('')
+						}//tok.selfClosing = 
+					}
+				},*/
+				parseObj: function(obj) {
+					if (!obj) return '';
+					return obj;
+				},
+				toggleEdit: function(ind) {
+					this.edit = (!this.edit ? ind : null);
+				},
+				addNewMedia: function(id, index) {
+
+					$.post('/api/newmedia/'+id+'/'+index+'', function(res) {
+						console.log(res)
+						$('#appendmedia').append(res);
+						//window.location.reload(true)
+					})
+				},
+				handleFile: function(dindex, index) {
+					var self = this;
+					self.dindex = dindex;
+					self.file = document.getElementById('media_'+index).files[0];
+					self.processImage(index);
+				},
+				processImage: function(imgindex) {
+					var self = this;
+					var dataurl = null;
+					var file = self.file;
+					console.log(file)
+					if (!file) return;
+					var imagefile = file.type;
+					var imageTypes= ["image/jpeg","image/png","image/jpg","image/svg+xml"];
+					if(imageTypes.indexOf(imagefile) === -1) {
+						$("#info").html("<span class='msg-error'>Please Select A valid Image File</span><br /><span>Only jpeg, jpg, png, and pdf types allowed</span>");
+						return false;
+						
+					} else {
+						var reader = new FileReader();
+						
+						reader.onloadend = function(e) {
+							var img = document.getElementById('return'+imgindex+'');
+							img.src = e.target.result;
+
+							img.onload = function() {
+								$('#media').val('');
+								var can = $('#canvas'+imgindex+'')[0];
+								var maxWidth = 1700 ;
+								var maxHeight = 1700 ;
+								var w = img.width;
+								var h = img.height;
+								can.width = w;
+								can.height = h;
+								var ctx = can.getContext("2d");
+								ctx.drawImage(img, 0, 0);
+								self.checkImage(img, can, w, h, maxWidth, maxHeight, imgindex, imagefile.split('image/')[1]);
+							}
+							
+						}
+						reader.readAsDataURL(file);
+					}
+				},
+				checkImage: function(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype) {
+					if (h > maxHeight) {
+						this.reSize(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype)
+					} else {
+						if (maxHeight === 400) {
+							this.drawThumb(img, can, w, h, imgindex, imgtype)
+						} else {
+							this.drawFull(img, can, w, h, imgindex, imgtype)
+						}
+					}
+					
+				},
+				reSize: function(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype){
+					can.height = h*0.75;
+					can.width = w*0.75;
+
+					var can2 = document.createElement('canvas');
+					can2.width = w*0.75;
+					can2.height = h*0.75;
+					var ctx2 = can2.getContext('2d');
+					var ctx = can.getContext('2d');
+					ctx2.drawImage(img, 0, 0, w*0.75, h*0.75);
+					ctx.drawImage(can2, 0, 0, w*0.75, h*0.75, 0, 0, w*0.75, h*0.75);
+					w = w*0.75;
+					h = h*0.75;
+					img.width = w;
+					img.height = h;
+					this.checkImage(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype)
+				},
+				drawFull: function(img, can, w, h, imgindex, imgtype) {
+					var self = this;
+					can.height = h;
+					can.width = w;
+					var ctx = can.getContext('2d');
+					
+					ctx.drawImage(img, 0, 0, w, h);
+					if (!HTMLCanvasElement.prototype.toBlob) {
+					 Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+						value: function (callback, type, quality) {
+							var binStr = atob( this.toDataURL(type, quality).split(',')[1] ),
+							len = binStr.length,
+							arr = new Uint8Array(len);
+							for (var i = 0; i < len; i++ ) {
+								arr[i] = binStr.charCodeAt(i);
+							}
+							callback( new Blob( [arr], {type: type || 'image/png'} ) );
+						}
+					 });
+					}
+					can.toBlob(function(blob) {
+						var fd = new FormData();
+
+						fd.append("img", blob);
+						
+						var uploadurl = '/api/uploadmedia/'+self.dindex+'/'+imgindex+'/png';
+						console.log(uploadurl)
+						$.ajax({
+							url: uploadurl,
+							type: 'POST',
+							data: fd,
+							processData: false,
+							contentType: false,
+								success: function(response) { 
+								img.src = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
+								img.onload = function () {
+									console.log(img, response)
+									$('#inputimg'+imgindex+'').val(response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', ''))
+									var can = $('#canvas'+imgindex+'')[0];
+									$('.return'+imgindex+'').attr('src', response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', ''));
+									var maxWidth = 400 ;
+									var maxHeight = 400 ;
+									var w = img.width;
+									var h = img.height;
+									self.checkImage(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype);
+								}
+							}
+						})
+					}, 'image/png');
+				},
+				drawThumb: function(img, can, w, h, imgindex, imgtype) {
+					var self = this;
+					can.height = h;
+					can.width = w;
+					var ctx = can.getContext('2d');
+					
+					ctx.drawImage(img, 0, 0, w, h);
+					dataurl = can.toDataURL("image/png", 0.8);
+					//console.log(dataurl)
+					setTimeout(function(){
+						$('#inputthumb'+imgindex+'').val(dataurl.replace(/data:image\/png;base64,/, ''));
+						//countUp(parseInt(counter, 10))
+						self.data[dindex].properties.media[imgindex].thumb = dataurl;
+						self.doc.properties.media[imgindex].thumb = dataurl;
+					}, 100);
+				}
+			}
+		});

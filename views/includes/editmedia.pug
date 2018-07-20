@@ -1,0 +1,30 @@
+div.tb-10-m0.tb-font-m(v-if="edit === dindexes.indexOf(doc.index)")
+	input(type="hidden", v-bind:id="'inputthumb'+img.index", v-bind:name="'thumb'+img.index", v-bind:value="img.thumb")
+	input(type="hidden", v-bind:id="'inputimg'+img.index", v-bind:name="'img'+img.index", v-bind:value="img.image")
+	canvas(v-bind:id="'canvas'+img.index", style="display: none;")
+	input(type="hidden", class="featuredimg", v-bind:id="'featured'+img.index", v-bind:name="'img'+img.index+'_featured'", v-bind:value="img.featured")
+
+	div.row
+		div.tb-04-m0.tb-02-m3
+			p.img.sm(href="#", v-bind:id="img.index", v-bind:name="doc._id")
+				img.block(v-bind:id="'return'+img.index", v-bind:src="img.thumb+'?ver=0.0'")
+			div.row
+				div.tb-08-m0(style="padding-top: 8px;")
+					label Featured Image?
+				div.tb-02-m0
+					input(style="height: 100%; padding: 2px 8px;", type="button", v-bind:id="'togglefeatured_'+img.index", v-bind:class="(img.featured?'featured toggle':'toggle')")
+			p
+			label(for="media") Change media
+			input(v-bind:id="'media_'+img.index", v-on:change="handleFile(dindexes.indexOf(doc.index),img.index)", v-bind:class="'editmedia@'+img.index", type="file")
+			label(v-bind:for="'deletemedia_'+img.index")
+			a.block.spacer.deletemedia(role="button", v-bind:id="'deletemedia_'+img.index")
+				span(style="color: #777;") Delete Media
+		div.tb-06-m0.tb-08-m3.shift-00
+			label(v-bind:for="'img'+img.index+'_name'") Image Title
+			input(type="text", v-bind:name="'img'+img.index+'_name'", v-bind:id="'img'+img.index+'_name'", v-bind:value="img.name")
+			label(v-bind:for="'img'+img.index+'_caption'") Image Caption
+			textarea(type="text", v-bind:name="'img'+img.index+'_caption'", v-bind:id="'img'+img.index+'_caption'", v-text="img.caption")
+			label(v-bind:for="'img'+img.index+'_postscript'") Caption postscript
+			input(type="text", v-bind:name="'img'+img.index+'_postscript'", v-bind:id="'img'+img.index+'_postscript'", value="img.postscript")
+			label(v-bind:for="'iframe'+img.index") Video URL
+			input(type="text", v-bind:name="'iframe'+img.index", v-bind:id="'iframe'+img.index", v-bind:value="img.iframe")

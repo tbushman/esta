@@ -1,0 +1,26 @@
+div
+	titled(style="display: block")
+
+		chapter
+			section(
+				v-for="doc in data",
+				v-if="doc.published"
+				)
+				titleis(v-text="doc.title.str")
+				chapteris(v-text="doc.chapter.str")
+				sectionis(v-text="doc.section.str")
+				sectionn(v-text="doc.title.ind+'.'+doc.chapter.ind+'.'+doc.section.ind")
+				subheader(v-text="doc.properties.label")
+				header(v-text="doc.properties.title")
+				place(v-text="doc.properties.place")
+				description(v-text="doc.properties.title")
+				media(v-for="img in doc.properties.media")
+					name(v-text="img.name")
+					image(v-bind:href="img.image")
+					thumb(v-bind:href="img.thumb")
+					caption(v-text="img.caption")
+					postscript(v-text="img.postscript")
+					url
+						a(v-bind:href="img.url")
+							span(v-text="More Info")
+				coordinates(v-text="doc.geometry.coordinates")
