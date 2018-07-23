@@ -34,7 +34,7 @@ var doesProjectPassTests = function(name, URL) {
     .forBrowser('chrome')
     .setChromeOptions(options)
     .build();
-
+console.log(driver)
   // The following functions are defined below instead of outside this function
   // so we do not have to pass the 'driver' as a function parameter. It makes
   // the functions easier to use in a 'then' chain.
@@ -97,22 +97,25 @@ var doesProjectPassTests = function(name, URL) {
 
   // Get the specified URL.
   driver.get(URL);
-	console.log(URL, driver)
 	//;
-	//var doesProjectPassTests = doesProjectPass(process.env.DEVAPPURL);
-	var chai = require('chai'),
-	    assert = chai.assert;
-
-	// Selenium wrapper for Mocha testing. You can also add the following if
-	// needed: after, afterEach, before, beforeEach, and xit.
-	var seleniumMocha = require('selenium-webdriver/testing'),
-	    describe = seleniumMocha.describe,
-	    it = seleniumMocha.it;
 	
 	driver.wait(
 		until.elementLocated(By.id('vue')),
 		elementTimeout
 	).then(function(){
+		describeOT()
+	},
+  errorFunc)
+	//var doesProjectPassTests = doesProjectPass(process.env.DEVAPPURL);
+	var chai = require('chai'),
+			assert = chai.assert;
+
+	// Selenium wrapper for Mocha testing. You can also add the following if
+	// needed: after, afterEach, before, beforeEach, and xit.
+	var seleniumMocha = require('selenium-webdriver/testing'),
+			describe = seleniumMocha.describe,
+			it = seleniumMocha.it;
+	function describeOT(){
 		describe('Ordinancer Tests', function() {
 			var tests = [
 				{
@@ -121,53 +124,53 @@ var doesProjectPassTests = function(name, URL) {
 				}
 			];
 			// Mocha timeout. Two minutes should be enough for every page we test.
-		  this.timeout(120000);
+			this.timeout(120000);
 			// Check mocha is loaded and populate test suite.
-		  let mochaCheck = setInterval(() => runCheck(), 50);
+			let mochaCheck = setInterval(() => runCheck(), 50);
 			var testRunner;
-		  function runCheck() {
-		    try {
-		      if (mocha) {
+			function runCheck() {
+				try {
+					if (mocha) {
 						//console.log(mocha)
-		        clearInterval(mochaCheck);
+						clearInterval(mochaCheck);
 						mocha.setup({
-		          ui: 'bdd',
-		          reporter: 'spec',
-		          fullTrace: true
-		        });
+							ui: 'bdd',
+							reporter: 'spec',
+							fullTrace: true
+						});
 						if (testRunner) {
 							
 						} else {
 							testRunner = mocha.run();
 						}
 						tests.forEach(function(test) {
-					    it(
-					      `${test.name} at URL ${test.URL} should pass all tests`,
-					      function(done) {
+							it(
+								`${test.name} at URL ${test.URL} should pass all tests`,
+								function(done) {
 
-					      doesProjectPassTests(test.name, test.URL)
-					      .then(function(success) {
-					        assert.isOk(
-					          success,
-					          `${test.name} did not pass all tests.`
-					        );
-					        done();
-					      });
-					    });
-					  });
+								doesProjectPassTests(test.name, test.URL)
+								.then(function(success) {
+									assert.isOk(
+										success,
+										`${test.name} did not pass all tests.`
+									);
+									done();
+								});
+							});
+						});
 					}
 				} catch (err) {
 					console.warn('mocha not loaded yet');
 				}
 			}
 			mochaCheck();
-		  
+			
 		});
 		function homePageTests() {
 			describe('#Export', function() {
 				
-		    it(`The #vue section is xml compliant`,
-		    function() {
+				it(`The #vue section is xml compliant`,
+				function() {
 					const title = document.getElementById('vue');
 					
 					console.log(title)
@@ -175,15 +178,15 @@ var doesProjectPassTests = function(name, URL) {
 						
 						if (title) {
 							assert.isNotNull(
-				        title,
-				        'There should be an element with id="vue" '
-				      );
+								title,
+								'There should be an element with id="vue" '
+							);
 						} else {
 							console.log(title)
 						}
 					},5000)
-		      
-		    });
+					
+				});
 			});
 		}
 		function testRunner(test){
@@ -196,13 +199,10 @@ var doesProjectPassTests = function(name, URL) {
 					homePageTests();
 			}
 		}
-	},
-  errorFunc)
-	
-	
-	return driver.quit()
+	}
+	/*return driver.quit()
   .then(function() {
     return success;
-  });
+  });*/
 }
 

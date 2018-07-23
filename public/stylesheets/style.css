@@ -841,6 +841,7 @@ a.menu.drop, a.submenu.drop {
 	overflow-y: scroll;
 	overflow-x: hidden;
 	z-index: 1;
+	pointer-events: all;
 }
 .centerall section {
 	width: 100%;

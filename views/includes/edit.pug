@@ -25,7 +25,7 @@ maintitle.centerall(style="display: block")
 				place.tb-10-m0.tb-font-s(v-if="!edit", v-text="doc.properties.place")
 				label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", for="description") Description
 				textarea#layouttext(v-if="edit === dindexes.indexOf(doc.index)", v-text="doc.properties.description", name="description")
-				description.tb-10-m0(v-if="!edit", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
+				description.tb-10-m0#testbtn(v-if="!edit", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
 
 				rss(version="1.0", xmlns:content="http://purl.org/rss/1.0/modules/content/", xmlns:atom="http://www.w3.org/2005/Atom" )
 					channel.tb-font-xxs

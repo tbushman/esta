@@ -129,6 +129,37 @@ function ensureCurly(req, res, next) {
 		return next()
 	})
 }
+
+router.get('/runtests', function(req, res, next){
+	let chromedriver = require('chromedriver');
+	var mocha = require('mocha');
+	let webdriver = require('selenium-webdriver'),
+		By = webdriver.By,
+		until = webdriver.until;
+		var driver = new webdriver.Builder().
+		withCapabilities(webdriver.Capabilities.chrome()).build();
+		 
+		driver.get('http://'+process.env.DEVAPPURL+'');
+		driver.findElement(webdriver.By.id('testbtn')).click();
+
+		driver.findElement(webdriver.By.name('description')).sendKeys('simple programmer');
+		driver.wait(
+      until.elementLocated(webdriver.By.id('submit_0')),
+      6000
+    )
+    .then(function(){
+			driver.findElement(webdriver.By.id('submit_0')).click();
+			return res.render('test', {
+				info: 'ok'
+			})
+		}, function(err) {
+			return next(err)
+		});
+		
+		//driver.quit();
+	
+})
+
 router.get('/', ensureCurly, function(req, res, next){
 	
 	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
