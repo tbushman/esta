@@ -1,0 +1,19 @@
+language: node_js
+node_js:
+  - 'node'
+dist: trusty
+addons:
+  chrome: stable
+before_install:
+  - if [[ `npm -v` != 3* ]]; then npm i -g npm@3; fi
+  - google-chrome-stable --headless --disable-gpu --remote-debugging-port=8555 http://localhost &
+  - sleep 1
+before_script:
+  - cp test/setup.js.travis test/setup.js
+  # The `&` at the end tells this process to fork into the background
+  # https://github.com/travis-ci/travis-ci/issues/1321
+  # - cd config && openssl genrsa -des3 -passout pass:"ogr" -out server.key 2048 && openssl req -passin pass:"ogr" -new -key server.key -out server.csr -subj "/C=BR/ST=Parana/L=Curitiba/O=fCC/OU=test/CN=freeCodeCamp" && cp server.key server.key.org && openssl rsa -in server.key.org -passin pass:"ogr" -out server.key && openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt && cp live-server-https.js.example live-server-https.js && sleep 3 && npm run live-serve-build &
+  # - sudo mount -o remount,size=64G /run/shm
+cache:
+  directories:
+    - node_modules

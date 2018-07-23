@@ -6,14 +6,16 @@ maintitle.centerall(style="display: block")
 			form.tb-10-m0.form(v-bind:id="'form_'+dindex", enctype="multipart/form-data", method="POST", action="/api/editcontent/"+doc._id+"", name="editform")
 				input(type="hidden", name="_csrf", value= csrfToken)
 
-				span.bd Title 
-				titlenum.bd(v-text="doc.title.ind + 1")
-				span(v-text="' '") 
-				titlename(v-text="doc.title.str")
-				span.bd Chapter 
-				chapternum.bd(v-text="doc.chapter.ind + 1")
-				span(v-text="' '")
-				chaptername(v-text="doc.chapter.str")
+				div.row.tb-font-l Title 
+					span
+						titlenum.bd(v-text="doc.title.ind + 1")
+					span(v-text="' '") 
+						titlename.bd(v-text="doc.title.str")
+				div.row.tb-font-l Chapter 
+					span
+						chapternum.bd(v-text="doc.chapter.ind + 1")
+					span(v-text="' '")
+						chaptername.bd(v-text="doc.chapter.str")
 
 				sectionnum.bd(v-text="(doc.title.ind + 1)+'.'+(doc.chapter.ind + 1)+'.'+(doc.section.ind + 1)")
 				span(v-text="' '")

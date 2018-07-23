@@ -4,7 +4,7 @@
   "description": "web-to-indesign engine",
   "main": "./bin/www",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -37,5 +37,11 @@
     "promise": "^8.0.1",
     "pug": "^2.0.3",
     "request": "^2.87.0"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "chromedriver": "^2.40.0",
+    "mocha": "^5.2.0",
+    "selenium-webdriver": "^3.4.0"
   }
 }
