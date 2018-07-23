@@ -1,9 +1,8 @@
-//doctype xml
 maintitle.centerall(style="display: block")
 		
 	chapter
 		section.row(v-for="doc in data")
-			form.tb-10-m0.form(v-bind:id="'form_'+dindex", enctype="multipart/form-data", method="POST", action="/api/editcontent/"+doc._id+"", name="editform")
+			form.tb-10-m0.form(v-bind:id="'form_'+dindex", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 				input(type="hidden", name="_csrf", value= csrfToken)
 
 				div.row.tb-font-l Title 
@@ -17,7 +16,7 @@ maintitle.centerall(style="display: block")
 					span(v-text="' '")
 						chaptername.bd(v-text="doc.chapter.str")
 
-				sectionnum.bd(v-text="(doc.title.ind + 1)+'.'+(doc.chapter.ind + 1)+'.'+(doc.section.ind + 1)")
+				sectionnum.bd(v-text="(doc.title.ind + 1)+'.'+(doc.chapter.ind + 1)+'.'+(doc.section.ind + 1)+''")
 				span(v-text="' '")
 				sectionname(v-text="doc.section.str")
 				label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", for="place") Place
@@ -25,7 +24,7 @@ maintitle.centerall(style="display: block")
 				place.tb-10-m0.tb-font-s(v-if="!edit", v-text="doc.properties.place")
 				label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", for="description") Description
 				textarea#layouttext(v-if="edit === dindexes.indexOf(doc.index)", v-text="doc.properties.description", name="description")
-				description.tb-10-m0#testbtn(v-if="!edit", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
+				description.tb-10-m0#description(v-if="!edit", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
 
 				rss(version="1.0", xmlns:content="http://purl.org/rss/1.0/modules/content/", xmlns:atom="http://www.w3.org/2005/Atom" )
 					channel.tb-font-xxs
@@ -36,14 +35,7 @@ maintitle.centerall(style="display: block")
 						item.row(v-for="img in doc.properties.media")
 							include editmedia.pug
 							img.tb-10-m0(v-bind:href="img.image_abs", style="height:100px", v-bind:src="img.image")
-							//
-								image
-									title(v-if="!edit", v-bind:style="{display:'inline-block'}", v-text="doc.title.str")
-									link(v-if="!edit", v-bind:href="'http://"+appURL+"'", rel="self")
-									url(v-text="'file://'+img.image")
-									width(v-text="100")
-									height(v-text="100")
-									description(v-text="img.caption")
+							
 						
 				coord.tb-font-xxs.bd(v-text="doc.geometry.coordinates.toString()")
 				hr

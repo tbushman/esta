@@ -133,28 +133,110 @@ function ensureCurly(req, res, next) {
 router.get('/runtests', function(req, res, next){
 	let chromedriver = require('chromedriver');
 	var mocha = require('mocha');
+	var assert = require('chai').assert;
 	let webdriver = require('selenium-webdriver'),
 		By = webdriver.By,
-		until = webdriver.until;
+		until = webdriver.until,
+		test = webdriver.testing;
 		var driver = new webdriver.Builder().
 		withCapabilities(webdriver.Capabilities.chrome()).build();
 		 
 		driver.get('http://'+process.env.DEVAPPURL+'');
-		driver.findElement(webdriver.By.id('testbtn')).click();
+		driver.wait(
+      until.elementLocated(webdriver.By.css('#description')),
+			12000
+		).then(function(){
+			driver.findElement(webdriver.By.css('#description')).click();
+		})
+				
 
 		driver.findElement(webdriver.By.name('description')).sendKeys('simple programmer');
 		driver.wait(
       until.elementLocated(webdriver.By.id('submit_0')),
-      6000
+      12000
     )
     .then(function(){
-			driver.findElement(webdriver.By.id('submit_0')).click();
+			driver.findElement(webdriver.By.css('#submit_0')).click();
 			return res.render('test', {
 				info: 'ok'
 			})
 		}, function(err) {
 			return next(err)
 		});
+		
+		driver.wait(
+			until.elementLocated(webdriver.By.css('#vue')),
+			12000
+		).then(function(el){
+			//console.log(el.getAttribute('innerHTML'))
+			var captures;
+			/*Content.find({}, function(err, data) {
+				if (err) {
+					return next(err)
+				}
+				/*var input = pug.renderFile(path.join(__dirname, '../views/publish.pug'), {
+					doctype: 'xml',
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					data: data,
+					doc: data[0]/*,
+					diff: str
+				});*/
+				var rx = /^(\w(?:[-:\w]*\w)?)/
+				//var rx = /^(\w[-:\w]*)(\/?)/
+				while (input.length) {
+					if (!rx.exec(input)) {
+						input = input.substr(1)
+					} else {
+						captures = rx.exec(input);
+						input = input.substr(captures[0].length)
+						//console.log(input)
+						console.log(captures)
+					}
+				}
+			})
+			
+			//driver.executeScript('return arguments[0].innerHTML;', el).then(function(ele){
+				//	console.log(input)
+				//el.getInnerHtml().then(function(input){
+				//var input = ele;
+				//console.log(/^(\w[-:\w]*)(\/?)/.exec(input))
+				//console.log(!/^(\w[-:\w]*)(\/?)/.exec(input))
+				
+				/*do {
+					if (!/^(\w[-:\w]*)(\/?)/.exec(input)) {
+						input = input.substr(1)
+						//console.log(input)
+			    }	else {
+						captures = /^(\w[-:\w]*)(\/?)/.exec(input);
+						input = input.substr(captures[0].length)
+						console.log(input)
+						console.log(captures)
+		      	//this.consume(captures[0].length);
+		      	/*var tok, name = captures[1];
+		      	if (':' == name[name.length - 1]) {
+		        	name = name.slice(0, -1);
+		        	tok = this.tok('tag', name);
+		        	this.defer(this.tok(':'));
+		        	while (' ' == this.input[0]) this.input = this.input.substr(1);
+			      } else {
+			        tok = this.tok('tag', name);
+			      }
+			      tok.selfClosing = !! captures[2];
+						if (captures[2]) {
+							console.log('closing tag')
+							console.log(captures[2])
+						}
+			      //return tok;
+						/*assert.isTrue(
+							//.test
+						)
+					}*/
+				//} while (!/^(\w[-:\w]*)(\/?)/.exec(input));
+			//})
+
+			
+			
+		//})
 		
 		//driver.quit();
 	
@@ -173,22 +255,22 @@ router.get('/', ensureCurly, function(req, res, next){
 		if (data.length === 0) {
 			return res.redirect('/api/new')
 		}
-		var str = pug.renderFile(path.join(__dirname, '../views/publish.pug'), {
+		var str = pug.renderFile(path.join(__dirname, '../views/includes/edit.pug'), {
 			doctype: 'xml',
-			menu: !req.session.menu ? 'view' : req.session.menu,
-			data: data,
-			doc: data[0],
-			diff: str
-		});
-		var file = path.join(__dirname, '/..')+'/public/json/testtemplate.xml';
-		fs.outputFileSync(file, str);
-		//console.log(str)
-		return res.render('publish', {
 			csrfToken: req.csrfToken(),
 			menu: !req.session.menu ? 'view' : req.session.menu,
 			data: data,
 			doc: data[0]/*,
 			diff: str*/
+		});
+		//var file = path.join(__dirname, '/..')+'/public/json/testtemplate.xml';
+		//fs.outputFileSync(file, str);
+		//console.log(str)
+		return res.render('publish', {
+			menu: !req.session.menu ? 'view' : req.session.menu,
+			data: data/*,
+			doc: data[0],*/
+			,diff: str
 		});
 	});
 });
