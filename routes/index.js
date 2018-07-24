@@ -22,12 +22,59 @@ var publishers = path.join(__dirname, '/../../..');
 dotenv.load();
 var upload = multer();
 
+ 
+
+var geolocation = require ('google-geolocation') ({
+	key: process.env.GOOGLE_KEY
+});
+
+function geoLocate(ip, zoom, cb) {
+	var ping = spawn('ping', [ip]);
+	ping.stdout.on('data', function(d){
+		console.log(d)
+	})
+	var arp = spawn('arp', ['-a']);
+	var mac;
+	arp.stdout.on('data', function(dat){
+		dat += '';
+		dat = dat.split('\n');
+		mac = dat[0].split(' ')[3];
+	})
+	// Configure API parameters
+	const params = {
+		wifiAccessPoints: [{
+			macAddress: ''+mac+'',
+			signalStrength: -65,
+			signalToNoiseRatio: 40
+		}]
+	};
+	geolocation(params, function(err, data) {
+		if (err) {
+			console.log(err)
+			position = {lat: 41.509859, lng: -112.015802, zoom: zoom };
+		} else {
+			position = { lng: data.location.lng, lat: data.location.lat, zoom: zoom };	
+		}
+		cb(position);
+	
+	})
+}
+
+
 var storage = multer.diskStorage({
 	
 	destination: function (req, file, cb) {
-		var p = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+''
-		var q = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+''
-		
+		var p, q;
+		if (req.params.type === 'csv') {
+			p = ''+publishers+'/pu/publishers/ordinancer/csv/'+req.params.id+''
+			q = ''+publishers+'/pu/publishers/ordinancer/csv/thumbs/'+req.params.id+''
+			
+		} else {
+			p = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+''
+			q = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+''
+
+		}
+				
 		fs.access(p, function(err) {
 			if (err && err.code === 'ENOENT') {
 				mkdirp(p, function(err){
@@ -48,8 +95,8 @@ var storage = multer.diskStorage({
 		
 	},
 	filename: function (req, file, cb) {
-		if (req.params.type === 'pdf') {
-			cb(null, 'pdf_' + req.params.counter + '.pdf')
+		if (req.params.type === 'csv') {
+			cb(null, 'csv_' + req.params.id + '.csv')
 		} else {
 			cb(null, 'img_' + req.params.counter + '.png')
 		}    	
@@ -246,8 +293,6 @@ router.get('/', ensureCurly, function(req, res, next){
 	
 	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 	req.session.refer = newrefer;
-	//console.log(require('global/window'))
-	//return res.redirect('/home');
 	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
 		if (err) {
 			return next(err)
@@ -259,22 +304,65 @@ router.get('/', ensureCurly, function(req, res, next){
 			doctype: 'xml',
 			csrfToken: req.csrfToken(),
 			menu: !req.session.menu ? 'view' : req.session.menu,
-			data: data,
-			doc: data[0]/*,
-			diff: str*/
+			data: data/*,
+			doc: data[0]*/
 		});
-		//var file = path.join(__dirname, '/..')+'/public/json/testtemplate.xml';
-		//fs.outputFileSync(file, str);
-		//console.log(str)
 		return res.render('publish', {
 			menu: !req.session.menu ? 'view' : req.session.menu,
-			data: data/*,
-			doc: data[0],*/
-			,diff: str
+			data: data,
+			diff: str
 		});
 	});
 });
 
+router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	//console.log(outputPath)
+
+	var zoom = parseInt(req.params.zoom, 10);
+	var lat = parseFloat(req.params.lat);
+	var lng = parseFloat(req.params.lng);
+	var position = {
+		lat: lat,
+		lng: lng,
+		zoom: zoom
+	}
+	
+	req.session.position = position;
+	return res.status(200).send('ok')
+	
+});
+
+
+router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+
+	fs.readFile(req.file.path, 'utf8', function (err, content) {
+		if (err) {
+			return console.log(err)
+		}
+		console.log(req.file)
+		var entry = [];
+		var json = require('d3').csvParse(content);
+		for (var i in json) {
+			if (!isNaN(parseFloat(json[i].longitude))) {
+				var coords = [parseFloat(json[i].longitude), parseFloat(json[i].latitude)];
+				entry.push(coords)
+			}
+		}
+		var geo = {
+			type: 'LineString',
+			coordinates: entry
+		}
+		Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
+			if (err) {
+				return next(err)
+			}
+			return res.status(200).send(req.file.path)
+		})
+	})
+})
 
 router.get('/api/new', function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;

@@ -7,6 +7,8 @@ html
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
 		link(rel="stylesheet", href="/stylesheets/simplemde.min.css")
 		link(rel="stylesheet", href="/stylesheets/style.css")
+		link(rel="stylesheet", href="/stylesheets/leaflet.css")
+
 		style(id="style", type="text/css")
 		script(type="text/javascript", src="/scripts/vue.min.js")
 		script(type="text/javascript", src="/scripts/jquery.min.js")
@@ -14,11 +16,14 @@ html
 		script(type="text/javascript", src="/scripts/moment-with-locales.min.js")
 		script(type="text/javascript", src="/scripts/marked.min.js")
 		script(type="text/javascript", src="/scripts/simplemde.min.js")
+		script(type="text/javascript", src="/scripts/leaflet.js")
 		script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.0.2/mocha.min.js")
 	body
 		block page
 		block header
 		block content
+		
+		#map
 		script(type="text/javascript").
 			new Vue({
 				el: '#vue',
@@ -27,14 +32,23 @@ html
 						menu: this.parseObj(!{JSON.stringify(menu)}),
 						data: this.parseObj(!{JSON.stringify(data)}),
 						doc: this.parseObj(!{JSON.stringify(doc)}),
+						position: this.parseObj(!{JSON.stringify(session.position)}),
 						edit: null,
 						dindexes: [],
 						dindex: (this.parseObj(!{JSON.stringify(doc)}) === '' ? 0 : this.parseObj(!{JSON.stringify(doc)}).index),
 						cursor: null,
 						input: '',
-						fixedPug: ''
-						/*,
-						diff: this.parseObj(!{JSON.stringify(diff)})*/
+						fixedPug: '',
+						map: '',
+						dataLayer: '',
+						lMarker: '',
+						thickness: 45,
+						wWidth: window.innerWidth,
+						wHeight: window.innerHeight,
+						dPath: this.dPathAttr()
+						
+						
+						
 					}
 				},
 				mounted: function(){
@@ -43,19 +57,88 @@ html
 						self.doc = self.data[0]
 					}
 					self.dindexes = self.data.map(function(doc){
+						//console.log(doc.properties.media[0].image_abs)
 						return doc.index;
 					})
-					console.log(self.diff)
 					if ( document.getElementById("layouttext")) {
 						var simplemde = new SimpleMDE({
 							element: document.getElementById("layouttext")
 						});
 					}
+					if (self.lMarker && self.lMarker !== '') {
+						self.lMarker.on('dragend', function(evend){
+							var marker = event.target;
+							var position = lMarker.getLatLng();
+							self.lMarker.setLatLng(new L.LatLng(position.lat, position.lng),{draggable:'true'});
+							self.map.panTo(new L.LatLng(position.lat, position.lng))
+							$('input#lat').val(position.lat)
+							$('input#lng').val(position.lng)
+						})
+					}
+					self.loadMap(function(map, dataLayer){
+						self.map = map;
+						self.dataLayer = dataLayer;
+						self.panZoom();
+					})
 				},
 				beforeDestroy: function(){
 					
 				},
 				methods: {
+					dPathAttr: function() {
+						var self = this;
+						var thickness = (!thickness ? 45 : thickness);
+						var nw = (!self.wWidth ? window.innerWidth : self.wWidth);
+						var nh = (!self.wHeight ? window.innerHeight : self.wHeight);
+						
+						var d = "M0,0v"+nh+"h"+nw+"V0H0L0,0z "+
+						"M"+(thickness)+","+(thickness)+"H"+(nw - thickness)+"V"+(nh - thickness)+"H"+(thickness)+"V"+(thickness)+"z "
+						return d;
+					},
+					widthRectAttr: function(plus,type){
+						var nw = this.getSize(type).nw;
+						console.log(self.thickness, plus, type)
+						return nw - ((self.thickness + plus) * 2);
+					},
+					heightRectAttr: function(plus,type){
+						var nh = this.getSize(type).nh;
+						//console.log(nh)
+						return nh - ((self.thickness + plus) * 2);
+					},
+					panZoom: function(){
+						var self = this;
+						$.post('/panzoom/'+self.map.getCenter().lat+'/'+self.map.getCenter().lng+'/'+self.map.getZoom()+'', function(result){
+							self.lMarker = L.marker([self.map.getCenter().lat, self.map.getCenter().lng], {draggable: true}).addTo(self.map);
+						})
+					},
+					importCsv: function(e){
+
+						var self = this;
+						var file = document.getElementById('importcsv').files[0];//e.target.files[0];
+						var reader = new FileReader();
+						
+						reader.onloadend = function(e) {
+							var fd = new FormData();
+
+							fd.append("csv", file);
+							
+							var uploadurl = '/api/importcsv/'+self.data[self.dindex]._id+'/csv';
+							$.ajax({
+								url: uploadurl,
+								type: 'POST',
+								data: fd,
+								processData: false,
+								contentType: false,
+								success: function(response) { 
+									console.log('success!')
+									console.log(response)
+								}
+								
+							})
+						}
+						reader.readAsDataURL(file)
+						
+					},
 					submitForm: function(ind){
 						$('#form_'+ind+'').submit()
 					},
@@ -167,7 +250,6 @@ html
 						}
 						can.toBlob(function(blob) {
 							var fd = new FormData();
-
 							fd.append("img", blob);
 							
 							var uploadurl = '/api/uploadmedia/'+self.dindex+'/'+imgindex+'/png';
@@ -210,6 +292,73 @@ html
 							self.data[dindex].properties.media[imgindex].thumb = dataurl;
 							self.doc.properties.media[imgindex].thumb = dataurl;
 						}, 100);
+					},
+					loadMap: function(cb) {
+						var self = this;
+						var dataLayer;
+
+						var map = new L.map('map', { 
+							center: [
+								(!self.position ? 41.509859 : self.position.lat),
+								(!self.position ? -112.015802 : self.position.lng)
+							], 
+							zoom: (!self.position ? 6 : self.position.zoom),
+							zoomControl: false,
+							minZoom: 2,
+							maxZoom: 18
+						});
+						if (self.infowindow === 'tooltip') {
+							L.control.zoom({
+								position:'bottomleft'
+							}).addTo(map);
+						} else {
+							L.control.zoom({
+								position:'topleft'
+							}).addTo(map);
+						}
+						
+						var options3 = {
+							
+							attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+						};
+						
+						L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', options3).addTo(map);
+						//L.tileLayer('https://{s}.tiles.mapbox.com/v3/tbushman.1pnqxgvi/{z}/{x}/{y}.png', map.getBounds()).addTo(map); //slc transit
+						if (!self.dataLayer) {
+							// generate geographic points from data
+							if (this.data.length > 0) {
+								dataLayer = L.geoJSON(this.data, {
+									// MongoDB stores coordinates as [lng, lat]
+									// Leaflet uses [lat, lng]
+									onEachFeature: function (feature) {
+										if (feature.geometry.type === 'Point') {
+											feature.geometry.coordinates.reverse()
+										}
+									},
+									pointToLayer: function (feature, latlng) {
+										if (feature.geometry.type = 'Point') {
+											//console.log(feature)
+											var geojsonMarkerOptions = {
+												radius: 11,
+												fillColor: 'var(--highlight)',
+												color: '#fff',
+												weight: 2,
+												opacity: 1,
+												fillOpacity: 0.8,
+												className: feature._id+'@'+feature.authorname+'@'+map.latLngToLayerPoint(latlng).x+','+map.latLngToLayerPoint(latlng).y+''
+											};
+											var circleMarker = L.circleMarker(latlng, geojsonMarkerOptions);
+											return circleMarker;
+										}
+									}
+								}).addTo(map);
+								//this.dataLayer = dataLayer;
+
+							}
+						}
+						//console.log(map)
+						//this.map = map;
+						cb(map, dataLayer)
 					}
 				}
 			});

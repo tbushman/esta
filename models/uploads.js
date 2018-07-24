@@ -1,6 +1,6 @@
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
-var Content = new Schema({
+var Uploads = new Schema({
 	type: String,
 	index: Number,
 	title: {
@@ -40,9 +40,7 @@ var Content = new Schema({
 	geometry: {
 		'type': {type: String, 'enum': [
 			'Point',
-			'MultiPoint',
-			'Polygon',
-			'LineString'
+			'MultiPoint'
 		]},
 		coordinates: { type: Array }
 	}
@@ -53,7 +51,3 @@ var Content = new Schema({
 
 Content.index({ geometry: '2dsphere' });
 module.exports = mongoose.model('Content', Content);
-/*function(dbc){ 
-	
-	return mongoose.model(dbc.collection, Content, dbc.collection);
-}*/

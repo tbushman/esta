@@ -1,4 +1,4 @@
-maintitle.centerall(style="display: block")
+maintitle(style="display: block; background-color: #fff; background-color: var(--primary);padding: 45px; pointer-events: auto;")
 		
 	chapter
 		section.row(v-for="doc in data")
@@ -21,23 +21,37 @@ maintitle.centerall(style="display: block")
 				sectionname(v-text="doc.section.str")
 				label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", for="place") Place
 				input(v-if="edit === dindexes.indexOf(doc.index)", v-bind:value="doc.properties.place", type="text", name="place")
-				place.tb-10-m0.tb-font-s(v-if="!edit", v-text="doc.properties.place")
+				place.tb-10-m0(v-if="edit === null", v-text="doc.properties.place")
 				label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", for="description") Description
 				textarea#layouttext(v-if="edit === dindexes.indexOf(doc.index)", v-text="doc.properties.description", name="description")
-				description.tb-10-m0#description(v-if="!edit", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
-
+				description.tb-10-m0#description(v-if="edit === null", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
+				input#importcsv(v-on:change="importCsv", type="file", value="Import CSV")
 				rss(version="1.0", xmlns:content="http://purl.org/rss/1.0/modules/content/", xmlns:atom="http://www.w3.org/2005/Atom" )
-					channel.tb-font-xxs
-						title(v-if="!edit", v-bind:style="{display:'inline-block'}", v-text="doc.title.str")
-						link(v-if="!edit", v-bind:href="'http://"+appURL+"'", rel="self")
-						description(v-if="!edit", v-text="doc.chapter.str")
-						ttl(v-text="60")
-						item.row(v-for="img in doc.properties.media")
+					channel
+						title(v-if="edit === null", v-bind:style="{display:'inline-block'}", v-text="doc.title.str")
+						link(v-if="edit === null", v-bind:href="'http://"+appURL+"'", rel="self")
+						description(v-if="edit === null", v-text="doc.chapter.str")
+						ttl(v-if="edit === null", v-text="60")
+						item.row(
+
+							v-for="img in doc.properties.media"
+							)
 							include editmedia.pug
-							img.tb-10-m0(v-bind:href="img.image_abs", style="height:100px", v-bind:src="img.image")
-							
-						
+							img.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", style="height:100px", v-bind:src="img.image")
+							image.tb-10-m0(v-bind:href="'file://'+img.image_abs")
+
 				coord.tb-font-xxs.bd(v-text="doc.geometry.coordinates.toString()")
 				hr
 				a.block(v-if="edit === dindexes.indexOf(doc.index)", role="button", v-bind:id="'submit_'+dindex", v-on:click="submitForm(dindexes.indexOf(doc.index))")
 					span Finished editing
+
+
+div(style="position:absolute;")
+	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
+		,
+		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto'}", xml:space="preserve"
+		, 
+		v-bind:width="wWidth +'px'",
+		v-bind:height="wHeight+'px'"
+		)
+		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")

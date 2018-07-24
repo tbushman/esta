@@ -4,7 +4,8 @@
   "description": "web-to-indesign engine",
   "main": "./bin/www",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "start": "nodemon &"
   },
   "repository": {
     "type": "git",
@@ -22,11 +23,13 @@
     "connect-mongo": "^2.0.1",
     "cookie-parser": "^1.4.3",
     "csurf": "^1.9.0",
+    "d3": "^5.5.0",
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
     "fs-extra": "^7.0.0",
     "fsxt": "^8.1.0",
+    "google-geolocation": "^1.0.2",
     "http": "0.0.0",
     "jquery": "^3.3.1",
     "marked": "^0.4.0",

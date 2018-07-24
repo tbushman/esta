@@ -115,7 +115,41 @@ console.log(driver)
 	var seleniumMocha = require('selenium-webdriver/testing'),
 			describe = seleniumMocha.describe,
 			it = seleniumMocha.it;
-	function describeOT(){
+			
+	function homePageTests() {
+		describe('#Export', function() {
+			
+			it(`The #vue section is xml compliant`,
+			function() {
+				const title = document.getElementById('vue');
+				
+				console.log(title)
+				setTimeout(function(){
+					
+					if (title) {
+						assert.isNotNull(
+							title,
+							'There should be an element with id="vue" '
+						);
+					} else {
+						console.log(title)
+					}
+				},5000)
+				
+			});
+		});
+	}
+	function testRunner(test){
+		mocha.suite.suites = [];
+		switch(test.name) {
+			case 'Home':
+				homePageTests();
+				break;
+			default:
+				homePageTests();
+		}
+	}
+	function describeOT(cb){
 		describe('Ordinancer Tests', function() {
 			var tests = [
 				{
@@ -166,39 +200,7 @@ console.log(driver)
 			mochaCheck();
 			
 		});
-		function homePageTests() {
-			describe('#Export', function() {
-				
-				it(`The #vue section is xml compliant`,
-				function() {
-					const title = document.getElementById('vue');
-					
-					console.log(title)
-					setTimeout(function(){
-						
-						if (title) {
-							assert.isNotNull(
-								title,
-								'There should be an element with id="vue" '
-							);
-						} else {
-							console.log(title)
-						}
-					},5000)
-					
-				});
-			});
-		}
-		function testRunner(test){
-			mocha.suite.suites = [];
-			switch(test.name) {
-				case 'Home':
-					homePageTests();
-					break;
-				default:
-					homePageTests();
-			}
-		}
+		
 	}
 	/*return driver.quit()
   .then(function() {
