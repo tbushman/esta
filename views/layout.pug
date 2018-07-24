@@ -15,7 +15,8 @@ html
 		script(type="text/javascript", src="/scripts/jquery-ui.min.js")
 		script(type="text/javascript", src="/scripts/moment-with-locales.min.js")
 		script(type="text/javascript", src="/scripts/marked.min.js")
-		script(type="text/javascript", src="/scripts/simplemde.min.js")
+		//script(type="text/javascript", src="/scripts/simplemde.min.js")
+		script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js")
 		script(type="text/javascript", src="/scripts/leaflet.js")
 		script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.0.2/mocha.min.js")
 	body
@@ -25,6 +26,7 @@ html
 		
 		#map
 		script(type="text/javascript").
+			
 			new Vue({
 				el: '#vue',
 				data: function data(){
@@ -45,12 +47,21 @@ html
 						thickness: 45,
 						wWidth: window.innerWidth,
 						wHeight: window.innerHeight,
-						dPath: this.dPathAttr()
+						dPath: this.dPathAttr(),
+						tinymce: tinymce.init({
+							selector: "#layouttext"
+						})/*,
+						simpleMde: (!document.getElementById("layouttext")[0] ? null : new SimpleMDE({
+							element: document.getElementById("layouttext")[0]
+						}))*/
 						
 						
 						
 					}
-				},
+				}/*,
+				components: {
+					'editor': Editor // <- Important part
+				}*/,
 				mounted: function(){
 					var self = this;
 					if (self.doc === '') {
@@ -60,11 +71,6 @@ html
 						//console.log(doc.properties.media[0].image_abs)
 						return doc.index;
 					})
-					if ( document.getElementById("layouttext")) {
-						var simplemde = new SimpleMDE({
-							element: document.getElementById("layouttext")
-						});
-					}
 					if (self.lMarker && self.lMarker !== '') {
 						self.lMarker.on('dragend', function(evend){
 							var marker = event.target;
@@ -147,7 +153,27 @@ html
 						return obj;
 					},
 					toggleEdit: function(ind) {
+						var self = this;
 						this.edit = (!this.edit ? ind : null);
+						setTimeout(function(){
+							/*this.simpleMde = new SimpleMDE({
+								element: document.getElementById("layouttext")[0]
+							})*/
+							self.tinymce = tinymce.init({
+								menubar: false,
+								statusbar: false,
+								selector: "#layouttext",
+								plugins: 'table',
+								toolbar: 'undo redo | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify alignnone | outdent indent blockquote | subscript superscript | bullist numlist | link unlink | table',
+								table_toolbar: "tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol"
+
+							});
+							setTimeout(function(){
+								$('button.mce-close').click();
+							}, 400)
+						}, 500)
+						
+						
 					},
 					addNewMedia: function(id, index) {
 

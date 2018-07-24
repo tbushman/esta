@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/tbushman/ordinancer#readme",
   "dependencies": {
+    "@tinymce/tinymce-vue": "^1.0.8",
     "async": "^2.6.1",
     "body-parser": "^1.18.3",
     "connect-mongo": "^2.0.1",

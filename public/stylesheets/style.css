@@ -1259,6 +1259,10 @@ a.menu.drop, a.submenu.drop {
 	left: var(--thumbw)!important;
 }
 
+.mce-panel {
+	pointer-events: all!important;
+}
+
 div.img > img {
 	position: relative;
 	left: 25%;
