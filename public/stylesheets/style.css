@@ -236,7 +236,7 @@ a span, a img {
 	padding: calc(var(--thumbw) / 4) 0 0 0;
 	display: block;
 }
-p, .tb-font-s {
+.tb-font-s {
 	font-family: var(--bfontname), var(--bfonttype)!important;
 	color: #fff;
 	color: var(--secondary);
@@ -828,7 +828,7 @@ a.menu.drop, a.submenu.drop {
 .centerallwrap {
 	display: block;
 	position: relative;
-	height: 100%;
+	height: 100vh;
 	width: 100%;
 	margin: 0;
 	overflow-x: hidden;
@@ -1300,9 +1300,9 @@ div.img {
 	/*background-image: radial-gradient(closest-side, transparent 98%, rgba(255, 255, 255, 0.5) 99%), radial-gradient(closest-side, transparent 98%, rgba(0, 0, 0, 0.02) 99%);
 	background-image: radial-gradient(closest-side, transparent 98%, rgba(255, 255, 255, 0.5) 99%), radial-gradient(closest-side, transparent 98%, #f7eef4 99%);
 	*/
-	background-image: url('/images/headerbkgrd.jpg');
+	/*background-image: url('/images/headerbkgrd.jpg');
 	background-size: cover;
-	background-position: center;
+	background-position: center;*/
 }
 
 div.img.blog {
@@ -1359,6 +1359,23 @@ div.img hr {
 	border-top: 1px solid var(--primary);
 }
 
+span.img {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	right: 0;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	display: inline-block;
+}
+
+span.img > img {
+	top: -50%;
+	position: absolute;
+	height: 200%;
+	width: auto;
+}
 .flexcontainr {
 	display: -webkit-box;
   display: -moz-box;
@@ -1617,6 +1634,7 @@ form {
 }
 form label {
 	color: #888;
+	font-size: 13px;
 }
 
 textarea {
@@ -1852,7 +1870,6 @@ hr {
 *[class^='tb-0'] > select, 
 *[class^='tb-1'] > p, 
 *[class^='tb-0'] > p {
-	padding: 10px;
 	margin: 10px auto;
 }
 

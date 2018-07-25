@@ -82,6 +82,7 @@ app.use(function (req, res, next) {
 app.get(/^(\/|\/api\/new|\/api\/editcontent)/, csrfProtection);
 // ensure multer parses before csrf
 app.post(/^(\/api\/editcontent)/, upload.array(), parseBody, csrfProtection);
+app.post(/^(\/diff)/, upload.array(), parseBody);
 
 app.use('/', routes);
 

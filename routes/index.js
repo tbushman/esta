@@ -17,6 +17,7 @@ var marked = require('marked');
 var pug = require('pug');
 //var Publisher = require('../models/publishers.js');
 var Content = require('../models/content.js');
+var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
 
 dotenv.load();
@@ -69,6 +70,9 @@ var storage = multer.diskStorage({
 			p = ''+publishers+'/pu/publishers/ordinancer/csv/'+req.params.id+''
 			q = ''+publishers+'/pu/publishers/ordinancer/csv/thumbs/'+req.params.id+''
 			
+		} else if (req.params.type === 'txt') {
+			p = ''+publishers+'/pu/publishers/ordinancer/txt'
+			q = ''+publishers+'/pu/publishers/ordinancer/txt/thumbs'
 		} else {
 			p = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+''
 			q = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+''
@@ -97,6 +101,8 @@ var storage = multer.diskStorage({
 	filename: function (req, file, cb) {
 		if (req.params.type === 'csv') {
 			cb(null, 'csv_' + req.params.id + '.csv')
+		} else if (req.params.type === 'txt') {
+			cb(null, 'txt_' + Date.now() + '.txt')
 		} else {
 			cb(null, 'img_' + req.params.counter + '.png')
 		}    	
@@ -175,6 +181,19 @@ function ensureCurly(req, res, next) {
 		})
 		return next()
 	})
+}
+
+function ensureContent(req, res, next) {
+	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+		if (err) {
+			return next(err)
+		}
+		if (data.length === 0) {
+			return res.redirect('/api/new')
+		} else {
+			return next()
+		}
+	});
 }
 
 router.get('/runtests', function(req, res, next){
@@ -289,6 +308,8 @@ router.get('/runtests', function(req, res, next){
 	
 })
 
+router.all('/.*/', ensureContent)
+
 router.get('/', ensureCurly, function(req, res, next){
 	
 	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
@@ -297,21 +318,45 @@ router.get('/', ensureCurly, function(req, res, next){
 		if (err) {
 			return next(err)
 		}
-		if (data.length === 0) {
-			return res.redirect('/api/new')
+		
+			var str = pug.renderFile(path.join(__dirname, '../views/includes/edit.pug'), {
+				doctype: 'xml',
+				csrfToken: req.csrfToken(),
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				data: data,
+				appURL: req.app.locals.appURL
+			});
+			return res.render('publish', {
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				data: data,
+				str: str
+			});
+		
+	});
+});
+
+router.post('/diff', function(req, res, next){
+	Diffs.find({}).sort({date:1}).exec(function(err, diffs){
+		if (err) {
+			return next(err)
 		}
-		var str = pug.renderFile(path.join(__dirname, '../views/includes/edit.pug'), {
-			doctype: 'xml',
-			csrfToken: req.csrfToken(),
-			menu: !req.session.menu ? 'view' : req.session.menu,
-			data: data/*,
-			doc: data[0]*/
+		//console.log(req.body);
+		var newdiff = new Diffs({
+			date: new Date(),
+			dif: require('diff').diffChars((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str),
+			str: req.body.str
 		});
-		return res.render('publish', {
-			menu: !req.session.menu ? 'view' : req.session.menu,
-			data: data,
-			diff: str
-		});
+		/*if (!newdiff) {
+			return next(new Error('no newdiff'))
+		}*/
+		newdiff.save(function(err){
+			if (err) {
+				return next(err)
+			} else {
+				return res.status(200).send(newdiff)
+			}
+			
+		})
 	});
 });
 
@@ -333,6 +378,50 @@ router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
 	
 });
 
+router.get('/list/:id/:index', function(req, res, next){
+	Content.findOne({_id: req.params.id}, function(err, doc){
+		if (err) {
+			return next(err)
+		}
+		return res.render('publish', {
+			doc: doc,
+			mindex: parseInt(req.params.index, 10)
+		})
+	})
+})
+
+router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+
+	fs.readFile(req.file.path, 'utf8', function (err, content) {
+		if (err) {
+			return console.log(err)
+		}
+		var entry = [];
+		//var json = require('d3').csvParse(content);
+		//console.log(content)
+		var data = [];
+		var str = content.toString();
+		var rx = /^(\d{1,2}\.\d{1,3}\.\d{0,4}\..*[\s\n\r]*.*\R*)/m
+		console.log(str.split(rx))
+		/*if (str) {
+			while (str.length > 0) {
+				data.push(str.split(rx)[0])
+				str = str.split(rx)[1]
+			}
+			//var rx = /^(\d{1,2}.\d{1,3}.\d{0,4}.)/gm
+			//data = str.split(rx);
+			console.log(str.split(rx))
+		}*/
+		/*Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
+			if (err) {
+				return next(err)
+			}
+			return res.status(200).send(doc)
+		})*/
+	})
+})
 
 router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
@@ -359,7 +448,7 @@ router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req,
 			if (err) {
 				return next(err)
 			}
-			return res.status(200).send(req.file.path)
+			return res.status(200).send(doc)
 		})
 	})
 })

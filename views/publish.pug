@@ -3,5 +3,11 @@ block page
 	
 block content
 	
-	div#vue.centerallwrap
-		!= diff
+	div#vue
+		div(style="position:absolute;z-index:999999;pointer-events:all;")
+			label(for="importtxt")
+			input#importtxt(v-on:change="importTxt", type="file", value="Import TXT")
+
+		div.centerallwrap
+			!= str
+

@@ -1,52 +1,24 @@
 maintitle(style="display: block; background-color: #fff; background-color: var(--primary);padding: 45px; pointer-events: auto;")
 		
 	chapter
-		section.row(v-for="doc in data")
-			form.tb-10-m0.form(v-bind:id="'form_'+dindex", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
-				input(type="hidden", name="_csrf", value= csrfToken)
-
-				div.row.tb-font-l Title 
-					span
-						titlenum.bd(v-text="doc.title.ind + 1")
-					span(v-text="' '") 
-						titlename.bd(v-text="doc.title.str")
-				div.row.tb-font-l Chapter 
-					span
-						chapternum.bd(v-text="doc.chapter.ind + 1")
-					span(v-text="' '")
-						chaptername.bd(v-text="doc.chapter.str")
-
-				sectionnum.bd(v-text="(doc.title.ind + 1)+'.'+(doc.chapter.ind + 1)+'.'+(doc.section.ind + 1)+''")
+		section.row
+			p.row.tb-font-xl Title 
+				titlenum.bd(v-text="data[0].title.ind + 1")
+				span(v-text="' '") 
+				titlename.bd(v-text="data[0].title.str")
+			p.row.tb-font-xl Chapter 
+				chapternum.bd(v-text="data[0].chapter.ind + 1")
 				span(v-text="' '")
-				sectionname(v-text="doc.section.str")
-				label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", for="place") Place
-				input(v-if="edit === dindexes.indexOf(doc.index)", v-bind:value="doc.properties.place", type="text", name="place")
-				place.tb-10-m0(v-if="edit === null", v-text="doc.properties.place")
-				label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", for="description") Description
-				textarea#layouttext(v-if="edit === dindexes.indexOf(doc.index)", v-text="doc.properties.description", name="description")
-				description.tb-10-m0#description(v-if="edit === null", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
-				input#importcsv(v-on:change="importCsv", type="file", value="Import CSV")
-				rss(version="1.0", xmlns:content="http://purl.org/rss/1.0/modules/content/", xmlns:atom="http://www.w3.org/2005/Atom" )
-					channel
-						title(v-if="edit === null", v-bind:style="{display:'inline-block'}", v-text="doc.title.str")
-						link(v-if="edit === null", v-bind:href="'http://"+appURL+"'", rel="self")
-						description(v-if="edit === null", v-text="doc.chapter.str")
-						ttl(v-if="edit === null", v-text="60")
-						item.row(
+				chaptername.bd(v-text="data[0].chapter.str")
+			hr
 
-							v-for="img in doc.properties.media"
-							)
-							include editmedia.pug
-							img.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", style="height:100px", v-bind:src="img.image")
-							image.tb-10-m0(v-bind:href="'file://'+img.image_abs")
+			div.tb-10-m0(v-if="edit === null", v-for="doc in data")
+				include entry.pug
+			form.tb-10-m0.form(v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+				input(type="hidden", name="_csrf", value= csrfToken)
+				include editor.pug
 
-				coord.tb-font-xxs.bd(v-text="doc.geometry.coordinates.toString()")
-				hr
-				a.block(v-if="edit === dindexes.indexOf(doc.index)", role="button", v-bind:id="'submit_'+dindex", v-on:click="submitForm(dindexes.indexOf(doc.index))")
-					span Finished editing
-
-
-div(style="position:absolute;")
+div(v-if="edit === dindexes.indexOf(doc.index)", style="position:absolute;")
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
 		,
 		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto'}", xml:space="preserve"
@@ -55,3 +27,6 @@ div(style="position:absolute;")
 		v-bind:height="wHeight+'px'"
 		)
 		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")
+
+
+

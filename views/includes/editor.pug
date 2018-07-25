@@ -1,0 +1,28 @@
+a.row.tb-font-l(v-bind:href="'/list/'+doc._id+'/'+null+''")
+	sectionnum.bd(v-text="(doc.title.ind + 1)+'.'+(doc.chapter.ind + 1)+'.'+(doc.section.ind + 1)+''")
+	span(v-text="' '")
+	sectionname(v-text="doc.section.str")
+
+label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", for="description") Description
+textarea#layouttext(v-if="edit === dindexes.indexOf(doc.index)", v-text="doc.properties.description", name="description")
+description.tb-10-m0#description(v-if="edit === null", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
+
+div.row.spacer(
+
+	v-for="img in doc.properties.media"
+	)
+	include editmedia.pug
+
+
+//label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", for="place") Place
+//input(v-if="edit === dindexes.indexOf(doc.index)", v-bind:value="doc.properties.place", type="text", name="place")
+//place.tb-10-m0(v-if="edit === null", v-text="doc.properties.place")
+
+p
+	label(for="importcsv") Import Geographic Data
+input#importcsv(v-on:change="importCsv", type="file", value="Import CSV")
+
+
+//coord.tb-font-xxs.bd(v-text="doc.geometry.coordinates")
+a.block(v-if="edit === dindexes.indexOf(doc.index)", role="button", v-bind:id="'submit_'+dindex", v-on:click="submitForm(dindexes.indexOf(doc.index))")
+	span Finished editing
