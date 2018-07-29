@@ -1,0 +1,21 @@
+maintitle.centerall(style="display: block; background-color: #fff; background-color: var(--primary);padding: 45px; pointer-events: auto;")
+		
+	chapter
+		section.row
+			p.row.tb-font-xl Title 
+				titlenum.bd(v-text="data[0].title.ind")
+				span(v-text="' '") 
+				titlename.bd(v-text="data[0].title.str")
+			p.row.tb-font-xl Chapter 
+				chapternum.bd(v-text="data[0].chapter.ind")
+				span(v-text="' '")
+				chaptername.bd(v-text="data[0].chapter.str")
+			hr
+		
+			div.row(v-if="edit === null", v-for="doc in data")
+				
+				include entry.pug
+
+
+
+

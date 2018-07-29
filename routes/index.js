@@ -167,7 +167,6 @@ function ensureCurly(req, res, next) {
 			return next(err)
 		}
 		data.forEach(function(doc){
-			doc.properties.orientation = doc.properties.orientation ? curly(doc.properties.orientation) : null;
 			doc.properties.description = doc.properties.description ? curly(doc.properties.description) : null;
 			doc.properties.media.forEach(function(media){
 				media.name = media.name ? curly(media.name) : null;
@@ -308,7 +307,7 @@ router.get('/runtests', function(req, res, next){
 	
 })
 
-router.all('/.*/', ensureContent)
+//router.all(/.*/, ensureContent)
 
 router.get('/', ensureCurly, function(req, res, next){
 	
@@ -318,14 +317,17 @@ router.get('/', ensureCurly, function(req, res, next){
 		if (err) {
 			return next(err)
 		}
-		
-			var str = pug.renderFile(path.join(__dirname, '../views/includes/edit.pug'), {
+		if (data.length === 0) {
+			return res.redirect('/api/new');
+		}
+			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 				doctype: 'xml',
 				csrfToken: req.csrfToken(),
 				menu: !req.session.menu ? 'view' : req.session.menu,
 				data: data,
 				appURL: req.app.locals.appURL
 			});
+			console.log(str)
 			return res.render('publish', {
 				menu: !req.session.menu ? 'view' : req.session.menu,
 				data: data,
@@ -383,9 +385,24 @@ router.get('/list/:id/:index', function(req, res, next){
 		if (err) {
 			return next(err)
 		}
-		return res.render('publish', {
-			doc: doc,
-			mindex: parseInt(req.params.index, 10)
+		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+			if (err) {
+				return next(err)
+			}
+			var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
+				doctype: 'xml',
+				csrfToken: req.csrfToken(),
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				data: data,
+				doc: doc,
+				appURL: req.app.locals.appURL
+			});
+			return res.render('single', {
+				data: data,
+				doc: doc,
+				mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
+				str: str
+			})
 		})
 	})
 })
@@ -393,18 +410,122 @@ router.get('/list/:id/:index', function(req, res, next){
 router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
+	async.waterfall([
+		function(next){
+			fs.readFile(req.file.path, 'utf8', function (err, content) {
+				if (err) {
+					return console.log(err)
+				}
+				var entry = [];
+				//var json = require('d3').csvParse(content);
+				//console.log(content)
+				var str = content.toString();
+				// description
+				// non-capturing marker at title.chapter.section index with global and multiple modifier
+				// Used to split the text into an array
+				var drx = /(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)(?=\d{1,3}\.\d{1,3}\.\d{1,4}\.\s*?)/gm;
+				// title.chapter.section index
+				var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)/si
+				var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
+				// title rx
+				var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n[\w])/si
+				// isolate description
+				var descrx = /(?:[\n])(.*)/si
+				//^(\d{1,2}\.\d{1,3}\.\d{0,4}\..*\s*.*(?!(\d{1,2}\.\d{1,3}\.\d{0,4}\.)))
+				//^(\d{1,2}\.\d{1,3}\.\d{0,4}\.[\w\s\d]*(?!(\d{1,2}\.\d{1,3}\.\d{0,4}\.)))
+				//console.log(str.split(rx))
+				var dat = str.split(drx).filter(function(item){
+					return item !== ''
+				}).map(function(it){
+					var num;
+					if (numrx.exec(it)) {
+						num = numrx.exec(it)
+					} else {
+						num = ['']
+					}
+					var desc = (descrx.exec(it) ? descrx.exec(it)[1] : '')
 
-	fs.readFile(req.file.path, 'utf8', function (err, content) {
-		if (err) {
-			return console.log(err)
+					return {
+						num: num[0],
+						title: (trx.exec(it) ? trx.exec(it)[1] : '').trim(),
+						desc: desc.toString().trim().replace(/(\t)/g, '  ').replace(/(\n)/g, '\n  ').replace(/(\r)/g, '\r  ').replace(/(\s{2})/g, ' ').replace(/(\s{3})/g, '  ').replace(/(\\n)/g, '  \n').replace(/(\\r)/g, '  \r')
+					}
+					
+				});
+				next(null, dat);
+			})
+		},
+		function(dat, next){
+			dat.forEach(function(item, i){
+				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.svg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.svg')
+				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.svg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.svg')
+
+				var entry = new Content({
+					index: i,
+					type: 'Feature',
+					title: {
+						ind: parseInt(item.num.split('.')[0], 10),
+						str: 'Subdivisions'
+					},
+					chapter: {
+						ind: parseInt(item.num.split('.')[1], 10),
+						str: 'General Provisions'
+					},
+					section: {
+						ind: parseInt(item.num.split('.')[2], 10),
+						str: item.title
+					},
+					properties: {
+						section: item.num,
+						published: true,
+						label: 'Edit Subtitle',
+						title: curly(item.title),
+						place: 'Edit Place',
+						description: curly(item.desc),
+						current: false,
+						media: [
+							{
+								index: 0,
+								name: 'Sample image',
+								image_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.png',
+								image: '/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.svg',
+								thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png',
+								thumb: '/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.svg',
+								caption: 'Sample caption',
+								postscript: 'Sample postscript',
+								url: 'https://pu.bli.sh'
+							}
+						]
+					},
+					geometry: {
+						type: 'Point',
+						coordinates: [-112.014717, 41.510488]
+					}
+				});
+				entry.save(function(err){
+					if (err) {
+						console.log(err)
+					}
+				})
+			});
+			next(null)
+		},
+		function(next) {
+			Content.find({}, function(err, data){
+				if (err) {
+					next(err)
+				} else {
+					next(null, data)
+				}
+				
+			})
 		}
-		var entry = [];
-		//var json = require('d3').csvParse(content);
-		//console.log(content)
-		var data = [];
-		var str = content.toString();
-		var rx = /^(\d{1,2}\.\d{1,3}\.\d{0,4}\..*[\s\n\r]*.*\R*)/m
-		console.log(str.split(rx))
+	], function(err, data){
+		return res.status(200).send(data)
+	})
+	
+		
+		//console.log(data)
 		/*if (str) {
 			while (str.length > 0) {
 				data.push(str.split(rx)[0])
@@ -420,7 +541,6 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 			}
 			return res.status(200).send(doc)
 		})*/
-	})
 })
 
 router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req, res, next){
@@ -471,21 +591,21 @@ router.get('/api/new', function(req, res, next){
 			index: data.length,
 			// db
 			title: {
-				ind: 24,
+				ind: 25,
 				str: 'Subdivisions' 
 			},
 			// collection
 			chapter: {
-				ind: 0,
+				ind: 1,
 				str: 'General Provisions' 
 			},
 			// document
 			section: {
-				ind: data.length,
+				ind: data.length + 1,
 				str: firstfew[data.length] 
 			},
 			properties: {
-				section: '25.01.0'+data.length,
+				section: '25.01.0'+data.length+1,
 				published: true,
 				label: 'Edit Subtitle',
 				title: 'Edit Title',
@@ -512,7 +632,7 @@ router.get('/api/new', function(req, res, next){
 			},
 			geometry: {
 				type: 'Point',
-				coordinates: [-111.854704, 40.769673]
+				coordinates: [-112.014717, 41.510488]
 			}
 		});
 		content.save(function(err){

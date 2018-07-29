@@ -1,11 +1,10 @@
 a.row.tb-font-l(v-bind:href="'/list/'+doc._id+'/'+null+''")
-	sectionnum.bd(v-text="(doc.title.ind + 1)+'.'+(doc.chapter.ind + 1)+'.'+(doc.section.ind + 1)+''")
+	sectionnum.bd(v-text="(doc.title.ind)+'.'+(doc.chapter.ind)+'.'+(doc.section.ind)+''")
 	span(v-text="' '")
 	sectionname(v-text="doc.section.str")
 
 label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", for="description") Description
-textarea#layouttext(v-if="edit === dindexes.indexOf(doc.index)", v-text="doc.properties.description", name="description")
-description.tb-10-m0#description(v-if="edit === null", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
+//textarea#layouttext(v-if="edit === dindexes.indexOf(doc.index)", v-text="marked(doc.properties.description)", name="description")
 
 div.row.spacer(
 

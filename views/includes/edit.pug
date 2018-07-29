@@ -3,20 +3,30 @@ maintitle(style="display: block; background-color: #fff; background-color: var(-
 	chapter
 		section.row
 			p.row.tb-font-xl Title 
-				titlenum.bd(v-text="data[0].title.ind + 1")
+				titlenum.bd(v-text="data[0].title.ind")
 				span(v-text="' '") 
 				titlename.bd(v-text="data[0].title.str")
 			p.row.tb-font-xl Chapter 
-				chapternum.bd(v-text="data[0].chapter.ind + 1")
+				chapternum.bd(v-text="data[0].chapter.ind")
 				span(v-text="' '")
 				chaptername.bd(v-text="data[0].chapter.str")
 			hr
 
 			div.tb-10-m0(v-if="edit === null", v-for="doc in data")
 				include entry.pug
-			form.tb-10-m0.form(v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
-				input(type="hidden", name="_csrf", value= csrfToken)
-				include editor.pug
+				description.tb-10-m0#description(v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
+
+			div.tb-10-m0(v-if="doc && doc !== '' && edit === dindexes.indexOf(doc.index)")
+				
+				form.tb-10-m0.form(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+					input(type="hidden", name="_csrf", value= csrfToken)
+					include editor.pug
+					description.tb-10-m0#description(v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
+
+			//-
+				form.tb-10-m0.form(v-for="doc in data", v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+					input(type="hidden", name="_csrf", value= csrfToken)
+					include editor.pug
 
 div(v-if="edit === dindexes.indexOf(doc.index)", style="position:absolute;")
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
