@@ -7,7 +7,7 @@ var url = require('url');
 var fs = require('fs-extra');
 var path = require('path');
 var glob = require("glob");
-
+var HtmlDiff = require('node-htmldiff');
 var moment = require("moment");
 var multer = require('multer');
 var mkdirp = require('mkdirp');
@@ -371,6 +371,11 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 		if (data.length === 0) {
 			return res.redirect('/api/new');
 		}
+		Diffs.find({}).sort({date:1}).exec(function(err, diffs){
+			if (err) {
+				return next(err) 
+			}
+			console.log(diffs)
 			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 				doctype: 'xml',
 				csrfToken: req.csrfToken(),
@@ -382,8 +387,11 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 			return res.render('publish', {
 				menu: !req.session.menu ? 'view' : req.session.menu,
 				data: data,
-				str: str
+				str: str,
+				diff: (!diffs[diffs.length-1] ? null : diffs[diffs.length-1])
 			});
+		})
+			
 		
 	});
 });
@@ -394,11 +402,15 @@ router.post('/diff', function(req, res, next){
 			return next(err)
 		}
 		//console.log(req.body);
+		//var Diff = require('text-diff');
+		var newdf = HtmlDiff((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str)//new Diff({timeout:60});
+		//var newdf = diff.main((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str);
 		var newdiff = new Diffs({
 			date: new Date(),
-			dif: require('diff').diffChars((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str),
+			dif: JSON.stringify(newdf),
 			str: req.body.str
 		});
+		//console.log(newdf)
 		/*if (!newdiff) {
 			return next(new Error('no newdiff'))
 		}*/
@@ -406,7 +418,7 @@ router.post('/diff', function(req, res, next){
 			if (err) {
 				return next(err)
 			} else {
-				return res.status(200).send(newdiff)
+				return res.status(200).send(newdiff.dif)
 			}
 			
 		})
@@ -440,19 +452,26 @@ router.get('/list/:id/:index', function(req, res, next){
 			if (err) {
 				return next(err)
 			}
-			var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
-				doctype: 'xml',
-				csrfToken: req.csrfToken(),
-				menu: !req.session.menu ? 'view' : req.session.menu,
-				data: data,
-				doc: doc,
-				appURL: req.app.locals.appURL
-			});
-			return res.render('single', {
-				data: data,
-				doc: doc,
-				mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
-				str: str
+			Diffs.find({}).sort({date:1}).exec(function(err, diffs){
+				if (err) {
+					return next(err)
+				}
+				var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
+					csrfToken: req.csrfToken(),
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					data: data,
+					doc: doc,
+					appURL: req.app.locals.appURL
+					
+				});
+				return res.render('single', {
+					//data: data,
+					doc: doc,
+					mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
+					str: str
+					/*,
+					diff:*/
+				})
 			})
 		})
 	})

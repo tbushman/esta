@@ -36,7 +36,7 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 						data: this.parseObj(!{JSON.stringify(data)}),
 						doc: this.parseObj(!{JSON.stringify(doc)}),
 						position: this.parseObj(!{JSON.stringify(session.position)}),
-						edit: null,
+						edit: (this.parseObj(!{JSON.stringify(doc)}) && this.parseObj(!{JSON.stringify(doc)}) !== '' ? this.parseObj(!{JSON.stringify(doc)}).index),
 						dindexes: [],
 						dindex: (this.parseObj(!{JSON.stringify(doc)}) === '' ? 0 : this.parseObj(!{JSON.stringify(doc)}).index),
 						cursor: null,
@@ -63,14 +63,14 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 				},
 				mounted: function(){
 					var self = this;
-					/*if (self.doc === '') {
-						self.doc = self.data[0]
-					}*/
 					self.dindexes = (self.data ? self.data.map(function(doc){
-						//console.log(doc.properties.media[0].image_abs)
 						return doc.index;
 					}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
 					
+					if (!self.diff || self.diff === '') {
+						//self.sendDiff();
+					}
+
 					setTimeout(function(){
 						/*this.simpleMde = new SimpleMDE({
 							element: document.getElementById("layouttext")[0]
@@ -87,9 +87,6 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 								table_toolbar: "tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol"
 
 							});
-							if (!self.diff || self.diff === '') {
-								//self.sendDiff();
-							}
 
 						}
 					}, 500);
@@ -146,7 +143,7 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 					
 					sendDiff: function() {
 						var fd = new FormData();
-						var innerhtml = $('div.centerallwrap').html().toString();
+						var innerhtml = $('maintitle.centerall').html().toString();
 						
 						fd.append("str", innerhtml);
 						
@@ -157,8 +154,9 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 							data: fd,
 							processData: false,
 							contentType: false,
-							success: function(oldstr, newstr, diff) { 
-								
+							success: function(diff) { 
+								console.log(diff);
+								self.diff = diff//$('#diff').html(diff)
 							}
 							
 						})

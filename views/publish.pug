@@ -11,6 +11,8 @@ block content
 			input#importtxt(v-on:change="importTxt", type="file", value="Import TXT")
 		
 
-		div.centerallwrap(style="background-color: #fff; background-color: var(--primary);")
+		div.centerallwrap(style="background-color: #fff; background-color: var(--primary);height:50vh;")
 			!= str
 
+		//div#diff(v-if="diff && diff !== ''", v-html="marked(JSON.parse(diff.dif))", style="height:50vh;display: inline-block;position: relative;background-color: #fff;overflow-y: scroll;pointer-events: all;height: 50vh;")
+			//!= diff.dif

@@ -13,7 +13,8 @@ maintitle.centerall(style="display: block;padding: 45px; pointer-events: auto;")
 			hr
 			div.row(v-if="edit === null")
 				include entry.pug
-			form.row.form(v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+			form.row.form(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+				//form.row.form(v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 				input(type="hidden", name="_csrf", value= csrfToken)
 				include editor.pug
 				description.tb-10-m0#description(v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")

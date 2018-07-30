@@ -8,20 +8,13 @@ label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", v-on:click="toggleEd
 
 div.row.spacer(
 
-	v-for="img in doc.properties.media"
+	v-for="(img, i) in doc.properties.media"
 	)
 	include editmedia.pug
-
-
-//label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", for="place") Place
-//input(v-if="edit === dindexes.indexOf(doc.index)", v-bind:value="doc.properties.place", type="text", name="place")
-//place.tb-10-m0(v-if="edit === null", v-text="doc.properties.place")
 
 p
 	label(for="importcsv") Import Geographic Data
 input#importcsv(v-on:change="importCsv", type="file", value="Import CSV")
 
-
-//coord.tb-font-xxs.bd(v-text="doc.geometry.coordinates")
 a.block(v-if="edit === dindexes.indexOf(doc.index)", role="button", v-bind:id="'submit_'+dindex", v-on:click="submitForm(dindexes.indexOf(doc.index))")
 	span Finished editing
