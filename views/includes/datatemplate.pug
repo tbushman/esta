@@ -1,4 +1,31 @@
 doctype xml
+//
+	xsl(:stylesheet, version="1.0"
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform")
+
+//
+	xsl(:template, match="/")
+		maintitle
+			chapter
+				section
+					header
+						bd
+							xsl(v-bind:valueOf="data[0].title.ind")
+						span
+						span
+					header
+						bd
+						span
+						span
+					table(v-for="doc in data")
+						tbody
+							tr
+								td
+									xsl(v-bind:valueOf="")
+								td
+							tr
+								td
+								td
 root(xmlns:aid="http://ns.adobe.com/AdobeInDesign/5.0/")
 	maintitle.centerall
 			
