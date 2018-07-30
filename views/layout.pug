@@ -36,7 +36,7 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 						data: this.parseObj(!{JSON.stringify(data)}),
 						doc: this.parseObj(!{JSON.stringify(doc)}),
 						position: this.parseObj(!{JSON.stringify(session.position)}),
-						edit: (this.parseObj(!{JSON.stringify(doc)}) && this.parseObj(!{JSON.stringify(doc)}) !== '' ? this.parseObj(!{JSON.stringify(doc)}).index),
+						edit: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)}).index),
 						dindexes: [],
 						dindex: (this.parseObj(!{JSON.stringify(doc)}) === '' ? 0 : this.parseObj(!{JSON.stringify(doc)}).index),
 						cursor: null,
@@ -143,7 +143,7 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 					
 					sendDiff: function() {
 						var fd = new FormData();
-						var innerhtml = $('maintitle.centerall').html().toString();
+						var innerhtml = $('div.centerallwrap').html().toString();
 						
 						fd.append("str", innerhtml);
 						
@@ -156,7 +156,7 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 							contentType: false,
 							success: function(diff) { 
 								console.log(diff);
-								self.diff = diff//$('#diff').html(diff)
+								//self.diff = diff//$('#diff').html(diff)
 							}
 							
 						})
