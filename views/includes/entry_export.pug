@@ -1,0 +1,51 @@
+#["Cell"(colspan="7", aid:table="cell", aid:theader="", aid:crows="1", aid:ccols="7", aid:cellstyle="head")]
+	a.tb-font-l(v-bind:href="'/list/'+doc._id+'/null'", aid:pstyle="header")
+		bd(v-text="doc.title.ind+'.'+doc.chapter.ind+'.'+doc.section.ind", aid:cstyle="bold")
+		span(v-text="' '")
+		span(v-text="doc.section.str")
+
+//
+	#["Cell"(aid:table="cell", aid:theader="", aid:crows="1", aid:ccols="3", aid:cellstyle="bread", colspan="3")
+		a(v-bind:href="'/'")
+			rss(version="1.0", xmlns:content="http://purl.org/rss/1.0/modules/content/", xmlns:atom="http://www.w3.org/2005/Atom" )
+				channel.row
+					title.tb-font-xxs(v-on:click="window.location.href = 'http://"+appURL+"'", v-if="edit === null", v-bind:style="{display:'inline-block'}", v-text="doc.title.str")
+					span.tb-font-xxs(v-text="' '")
+					description.tb-font-xxs(v-if="edit === null", v-text="doc.chapter.str")]
+			
+				
+					
+//
+	tr
+		td(colspan="7")
+			a.tb-font-l(v-bind:href="'/list/'+doc._id+'/null'", aid:pstyle="header")
+				//
+				sectionnum.bd(v-text="doc.title.ind+'.'+doc.chapter.ind+'.'+doc.section.ind", aid:cstyle="bold")
+				span(v-text="' '")
+				sectionname(v-text="doc.section.str")
+		//, aid:table="cell" aid:theader="" aid:crows="1", aid:ccols="3", aid:cellstyle="bread"
+		td(colspan="3")
+			a(v-bind:href="'/'")
+				rss(version="1.0", xmlns:content="http://purl.org/rss/1.0/modules/content/", xmlns:atom="http://www.w3.org/2005/Atom" )
+					channel.row
+						title.tb-font-xxs(v-on:click="window.location.href = 'http://"+appURL+"'", v-if="edit === null", v-bind:style="{display:'inline-block'}", v-text="doc.title.str")
+						span.tb-font-xxs(v-text="' '")
+						link(v-if="edit === null", v-bind:href="'http://"+appURL+"'", rel="self")
+						description.tb-font-xxs(v-if="edit === null", v-text="doc.chapter.str")
+					
+						item.tb-11-m0(
+
+							v-for="img in doc.properties.media"
+							)
+							image.tb-10-m0(v-bind:href="'File://'+img.image_abs", style="display: none;")
+
+//
+	#["Cell" #description.tb-font-s(aid:table="cell", aid:crows="1", aid:ccols="7", aid:cellstyle="desc", colspan="7", v-html="marked(doc.properties.description)")]
+	//,
+	#["Cell" (aid:table="cell", aid:crows="1", aid:ccols="3", aid:cellstyle="imgs", v-if="doc.properties.media.length > 0 && web", v-for="img in doc.properties.media", colspan="3")
+		a.img(v-if="img.thumb.split('.')[1] === 'svg'")
+			Imaage(aid:image="image", v-bind:href="'File://'+img.image_abs")]
+	#["Cell" (aid:table="cell", aid:crows="1", aid:ccols="3", aid:cellstyle="imgs", v-else-if="doc.properties.media.length > 0", v-for="img in doc.properties.media", colspan="3")
+		a.img(v-if="img.thumb.split('.')[1] === 'svg'")
+			img(v-bind:src="img.image")]
+

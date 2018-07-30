@@ -1,6 +1,7 @@
 var express = require('express');
 var csrf = require('csurf');
 var marked = require('marked');
+var favicon = require('serve-favicon');
 var session = require('express-session');
 var MongoDBStore = require('connect-mongo')(session);
 var path = require('path');
@@ -68,6 +69,7 @@ app.use(cookieParser(sess.secret));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, '../../pu/publishers')));
 app.use('/publishers', express.static(path.join(__dirname, '../../pu/publishers')));
+app.use(favicon(path.join(__dirname, 'public/images', 'favicon.ico')));
 app.use(session(sess));
 if (app.get('env') === 'production') {
 	app.set('trust proxy', 1)

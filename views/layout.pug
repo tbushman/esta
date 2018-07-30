@@ -1,5 +1,5 @@
-doctype html
-html
+doctype strict
+html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeInDesign/5.0/", xml:lang="en-US", lang="en-US")
 	head
 		meta(charset="utf-8")
 		meta(http-equiv="X-UA-Compatible", content="IE=edge; charset=utf-8")
@@ -51,7 +51,8 @@ html
 						dPath: this.dPathAttr(),
 						tinymce: null,
 						str: this.parseObj(!{JSON.stringify(str)}),
-						diff: this.parseObj(!{JSON.stringify(diff)})/*,
+						diff: this.parseObj(!{JSON.stringify(diff)}),
+						web: true/*,
 						simpleMde: (!document.getElementById("layouttext")[0] ? null : new SimpleMDE({
 							element: document.getElementById("layouttext")[0]
 						}))*/
@@ -74,7 +75,7 @@ html
 						/*this.simpleMde = new SimpleMDE({
 							element: document.getElementById("layouttext")[0]
 						})*/
-						if (!self.tinymce) {
+						if (!self.tinymce && $('#description')[0]) {
 							self.tinymce = tinymce.init({
 								menubar: false,
 								statusbar: false,
@@ -87,11 +88,11 @@ html
 
 							});
 							if (!self.diff || self.diff === '') {
-								self.sendDiff();
+								//self.sendDiff();
 							}
 
 						}
-					}, 500)
+					}, 500);
 					
 					self.loadMap(function(map, dataLayer){
 						self.map = map;
@@ -199,6 +200,7 @@ html
 							fd.append("txt", file);
 							
 							var uploadurl = '/api/importtxt/'+(!self.doc || self.doc === '' ? self.data[self.dindex]._id : self.doc._id )+'/txt';
+							console.log(uploadurl, file)
 							$.ajax({
 								url: uploadurl,
 								type: 'POST',

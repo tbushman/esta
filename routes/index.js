@@ -111,15 +111,19 @@ var storage = multer.diskStorage({
 var uploadmedia = multer({ storage: storage/*, limits: {files: 1}*/ });
 
 var curly = function(str){
+	//console.log(/\\n/g.test(str))
+	//console.log(str.match(/\s/g))
+	//console.log(str.match(/\"/g))
 	return str
 	
 	.replace(/'\b/g, "\u2018")     // Opening singles
 	.replace(/\b'/g, "\u2019")     // Closing singles
 	.replace(/"\b/g, "\u201c")     // Opening doubles
 	.replace(/\b"/g, "\u201d")     // Closing doubles
+	//.replace(/([a-z])'([a-z])/ig, '$1\u2019$2')     // Apostrophe
 	//
-	.replace(/(\d\s*)\u201d/g, '$1\"')
-	.replace(/(\d\s*)\u2019/g, "$1\'")
+	//.replace(/(\d\s*)\u201d/g, '$1\"')
+	//.replace(/(\d\s*)\u2019/g, "$1\'")
 	.replace(/([a-z])\u2018([a-z])/ig, '$1\u2019$2')
 }
 
@@ -166,11 +170,15 @@ function ensureCurly(req, res, next) {
 		if (err){
 			return next(err)
 		}
+		if (data.length === 0) {
+			return res.redirect('/api/new')
+		}
 		data.forEach(function(doc){
-			doc.properties.description = doc.properties.description ? curly(doc.properties.description) : null;
+			//console.log(doc.index)
+			doc.properties.description = (!doc.properties.description ? null : curly(doc.properties.description));
 			doc.properties.media.forEach(function(media){
 				media.name = media.name ? curly(media.name) : null;
-				media.caption = media.caption ? curly(media.caption) : null;
+				media.caption = (!media.caption ? null : curly(media.caption));
 			})
 			doc.save(function(err){
 				if (err) {
@@ -193,6 +201,49 @@ function ensureContent(req, res, next) {
 			return next()
 		}
 	});
+}
+
+function ensureEscape(req, res, next) {
+	Content.find({}, function(err,data){
+		if (err) {
+			return next(err)
+		}
+		data.forEach(function(doc){
+			if (/^\r{1}\d. /mg.test(doc.properties.description)) {
+				
+			}
+			//var descarr = doc.properties.description.split('');
+			/*var lineseparr = descarr.filter(function(fr){
+				return /\u2028/g.test(fr)
+			});
+			var nullarr = descarr.filter(function(fr){
+				return /(\0)/g.test(fr)
+			});
+			var newlinearr = descarr.filter(function(fr){
+				return /(\\n)/g.test(fr)
+			});
+			var tabarr = descarr.filter(function(fr){
+				return /(\t)/g.test(fr)
+			});*/
+			
+			/*doc.properties.media.forEach(function(img){
+				img.caption
+			})*/
+			/*if (newlinearr.length > 0 || tabarr.length > 0 || nullarr.length > 0 || lineseparr.length > 0) {
+				console.log('blagh')
+			}*/
+			if (/\u2028/g.test(doc.properties.description)) {
+				console.log('blip')
+				doc.properties.description = doc.properties.description.replace(/\u2028/g, '  \\n')
+				doc.save(function(err){
+					if (err) {
+						console.log(err)
+					}
+				})
+			}
+		})
+		return next()
+	})
 }
 
 router.get('/runtests', function(req, res, next){
@@ -228,7 +279,7 @@ router.get('/runtests', function(req, res, next){
 		}, function(err) {
 			return next(err)
 		});
-		
+		/*
 		driver.wait(
 			until.elementLocated(webdriver.By.css('#vue')),
 			12000
@@ -245,7 +296,7 @@ router.get('/runtests', function(req, res, next){
 					data: data,
 					doc: data[0]/*,
 					diff: str
-				});*/
+				});
 				var rx = /^(\w(?:[-:\w]*\w)?)/
 				//var rx = /^(\w[-:\w]*)(\/?)/
 				while (input.length) {
@@ -259,7 +310,7 @@ router.get('/runtests', function(req, res, next){
 					}
 				}
 			})
-			
+			*/
 			//driver.executeScript('return arguments[0].innerHTML;', el).then(function(ele){
 				//	console.log(input)
 				//el.getInnerHtml().then(function(input){
@@ -309,7 +360,7 @@ router.get('/runtests', function(req, res, next){
 
 //router.all(/.*/, ensureContent)
 
-router.get('/', ensureCurly, function(req, res, next){
+router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 	
 	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 	req.session.refer = newrefer;
@@ -327,7 +378,7 @@ router.get('/', ensureCurly, function(req, res, next){
 				data: data,
 				appURL: req.app.locals.appURL
 			});
-			console.log(str)
+			//console.log(str)
 			return res.render('publish', {
 				menu: !req.session.menu ? 'view' : req.session.menu,
 				data: data,
@@ -414,7 +465,7 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 		function(next){
 			fs.readFile(req.file.path, 'utf8', function (err, content) {
 				if (err) {
-					return console.log(err)
+					next(err)
 				}
 				var entry = [];
 				//var json = require('d3').csvParse(content);
@@ -423,7 +474,7 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 				// description
 				// non-capturing marker at title.chapter.section index with global and multiple modifier
 				// Used to split the text into an array
-				var drx = /(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)(?=\d{1,3}\.\d{1,3}\.\d{1,4}\.\s*?)/gm;
+				var drx = /(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)(?=\d{1,3}\.\d{1,3}\.\d{1,4}\.\s*?)/gm
 				// title.chapter.section index
 				var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)/si
 				var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
@@ -431,9 +482,7 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 				var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n[\w])/si
 				// isolate description
 				var descrx = /(?:[\n])(.*)/si
-				//^(\d{1,2}\.\d{1,3}\.\d{0,4}\..*\s*.*(?!(\d{1,2}\.\d{1,3}\.\d{0,4}\.)))
-				//^(\d{1,2}\.\d{1,3}\.\d{0,4}\.[\w\s\d]*(?!(\d{1,2}\.\d{1,3}\.\d{0,4}\.)))
-				//console.log(str.split(rx))
+				//remove stray spaces
 				var dat = str.split(drx).filter(function(item){
 					return item !== ''
 				}).map(function(it){
@@ -443,12 +492,22 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 					} else {
 						num = ['']
 					}
-					var desc = (descrx.exec(it) ? descrx.exec(it)[1] : '')
+					//console.log(/\r/g.test(it))
+					var desc = (descrx.exec(it) ? 
+						descrx.exec(it)[1].toString().trim().replace(/(\d|\w\.)\t/g, '$1 ').replace(/(\t)/g, '  \t').replace(/(\v)/g, '   \n  \n').replace(/\u2028/g, '  \n  \n')
+						.replace(/[\n ](\d\.)/g, '  \n  \n$1')
+						//.replace(/^([A-Z]\.)/gm, '  \n- **$1**')
+						//.replace(/[\s\.]([A-Z]\.)/g, '  \n  \n- **$1**')
+						: 
+						''
+					);
+					desc = desc.replace(/^([A-Z]\.)/gm, '  \n**$1**').replace(/[\s\.]([A-Z]\.)/g, '  \n  \n**$1**');
 
 					return {
 						num: num[0],
 						title: (trx.exec(it) ? trx.exec(it)[1] : '').trim(),
-						desc: desc.toString().trim().replace(/(\t)/g, '  ').replace(/(\n)/g, '\n  ').replace(/(\r)/g, '\r  ').replace(/(\s{2})/g, ' ').replace(/(\s{3})/g, '  ').replace(/(\\n)/g, '  \n').replace(/(\\r)/g, '  \r')
+						desc: desc.toString()
+						//.replace(/(\t)/g, '  ').replace(/(\n)/g, '\n  ').replace(/(\r)/g, '\r  ').replace(/(\s{2})/g, ' ').replace(/(\s{3})/g, '  ').replace(/(\\n)/g, '  \n').replace(/(\\r)/g, '  \r')
 					}
 					
 				});
@@ -521,6 +580,9 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 			})
 		}
 	], function(err, data){
+		if (err) {
+			return next(err)
+		}
 		return res.status(200).send(data)
 	})
 	
@@ -610,7 +672,7 @@ router.get('/api/new', function(req, res, next){
 				label: 'Edit Subtitle',
 				title: 'Edit Title',
 				place: 'Edit Place',
-				description: '...edit description...',
+				description: 'Sample text with  \n  \n**A.** lists and  \n  \n1. More  \n2. lists',
 				current: false,
 				time: {
 					begin: moment().utc().format(),

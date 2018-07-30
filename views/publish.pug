@@ -3,9 +3,13 @@ block page
 block content
 	
 	div#vue
+		
 		div(style="position:absolute;z-index:999999;pointer-events:all;")
+			div.tb-02-m0
+				a.block(v-bind:href="'/'", v-text="'back'")
 			label(for="importtxt")
 			input#importtxt(v-on:change="importTxt", type="file", value="Import TXT")
+		
 
 		div.centerallwrap(style="background-color: #fff; background-color: var(--primary);")
 			!= str
