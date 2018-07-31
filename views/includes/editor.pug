@@ -4,7 +4,6 @@ a.row.tb-font-l(v-bind:href="'/list/'+doc._id+'/'+null+''")
 	sectionname(v-text="doc.section.str")
 
 label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", for="description") Description
-//textarea#layouttext(v-if="edit === dindexes.indexOf(doc.index)", v-text="marked(doc.properties.description)", name="description")
 
 div.row.spacer(
 
@@ -15,6 +14,7 @@ div.row.spacer(
 p
 	label(for="importcsv") Import Geographic Data
 input#importcsv(v-on:change="importCsv", type="file", value="Import CSV")
-
+input#lat(v-bind:value="position.lat", name="lat")
+input#lng(v-bind:value="position.lng", name="lng")
 a.block(v-if="edit === dindexes.indexOf(doc.index)", role="button", v-bind:id="'submit_'+dindex", v-on:click="submitForm(dindexes.indexOf(doc.index))")
 	span Finished editing

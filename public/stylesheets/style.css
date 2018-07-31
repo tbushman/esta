@@ -1183,6 +1183,14 @@ rss {
 table {
 	table-layout: fixed;
 }
+
+ins {
+	color: green;
+}
+del {
+	color: red;
+}
+
 @media (max-width: 400px) {
 	
 		

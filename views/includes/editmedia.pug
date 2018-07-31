@@ -1,8 +1,8 @@
 div.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)")
 	input(v-bind:id="'inputthumb'+img.index", v-bind:name="'thumb'+img.index", v-bind:value="img.thumb")
 	input(v-bind:id="'inputimg'+img.index", v-bind:name="'img'+img.index", v-bind:value="img.image")
-	canvas(v-bind:id="'canvas'+img.index", style="display: none;")
-	input(type="hidden", class="featuredimg", v-bind:id="'featured'+img.index", v-bind:name="'img'+img.index+'_featured'", v-bind:value="img.featured")
+	canvas(v-bind:id="'canvas'+img.index")
+	input(class="featuredimg", v-bind:id="'featured'+img.index", v-bind:name="'img'+img.index+'_featured'", v-bind:value="img.featured")
 
 	div.row
 		div.tb-04-m0.tb-02-m3

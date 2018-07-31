@@ -85,7 +85,7 @@ app.get(/^(\/|\/api\/new|\/api\/editcontent)/, csrfProtection);
 // ensure multer parses before csrf
 app.post(/^(\/api\/editcontent)/, upload.array(), parseBody, csrfProtection);
 app.post(/^(\/diff)/, upload.array(), parseBody);
-
+app.post(/^(\/api\/uploadmedia)/, parseBody)
 app.use('/', routes);
 
 // catch 404 and forward to error handler

@@ -7,7 +7,7 @@ var url = require('url');
 var fs = require('fs-extra');
 var path = require('path');
 var glob = require("glob");
-var HtmlDiff = require('node-htmldiff');
+//var HtmlDiff = require('node-htmldiff');
 var moment = require("moment");
 var multer = require('multer');
 var mkdirp = require('mkdirp');
@@ -66,7 +66,11 @@ var storage = multer.diskStorage({
 	
 	destination: function (req, file, cb) {
 		var p, q;
-		if (req.params.type === 'csv') {
+		if (req.params.type === 'png') {
+			p = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+''
+			q = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+''
+
+		} else if (req.params.type === 'csv') {
 			p = ''+publishers+'/pu/publishers/ordinancer/csv/'+req.params.id+''
 			q = ''+publishers+'/pu/publishers/ordinancer/csv/thumbs/'+req.params.id+''
 			
@@ -99,13 +103,13 @@ var storage = multer.diskStorage({
 		
 	},
 	filename: function (req, file, cb) {
-		if (req.params.type === 'csv') {
+		if (req.params.type === 'png') {
+			cb(null, 'img_' + req.params.counter + '.png')
+		} else if (req.params.type === 'csv') {
 			cb(null, 'csv_' + req.params.id + '.csv')
 		} else if (req.params.type === 'txt') {
 			cb(null, 'txt_' + Date.now() + '.txt')
-		} else {
-			cb(null, 'img_' + req.params.counter + '.png')
-		}    	
+		}  	
   }
 });
 var uploadmedia = multer({ storage: storage/*, limits: {files: 1}*/ });
@@ -128,8 +132,9 @@ var curly = function(str){
 }
 
 function rmFile(req, res, next) {
-	var imgp = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+'/'+'img_' + req.params.counter + '.{jpeg,png}';
-	var thumbp = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+'/'+'thumb_' + req.params.counter + '.{jpeg,png}';
+	var imgp = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+'/'+'img_' + req.params.counter + '.png';
+	var thumbp = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+'/'+'thumb_' + req.params.counter + '.png';
+	console.log(imgp, thumbp)
 	var options = {nonull:true,nodir:true}
 	var p = glob.sync(imgp, options)[0];
 	var q = glob.sync(thumbp, options)[0];
@@ -371,11 +376,12 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 		if (data.length === 0) {
 			return res.redirect('/api/new');
 		}
+		console.log(data)
 		Diffs.find({}).sort({date:1}).exec(function(err, diffs){
 			if (err) {
 				return next(err) 
 			}
-			console.log(diffs)
+			//console.log(diffs)
 			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 				doctype: 'xml',
 				csrfToken: req.csrfToken(),
@@ -387,8 +393,8 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 			return res.render('publish', {
 				menu: !req.session.menu ? 'view' : req.session.menu,
 				data: data,
-				str: str,
-				diff: (!diffs[diffs.length-1] ? null : diffs[diffs.length-1])
+				str: str/*,
+				diff: (!diffs[diffs.length-1] ? null : diffs[diffs.length-1].dif)*/
 			});
 		})
 			
@@ -403,25 +409,40 @@ router.post('/diff', function(req, res, next){
 		}
 		//console.log(req.body);
 		//var Diff = require('text-diff');
-		var newdf = HtmlDiff((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str)//new Diff({timeout:60});
+		var Diff = require('diff');
+		var diff = Diff.diffChars((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str);
+		diff.forEach(function(part){
+			//console.log(part)
+			
+		})
+		///var textDiff = diff.main((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str)
+		
+		//var newdf = HtmlDiff((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str, 'diff', 'diff', 'form,input,label,iframe,object,math,svg,script,video,head,style').toString()//new Diff({timeout:60});
+		//console.log(newdf)
 		//var newdf = diff.main((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str);
-		var newdiff = new Diffs({
-			date: new Date(),
-			dif: JSON.stringify(newdf),
-			str: req.body.str
-		});
+		//if (diffs.length === 0 || newdf.split('</ins>')[1] || newdf.split('</del>')[1]) {
+		if (diff.length) {
+			var newdiff = new Diffs({
+				date: new Date(),
+				dif: [...diff],
+				str: req.body.str
+			});
+			newdiff.save(function(err){
+				if (err) {
+					return next(err)
+				} else {
+					return res.status(200).send(diff)
+				}
+				
+			})
+
+		} else {
+			return res.status(200).send('unchanged');
+		}
 		//console.log(newdf)
 		/*if (!newdiff) {
 			return next(new Error('no newdiff'))
 		}*/
-		newdiff.save(function(err){
-			if (err) {
-				return next(err)
-			} else {
-				return res.status(200).send(newdiff.dif)
-			}
-			
-		})
 	});
 });
 
@@ -535,8 +556,8 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 		},
 		function(dat, next){
 			dat.forEach(function(item, i){
-				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.svg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.svg')
-				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.svg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.svg')
+				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.svg')
+				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.svg')
 
 				var entry = new Content({
 					index: i,
@@ -662,8 +683,8 @@ router.get('/api/new', function(req, res, next){
 		if (err) {
 			return next(err)
 		}
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.svg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.svg')
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.svg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.svg')
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png')
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png')
 		
 		var firstfew = ['Short Title', 'Purposes', 'Final Plat Required Before Lots May Be Sold', 'Enactment', 'Subdivision Defined']
 		
@@ -740,7 +761,7 @@ router.get('/api/new', function(req, res, next){
 
 router.post('/api/uploadmedia/:index/:counter/:type', rmFile, uploadmedia.single('img'), function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
-	//console.log(outputPath, req.file.path)
+	console.log(outputPath, req.file)
 	return res.status(200).send(req.file.path)
 	
 });
@@ -764,14 +785,14 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				var i = 0;
 				for (var i in keys) {
 					var thiskey = 'thumb'+count+'';
-
 					if (keys[i] === thiskey) {
 						//console.log(body[thiskey])
 						var thisbody = body[thiskey];
-						if (thisbody !== '/images/publish_logo_sq.svg' && thisbody.split('').length > 100) {
+						if (thisbody && thisbody.split('').length > 100) {
 							//fs.writefile
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
 							var thumburl = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
+							console.log(body, thumbbuf, thumburl)
 							thumburls.push(thumburl.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', ''))
 							count++;
 							fs.writeFile(thumburl, thumbbuf, function(err) {
@@ -871,8 +892,10 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						index: count,
 						name: (body['img'+i+'_name'] ? curly(body['img'+i+'_name']) : ''),
 						image: imgs[i],
+						image_abs: path.join(publishers, '/pu'+imgs[i]),
 						iframe: (!body['iframe'+i+''] ? null : body['iframe'+i+'']),
 						thumb: thumbs[i],
+						thumb_abs: path.join(publishers, '/pu'+thumbs[i]),
 						caption: (body['img'+i+'_caption'] ? curly(body['img'+i+'_caption']) : ''),
 						postscript: (body['img'+i+'_postscript'] ? curly(body['img'+i+'_postscript']) : ''),
 						featured: body['img'+i+'_featured']
@@ -896,19 +919,21 @@ router.post('/api/editcontent/:id', function(req, res, next){
 
 			//dbSet(Content, doc._id, set1, options, function(err, doc){
 				if (err) {
-					return next(err) 
+					next(err) 
 				}
 				Content.findOneAndUpdate({_id: doc._id}, set2, options, function(errr, doc) {
 				//dbSet(Content, doc._id, set2, options, function(errr, doc){
 					if (errr) {
-						return next(errr)
+						next(errr)
+					} else {
+						next(null)
+
 					}
-					var str = pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
+					/*var str = pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
 						doc: doc
 					});
 					var file = path.join(__dirname, '../../testtemplate.xml');
-					fs.outputFileSync(file, str);
-					next(null)
+					fs.outputFileSync(file, str);*/
 				})
 			})
 			
@@ -931,9 +956,9 @@ router.post('/api/newmedia/:id/:index', function(req, res, next) {
 	var media = {
 		index: index,
 		name: 'Image '+(index + 1)+'',
-		image: '/images/publish_logo_sq.svg',
+		image: '/images/publish_logo_sq.png',
 		iframe: null,
-		thumb: '/images/publish_logo_sq.svg',
+		thumb: '/images/publish_logo_sq.png',
 		caption: '',
 		postscript: '',
 		featured: false
