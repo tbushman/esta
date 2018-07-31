@@ -556,8 +556,8 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 		},
 		function(dat, next){
 			dat.forEach(function(item, i){
-				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.svg')
-				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.svg')
+				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png')
+				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.png')
 
 				var entry = new Content({
 					index: i,
@@ -587,9 +587,9 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 								index: 0,
 								name: 'Sample image',
 								image_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.png',
-								image: '/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.svg',
+								image: '/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png',
 								thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png',
-								thumb: '/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.svg',
+								thumb: '/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png',
 								caption: 'Sample caption',
 								postscript: 'Sample postscript',
 								url: 'https://pu.bli.sh'
@@ -723,9 +723,9 @@ router.get('/api/new', function(req, res, next){
 						index: 0,
 						name: 'Sample image',
 						image_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png',
-						image: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.svg',
+						image: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
 						thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
-						thumb: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.svg',
+						thumb: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
 						caption: 'Sample caption',
 						postscript: 'Sample postscript',
 						url: 'https://pu.bli.sh'

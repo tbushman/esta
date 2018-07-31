@@ -401,7 +401,7 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 						}
 						can.toBlob(function(blob) {
 							var fd = new FormData();
-							//fd.append("img", blob);
+							fd.append("img", blob);
 							console.log(blob)
 							var uploadurl = '/api/uploadmedia/'+self.doc.index+'/'+imgindex+'/png';
 							//console.log(uploadurl)
@@ -424,7 +424,7 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 										self.doc.properties.media[imgindex].image = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
 
 										var can = $('#canvas'+imgindex+'')[0];
-										$('#return'+imgindex+'').attr('src', response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', ''));
+										//$('.return'+imgindex+'').attr('src', response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', ''));
 										var maxWidth = 400 ;
 										var maxHeight = 400 ;
 										var w = img.width;
