@@ -1,46 +1,16 @@
-doctype xml
-//
-	xsl(:stylesheet, version="1.0"
-	xmlns:xsl="http://www.w3.org/1999/XSL/Transform")
+section(v-for="doc in data", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+	taable(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 
-	//
-	xsl(:template, match="/")
-		root
-			maintitle
-				chapter
-					section
-						header
-							bd
-							span
-							span
-						header
-							bd
-							span
-							span
-						xsl(:for-each select="root/maintitle/chapter/section/table")
-						Table
-							td
-							td
-							td
-							td
-root(xmlns:aid="http://ns.adobe.com/AdobeInDesign/5.0/")
-	maintitle.centerall
-			
-		chapter
-			section.row
-				header.row.tb-font-l Title 
-					bd.bd(v-text="data[0].title.ind")
-					span(v-text="' '") 
-					span(v-text="data[0].title.str")
-				header.row.tb-font-l Chapter 
-					bd.bd(v-text="data[0].chapter.ind")
-					span(v-text="' '")
-					span(v-text="data[0].chapter.str")
-			
-				div.row(v-for="doc in data")
-					include entry.pug
-				
-				
+		tgroup(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/", cols="2")
+			colspec(colname="left")
+			colspec(colname="right")
+			tboddy
+				row
+					include header.pug
+
+				row
+					include body.pug
+						
 
 
 

@@ -1,5 +1,5 @@
-doctype strict
-html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeInDesign/5.0/", xml:lang="en-US", lang="en-US")
+doctype xml
+html
 	head
 		meta(charset="utf-8")
 		meta(http-equiv="X-UA-Compatible", content="IE=edge; charset=utf-8")
@@ -52,7 +52,8 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 						tinymce: null,
 						str: this.parseObj(!{JSON.stringify(str)}),
 						diff: (!this.parseObj(!{JSON.stringify(diff)}) || this.parseObj(!{JSON.stringify(diff)}) === '' ? null : this.parseObj(!{JSON.stringify(diff)})),
-						web: true
+						web: true,
+						export: this.parseBool(!{JSON.stringify(exports)})
 						/*,
 						image: null,
 						thumb: null/*,
@@ -74,9 +75,9 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 					//console.log(self.diff[1],self.diff[2],self.diff[3],self.diff[4],self.diff[10])
 					if (!Array.isArray(self.diff)) {
 						if (!self.doc || self.doc === '') {
-							self.sendDiff(function(diffs){
+							/*self.sendDiff(function(diffs){
 								self.diff = diffs
-							});
+							});*/
 						} else {
 						}
 					}
@@ -152,14 +153,21 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 					
 				},
 				methods: {
+					parseBool: function(item) {
+						if (!item) return false;
+						return true;
+					},
+					toggleExport: function() {
+						this.export = !this.export;
+					},
 					getHTML: function(type, str) {
 						var self = this;
 						var span = document.createElement(type);
 						//var parser = new DOMParser();
 						span.innerHTML = str;
-						console.log(span.children)
+						//console.log(span.children)
 						//parser.parseFromString(str, 'text/html')
-						console.log(span, type, self.diff[0].value)
+						//console.log(span, type, self.diff[0].value)
 						return span;
 					},
 					computeDiffStr: function(diffs) {
@@ -178,7 +186,9 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 					sendDiff: function(cb) {
 						var self = this;
 						var fd = new FormData();
-						var innerhtml = $('div.centerallwrap').html().toString();
+						var innerhtmldiv = $('div.centerallwrap')[0];
+						if (!innerhtmldiv) return;
+						var innerhtml = $(innerhtmldiv).html().toString();
 						
 						fd.append("str", innerhtml);
 						

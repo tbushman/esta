@@ -51,7 +51,9 @@ body {
 	background-color: #fff;
 	background-color: var(--primary);
 }
-
+#vue {
+	pointer-events: all;
+}
 p {
 	margin: 9px 0 0 0;
 }

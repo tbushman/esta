@@ -1,0 +1,29 @@
+extends layout
+block page
+block content
+	
+	div#vue
+		div.centerallwrap(style="background-color: #fff; background-color: var(--primary);")
+			doctype xml
+			root
+				maintitle.centerall
+						
+					chapter(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+						taable
+							tgroup(cols="1", class="tb-10-m0")
+								theead
+									row
+										entry(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+											header.row.tb-font-l Title 
+												bd.bd(v-text="data[0].title.ind")
+												span(v-text="' '") 
+												span(v-text="data[0].title.str")
+									row
+										entry(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+											header.row.tb-font-l Chapter 
+												bd.bd(v-text="data[0].chapter.ind")
+												span(v-text="' '")
+												span(v-text="data[0].chapter.str")
+						
+						
+						!= str

@@ -376,7 +376,7 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 		if (data.length === 0) {
 			return res.redirect('/api/new');
 		}
-		console.log(data)
+		//console.log(data)
 		Diffs.find({}).sort({date:1}).exec(function(err, diffs){
 			if (err) {
 				return next(err) 
@@ -401,6 +401,43 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 		
 	});
 });
+
+router.get('/export', ensureCurly, function(req, res, next){
+	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
+	req.session.refer = newrefer;
+	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+		if (err) {
+			return next(err)
+		}
+		if (data.length === 0) {
+			return res.redirect('/api/new');
+		}
+		// console.log(data)
+		Diffs.find({}).sort({date:1}).exec(function(err, diffs){
+			if (err) {
+				return next(err) 
+			}
+			//console.log(diffs)
+			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
+				doctype: 'xml',
+				csrfToken: req.csrfToken(),
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				data: data,
+				appURL: req.app.locals.appURL
+			});
+			//console.log(str)
+			return res.render('export', {
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				data: data,
+				str: str,
+				exports: true/*,
+				diff: (!diffs[diffs.length-1] ? null : diffs[diffs.length-1].dif)*/
+			});
+		})
+			
+		
+	});
+})
 
 router.post('/diff', function(req, res, next){
 	Diffs.find({}).sort({date:1}).exec(function(err, diffs){
