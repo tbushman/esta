@@ -1,4 +1,16 @@
 section.headrule(v-for="doc in data", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+	taable(v-if="!data[dindexes.indexOf(doc.index) - 1] || data[dindexes.indexOf(doc.index)].chapter.ind !== data[dindexes.indexOf(doc.index) - 1].chapter.ind", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
+		celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+			header.row.tb-font-l Title 
+				bd.bd(v-text="data[0].title.ind")
+				span(v-text="' '") 
+				span(v-text="data[0].title.str")
+		celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+			header.row.tb-font-l Chapter 
+				bd.bd(v-text="data[0].chapter.ind")
+				span(v-text="' '")
+				span(v-text="data[0].chapter.str")
+
 	taable(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 		include header.pug
 		include body.pug

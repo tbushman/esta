@@ -12,12 +12,14 @@ p
 		v-for="(img, i) in doc.properties.media"
 		)
 		include editmedia.pug
-
+	a.block(role="button", v-on:click="addNewMedia(doc._id, doc.properties.media.length)")
+		span Add image
+	div.row.spacer#appendmedia
 p
 	label(for="importcsv") Import Geographic Data
 input#importcsv(v-on:change="importCsv", type="file", value="Import CSV")
 div(style="visibility: hidden;")
-	input#lat(v-bind:value="position.lat", name="lat")
-	input#lng(v-bind:value="position.lng", name="lng")
+input#lat(v-bind:value="doc.geometry.coordinates[1]", name="lat")
+input#lng(v-bind:value="doc.geometry.coordinates[0]", name="lng")
 button.block(v-if="edit === doc.index", role="submit", v-bind:id="'submit_'+dindex")
 	span Finished editing

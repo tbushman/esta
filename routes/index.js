@@ -827,24 +827,6 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 		}
 		return res.status(200).send(data)
 	})
-	
-		
-		//console.log(data)
-		/*if (str) {
-			while (str.length > 0) {
-				data.push(str.split(rx)[0])
-				str = str.split(rx)[1]
-			}
-			//var rx = /^(\d{1,2}.\d{1,3}.\d{0,4}.)/gm
-			//data = str.split(rx);
-			console.log(str.split(rx))
-		}*/
-		/*Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
-			if (err) {
-				return next(err)
-			}
-			return res.status(200).send(doc)
-		})*/
 })
 
 router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req, res, next){
@@ -988,6 +970,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	var id = req.params.id;
 	var body = req.body;
 	var keys = Object.keys(body);
+	console.log(body.lat, body.lng)
 	async.waterfall([
 		function(next){
 			
@@ -1097,6 +1080,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					coordinates: [parseFloat(body.lng), parseFloat(body.lat)]
 				}
 			}
+			console.log(entry)
 			var entrymedia = []
 			var thumbs = thumburls;
 			var count = 0;
@@ -1129,27 +1113,27 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			var key2 = 'properties.media';
 			var set2 = {$set: {}};
 			set2.$set[key2] = entrymedia;
+			
+			var set3 = {$set: {}};
+			set3.$set['geometry'] = entry.geometry;
 
 			var options = {safe: true, new: true, upsert: false};
 			Content.findOneAndUpdate({_id: doc._id}, set1, options, function(err, doc) {
-
-			//dbSet(Content, doc._id, set1, options, function(err, doc){
 				if (err) {
 					next(err) 
 				}
 				Content.findOneAndUpdate({_id: doc._id}, set2, options, function(errr, doc) {
-				//dbSet(Content, doc._id, set2, options, function(errr, doc){
 					if (errr) {
 						next(errr)
-					} else {
-						next(null)
-
 					}
-					/*var str = pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
-						doc: doc
-					});
-					var file = path.join(__dirname, '../../testtemplate.xml');
-					fs.outputFileSync(file, str);*/
+					Content.findOneAndUpdate({_id: doc._id}, set3, options, function(errr, doc) {
+						if (errr) {
+							next(errr)
+						} else {
+							next(null)
+
+						}
+					})
 				})
 			})
 			
@@ -1168,30 +1152,37 @@ router.post('/api/new', function(req, res, next) {
 })
 
 router.post('/api/newmedia/:id/:index', function(req, res, next) {
-	var index = parseInt(req.params.index, 10);
-	var media = {
-		index: index,
-		name: 'Image '+(index + 1)+'',
-		image: '/images/publish_logo_sq.png',
-		iframe: null,
-		thumb: '/images/publish_logo_sq.png',
-		caption: '',
-		postscript: '',
-		featured: false
-	}
-	Content.findOneAndUpdate({_id: req.params.id}, {$push:{'properties.media': media}}, {safe:true, new:true}, function(err, doc){
+	Content.findOne({_id: req.params.id}, function(err, doc){
 		if (err) {
-			return next(err)
+			return next(err) 
 		}
+		var index = parseInt(req.params.index, 10);
 		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png')
 		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png')
-		return res.status(200).send(pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
-			item: media,
-			doc: doc
-			
-		}))
-		//return res.status(200).send('ok')
+		var media = {
+			index: index,
+			name: 'Image '+(index + 1)+'',
+			image: '/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
+			image_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
+			iframe: null,
+			thumb: '/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png',
+			thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png',
+			caption: '',
+			postscript: '',
+			featured: false
+		}
+		Content.findOneAndUpdate({_id: req.params.id}, {$push:{'properties.media': media}}, {safe:true, new:true}, function(err, doc){
+			if (err) {
+				return next(err)
+			}
+			return res.status(200).send(pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
+				img: media,
+				doc: doc
+				
+			}))
+		})
 	})
+	
 });
 
 router.post('/api/deleteentry/:id/:index', function(req, res, next) {

@@ -71,7 +71,7 @@ html
 				updated: function(){
 					if (this.dindexes.length === 0) {
 						var self = this;
-						self.dindexes = (self.data ? self.data.map(function(doc){
+						self.dindexes = (self.data && self.data !== '' ? self.data.map(function(doc){
 							return doc.index;
 						}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
 						self.dindexes.sort();
@@ -79,7 +79,7 @@ html
 				},
 				mounted: function(){
 					var self = this;
-					self.dindexes = (self.data ? self.data.map(function(doc){
+					self.dindexes = (self.data && self.data !== '' ? self.data.map(function(doc){
 						return doc.index;
 					}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
 					self.dindexes.sort();
@@ -131,13 +131,17 @@ html
 						self.map = map;
 						self.dataLayer = dataLayer;
 						self.lMarker.on('dragend', function(event){
-							console.log(event)
 							var marker = event.target;
 							var position = event.target.getLatLng();
+							var lat = position.lat;
+							var lng = position.lng;
 							self.lMarker.setLatLng(new L.LatLng(position.lat, position.lng),{draggable:'true'});
 							self.map.panTo(new L.LatLng(position.lat, position.lng))
-							self.position.lng = self.lMarker.getLatLng().lng;
-							self.position.lat = self.lMarker.getLatLng().lat;
+							self.position.lng = lng;
+							self.position.lat = lat;
+							self.doc.geometry.coordinates = [lng, lat];
+							console.log(self.doc.geometry.coordinates)
+
 							//$('input#lat').val(position.lat)
 							//$('input#lng').val(position.lng)
 						})
@@ -178,6 +182,14 @@ html
 					
 				},
 				methods: {
+					addNewMedia: function(id, index) {
+
+						$.post('/api/newmedia/'+id+'/'+index+'', function(res) {
+							console.log(res)
+							$('#appendmedia').append(res);
+							//window.location.reload(true)
+						})
+					},
 					deleteMedia: function(ind) {
 						var self = this;
 						$.post('/api/deletemedia/'+self.doc._id+'/'+ind+'', function(res){
@@ -518,7 +530,7 @@ html
 					loadMap: function(cb) {
 						var self = this;
 						var dataLayer;
-
+						var dataCoords;
 						var map = new L.map('map', { 
 							center: [
 								(!self.position ? 41.509859 : self.position.lat),
@@ -550,7 +562,9 @@ html
 							// generate geographic points from data
 							if (self.doc && self.doc !== '') {
 								dataLayer = L.GeoJSON.geometryToLayer(self.doc).addTo(map);
+								dataCoords = self.doc.geometry.coordinates;
 							} else {
+								dataCoords = self.data[self.dindex].geometry.coordinates;
 								dataLayer = L.geoJSON(self.data, {
 									// MongoDB stores coordinates as [lng, lat]
 									// Leaflet uses [lat, lng]
@@ -595,8 +609,8 @@ html
 									}
 								}).addTo(map);
 							}
-							self.lMarker = L.marker([map.getCenter().lat, map.getCenter().lng], {draggable: true}).addTo(map);
-
+							self.lMarker = L.marker([dataCoords[1], dataCoords[0]], {draggable: true}).addTo(map);
+							map.panTo(new L.LatLng(dataCoords[1], dataCoords[0]))
 						}
 						cb(map, dataLayer)
 					},
