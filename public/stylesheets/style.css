@@ -51,7 +51,10 @@ body {
 	background-color: #fff;
 	background-color: var(--primary);
 }
-#vue {
+/*#vue {
+	pointer-events: all;
+}*/
+maintitle {
 	pointer-events: all;
 }
 p {
@@ -627,8 +630,8 @@ a.menu.drop, a.submenu.drop {
 }
 
 .centerallwrap {
-	display: inline-block;
-	position: relative;
+	display: block;
+	position: absolute;
 	height: 100vh;
 	width: 100%;
 	margin: 0;
@@ -637,16 +640,14 @@ a.menu.drop, a.submenu.drop {
 }
 
 .centerall {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	height: calc(100% - 100px);
-	width: 100%;
-	overflow-y: scroll;
+	height: auto;
+	overflow-y: hidden;
 	overflow-x: hidden;
 	z-index: 1;
 	pointer-events: all;
+	padding: 45px;
+	pointer-events: auto;
+	position: relative;
 }
 .centerall section {
 	width: 100%;
@@ -938,7 +939,6 @@ form {
 	overflow-x: hidden;
 	overflow-y: scroll;
 	pointer-events: auto;
-	height: 100%!important;
 }
 form label {
 	color: #888;
@@ -1085,6 +1085,11 @@ hr {
 	white-space: nowrap;
 }	
 
+.headrule {
+	border-top: 1px solid;
+margin-top: 20px;
+padding-top: 20px;
+}
 
 .tb-11-m0 {
 	width: 100%;
@@ -1199,9 +1204,6 @@ del {
 }
 @media (min-width: 401px) {
 	
-	.centerall {
-		width: calc(100% - 100px);
-	}
 	.tb-10-m1 {
 		width: 100%;
 	}

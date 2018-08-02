@@ -1,12 +1,12 @@
-entry.tb-07-m0(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="desc")
+celll.tb-07-m0(v-show="(accordions.indexOf(dindexes.indexOf(doc.index)) !== -1)", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="desc")
 
 	p#description.tb-font-s(v-if="doc.properties !== undefined", colspan="7", v-html="marked(doc.properties.description)", aid:pstyle="p")
-entry.tb-03-m0(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="imgs")
+celll.tb-03-m0(v-show="(accordions.indexOf(dindexes.indexOf(doc.index)) !== -1)", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="imgs")
 
-	a.img(v-if="doc.properties !== undefined", v-for="img in doc.properties.media")
+	a.img(v-if="doc.properties !== undefined", v-for="img in doc.properties.media", v-bind:href="'/list/'+doc._id+'/null'")
 		//Imaage(v-if="export", aid:image="image", v-bind:href="'File://'+img.image_abs")
 		//img(v-if="!export",  v-bind:src="img.image")
-		breadcrumbs(v-text="img.caption", aid:cstyle="bread")
+		breadcrumbs(v-text="(img.caption !== 'Sample caption' ? img.caption : '' )", aid:cstyle="bread")
 		//a.img(v-else-if="img.thumb.split('.')[1] !== 'svg'")
-		imaage(v-bind:src="img.image", aid:image="image", v-bind:href="'File://'+img.image_abs")
+		imaage(v-bind:src="img.image", aid:image="image", v-bind:href="'File://'+img.image_abs", style="pointer-events: none;")
 

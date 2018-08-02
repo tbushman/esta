@@ -11,14 +11,28 @@ block content
 			input#importtxt(v-on:change="importTxt", type="file", value="Import TXT")
 		
 
-		div.centerallwrap(style="background-color: #fff; background-color: var(--primary);height:50vh;")
-			!= str
+		div.centerallwrap
+			maintitle.centerall
+					
+				chapter(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+					taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
+						celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+							header.row.tb-font-l Title 
+								bd.bd(v-text="data[0].title.ind")
+								span(v-text="' '") 
+								span(v-text="data[0].title.str")
+						celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+							header.row.tb-font-l Chapter 
+								bd.bd(v-text="data[0].chapter.ind")
+								span(v-text="' '")
+								span(v-text="data[0].chapter.str")
+					!= str
 
 		
-		div#diff(v-if="diff", style="height:50vh;display: inline-block;position: relative;background-color: #fff;overflow-y: scroll;pointer-events: all;height: 50vh;")
-			span(v-for="part in diff")
-				span(v-if="part.added", v-html="getHTML('ins',part.value)", style="color: 'green';")
-				span(v-if="part.removed", v-html="getHTML('del',part.value)", style="color: 'red';")
-				span(v-else-if="part.value", v-html="getHTML('span',part.value)", style="color: 'grey';")
-			//!= diff.dif
-			//span(v-for="part in diff", v-html="part.value")
+			div#diff(v-if="diff", style="height:50vh;display: inline-block;position: relative;background-color: #fff;overflow-y: scroll;pointer-events: all;height: 50vh;")
+				span(v-for="part in diff")
+					span(v-if="part.added", v-html="getHTML('ins',part.value)", style="color: 'green';")
+					span(v-if="part.removed", v-html="getHTML('del',part.value)", style="color: 'red';")
+					span(v-else-if="part.value", v-html="getHTML('span',part.value)", style="color: 'grey';")
+				//!= diff.dif
+				//span(v-for="part in diff", v-html="part.value")

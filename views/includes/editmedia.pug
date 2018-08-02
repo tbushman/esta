@@ -1,8 +1,9 @@
-div.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)")
-	input(v-bind:id="'inputthumb'+img.index", v-bind:name="'thumb'+img.index", v-bind:value="img.thumb")
-	input(v-bind:id="'inputimg'+img.index", v-bind:name="'img'+img.index", v-bind:value="img.image")
-	canvas(v-bind:id="'canvas'+img.index")
-	input(class="featuredimg", v-bind:id="'featured'+img.index", v-bind:name="'img'+img.index+'_featured'", v-bind:value="img.featured")
+div.tb-10-m0(v-if="edit === doc.index")
+	div(style="visibility: hidden;")
+		input(v-bind:id="'inputthumb'+img.index", v-bind:name="'thumb'+img.index", v-bind:value="img.thumb")
+		input(v-bind:id="'inputimg'+img.index", v-bind:name="'img'+img.index", v-bind:value="img.image")
+		canvas(v-bind:id="'canvas'+img.index")
+		input(class="featuredimg", v-bind:id="'featured'+img.index", v-bind:name="'img'+img.index+'_featured'", v-bind:value="img.featured")
 
 	div.row
 		div.tb-04-m0.tb-02-m3
@@ -18,12 +19,12 @@ div.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)")
 			div.tb-08-m0(style="padding-top: 8px;")
 				label Featured?
 			div.tb-02-m0
-				input(style="height: 100%; padding: 2px 8px;", type="button", v-bind:id="'togglefeatured_'+img.index", v-bind:class="(img.featured?'featured toggle':'toggle')")
+				input(style="padding: 2px 8px;", type="button", v-bind:id="'togglefeatured_'+img.index", v-bind:class="(img.featured?'featured toggle':'toggle')")
 
 			label(for="media") Change media:
 			input(v-bind:id="'media_'+img.index", v-on:change="handleFile(dindexes.indexOf(doc.index),img.index)", v-bind:class="'editmedia@'+img.index", type="file")
 			label(v-bind:for="'deletemedia_'+img.index")
-			a.danger.block(role="button", v-bind:id="'deletemedia_'+img.index")
+			a.danger.block(role="button", v-on:click="deleteMedia(img.index)", v-bind:id="'deletemedia_'+img.index")
 				span Delete Media
 			
 		div.tb-10-m0.tb-08-m3.shift-00

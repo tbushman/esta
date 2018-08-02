@@ -1,17 +1,4 @@
-section(v-for="doc in data", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+section.headrule(v-for="doc in data", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
 	taable(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-
-		tgroup(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/", cols="2")
-			colspec(colname="left")
-			colspec(colname="right")
-			tboddy
-				row
-					include header.pug
-
-				row
-					include body.pug
-						
-
-
-
-
+		include header.pug
+		include body.pug

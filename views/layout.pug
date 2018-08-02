@@ -53,7 +53,10 @@ html
 						str: this.parseObj(!{JSON.stringify(str)}),
 						diff: (!this.parseObj(!{JSON.stringify(diff)}) || this.parseObj(!{JSON.stringify(diff)}) === '' ? null : this.parseObj(!{JSON.stringify(diff)})),
 						web: true,
-						export: this.parseBool(!{JSON.stringify(exports)})
+						export: this.parseBool(!{JSON.stringify(exports)}),
+						ff: ['General Provisions.', 'Sketch Plan.', 'Intent and Purpose.', 'Final Subdivision Applications.', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final.', 'Subdivision Ordinance Amendments.', 'Noticing Requirements.', 'Appeals.', 'Special Excepetions.', 'Design and Construction Standards.', 'Guarantees for Subdivision Improvements, Facilities, and Amenities.', 'Definitions.'],
+						accordions: (!this.parseBool(!{JSON.stringify(exports)}) ? [] : (this.parseObj(!{JSON.stringify(data)}) !== '' ? this.parseObj(!{JSON.stringify(data)}).map(function(doc){return doc.index}): []) )
+
 						/*,
 						image: null,
 						thumb: null/*,
@@ -65,11 +68,21 @@ html
 						
 					}
 				},
+				updated: function(){
+					if (this.dindexes.length === 0) {
+						var self = this;
+						self.dindexes = (self.data ? self.data.map(function(doc){
+							return doc.index;
+						}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
+						self.dindexes.sort();
+					}
+				},
 				mounted: function(){
 					var self = this;
 					self.dindexes = (self.data ? self.data.map(function(doc){
 						return doc.index;
 					}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
+					self.dindexes.sort();
 					//console.log(Object.keys(self.diff))
 					//console.log(self.diff.toString())
 					//console.log(self.diff[1],self.diff[2],self.diff[3],self.diff[4],self.diff[10])
@@ -79,6 +92,18 @@ html
 								self.diff = diffs
 							});*/
 						} else {
+						}
+					}
+					console.log(self.edit)
+					if (!self.data || self.data === '') {
+						if (!self.doc || self.doc === '') {
+							
+						} else {
+							
+							self.edit = self.doc.index;
+							self.dindexes = [self.edit];
+							self.dindex = 0;
+							console.log(self.edit)
 						}
 					}
 
@@ -108,11 +133,11 @@ html
 						self.lMarker.on('dragend', function(event){
 							console.log(event)
 							var marker = event.target;
-							var position = self.lMarker.getLatLng();
+							var position = event.target.getLatLng();
 							self.lMarker.setLatLng(new L.LatLng(position.lat, position.lng),{draggable:'true'});
 							self.map.panTo(new L.LatLng(position.lat, position.lng))
-							self.position.lng = position.lng;
-							self.position.lat = position.lat;
+							self.position.lng = self.lMarker.getLatLng().lng;
+							self.position.lat = self.lMarker.getLatLng().lat;
 							//$('input#lat').val(position.lat)
 							//$('input#lng').val(position.lng)
 						})
@@ -153,6 +178,30 @@ html
 					
 				},
 				methods: {
+					deleteMedia: function(ind) {
+						var self = this;
+						$.post('/api/deletemedia/'+self.doc._id+'/'+ind+'', function(res){
+							self.doc = res;
+						})
+					},
+					accordion: function(ind) {
+						var self = this;
+						if (self.accordions.indexOf(ind) === -1) {
+							self.accordions.push(ind);
+							self.accordions.sort();
+						} else {
+							self.accordions.splice(self.accordions.indexOf(ind), 1);
+						}
+						/*if (e.target.tagName === 'SECTION' || e.target.tagName === 'section') {
+							if (!e.target.style.height === 'auto') {
+								if (self.accordions.indexOf())
+								//e.target.style.height = 'auto'
+							} else {
+								//e.target.style.height = 'var(--thumbw)';
+							}
+						}*/
+						
+					},
 					parseBool: function(item) {
 						if (!item) return false;
 						return true;
