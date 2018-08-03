@@ -1,11 +1,11 @@
-doctype strict
-html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeInDesign/5.0/", xml:lang="en-US", lang="en-US")
+doctype xml
+html
 	head
 		meta(charset="utf-8")
 		meta(http-equiv="X-UA-Compatible", content="IE=edge; charset=utf-8")
 		title= appTitle
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
-		link(rel="stylesheet", href="/stylesheets/simplemde.min.css")
+		//link(rel="stylesheet", href="/stylesheets/simplemde.min.css")
 		link(rel="stylesheet", href="/stylesheets/style.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 
@@ -33,10 +33,13 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 				data: function data(){
 					return {
 						menu: this.parseObj(!{JSON.stringify(menu)}),
-						data: this.parseObj(!{JSON.stringify(data)}),
+						dat: this.parseObj(!{JSON.stringify(dat)}),
+						data: '',//this.parseObj(!{JSON.stringify(data)}),
 						doc: this.parseObj(!{JSON.stringify(doc)}),
 						position: this.parseObj(!{JSON.stringify(session.position)}),
 						edit: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)}).index),
+						chindexes: [],
+						chindex: 0,
 						dindexes: [],
 						dindex: (this.parseObj(!{JSON.stringify(doc)}) === '' ? 0 : this.parseObj(!{JSON.stringify(doc)}).index),
 						cursor: null,
@@ -52,7 +55,11 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 						tinymce: null,
 						str: this.parseObj(!{JSON.stringify(str)}),
 						diff: (!this.parseObj(!{JSON.stringify(diff)}) || this.parseObj(!{JSON.stringify(diff)}) === '' ? null : this.parseObj(!{JSON.stringify(diff)})),
-						web: true
+						web: true,
+						export: this.parseBool(!{JSON.stringify(exports)}),
+						ff: ['General Provisions.', 'Sketch Plan.', 'Intent and Purpose.', 'Final Subdivision Applications.', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final.', 'Subdivision Ordinance Amendments.', 'Noticing Requirements.', 'Appeals.', 'Special Excepetions.', 'Design and Construction Standards.', 'Guarantees for Subdivision Improvements, Facilities, and Amenities.', 'Definitions.'],
+						accordions: (this.parseObj(!{JSON.stringify(dat)}) !== '' && this.parseBool(!{JSON.stringify(exports)}) ? this.parseObj(!{JSON.stringify(dat)}).map(function(data){return data.map(function(doc){return doc.index})}): [[]]) 
+
 						/*,
 						image: null,
 						thumb: null/*,
@@ -64,20 +71,49 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 						
 					}
 				},
+				updated: function(){
+					if (this.dindexes.length === 0) {
+						var self = this;
+						self.dindexes = (self.data && self.data !== '' ? self.data.map(function(doc){
+							return doc.index;
+						}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
+						self.dindexes.sort();
+					}
+				},
 				mounted: function(){
 					var self = this;
-					self.dindexes = (self.data ? self.data.map(function(doc){
+					console.log(self.accordions)
+					self.dindexes = (self.data && self.data !== '' ? self.data.map(function(doc){
 						return doc.index;
 					}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
+					self.dindexes.sort();
 					//console.log(Object.keys(self.diff))
 					//console.log(self.diff.toString())
 					//console.log(self.diff[1],self.diff[2],self.diff[3],self.diff[4],self.diff[10])
 					if (!Array.isArray(self.diff)) {
 						if (!self.doc || self.doc === '') {
-							self.sendDiff(function(diffs){
+							/*self.sendDiff(function(diffs){
 								self.diff = diffs
-							});
+							});*/
 						} else {
+						}
+					}
+					if (!self.data || self.data === '') {
+						//self.dat.forEach(function(data))
+						if (self.dat[0] && self.dat[0][0].chapter.ind === self.dat[self.dat.length - 1][0].chapter.ind) {
+							self.data = self.dat[0]
+						} else {
+							if (self.dat[0]) {
+								self.data = [].concat.apply([], self.dat);
+							}
+						}
+						if (!self.doc || self.doc === '') {
+							
+						} else {
+							
+							self.edit = self.doc.index;
+							self.dindexes = [self.edit];
+							self.dindex = 0;
 						}
 					}
 
@@ -85,7 +121,7 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 						/*this.simpleMde = new SimpleMDE({
 							element: document.getElementById("layouttext")[0]
 						})*/
-						if (!self.tinymce && $('#description')[0]) {
+						if (!self.tinymce && $('#description')[0] && tinymce) {
 							self.tinymce = tinymce.init({
 								menubar: false,
 								statusbar: false,
@@ -102,16 +138,21 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 					}, 500);
 					
 					self.loadMap(function(map, dataLayer){
+						if (!map) return;
 						self.map = map;
 						self.dataLayer = dataLayer;
 						self.lMarker.on('dragend', function(event){
-							console.log(event)
 							var marker = event.target;
-							var position = self.lMarker.getLatLng();
+							var position = event.target.getLatLng();
+							var lat = position.lat;
+							var lng = position.lng;
 							self.lMarker.setLatLng(new L.LatLng(position.lat, position.lng),{draggable:'true'});
 							self.map.panTo(new L.LatLng(position.lat, position.lng))
-							self.position.lng = position.lng;
-							self.position.lat = position.lat;
+							self.position.lng = lng;
+							self.position.lat = lat;
+							self.doc.geometry.coordinates = [lng, lat];
+							console.log(self.doc.geometry.coordinates)
+
 							//$('input#lat').val(position.lat)
 							//$('input#lng').val(position.lng)
 						})
@@ -152,14 +193,54 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 					
 				},
 				methods: {
+					navigateTo: function(url){
+						window.location.href = url;
+					},
+					deleteEntry: function(doc) {
+						$.post('/api/deleteentry/'+doc._id+'/'+doc.index+'', function(res){
+							window.location.href = '/menu/'+doc.title.ind+'/'+doc.chapter.ind+'';
+						})
+					},
+					deleteMedia: function(ind) {
+						var self = this;
+						$.post('/api/deletemedia/'+self.doc._id+'/'+ind+'', function(res){
+							self.doc = res;
+						})
+					},
+					accordion: function(n, ind) {
+						var self = this;
+						console.log(self.accordions[n])
+						if (self.accordions[n].indexOf(ind) === -1) {
+							self.accordions[n].push(ind);
+							self.accordions[n].sort();
+						} else {
+							self.accordions[n].splice(self.accordions[n].indexOf(ind), 1);
+						}
+						/*if (e.target.tagName === 'SECTION' || e.target.tagName === 'section') {
+							if (!e.target.style.height === 'auto') {
+								if (self.accordions.indexOf())
+								//e.target.style.height = 'auto'
+							} else {
+								//e.target.style.height = 'var(--thumbw)';
+							}
+						}*/
+						
+					},
+					parseBool: function(item) {
+						if (!item) return false;
+						return true;
+					},
+					toggleExport: function() {
+						this.export = !this.export;
+					},
 					getHTML: function(type, str) {
 						var self = this;
 						var span = document.createElement(type);
 						//var parser = new DOMParser();
 						span.innerHTML = str;
-						console.log(span.children)
+						//console.log(span.children)
 						//parser.parseFromString(str, 'text/html')
-						console.log(span, type, self.diff[0].value)
+						//console.log(span, type, self.diff[0].value)
 						return span;
 					},
 					computeDiffStr: function(diffs) {
@@ -178,7 +259,9 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 					sendDiff: function(cb) {
 						var self = this;
 						var fd = new FormData();
-						var innerhtml = $('div.centerallwrap').html().toString();
+						var innerhtmldiv = $('div.centerallwrap')[0];
+						if (!innerhtmldiv) return;
+						var innerhtml = $(innerhtmldiv).html().toString();
 						
 						fd.append("str", innerhtml);
 						
@@ -231,8 +314,8 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 							var fd = new FormData();
 
 							fd.append("txt", file);
-							
-							var uploadurl = '/api/importtxt/'+(!self.doc || self.doc === '' ? self.data[self.dindex]._id : self.doc._id )+'/txt';
+							var chtitle = encodeURIComponent($('#chaptername').val());
+							var uploadurl = '/api/importtxt/txt/'+chtitle+'';
 							console.log(uploadurl, file)
 							$.ajax({
 								url: uploadurl,
@@ -243,9 +326,12 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 								success: function(response) { 
 									console.log('success!')
 									console.log(response)
-									self.data = response;
-									var bounds = self.dataLayer.getBounds();
-									self.map.fitBounds(bounds);
+									/*self.dat = response;
+									if (self.map) {
+										var bounds = self.dataLayer.getBounds();
+										self.map.fitBounds(bounds);
+									}*/
+									window.location.href = '/'
 								}
 								
 							})
@@ -298,10 +384,11 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 						
 					},
 					addNewMedia: function(id, index) {
-
+						var self = this;
 						$.post('/api/newmedia/'+id+'/'+index+'', function(res) {
 							console.log(res)
-							$('#appendmedia').append(res);
+							//$('#appendmedia').append(res);
+							self.doc.properties.media.push(res)
 						})
 					},
 					handleFile: function(dindex, index) {
@@ -459,7 +546,7 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 					loadMap: function(cb) {
 						var self = this;
 						var dataLayer;
-
+						var dataCoords;
 						var map = new L.map('map', { 
 							center: [
 								(!self.position ? 41.509859 : self.position.lat),
@@ -487,11 +574,13 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 						
 						L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', options3).addTo(map);
 						//L.tileLayer('https://{s}.tiles.mapbox.com/v3/tbushman.1pnqxgvi/{z}/{x}/{y}.png', map.getBounds()).addTo(map); //slc transit
-						if (!self.dataLayer) {
+						if (!self.dataLayer && self.doc) {
 							// generate geographic points from data
 							if (self.doc && self.doc !== '') {
 								dataLayer = L.GeoJSON.geometryToLayer(self.doc).addTo(map);
-							} else {
+								dataCoords = self.doc.geometry.coordinates;
+							}/* else {
+								dataCoords = self.data[self.dindex].geometry.coordinates;
 								dataLayer = L.geoJSON(self.data, {
 									// MongoDB stores coordinates as [lng, lat]
 									// Leaflet uses [lat, lng]
@@ -535,11 +624,15 @@ html(xmlns="http://www.w3.org/1999/xhtml", xmlns:aid="http://ns.adobe.com/AdobeI
 										
 									}
 								}).addTo(map);
-							}
-							self.lMarker = L.marker([map.getCenter().lat, map.getCenter().lng], {draggable: true}).addTo(map);
+							}*/
+							self.lMarker = L.marker([dataCoords[1], dataCoords[0]], {draggable: true}).addTo(map);
+							map.panTo(new L.LatLng(dataCoords[1], dataCoords[0]))
+							cb(map, dataLayer)
 
+						} else {
+							cb(null)
+							console.log('when?')
 						}
-						cb(map, dataLayer)
 					},
 					coincidentVectors: function(dx, dy, cb) {
 						var self = this;

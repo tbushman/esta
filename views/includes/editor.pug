@@ -3,18 +3,26 @@ a.row.tb-font-l(v-bind:href="'/list/'+doc._id+'/'+null+''")
 	span(v-text="' '")
 	sectionname(v-text="doc.section.str")
 
-label.tb-10-m0(v-if="edit === dindexes.indexOf(doc.index)", v-on:click="toggleEdit(dindexes.indexOf(doc.index))", for="description") Description
+p
+	label.tb-10-m0(v-if="edit === doc.index", for="description") Description
+	description.tb-10-m0#description(v-html="doc.properties.description")
+p
+	div.row.spacer(
 
-div.row.spacer(
-
-	v-for="(img, i) in doc.properties.media"
-	)
-	include editmedia.pug
-
+		v-for="(img, j) in doc.properties.media"
+		)
+		include editmedia.pug
+	//div.row.spacer#appendmedia(v-if="j")
+	a.success.block.spacer.tb-03-m0(role="button", v-on:click="addNewMedia(doc._id, doc.properties.media.length)")
+		span Add image
+	
 p
 	label(for="importcsv") Import Geographic Data
 input#importcsv(v-on:change="importCsv", type="file", value="Import CSV")
-input#lat(v-bind:value="position.lat", name="lat")
-input#lng(v-bind:value="position.lng", name="lng")
-a.block(v-if="edit === dindexes.indexOf(doc.index)", role="button", v-bind:id="'submit_'+dindex", v-on:click="submitForm(dindexes.indexOf(doc.index))")
+div(style="visibility: hidden;")
+input#lat(v-bind:value="doc.geometry.coordinates[1]", name="lat", type="hidden")
+input#lng(v-bind:value="doc.geometry.coordinates[0]", name="lng", type="hidden")
+button.block.success.spacer.tb-11-m0(v-if="edit === doc.index", role="submit", v-bind:id="'submit_'+dindex")
 	span Finished editing
+a.danger.block.spacer.tb-03-m0(v-on:click="deleteEntry(doc)", role="button")
+	span Delete entry

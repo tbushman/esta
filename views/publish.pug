@@ -3,22 +3,16 @@ block page
 block content
 	
 	div#vue
-		
-		div(style="position:absolute;z-index:999999;pointer-events:all;")
-			div.tb-02-m0
-				a.block(v-bind:href="'/'", v-text="'back'")
-			label(for="importtxt")
-			input#importtxt(v-on:change="importTxt", type="file", value="Import TXT")
-		
-
-		div.centerallwrap(style="background-color: #fff; background-color: var(--primary);height:50vh;")
+		include includes/menu.pug
+		div.centerallwrap
+			
 			!= str
 
 		
-		div#diff(v-if="diff", style="height:50vh;display: inline-block;position: relative;background-color: #fff;overflow-y: scroll;pointer-events: all;height: 50vh;")
-			span(v-for="part in diff")
-				span(v-if="part.added", v-html="getHTML('ins',part.value)", style="color: 'green';")
-				span(v-if="part.removed", v-html="getHTML('del',part.value)", style="color: 'red';")
-				span(v-else-if="part.value", v-html="getHTML('span',part.value)", style="color: 'grey';")
-			//!= diff.dif
-			//span(v-for="part in diff", v-html="part.value")
+			div#diff(v-if="diff", style="height:50vh;display: inline-block;position: relative;background-color: #fff;overflow-y: scroll;pointer-events: all;height: 50vh;")
+				span(v-for="part in diff")
+					span(v-if="part.added", v-html="getHTML('ins',part.value)", style="color: 'green';")
+					span(v-if="part.removed", v-html="getHTML('del',part.value)", style="color: 'red';")
+					span(v-else-if="part.value", v-html="getHTML('span',part.value)", style="color: 'grey';")
+				//!= diff.dif
+				//span(v-for="part in diff", v-html="part.value")

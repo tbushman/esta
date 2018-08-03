@@ -38,13 +38,8 @@ var Content = new Schema({
 		]
 	},
 	geometry: {
-		'type': {type: String, 'enum': [
-			'Point',
-			'MultiPoint',
-			'Polygon',
-			'LineString'
-		]},
-		coordinates: { type: Array }
+		'type': {type: String},
+		coordinates: { type: [Number] }
 	}
 }, 
 //{pluralize: false}

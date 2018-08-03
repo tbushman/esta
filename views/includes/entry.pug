@@ -1,24 +1,25 @@
-trow.tb-10-m0(aid:table="Table", aid:trows="1", aid:tcols="2", aid:tablestyle="entry", width="100%", height="100%")
-	headrule(aid:table="cell", aid:theader="", aid:crows="1", aid:ccols="7", aid:cellstyle="head")
-		a.tb-font-l(v-bind:href="'/list/'+doc._id+'/null'", aid:pstyle="header")
-			bd.bd(v-text="doc.title.ind+'.'+doc.chapter.ind+'.'+doc.section.ind", aid:cstyle="bold")
-			span(v-text="' '")
-			span(v-text="doc.section.str")
-	breadcrumbs(aid:table="cell", aid:theader="", aid:crows="1", aid:ccols="3", aid:cellstyle="bread")
+entry.tb-07-m0.tb-font-l(v-bind:href="'/list/'+doc._id+'/null'", aid5:cellstyle="head")
+	a.headrule(v-bind:href="'/list/'+doc._id+'/null'", aid:pstyle="header")
+		bd.bd(v-if="doc.title !== undefined", v-text="doc.title.ind+'.'+doc.chapter.ind+'.'+doc.section.ind", aid:cstyle="bold")
+		span(v-text="' '")
+		span(v-text="doc.section.str")
+entry.tb-03-m0(aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="bread")
+	breadcrumbs(v-if="doc.properties !== undefined")
 		a(v-bind:href="'/'")
 			rss(version="1.0", xmlns:content="http://purl.org/rss/1.0/modules/content/", xmlns:atom="http://www.w3.org/2005/Atom" )
 				channel.row
-					title.tb-font-xxs(v-on:click="window.location.href = 'http://"+appURL+"'", v-if="edit === null", v-bind:style="{display:'inline-block'}", v-text="doc.title.str")
+					title.tb-font-xxs(v-on:click="window.location.href = 'http://"+appURL+"'", v-bind:style="{display:'inline-block'}", v-text="doc.title.str")
 					span.tb-font-xxs(v-text="' '")
-					description.tb-font-xxs(v-if="edit === null", v-text="doc.chapter.str")
-				
-trow.tb-10-m0
-	//aid:table="cell", aid:crows="1", aid:ccols="7", aid:cellstyle="desc"
-	div.tb-07-m0
-		p#description.tb-font-s(colspan="7", v-html="marked(doc.properties.description)")
-	div.tb-07-m0(aid:table="cell", aid:crows="1", aid:ccols="3", aid:cellstyle="imgs", v-if="doc.properties.media.length > 0", v-for="img in doc.properties.media")
-		a.img(v-if="img.thumb.split('.')[1] === 'svg' && web")
-			Imaage(aid:image="image", v-bind:href="'File://'+img.image_abs")
-		a.img(v-else-if="img.thumb.split('.')[1] !== 'svg'")
-			img(v-bind:src="img.image")
+					description.tb-font-xxs(v-text="doc.chapter.str")
+entry.tb-07-m0(aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="desc")
+
+	p#description.tb-font-s(v-if="doc.properties !== undefined", colspan="7", v-html="marked(doc.properties.description)")
+entry.tb-03-m0(aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="imgs")
+
+	a.img(v-if="doc.properties !== undefined", v-for="img in doc.properties.media")
+		//Imaage(v-if="export", aid:image="image", v-bind:href="'File://'+img.image_abs")
+		//img(v-if="!export",  v-bind:src="img.image")
+		breadcrumbs(v-text="img.caption")
+		//a.img(v-else-if="img.thumb.split('.')[1] !== 'svg'")
+		imaage(v-bind:src="img.image", aid:image="image", v-bind:href="'File://'+img.image_abs")
 

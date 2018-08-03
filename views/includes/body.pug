@@ -1,0 +1,12 @@
+celll.tb-07-m0(v-show="(accordions[n].indexOf(doc.index) !== -1)", aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="desc")
+
+	p#description.tb-font-s(v-if="doc.properties !== undefined", colspan="7", v-html="doc.properties.description", aid:pstyle="p")
+celll.tb-03-m0(v-show="(accordions[n].indexOf(doc.index) !== -1)", aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="imgs")
+
+	a.img(v-if="doc.properties !== undefined", v-for="img in doc.properties.media", v-bind:href="'/list/'+doc._id+'/null'")
+		//Imaage(v-if="export", aid:image="image", v-bind:href="'File://'+img.image_abs")
+		//img(v-if="!export",  v-bind:src="img.image")
+		breadcrumbs(v-text="(img.caption !== 'Sample caption' ? img.caption : '' )", aid:pstyle="breadcrumbs")
+		//a.img(v-else-if="img.thumb.split('.')[1] !== 'svg'")
+		imaage(v-bind:src="img.image", aid:image="image", v-bind:href="'File://'+img.image_abs", style="pointer-events: none;")
+

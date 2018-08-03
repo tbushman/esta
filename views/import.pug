@@ -1,0 +1,14 @@
+extends layout
+block page
+block content
+	
+	div#vue
+		
+		include includes/menu.pug
+		div.centerallwrap
+			maintitle.centerall(style="height: 100%;padding-top:100px")
+				label.spacer(for="chaptername", v-text="'"+info+" '")
+				input.block.spacer.tb-10-m0#chaptername(required)
+				p(v-text="' '")
+				label.spacer(for="importtxt") ..and then get the file
+				input.block.spacer#importtxt(v-on:change="importTxt", type="file", value="Import TXT")

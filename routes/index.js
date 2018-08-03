@@ -4,7 +4,7 @@ var async = require('async');
 var router = express.Router();
 var mongoose = require('mongoose');
 var url = require('url');
-var fs = require('fs-extra');
+var fs = require('fsxt');
 var path = require('path');
 var glob = require("glob");
 //var HtmlDiff = require('node-htmldiff');
@@ -19,6 +19,7 @@ var pug = require('pug');
 var Content = require('../models/content.js');
 var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
+var ff = ['General Provisions', 'Sketch Plan', 'Intent and Purpose', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
 
 dotenv.load();
 var upload = multer();
@@ -169,6 +170,133 @@ function rmFile(req, res, next) {
 		}
 	})
 }
+function renameEachImgDir(data, direction, indexes, oldInd, next) {
+	
+	async.waterfall([
+		
+		function(cb) {
+			var qs = [];
+			var count = 0;
+			
+			for (let i of indexes) {
+				switch(direction){
+					case 'none':
+						break;
+					case 'decrement':
+						i--;
+						break;
+					case 'increment':
+						i++;
+						break;
+					default:
+						break;
+				}
+			
+				var doc = data[count];
+				
+				for (var j = 0; j < doc.properties.media.length; j++) {
+					j = parseInt(j, 10);
+					var q1 = {
+						query: {_id: doc._id},
+						key: 'image',
+						index: i,
+						ind: j,
+						//key: 'properties.media.$.image',
+						image: '/publishers/ordinancer/images/full/'+i+'/img_'+j+'.png'
+					}
+					qs.push(q1);
+					var q2 = {
+						query: {_id: doc._id},
+						key: 'thumb',
+						index: i,
+						ind: j,
+						//key: 'properties.media.$.thumb',
+						image: '/publishers/ordinancer/images/thumbs/'+i+'/thumb_'+j+'.png'
+					}
+					qs.push(q2);
+					var q3 = {
+						query: {_id: doc._id},
+						key: 'thumb_abs',
+						index: i,
+						ind: j,
+						//key: 'properties.media.$.thumb',
+						image: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_'+j+'.png'
+					}
+					qs.push(q3);
+					var q4 = {
+						query: {_id: doc._id},
+						key: 'image_abs',
+						index: i,
+						ind: j,
+						//key: 'properties.media.$.thumb',
+						image: ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_'+j+'.png'
+					}
+					qs.push(q4);
+					
+				}
+				var oldImgDir = ''+publishers+'/pu/publishers/ordinancer/images/full/'+(oldInd ? oldInd : doc.index)+'';
+				var oldThumbDir = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(oldInd ? oldInd : doc.index)+'';
+				var newImgDir = ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'';
+				var newThumbDir = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'';
+				fs.moveSync(oldImgDir, newImgDir, { overwrite: true });
+				fs.moveSync(oldThumbDir, newThumbDir, { overwrite: true });
+				count++;
+			}
+			cb(null, qs)
+		},
+		function(qs, cb) {
+			async.eachSeries(qs, function(q, nxt){
+				Content.findOne(q.query, function(err, doc){
+					if (err) {
+						nxt(err)
+					}
+					if (doc) {
+						doc.properties.media[q.ind][q.key] = q.image;
+						doc.save(function(err){
+							if (err) {
+								nxt(err)
+							} else {
+								nxt(null)
+							}
+						})
+					} else {
+						nxt(null)
+					}
+				})
+			}, function(err){
+				if(err) {
+					cb(err)
+				} else {
+					cb(null)
+				}
+			})
+		}
+	], function(err) {
+		if (err) {
+			return next(err) 
+		}
+		return next();
+	})
+	
+}
+
+// https://gist.github.com/liangzan/807712/8fb16263cb39e8472d17aea760b6b1492c465af2
+function emptyDirs(index, next) {
+	var p = ''+publishers+'/pu/publishers/ordinancer/images/full/'+index+'';
+	var q = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+index+'';
+	fs.emptyDir(p, function(err){
+		if (err) {
+			return next(err)
+		}
+		fs.emptyDir(q, function(err) {
+			if (err) {
+				return next(err)
+			}
+			next()
+		})
+	})
+}
+
 
 function ensureCurly(req, res, next) {
 	Content.find({}, function(err, data) {
@@ -366,6 +494,21 @@ router.get('/runtests', function(req, res, next){
 //router.all(/.*/, ensureContent)
 
 router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
+	var dat = []
+	ff.forEach(function(key, i) {
+		Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+			if (err) {
+				console.log(err)
+			}
+			if (data.length === 0) return;
+			if (data.length > 0) {
+				// I either add the 1 here or in template. A conundrum.
+				//chind = i + 1;
+				dat.push(data)
+				//ff.shift();
+			}
+		})
+	});
 	
 	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 	req.session.refer = newrefer;
@@ -376,7 +519,7 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 		if (data.length === 0) {
 			return res.redirect('/api/new');
 		}
-		console.log(data)
+		//console.log(data)
 		Diffs.find({}).sort({date:1}).exec(function(err, diffs){
 			if (err) {
 				return next(err) 
@@ -386,13 +529,15 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 				doctype: 'xml',
 				csrfToken: req.csrfToken(),
 				menu: !req.session.menu ? 'view' : req.session.menu,
-				data: data,
+				//data: data,
+				dat: dat,
 				appURL: req.app.locals.appURL
 			});
 			//console.log(str)
-			return res.render('publish', {
+			return res.render('agg', {
 				menu: !req.session.menu ? 'view' : req.session.menu,
-				data: data,
+				dat: dat,
+				//data: data,
 				str: str/*,
 				diff: (!diffs[diffs.length-1] ? null : diffs[diffs.length-1].dif)*/
 			});
@@ -401,6 +546,61 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 		
 	});
 });
+
+router.get('/export', ensureCurly, function(req, res, next){
+	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
+	req.session.refer = newrefer;
+	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+		if (err) {
+			return next(err)
+		}
+		if (data.length === 0) {
+			return res.redirect('/api/new');
+		}
+		// console.log(data)
+		var dat = []
+		ff.forEach(function(key, i) {
+			Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+				if (err) {
+					console.log(err)
+				}
+				if (data.length === 0) return;
+				if (data.length > 0) {
+					// I either add the 1 here or in template. A conundrum.
+					//chind = i + 1;
+					dat.push(data)
+					//ff.shift();
+				}
+			})
+		});
+
+		Diffs.find({}).sort({date:1}).exec(function(err, diffs){
+			if (err) {
+				return next(err) 
+			}
+			//console.log(diffs)
+			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
+				doctype: 'xml',
+				csrfToken: req.csrfToken(),
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				//data: data,
+				dat: dat,
+				appURL: req.app.locals.appURL
+			});
+			//console.log(str)
+			return res.render('export', {
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				//data: data,
+				dat: dat,
+				str: str,
+				exports: true/*,
+				diff: (!diffs[diffs.length-1] ? null : diffs[diffs.length-1].dif)*/
+			});
+		})
+			
+		
+	});
+})
 
 router.post('/diff', function(req, res, next){
 	Diffs.find({}).sort({date:1}).exec(function(err, diffs){
@@ -480,7 +680,7 @@ router.get('/list/:id/:index', function(req, res, next){
 				var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
 					csrfToken: req.csrfToken(),
 					menu: !req.session.menu ? 'view' : req.session.menu,
-					data: data,
+					//data: data,
 					doc: doc,
 					appURL: req.app.locals.appURL
 					
@@ -498,7 +698,54 @@ router.get('/list/:id/:index', function(req, res, next){
 	})
 })
 
-router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req, res, next){
+router.get('/menu/:title/:chapter', function(req, res, next){
+	var key, val;
+	var find = {}
+
+	if (!req.params.chapter || req.params.chapter === 'null') {
+		if (!req.params.title) {
+			return res.redirect('/')
+		}
+		key = 'title.ind'
+		val = parseInt(req.params.title, 10)
+		
+			
+	} else {
+		key = 'chapter.ind'
+		val = parseInt(req.params.chapter, 10)
+		
+	}
+	find[key] = val;
+	Content.find(find).sort( { index: 1 } ).lean().exec(function(err, data){
+		if (err) {
+			return next(err)
+		}
+		//console.log([data])
+		var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
+			doctype: 'xml',
+			csrfToken: req.csrfToken(),
+			menu: !req.session.menu ? 'view' : req.session.menu,
+			//data: data,
+			dat: [data],
+			appURL: req.app.locals.appURL
+		});
+		return res.render('publish', {
+			menu: !req.session.menu ? 'view' : req.session.menu,
+			//data: data,
+			dat: [data],
+			str: str,
+			exports: false
+		})
+	})
+})
+
+router.get('/api/importtxt', function(req, res, next){
+	return res.render('import', {
+		info: 'Please enter Chapter name exactly as it appears in the document'
+	})
+})
+
+router.post('/api/importtxt/:type/:chtitle', uploadmedia.single('txt'), function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	async.waterfall([
@@ -507,6 +754,7 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 				if (err) {
 					next(err)
 				}
+				var chtitle = decodeURIComponent(req.params.chtitle);
 				var entry = [];
 				//var json = require('d3').csvParse(content);
 				//console.log(content)
@@ -551,10 +799,10 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 					}
 					
 				});
-				next(null, dat);
+				next(null, dat, chtitle);
 			})
 		},
-		function(dat, next){
+		function(dat, chtitle, next){
 			dat.forEach(function(item, i){
 				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png')
 				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.png')
@@ -568,7 +816,7 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 					},
 					chapter: {
 						ind: parseInt(item.num.split('.')[1], 10),
-						str: 'General Provisions'
+						str: chtitle
 					},
 					section: {
 						ind: parseInt(item.num.split('.')[2], 10),
@@ -580,7 +828,7 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 						label: 'Edit Subtitle',
 						title: curly(item.title),
 						place: 'Edit Place',
-						description: curly(item.desc),
+						description: require('marked')(curly(item.desc)),
 						current: false,
 						media: [
 							{
@@ -610,14 +858,22 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 			next(null)
 		},
 		function(next) {
-			Content.find({}, function(err, data){
-				if (err) {
-					next(err)
-				} else {
-					next(null, data)
-				}
-				
-			})
+			var dat = []
+			ff.forEach(function(key, i) {
+				Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+					if (err) {
+						console.log(err)
+					}
+					if (data.length === 0) return;
+					if (data.length > 0) {
+						// I either add the 1 here or in template. A conundrum.
+						//chind = i + 1;
+						dat.push(data)
+						//ff.shift();
+					}
+				})
+			});
+			next(null, dat)
 		}
 	], function(err, data){
 		if (err) {
@@ -625,24 +881,6 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 		}
 		return res.status(200).send(data)
 	})
-	
-		
-		//console.log(data)
-		/*if (str) {
-			while (str.length > 0) {
-				data.push(str.split(rx)[0])
-				str = str.split(rx)[1]
-			}
-			//var rx = /^(\d{1,2}.\d{1,3}.\d{0,4}.)/gm
-			//data = str.split(rx);
-			console.log(str.split(rx))
-		}*/
-		/*Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
-			if (err) {
-				return next(err)
-			}
-			return res.status(200).send(doc)
-		})*/
 })
 
 router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req, res, next){
@@ -653,7 +891,7 @@ router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req,
 		if (err) {
 			return console.log(err)
 		}
-		console.log(req.file)
+		//console.log(req.file)
 		var entry = [];
 		var json = require('d3').csvParse(content);
 		for (var i in json) {
@@ -687,7 +925,20 @@ router.get('/api/new', function(req, res, next){
 		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png')
 		
 		var firstfew = ['Short Title', 'Purposes', 'Final Plat Required Before Lots May Be Sold', 'Enactment', 'Subdivision Defined']
-		
+		var chind = 1;
+		ff.forEach(function(key, i) {
+			Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+				if (err) {
+					console.log(err)
+				}
+				if (data.length === 0) return;
+				if (data.length > 0) {
+					// I either add the 1 here or in template. A conundrum.
+					chind = i + 1;
+					ff.shift();
+				}
+			})
+		});
 		var content = new Content({
 			type: 'Feature',
 			index: data.length,
@@ -698,21 +949,21 @@ router.get('/api/new', function(req, res, next){
 			},
 			// collection
 			chapter: {
-				ind: 1,
-				str: 'General Provisions' 
+				ind: chind,
+				str: ff[0] 
 			},
 			// document
 			section: {
-				ind: data.length + 1,
-				str: firstfew[data.length] 
+				ind: 1,
+				str: 'Introduction' 
 			},
 			properties: {
-				section: '25.01.0'+data.length+1,
+				section: '25.'+chind+'.0'+1,
 				published: true,
 				label: 'Edit Subtitle',
 				title: 'Edit Title',
 				place: 'Edit Place',
-				description: 'Sample text with  \n  \n**A.** lists and  \n  \n1. More  \n2. lists',
+				description: require('marked')('Sample text with  \n  \n**A.** lists and  \n  \n1. More  \n2. lists'),
 				current: false,
 				time: {
 					begin: moment().utc().format(),
@@ -772,6 +1023,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	var id = req.params.id;
 	var body = req.body;
 	var keys = Object.keys(body);
+	//console.log(body.lat, body.lng)
 	async.waterfall([
 		function(next){
 			
@@ -792,7 +1044,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 							//fs.writefile
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
 							var thumburl = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
-							console.log(body, thumbbuf, thumburl)
+							//console.log(body, thumbbuf, thumburl)
 							thumburls.push(thumburl.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', ''))
 							count++;
 							fs.writeFile(thumburl, thumbbuf, function(err) {
@@ -881,6 +1133,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					coordinates: [parseFloat(body.lng), parseFloat(body.lat)]
 				}
 			}
+			//console.log(entry)
 			var entrymedia = []
 			var thumbs = thumburls;
 			var count = 0;
@@ -913,27 +1166,27 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			var key2 = 'properties.media';
 			var set2 = {$set: {}};
 			set2.$set[key2] = entrymedia;
+			
+			var set3 = {$set: {}};
+			set3.$set['geometry'] = entry.geometry;
 
 			var options = {safe: true, new: true, upsert: false};
 			Content.findOneAndUpdate({_id: doc._id}, set1, options, function(err, doc) {
-
-			//dbSet(Content, doc._id, set1, options, function(err, doc){
 				if (err) {
 					next(err) 
 				}
 				Content.findOneAndUpdate({_id: doc._id}, set2, options, function(errr, doc) {
-				//dbSet(Content, doc._id, set2, options, function(errr, doc){
 					if (errr) {
 						next(errr)
-					} else {
-						next(null)
-
 					}
-					/*var str = pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
-						doc: doc
-					});
-					var file = path.join(__dirname, '../../testtemplate.xml');
-					fs.outputFileSync(file, str);*/
+					Content.findOneAndUpdate({_id: doc._id}, set3, options, function(errr, doc) {
+						if (errr) {
+							next(errr)
+						} else {
+							next(null)
+
+						}
+					})
 				})
 			})
 			
@@ -952,29 +1205,132 @@ router.post('/api/new', function(req, res, next) {
 })
 
 router.post('/api/newmedia/:id/:index', function(req, res, next) {
+	Content.findOne({_id: req.params.id}, function(err, doc){
+		if (err) {
+			return next(err) 
+		}
+		var index = parseInt(req.params.index, 10);
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png')
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png')
+		var media = {
+			index: index,
+			name: 'Image '+(index + 1)+'',
+			image: '/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
+			image_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
+			iframe: null,
+			thumb: '/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png',
+			thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png',
+			caption: '',
+			postscript: '',
+			featured: false
+		}
+		Content.findOneAndUpdate({_id: req.params.id}, {$push:{'properties.media': media}}, {safe:true, new:true}, function(err, doc){
+			if (err) {
+				return next(err)
+			}
+			/*return res.status(200).send(pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
+				img: media,
+				doc: doc,
+				i: index
+				
+			}))*/
+			return res.status(200).send(doc)
+		})
+	})
+	
+});
+
+router.post('/api/deleteentry/:id/:index', function(req, res, next) {
+	var id = req.params.id;
 	var index = parseInt(req.params.index, 10);
-	var media = {
-		index: index,
-		name: 'Image '+(index + 1)+'',
-		image: '/images/publish_logo_sq.png',
-		iframe: null,
-		thumb: '/images/publish_logo_sq.png',
-		caption: '',
-		postscript: '',
-		featured: false
-	}
-	Content.findOneAndUpdate({_id: req.params.id}, {$push:{'properties.media': media}}, {safe:true, new:true}, function(err, doc){
+	Content.remove({_id: id}, function(err, data) {
+		if (err) {
+			return next(err); 
+		}
+		emptyDirs(index, function(err){
+			if (err) {
+				return next(err)
+			}
+			Content.find({index:{$gt:index}}).sort( { index: 1 } ).exec(function(err, dat){
+				if (err) {
+					return next(err)
+				}
+				var indexes = [];
+				for (var i = 0; i < dat.length; i++) {
+					indexes.push(dat[i].index);
+				}
+				dat = JSON.parse(JSON.stringify(dat));
+				renameEachImgDir(dat, 'decrement', indexes, null, function(err){
+					if (err) {
+						console.log(err)
+					}
+					Content.update({index: {$gt: index}}, {$inc: {index: -1}}, { multi: true }, function(err, data) {
+						if (err) {
+							return next(err)
+						}
+					
+						return res.status(200).send('ok');
+					});
+					
+				})
+			});
+		})
+	})
+});
+
+router.post('/api/deletemedia/:id/:index', function(req, res, next) {
+	var id = req.params.id;
+	var index = parseInt(req.params.index, 10);
+	Content.findOne({_id: id}, function(err, thisdoc){
 		if (err) {
 			return next(err)
 		}
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png')
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png')
-		return res.status(200).send(pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
-			item: media,
-			doc: doc
-			
-		}))
-		//return res.status(200).send('ok')
+		Content.findOneAndUpdate({_id: id}, {$pull: {'properties.media': {index: index}}}, {multi: false, new: true}, function(err, doc) {
+			if (err) {
+				return next(err) 
+			}
+			var media = doc.properties.media;
+			if (media.length === 0) {
+				media = []
+			} else {
+				for (var i = index; i < media.length; i++) {
+					var oip = ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/'+'img_' + (i+1) + '.png';
+					var otp = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/'+'thumb_' + (i+1) + '.png';
+					var nip = ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/'+'img_' + i + '.png';
+					var ntp = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/'+'thumb_' + i + '.png';
+					var options = {nonull:true,nodir:true}
+					var oldImgPath = glob.sync(oip, options)[0];
+					var oldThumbPath = glob.sync(otp, options)[0];
+					var newImgPath = glob.sync(nip, options)[0];
+					var newThumbPath = glob.sync(ntp, options)[0];
+					fs.moveSync(oldImgPath, newImgPath, { overwrite: true });
+					fs.moveSync(oldThumbPath, newThumbPath, { overwrite: true });
+					media[i].image_abs = newImgPath;
+					media[i].thumb_abs = newThumbPath;
+					media[i].image = newImgPath.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
+					media[i].thumb = newThumbPath.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '')
+					media[i].index -= 1;
+				}
+			}
+			Content.findOneAndUpdate({_id: id}, {$set:{'properties.media': media}}, function(err, doc){
+				if (err) {
+					return next(err)
+				}
+				// if deleted media was featured, assign featured value to first media
+				if (thisdoc.properties.media[index].featured) {
+					Content.findOneAndUpdate({_id: id, 'properties.media.index': 0}, {$set: {'properties.media.$.featured': true}}, function(err, doc) {
+						if (err) {
+							return next(err)
+						}
+						return res.status(200).send(doc);
+					})
+				} else {
+					return res.status(200).send(doc);
+				}
+				
+			})
+		})	
 	})
-})
+});
+
 module.exports = router;

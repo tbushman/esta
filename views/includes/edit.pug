@@ -14,14 +14,14 @@ maintitle(style="display: block; background-color: #fff; background-color: var(-
 
 			div.tb-10-m0(v-if="edit === null", v-for="doc in data")
 				include entry.pug
-				description.tb-10-m0#description(v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
+				description.tb-10-m0#description(v-html="marked(doc.properties.description)")
 
-			div.tb-10-m0(v-if="doc && doc !== '' && edit === dindexes.indexOf(doc.index)")
+			div.tb-10-m0(v-if="doc && doc !== '' && edit === doc.index")
 				
-				form.tb-10-m0.form(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+				form.tb-10-m0.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)
 					include editor.pug
-					description.tb-10-m0#description(v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="doc.properties.description")
+				
 
 			//-
 				form.tb-10-m0.form(v-for="doc in data", v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")

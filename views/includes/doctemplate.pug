@@ -1,33 +1,24 @@
-maintitle.centerall(style="display: block;padding: 45px; pointer-events: auto;")
+maintitle.centerall
 		
 	chapter
 		section.row
-			p.row.tb-font-xl Title 
-				titlenum.bd(v-text="doc.title.ind")
-				span(v-text="' '") 
-				titlename.bd(v-text="doc.title.str")
-			p.row.tb-font-xl Chapter 
-				chapternum.bd(v-text="doc.chapter.ind")
-				span(v-text="' '")
-				chaptername.bd(v-text="doc.chapter.str")
-			hr
+			a(v-bind:href="'/'")
+				taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
+					celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+						header.row.tb-font-l Title 
+							bd.bd(v-text="doc.title.ind")
+							span(v-text="' '") 
+							span(v-text="doc.title.str")
+					celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+						header.row.tb-font-l Chapter 
+							bd.bd(v-text="doc.chapter.ind")
+							span(v-text="' '")
+							span(v-text="doc.chapter.str")
 			div.row(v-if="edit === null")
-				include entry.pug
-			form.row.form(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
-				//form.row.form(v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
-				input(type="hidden", name="_csrf", value= csrfToken)
-				include editor.pug
-				description.tb-10-m0#description(v-on:click="toggleEdit(dindexes.indexOf(doc.index))", v-html="marked(doc.properties.description)")
-
-div(v-if="edit === dindexes.indexOf(doc.index)", style="position:absolute;")
-	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
-		,
-		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto'}", xml:space="preserve"
-		, 
-		v-bind:width="wWidth +'px'",
-		v-bind:height="wHeight+'px'"
-		)
-		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")
-
-
-
+				include header.pug
+				include body.pug
+			div.row(v-else-if="edit === doc.index")
+				form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+					//form.row.form(v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+					input(type="hidden", name="_csrf", value= csrfToken)
+					include editor.pug

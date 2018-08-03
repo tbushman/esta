@@ -3,9 +3,16 @@ block page
 block content
 
 	div#vue
-		div(style="position:absolute;z-index:999999;pointer-events:all;")
-			label(for="importtxt")
-			input#importtxt(v-on:change="importTxt", type="file", value="Import TXT")
+		include includes/menu.pug
 
-		div.centerallwrap(style="background-color: #fff; background-color: var(--primary);")
+		div.centerallwrap
 			!= str
+			div(v-if="edit === doc.index", style="position:absolute;")
+				svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
+					,
+					v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto'}", xml:space="preserve"
+					, 
+					v-bind:width="wWidth +'px'",
+					v-bind:height="wHeight+'px'"
+					)
+					path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")
