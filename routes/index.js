@@ -4,7 +4,7 @@ var async = require('async');
 var router = express.Router();
 var mongoose = require('mongoose');
 var url = require('url');
-var fs = require('fs-extra');
+var fs = require('fsxt');
 var path = require('path');
 var glob = require("glob");
 //var HtmlDiff = require('node-htmldiff');
@@ -19,6 +19,7 @@ var pug = require('pug');
 var Content = require('../models/content.js');
 var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
+var ff = ['General Provisions', 'Sketch Plan', 'Intent and Purpose', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
 
 dotenv.load();
 var upload = multer();
@@ -493,6 +494,21 @@ router.get('/runtests', function(req, res, next){
 //router.all(/.*/, ensureContent)
 
 router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
+	var dat = []
+	ff.forEach(function(key, i) {
+		Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+			if (err) {
+				console.log(err)
+			}
+			if (data.length === 0) return;
+			if (data.length > 0) {
+				// I either add the 1 here or in template. A conundrum.
+				//chind = i + 1;
+				dat.push(data)
+				//ff.shift();
+			}
+		})
+	});
 	
 	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 	req.session.refer = newrefer;
@@ -513,13 +529,15 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 				doctype: 'xml',
 				csrfToken: req.csrfToken(),
 				menu: !req.session.menu ? 'view' : req.session.menu,
-				data: data,
+				//data: data,
+				dat: dat,
 				appURL: req.app.locals.appURL
 			});
 			//console.log(str)
-			return res.render('publish', {
+			return res.render('agg', {
 				menu: !req.session.menu ? 'view' : req.session.menu,
-				data: data,
+				dat: dat,
+				//data: data,
 				str: str/*,
 				diff: (!diffs[diffs.length-1] ? null : diffs[diffs.length-1].dif)*/
 			});
@@ -540,6 +558,22 @@ router.get('/export', ensureCurly, function(req, res, next){
 			return res.redirect('/api/new');
 		}
 		// console.log(data)
+		var dat = []
+		ff.forEach(function(key, i) {
+			Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+				if (err) {
+					console.log(err)
+				}
+				if (data.length === 0) return;
+				if (data.length > 0) {
+					// I either add the 1 here or in template. A conundrum.
+					//chind = i + 1;
+					dat.push(data)
+					//ff.shift();
+				}
+			})
+		});
+
 		Diffs.find({}).sort({date:1}).exec(function(err, diffs){
 			if (err) {
 				return next(err) 
@@ -549,13 +583,15 @@ router.get('/export', ensureCurly, function(req, res, next){
 				doctype: 'xml',
 				csrfToken: req.csrfToken(),
 				menu: !req.session.menu ? 'view' : req.session.menu,
-				data: data,
+				//data: data,
+				dat: dat,
 				appURL: req.app.locals.appURL
 			});
 			//console.log(str)
 			return res.render('export', {
 				menu: !req.session.menu ? 'view' : req.session.menu,
-				data: data,
+				//data: data,
+				dat: dat,
 				str: str,
 				exports: true/*,
 				diff: (!diffs[diffs.length-1] ? null : diffs[diffs.length-1].dif)*/
@@ -666,7 +702,7 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 	var key, val;
 	var find = {}
 
-	if (!req.params.chapter) {
+	if (!req.params.chapter || req.params.chapter === 'null') {
 		if (!req.params.title) {
 			return res.redirect('/')
 		}
@@ -680,27 +716,36 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 		
 	}
 	find[key] = val;
-	Content.find(find).sort( { index: 1 } ).exec(function(err, data){
+	Content.find(find).sort( { index: 1 } ).lean().exec(function(err, data){
 		if (err) {
 			return next(err)
 		}
+		//console.log([data])
 		var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 			doctype: 'xml',
 			csrfToken: req.csrfToken(),
 			menu: !req.session.menu ? 'view' : req.session.menu,
-			data: data,
+			//data: data,
+			dat: [data],
 			appURL: req.app.locals.appURL
 		});
 		return res.render('publish', {
 			menu: !req.session.menu ? 'view' : req.session.menu,
-			data: data,
+			//data: data,
+			dat: [data],
 			str: str,
 			exports: false
 		})
 	})
 })
 
-router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req, res, next){
+router.get('/api/importtxt', function(req, res, next){
+	return res.render('import', {
+		info: 'Please enter Chapter name exactly as it appears in the document'
+	})
+})
+
+router.post('/api/importtxt/:type/:chtitle', uploadmedia.single('txt'), function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	async.waterfall([
@@ -709,6 +754,7 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 				if (err) {
 					next(err)
 				}
+				var chtitle = decodeURIComponent(req.params.chtitle);
 				var entry = [];
 				//var json = require('d3').csvParse(content);
 				//console.log(content)
@@ -753,10 +799,10 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 					}
 					
 				});
-				next(null, dat);
+				next(null, dat, chtitle);
 			})
 		},
-		function(dat, next){
+		function(dat, chtitle, next){
 			dat.forEach(function(item, i){
 				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png')
 				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.png')
@@ -770,7 +816,7 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 					},
 					chapter: {
 						ind: parseInt(item.num.split('.')[1], 10),
-						str: 'General Provisions'
+						str: chtitle
 					},
 					section: {
 						ind: parseInt(item.num.split('.')[2], 10),
@@ -782,7 +828,7 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 						label: 'Edit Subtitle',
 						title: curly(item.title),
 						place: 'Edit Place',
-						description: curly(item.desc),
+						description: require('marked')(curly(item.desc)),
 						current: false,
 						media: [
 							{
@@ -812,14 +858,22 @@ router.post('/api/importtxt/:id/:type', uploadmedia.single('txt'), function(req,
 			next(null)
 		},
 		function(next) {
-			Content.find({}, function(err, data){
-				if (err) {
-					next(err)
-				} else {
-					next(null, data)
-				}
-				
-			})
+			var dat = []
+			ff.forEach(function(key, i) {
+				Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+					if (err) {
+						console.log(err)
+					}
+					if (data.length === 0) return;
+					if (data.length > 0) {
+						// I either add the 1 here or in template. A conundrum.
+						//chind = i + 1;
+						dat.push(data)
+						//ff.shift();
+					}
+				})
+			});
+			next(null, dat)
 		}
 	], function(err, data){
 		if (err) {
@@ -837,7 +891,7 @@ router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req,
 		if (err) {
 			return console.log(err)
 		}
-		console.log(req.file)
+		//console.log(req.file)
 		var entry = [];
 		var json = require('d3').csvParse(content);
 		for (var i in json) {
@@ -871,10 +925,9 @@ router.get('/api/new', function(req, res, next){
 		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png')
 		
 		var firstfew = ['Short Title', 'Purposes', 'Final Plat Required Before Lots May Be Sold', 'Enactment', 'Subdivision Defined']
-		var ff = ['General Provisions.', 'Sketch Plan.', 'Intent and Purpose.', 'Final Subdivision Applications.', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final.', 'Subdivision Ordinance Amendments.', 'Noticing Requirements.', 'Appeals.', 'Special Excepetions.', 'Design and Construction Standards.', 'Guarantees for Subdivision Improvements, Facilities, and Amenities.', 'Definitions.']
-		var chind = 0;
+		var chind = 1;
 		ff.forEach(function(key, i) {
-			Content.find({chapter:{$regex:key}}).lean().exec(function(err, data){
+			Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
 				if (err) {
 					console.log(err)
 				}
@@ -910,7 +963,7 @@ router.get('/api/new', function(req, res, next){
 				label: 'Edit Subtitle',
 				title: 'Edit Title',
 				place: 'Edit Place',
-				description: 'Sample text with  \n  \n**A.** lists and  \n  \n1. More  \n2. lists',
+				description: require('marked')('Sample text with  \n  \n**A.** lists and  \n  \n1. More  \n2. lists'),
 				current: false,
 				time: {
 					begin: moment().utc().format(),
@@ -970,7 +1023,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	var id = req.params.id;
 	var body = req.body;
 	var keys = Object.keys(body);
-	console.log(body.lat, body.lng)
+	//console.log(body.lat, body.lng)
 	async.waterfall([
 		function(next){
 			
@@ -991,7 +1044,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 							//fs.writefile
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
 							var thumburl = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
-							console.log(body, thumbbuf, thumburl)
+							//console.log(body, thumbbuf, thumburl)
 							thumburls.push(thumburl.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', ''))
 							count++;
 							fs.writeFile(thumburl, thumbbuf, function(err) {
@@ -1080,7 +1133,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					coordinates: [parseFloat(body.lng), parseFloat(body.lat)]
 				}
 			}
-			console.log(entry)
+			//console.log(entry)
 			var entrymedia = []
 			var thumbs = thumburls;
 			var count = 0;
@@ -1175,11 +1228,13 @@ router.post('/api/newmedia/:id/:index', function(req, res, next) {
 			if (err) {
 				return next(err)
 			}
-			return res.status(200).send(pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
+			/*return res.status(200).send(pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
 				img: media,
-				doc: doc
+				doc: doc,
+				i: index
 				
-			}))
+			}))*/
+			return res.status(200).send(doc)
 		})
 	})
 	

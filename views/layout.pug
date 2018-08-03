@@ -5,7 +5,7 @@ html
 		meta(http-equiv="X-UA-Compatible", content="IE=edge; charset=utf-8")
 		title= appTitle
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
-		link(rel="stylesheet", href="/stylesheets/simplemde.min.css")
+		//link(rel="stylesheet", href="/stylesheets/simplemde.min.css")
 		link(rel="stylesheet", href="/stylesheets/style.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 
@@ -33,10 +33,13 @@ html
 				data: function data(){
 					return {
 						menu: this.parseObj(!{JSON.stringify(menu)}),
-						data: this.parseObj(!{JSON.stringify(data)}),
+						dat: this.parseObj(!{JSON.stringify(dat)}),
+						data: '',//this.parseObj(!{JSON.stringify(data)}),
 						doc: this.parseObj(!{JSON.stringify(doc)}),
 						position: this.parseObj(!{JSON.stringify(session.position)}),
 						edit: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)}).index),
+						chindexes: [],
+						chindex: 0,
 						dindexes: [],
 						dindex: (this.parseObj(!{JSON.stringify(doc)}) === '' ? 0 : this.parseObj(!{JSON.stringify(doc)}).index),
 						cursor: null,
@@ -55,7 +58,7 @@ html
 						web: true,
 						export: this.parseBool(!{JSON.stringify(exports)}),
 						ff: ['General Provisions.', 'Sketch Plan.', 'Intent and Purpose.', 'Final Subdivision Applications.', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final.', 'Subdivision Ordinance Amendments.', 'Noticing Requirements.', 'Appeals.', 'Special Excepetions.', 'Design and Construction Standards.', 'Guarantees for Subdivision Improvements, Facilities, and Amenities.', 'Definitions.'],
-						accordions: (!this.parseBool(!{JSON.stringify(exports)}) ? [] : (this.parseObj(!{JSON.stringify(data)}) !== '' ? this.parseObj(!{JSON.stringify(data)}).map(function(doc){return doc.index}): []) )
+						accordions: (this.parseObj(!{JSON.stringify(dat)}) !== '' && this.parseBool(!{JSON.stringify(exports)}) ? this.parseObj(!{JSON.stringify(dat)}).map(function(data){return data.map(function(doc){return doc.index})}): [[]]) 
 
 						/*,
 						image: null,
@@ -79,6 +82,7 @@ html
 				},
 				mounted: function(){
 					var self = this;
+					console.log(self.accordions)
 					self.dindexes = (self.data && self.data !== '' ? self.data.map(function(doc){
 						return doc.index;
 					}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
@@ -94,8 +98,15 @@ html
 						} else {
 						}
 					}
-					console.log(self.edit)
 					if (!self.data || self.data === '') {
+						//self.dat.forEach(function(data))
+						if (self.dat[0] && self.dat[0][0].chapter.ind === self.dat[self.dat.length - 1][0].chapter.ind) {
+							self.data = self.dat[0]
+						} else {
+							if (self.dat[0]) {
+								self.data = [].concat.apply([], self.dat);
+							}
+						}
 						if (!self.doc || self.doc === '') {
 							
 						} else {
@@ -103,7 +114,6 @@ html
 							self.edit = self.doc.index;
 							self.dindexes = [self.edit];
 							self.dindex = 0;
-							console.log(self.edit)
 						}
 					}
 
@@ -111,7 +121,7 @@ html
 						/*this.simpleMde = new SimpleMDE({
 							element: document.getElementById("layouttext")[0]
 						})*/
-						if (!self.tinymce && $('#description')[0]) {
+						if (!self.tinymce && $('#description')[0] && tinymce) {
 							self.tinymce = tinymce.init({
 								menubar: false,
 								statusbar: false,
@@ -128,6 +138,7 @@ html
 					}, 500);
 					
 					self.loadMap(function(map, dataLayer){
+						if (!map) return;
 						self.map = map;
 						self.dataLayer = dataLayer;
 						self.lMarker.on('dragend', function(event){
@@ -182,12 +193,12 @@ html
 					
 				},
 				methods: {
-					addNewMedia: function(id, index) {
-
-						$.post('/api/newmedia/'+id+'/'+index+'', function(res) {
-							console.log(res)
-							$('#appendmedia').append(res);
-							//window.location.reload(true)
+					navigateTo: function(url){
+						window.location.href = url;
+					},
+					deleteEntry: function(doc) {
+						$.post('/api/deleteentry/'+doc._id+'/'+doc.index+'', function(res){
+							window.location.href = '/menu/'+doc.title.ind+'/'+doc.chapter.ind+'';
 						})
 					},
 					deleteMedia: function(ind) {
@@ -196,13 +207,14 @@ html
 							self.doc = res;
 						})
 					},
-					accordion: function(ind) {
+					accordion: function(n, ind) {
 						var self = this;
-						if (self.accordions.indexOf(ind) === -1) {
-							self.accordions.push(ind);
-							self.accordions.sort();
+						console.log(self.accordions[n])
+						if (self.accordions[n].indexOf(ind) === -1) {
+							self.accordions[n].push(ind);
+							self.accordions[n].sort();
 						} else {
-							self.accordions.splice(self.accordions.indexOf(ind), 1);
+							self.accordions[n].splice(self.accordions[n].indexOf(ind), 1);
 						}
 						/*if (e.target.tagName === 'SECTION' || e.target.tagName === 'section') {
 							if (!e.target.style.height === 'auto') {
@@ -302,8 +314,8 @@ html
 							var fd = new FormData();
 
 							fd.append("txt", file);
-							
-							var uploadurl = '/api/importtxt/'+(!self.doc || self.doc === '' ? self.data[self.dindex]._id : self.doc._id )+'/txt';
+							var chtitle = encodeURIComponent($('#chaptername').val());
+							var uploadurl = '/api/importtxt/txt/'+chtitle+'';
 							console.log(uploadurl, file)
 							$.ajax({
 								url: uploadurl,
@@ -314,9 +326,12 @@ html
 								success: function(response) { 
 									console.log('success!')
 									console.log(response)
-									self.data = response;
-									var bounds = self.dataLayer.getBounds();
-									self.map.fitBounds(bounds);
+									/*self.dat = response;
+									if (self.map) {
+										var bounds = self.dataLayer.getBounds();
+										self.map.fitBounds(bounds);
+									}*/
+									window.location.href = '/'
 								}
 								
 							})
@@ -369,10 +384,11 @@ html
 						
 					},
 					addNewMedia: function(id, index) {
-
+						var self = this;
 						$.post('/api/newmedia/'+id+'/'+index+'', function(res) {
 							console.log(res)
-							$('#appendmedia').append(res);
+							//$('#appendmedia').append(res);
+							self.doc.properties.media.push(res)
 						})
 					},
 					handleFile: function(dindex, index) {
@@ -558,12 +574,12 @@ html
 						
 						L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', options3).addTo(map);
 						//L.tileLayer('https://{s}.tiles.mapbox.com/v3/tbushman.1pnqxgvi/{z}/{x}/{y}.png', map.getBounds()).addTo(map); //slc transit
-						if (!self.dataLayer) {
+						if (!self.dataLayer && self.doc) {
 							// generate geographic points from data
 							if (self.doc && self.doc !== '') {
 								dataLayer = L.GeoJSON.geometryToLayer(self.doc).addTo(map);
 								dataCoords = self.doc.geometry.coordinates;
-							} else {
+							}/* else {
 								dataCoords = self.data[self.dindex].geometry.coordinates;
 								dataLayer = L.geoJSON(self.data, {
 									// MongoDB stores coordinates as [lng, lat]
@@ -608,11 +624,15 @@ html
 										
 									}
 								}).addTo(map);
-							}
+							}*/
 							self.lMarker = L.marker([dataCoords[1], dataCoords[0]], {draggable: true}).addTo(map);
 							map.panTo(new L.LatLng(dataCoords[1], dataCoords[0]))
+							cb(map, dataLayer)
+
+						} else {
+							cb(null)
+							console.log('when?')
 						}
-						cb(map, dataLayer)
 					},
 					coincidentVectors: function(dx, dy, cb) {
 						var self = this;

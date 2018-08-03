@@ -3,9 +3,7 @@ block page
 block content
 
 	div#vue
-		div(style="position:absolute;z-index:999999;pointer-events:all;")
-			label(for="importtxt")
-			input#importtxt(v-on:change="importTxt", type="file", value="Import TXT")
+		include includes/menu.pug
 
 		div.centerallwrap
 			!= str
