@@ -8,5 +8,5 @@ div.menu.static
 			a.submenu.drop.static(v-on:click="addMapBlob")
 				span.tb-font-l(v-text="'Save Map'")
 		if (menu === "publish")
-			a.submenu.drop.static(v-bind:href="'/api/new/'+data[0].chapter.str")
-				span.tb-font-l(v-text="'Add Section to Chapter '+data[0].chapter.ind+': '+data[0].chapter.str+''")
+			a.submenu.drop.static(v-bind:href="'/api/new/'+dat[0][0].chapter.str")
+				span.tb-font-l(v-text="'Add Section to Chapter '+dat[0][0].chapter.ind+': '+dat[0][0].chapter.str+''")

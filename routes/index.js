@@ -222,7 +222,7 @@ function rmDocs(req, res, next) {
 function rmFile(req, res, next) {
 	var imgp = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+'/'+'img_' + req.params.counter + '.png';
 	var thumbp = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+'/'+'thumb_' + req.params.counter + '.png';
-	console.log(imgp, thumbp)
+	//console.log(imgp, thumbp)
 	var options = {nonull:true,nodir:true}
 	var p = glob.sync(imgp, options)[0];
 	var q = glob.sync(thumbp, options)[0];

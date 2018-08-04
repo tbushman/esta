@@ -434,7 +434,7 @@ em {
 	height: var(--thumbw);
 }
 .dropdown.static > .submenu:last-child > span, .dropdown.static > .submenu:last-child > .ui > .fas {
-	color: rgba(0,0,0,0.3);
+	color: tomato;
 }
 .submenu.static:hover > span, .submenu.static:last-child:hover > span, .submenu.static:hover > .ui > .fas, .submenu.static:last-child:hover > .ui > .fas {
 	color: #000!important;
@@ -515,6 +515,7 @@ em {
 }
 .centerall section {
 	width: 100%;
+	cursor: pointer;
 }
 .centerall img {
 	width: 100%;

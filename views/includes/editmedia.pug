@@ -3,26 +3,28 @@ div.tb-10-m0(v-if="edit === doc.index")
 	input(v-bind:id="'inputthumb'+img.index", v-bind:name="'thumb'+img.index", v-bind:value="img.thumb", type="hidden")
 	input(v-bind:id="'inputimg'+img.index", v-bind:name="'img'+img.index", v-bind:value="img.image", type="hidden")
 	canvas(v-bind:id="'canvas'+img.index", style="display: none;")
-	input(class="featuredimg", v-bind:id="'featured'+img.index", v-bind:name="'img'+img.index+'_featured'", v-bind:value="img.featured", type="hidden")
+	//input(class="featuredimg", v-bind:id="'featured'+img.index", v-bind:name="'img'+img.index+'_featured'", v-bind:value="img.featured", type="hidden")
 
 	div.row
 		div.tb-04-m0.tb-02-m3
 			div.row(style="height: 100px;")
 				span.img(v-bind:id="img.index", v-bind:name="doc._id")
-					img(v-bind:id="'return'+img.index", v-bind:src="img.thumb+'?ver=0.0'")
+					img(v-bind:id="'return'+img.index", v-bind:src="img.image")
 		div.tb-06-m0.tb-08-m3
 			div.row
 				label(v-bind:for="'img'+img.index+'_name'") Image Title
 				input(type="text", v-bind:name="'img'+img.index+'_name'", v-bind:id="'img'+img.index+'_name'", v-bind:value="img.name")
 	div.row
 		div.tb-10-m0.tb-02-m3
-			div.tb-08-m0(style="padding-top: 8px;")
-				label Featured?
-			div.tb-02-m0
-				input(style="padding: 2px 8px;", type="button", v-bind:id="'togglefeatured_'+img.index", v-bind:class="(img.featured?'featured toggle':'toggle')")
+			//
+				div.tb-08-m0(style="padding-top: 8px;")
+					label Featured?
+				div.tb-02-m0
+					input(v-on:click="featureImg(img.index)", v-bind:id="'togglefeatured_'+img.index", v-bind:class="(img.featured?'toggle featured':'toggle')", v-bind:value="!img.featured ? false : true", v-bind:name="'img'+img.index+'_featured'", style="padding: 2px 8px;", type="button")
 
-			label(for="media") Change media:
-			input(v-bind:id="'media_'+img.index", v-on:change="handleFile(dindexes.indexOf(doc.index),img.index)", v-bind:class="'editmedia@'+img.index", type="file")
+			p
+				label(for="media") Change media:
+			input.block.spacer.success.tb-07-m0(v-bind:id="'media_'+img.index", v-on:change="handleFile(dindexes.indexOf(doc.index),img.index)", v-bind:class="'editmedia@'+img.index", type="file", style="padding: 18px;")
 			label(v-bind:for="'deletemedia_'+img.index")
 			a.danger.block.spacer.tb-08-m0(role="button", v-on:click="deleteMedia(img.index)", v-bind:id="'deletemedia_'+img.index")
 				span Delete Media
@@ -31,6 +33,6 @@ div.tb-10-m0(v-if="edit === doc.index")
 			div.row
 				label(v-bind:for="'img'+img.index+'_caption'") Image Caption
 				textarea(type="text", v-bind:name="'img'+img.index+'_caption'", v-bind:id="'img'+img.index+'_caption'", v-text="img.caption")
-				label(v-bind:for="'img'+img.index+'_postscript'") Caption postscript
-				input(type="text", v-bind:name="'img'+img.index+'_postscript'", v-bind:id="'img'+img.index+'_postscript'", value="img.postscript")
+				//label(v-bind:for="'img'+img.index+'_postscript'") Caption postscript
+				//input(type="text", v-bind:name="'img'+img.index+'_postscript'", v-bind:id="'img'+img.index+'_postscript'", value="img.postscript")
 
