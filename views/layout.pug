@@ -1,4 +1,4 @@
-doctype xml
+doctype strict
 html
 	head
 		meta(charset="utf-8")
@@ -19,6 +19,7 @@ html
 		script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
 		script(type="text/javascript", src="/scripts/leaflet.js")
 		script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.0.2/mocha.min.js")
+		script(type='text/javascript', src='/scripts/leaflet-image_0_4_0.js')
 	body
 		block page
 		block header
@@ -58,17 +59,9 @@ html
 						web: true,
 						export: this.parseBool(!{JSON.stringify(exports)}),
 						ff: ['General Provisions.', 'Sketch Plan.', 'Intent and Purpose.', 'Final Subdivision Applications.', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final.', 'Subdivision Ordinance Amendments.', 'Noticing Requirements.', 'Appeals.', 'Special Excepetions.', 'Design and Construction Standards.', 'Guarantees for Subdivision Improvements, Facilities, and Amenities.', 'Definitions.'],
-						accordions: (this.parseObj(!{JSON.stringify(dat)}) !== '' && this.parseBool(!{JSON.stringify(exports)}) ? this.parseObj(!{JSON.stringify(dat)}).map(function(data){return data.map(function(doc){return doc.index})}): [[]]) 
-
-						/*,
-						image: null,
-						thumb: null/*,
-						simpleMde: (!document.getElementById("layouttext")[0] ? null : new SimpleMDE({
-							element: document.getElementById("layouttext")[0]
-						}))*/
-						
-						
-						
+						accordions: (this.parseObj(!{JSON.stringify(dat)}) !== '' && this.parseBool(!{JSON.stringify(exports)}) ? this.parseObj(!{JSON.stringify(dat)}).map(function(data){return data.map(function(doc){return doc.index})}): [[]]),
+						uploadisreplace: false,
+						uploadchtitle: null
 					}
 				},
 				updated: function(){
@@ -82,21 +75,24 @@ html
 				},
 				mounted: function(){
 					var self = this;
-					console.log(self.accordions)
 					self.dindexes = (self.data && self.data !== '' ? self.data.map(function(doc){
 						return doc.index;
 					}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
 					self.dindexes.sort();
-					//console.log(Object.keys(self.diff))
-					//console.log(self.diff.toString())
-					//console.log(self.diff[1],self.diff[2],self.diff[3],self.diff[4],self.diff[10])
-					if (!Array.isArray(self.diff)) {
+					/*if (self.export) {
+						//console.log(self.diff[0].value)
 						if (!self.doc || self.doc === '') {
-							/*self.sendDiff(function(diffs){
-								self.diff = diffs
-							});*/
+							self.sendDiff(function(diffs){
+								self.diff = diffs.dif;
+							});
 						} else {
 						}
+					} else {
+						if (self.diff)
+							console.log(self.diff[0].value)
+					}*/
+					if (self.dat) {
+						//self.dat = self.dat.reverse()
 					}
 					if (!self.data || self.data === '') {
 						//self.dat.forEach(function(data))
@@ -118,9 +114,6 @@ html
 					}
 
 					setTimeout(function(){
-						/*this.simpleMde = new SimpleMDE({
-							element: document.getElementById("layouttext")[0]
-						})*/
 						if (!self.tinymce && $('#description')[0] && tinymce) {
 							self.tinymce = tinymce.init({
 								menubar: false,
@@ -152,9 +145,6 @@ html
 							self.position.lat = lat;
 							self.doc.geometry.coordinates = [lng, lat];
 							console.log(self.doc.geometry.coordinates)
-
-							//$('input#lat').val(position.lat)
-							//$('input#lng').val(position.lng)
 						})
 						self.dataLayer.on('click', function(event) {
 							//$('.module').removeClass('full');
@@ -166,14 +156,12 @@ html
 							pHeight = 0.5 * height;
 
 							zoom = map.getZoom();
-							var latlng = event.latlng;//event.originalEvent.clientX;
-							//var lat = event.latlng.lat;//event.originalEvent.clientY;
+							var latlng = event.latlng;
 							var dx = map.latLngToLayerPoint(latlng).x;
 							var dy = map.latLngToLayerPoint(latlng).y;
 							
 							self.coincidentVectors(dx, dy, function(ret){
 								if (ret) {
-									//console.log(dx,dy, event)
 									console.log(ret)
 									console.log('coincidences')
 									// coincidents
@@ -193,6 +181,19 @@ html
 					
 				},
 				methods: {
+					checkChapterName: function() {
+						var self = this;
+						$.post('/checkchaptername/'+$('#chaptername').val()+'', function(res){
+							if (!res) {
+								self.uploadisreplace = false;
+							} else {
+								$('#info').html('<p class="danger">You will be replacing an existing chapter.</p>')
+								self.uploadisreplace = true;
+								self.uploadchtitle = res;
+							}
+							$('#importarea').show();
+						})
+					},
 					navigateTo: function(url){
 						window.location.href = url;
 					},
@@ -209,22 +210,13 @@ html
 					},
 					accordion: function(n, ind) {
 						var self = this;
-						console.log(self.accordions[n])
+						//console.log(self.accordions[n])
 						if (self.accordions[n].indexOf(ind) === -1) {
 							self.accordions[n].push(ind);
 							self.accordions[n].sort();
 						} else {
 							self.accordions[n].splice(self.accordions[n].indexOf(ind), 1);
 						}
-						/*if (e.target.tagName === 'SECTION' || e.target.tagName === 'section') {
-							if (!e.target.style.height === 'auto') {
-								if (self.accordions.indexOf())
-								//e.target.style.height = 'auto'
-							} else {
-								//e.target.style.height = 'var(--thumbw)';
-							}
-						}*/
-						
 					},
 					parseBool: function(item) {
 						if (!item) return false;
@@ -236,23 +228,17 @@ html
 					getHTML: function(type, str) {
 						var self = this;
 						var span = document.createElement(type);
-						//var parser = new DOMParser();
 						span.innerHTML = str;
-						//console.log(span.children)
-						//parser.parseFromString(str, 'text/html')
-						//console.log(span, type, self.diff[0].value)
-						return span;
+						return span.outerHTML;
 					},
 					computeDiffStr: function(diffs) {
 						diffs.forEach(function(diff) {
-							console.log(diff)
 							return diff
 						})
 					},
 					getDiffHtml: function() {
 						var self = this;
 						sendDiff(function(diffs){
-							console.log(self.computeDiffStr(diffs))
 							return ('<test></test>')
 						})
 					},
@@ -262,7 +248,6 @@ html
 						var innerhtmldiv = $('div.centerallwrap')[0];
 						if (!innerhtmldiv) return;
 						var innerhtml = $(innerhtmldiv).html().toString();
-						
 						fd.append("str", innerhtml);
 						
 						var uploadurl = '/diff';
@@ -291,18 +276,15 @@ html
 					},
 					widthRectAttr: function(plus,type){
 						var nw = this.getSize(type).nw;
-						console.log(self.thickness, plus, type)
 						return nw - ((self.thickness + plus) * 2);
 					},
 					heightRectAttr: function(plus,type){
 						var nh = this.getSize(type).nh;
-						//console.log(nh)
 						return nh - ((self.thickness + plus) * 2);
 					},
 					panZoom: function(){
 						var self = this;
 						$.post('/panzoom/'+self.map.getCenter().lat+'/'+self.map.getCenter().lng+'/'+self.map.getZoom()+'', function(result){
-							//self.lMarker = L.marker([self.map.getCenter().lat, self.map.getCenter().lng], {draggable: true}).addTo(self.map);
 						})
 					},
 					importTxt: function(e){
@@ -315,8 +297,7 @@ html
 
 							fd.append("txt", file);
 							var chtitle = encodeURIComponent($('#chaptername').val());
-							var uploadurl = '/api/importtxt/txt/'+chtitle+'';
-							console.log(uploadurl, file)
+							var uploadurl = '/api/importtxt/txt/'+(self.uploadchtitle ? self.uploadchtitle : chtitle )+'/'+self.uploadisreplace+'';
 							$.ajax({
 								url: uploadurl,
 								type: 'POST',
@@ -324,13 +305,6 @@ html
 								processData: false,
 								contentType: false,
 								success: function(response) { 
-									console.log('success!')
-									console.log(response)
-									/*self.dat = response;
-									if (self.map) {
-										var bounds = self.dataLayer.getBounds();
-										self.map.fitBounds(bounds);
-									}*/
 									window.location.href = '/'
 								}
 								
@@ -357,8 +331,6 @@ html
 								processData: false,
 								contentType: false,
 								success: function(response) { 
-									console.log('success!')
-									console.log(response)
 									self.doc = response;
 									var bounds = self.dataLayer.getBounds();
 									self.map.fitBounds(bounds);
@@ -383,12 +355,33 @@ html
 						
 						
 					},
-					addNewMedia: function(id, index) {
+					addMapBlob: function() {
+						var self = this;
+						var ind = self.doc.properties.media.length;
+						self.addNewMedia(self.doc._id, ind, function(){
+							//var canvas = document.querySelector('canvas.leaflet-zoom-animated');
+							leafletImage(self.map, function(err, canvas){
+								if (err) {
+									return console.log(err)
+								}
+								setTimeout(function(){
+									var img = document.querySelector('img#return'+ind+'');
+									self.uploadBlob(img, canvas, ind, function(){
+
+									})
+								},2000)
+							})
+							
+							
+							
+						});
+						
+					},
+					addNewMedia: function(id, index, cb) {
 						var self = this;
 						$.post('/api/newmedia/'+id+'/'+index+'', function(res) {
-							console.log(res)
-							//$('#appendmedia').append(res);
 							self.doc.properties.media.push(res)
+							cb()
 						})
 					},
 					handleFile: function(dindex, index) {
@@ -401,7 +394,6 @@ html
 						var self = this;
 						var dataurl = null;
 						var file = self.file;
-						console.log(file)
 						if (!file) return;
 						var imagefile = file.type;
 						var imageTypes= ["image/jpeg","image/png","image/jpg","image/svg+xml"];
@@ -417,7 +409,6 @@ html
 								img.src = e.target.result;
 								var type = imagefile.split('image/')[1];
 								img.onload = function() {
-									console.log(type)
 									$('#media').val('');
 									var can = $('#canvas'+imgindex+'')[0];
 									var maxWidth = 1700 ;
@@ -436,7 +427,6 @@ html
 						}
 					},
 					checkImage: function(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype) {
-						console.log(img)
 						var self = this;
 						if (h > maxHeight) {
 							self.reSize(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype)
@@ -466,13 +456,8 @@ html
 						img.height = h;
 						this.checkImage(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype)
 					},
-					drawFull: function(img, can, w, h, imgindex, imgtype) {
+					uploadBlob: function(img, can, imgindex, cb) {
 						var self = this;
-						can.height = h;
-						can.width = w;
-						var ctx = can.getContext('2d');
-						
-						ctx.drawImage(img, 0, 0, w, h);
 						if (!HTMLCanvasElement.prototype.toBlob) {
 						 Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
 							value: function (callback, type, quality) {
@@ -489,9 +474,7 @@ html
 						can.toBlob(function(blob) {
 							var fd = new FormData();
 							fd.append("img", blob);
-							console.log(blob)
 							var uploadurl = '/api/uploadmedia/'+self.doc.index+'/'+imgindex+'/png';
-							//console.log(uploadurl)
 							$.ajax({
 								url: uploadurl,
 								type: 'POST',
@@ -501,26 +484,33 @@ html
 									success: function(response) { 
 									img.src = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
 									img.onload = function () {
-										console.log(img, response)
-										$('#inputimg'+imgindex+'').val(response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', ''))
-										/*if (!self.doc || self.doc === '') {
-											//self.data[self.dindex].properties.media[imgindex].image = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
-										} else {
-											//self.doc.properties.media[imgindex].image = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
-										}*/
+										self.doc.properties.media[imgindex].image_abs = response;
 										self.doc.properties.media[imgindex].image = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
-
-										var can = $('#canvas'+imgindex+'')[0];
-										//$('.return'+imgindex+'').attr('src', response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', ''));
-										var maxWidth = 400 ;
-										var maxHeight = 400 ;
-										var w = img.width;
-										var h = img.height;
-										self.checkImage(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype);
+										self.doc.properties.media[imgindex].thumb_abs = response;
+										self.doc.properties.media[imgindex].thumb = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
+										cb();
 									}
 								}
 							})
 						}, 'image/png');
+					},
+					drawFull: function(img, can, w, h, imgindex, imgtype) {
+						var self = this;
+						can.height = h;
+						can.width = w;
+						var ctx = can.getContext('2d');
+						
+						ctx.drawImage(img, 0, 0, w, h);
+						self.uploadBlob(img, can, imgindex, function(){
+							var can = $('#canvas'+imgindex+'')[0];
+							var maxWidth = 400 ;
+							var maxHeight = 400 ;
+							var w = img.width;
+							var h = img.height;
+
+							self.checkImage(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype);
+						})
+						
 					},
 					drawThumb: function(img, can, w, h, imgindex, imgtype) {
 						var self = this;
@@ -530,16 +520,9 @@ html
 						
 						ctx.drawImage(img, 0, 0, w, h);
 						var dataurl = can.toDataURL("image/png", 0.8);
-						console.log(dataurl.replace(/data:image\/png;base64,/, ''))
 						setTimeout(function(){
-							/*if (!self.doc || self.doc === '') {
-								//self.data[self.dindex].properties.media[imgindex].thumb = dataurl.replace(/data:image\/png;base64,/, '');
-							} else {
-							self.doc.properties.media[imgindex].thumb = dataurl.replace(/data:image\/png;base64,/, '');
-							}*/
 							self.doc.properties.media[imgindex].thumb = dataurl;
-							$('#inputthumb'+imgindex+'').val(dataurl.replace(/data:image\/png;base64,/, ''));
-							//countUp(parseInt(counter, 10))
+							//$('#inputthumb'+imgindex+'').val(dataurl.replace(/data:image\/png;base64,/, ''));
 							
 						}, 100);
 					},
@@ -555,7 +538,9 @@ html
 							zoom: (!self.position ? 6 : self.position.zoom),
 							zoomControl: false,
 							minZoom: 2,
-							maxZoom: 18
+							maxZoom: 18,
+							renderer: L.canvas(),
+							preferCanvas: true
 						});
 						if (self.infowindow === 'tooltip') {
 							L.control.zoom({
@@ -571,29 +556,34 @@ html
 							
 							attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
 						};
+						//https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png
+						//L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', options3).addTo(map);
+						//var canvas = L.tileLayer.canvas();
+						//canvas.drawTile = function(can, )
+						L.tileLayer('https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A', {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(100)}).addTo(map);
+						//var tileCanvas = L.tileLayer.canvas('https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A', {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(100)})//.addTo(map); //slc transit
+						//tileCanvas.drawTile = function()
+						//var stamenLayer = new L.StamenTileLayer('terrain');
+						//map.addLayer(stamenLayer)
+						//L.tileLayer('http://{s}.tiles.mapbox.com/v3/tbushman.iba1gl27/{z}/{x}/{y}.png').addTo(map);
 						
-						L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', options3).addTo(map);
-						//L.tileLayer('https://{s}.tiles.mapbox.com/v3/tbushman.1pnqxgvi/{z}/{x}/{y}.png', map.getBounds()).addTo(map); //slc transit
+						//L.tileLayer('http://tile.thunderforest.com/outdoors/${z}/${x}/${y}.png').addTo(map);
 						if (!self.dataLayer && self.doc) {
 							// generate geographic points from data
 							if (self.doc && self.doc !== '') {
-								dataLayer = L.GeoJSON.geometryToLayer(self.doc).addTo(map);
-								dataCoords = self.doc.geometry.coordinates;
-							}/* else {
-								dataCoords = self.data[self.dindex].geometry.coordinates;
-								dataLayer = L.geoJSON(self.data, {
+								var myRenderer = L.canvas({ padding: 0.5 });
+								//dataLayer = L.GeoJSON.geometryToLayer(self.doc).addTo(map);
+								dataLayer = L.geoJSON([self.doc], {
 									// MongoDB stores coordinates as [lng, lat]
 									// Leaflet uses [lat, lng]
 									onEachFeature: function (feature) {
 										if (feature.geometry.type === 'Point') {
-											console.log(feature.geometry.type)
-											feature.geometry.coordinates.reverse()
 										}
 										
 									},
 									geometryToLayer: function(feature) {
 										if (feature.geometry.type === 'LineString') {
-											console.log(feature.geometry.type )
+											//console.log(feature.geometry.type )
 											var geojsonPolygonOptions = {
 												fillColor: 'var(--highlight)',
 												color: '#fff',
@@ -624,9 +614,12 @@ html
 										
 									}
 								}).addTo(map);
-							}*/
+								dataCoords = self.doc.geometry.coordinates;
+							}
 							self.lMarker = L.marker([dataCoords[1], dataCoords[0]], {draggable: true}).addTo(map);
-							map.panTo(new L.LatLng(dataCoords[1], dataCoords[0]))
+							//map.panTo(new L.LatLng(dataCoords[1], dataCoords[0]));
+							var bounds = dataLayer.getBounds();
+							map.fitBounds(bounds);
 							cb(map, dataLayer)
 
 						} else {
@@ -643,12 +636,10 @@ html
 						self.map.panTo(position);
 						var ind;
 						self.doc.geometry.coordinates.forEach(function(coord, i){
-							console.log(coord, position)
 							if (coord[0] === position.lat && coord[1] === position.lng) {
 								ind = i;
 							} 
 						})
-						console.log(ind)
 						self.lMarker.setLatLng(new L.LatLng(position.lat, position.lng),{draggable:'true'});
 					}
 				}

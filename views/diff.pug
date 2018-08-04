@@ -1,0 +1,13 @@
+extends layout
+block page
+block content
+	
+	div#vue
+		include includes/menu.pug
+
+		div.centerallwrap(style="background-color: #fff; background-color: var(--primary);")
+			div.centarall#diff(v-if="diff")
+				span(v-for="part in diff")
+					ins(v-if="part.added", v-html="part.value", style="color: 'green';")
+					del(v-else-if="part.removed", v-html="part.value", style="color: 'red';")
+					span(v-else-if="part.value", v-html="part.value", style="color: 'grey';")

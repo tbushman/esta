@@ -19,7 +19,7 @@ var pug = require('pug');
 var Content = require('../models/content.js');
 var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
-var ff = ['General Provisions', 'Sketch Plan', 'Intent and Purpose', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
+var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Intent and Purpose', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
 
 dotenv.load();
 var upload = multer();
@@ -130,6 +130,93 @@ var curly = function(str){
 	//.replace(/(\d\s*)\u201d/g, '$1\"')
 	//.replace(/(\d\s*)\u2019/g, "$1\'")
 	.replace(/([a-z])\u2018([a-z])/ig, '$1\u2019$2')
+}
+
+function rmDocs(req, res, next) {
+	///api/importtxt/:type/:chtitle/:rmdoc
+	//\b(\w)
+	if (req.params.rmdoc) {
+		async.waterfall([
+			function(next){
+				Content.find({'chapter.str': {$regex: RegExp(''+decodeURIComponent(req.params.chtitle)+'\.?$')}}, function(err, data){
+					if (err) {
+						return next(err)
+					}
+					Content.remove({'chapter.str': {$regex: RegExp(''+decodeURIComponent(req.params.chtitle)+'\.?$')}}, function(err, dat){
+						if (err) {
+							return next(err)
+						}
+						data.forEach(function(doc){
+							var imgp = ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'';
+							var thumbp = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'';
+							var options = {nonull:true,nodir:true}
+							var p = glob.sync(imgp, options)[0];
+							var q = glob.sync(thumbp, options)[0];
+							fs.pathExists(q, function(err, exists){
+								if (err) {
+									console.log(err)
+								}
+								if (exists) {
+									fs.pathExists(p, function(err, exists2){
+										if (err) {
+											console.log(err)
+										}
+										if (exists2) {
+											fs.remove(p, function(e){
+												if (e) {
+													console.log(e)
+												}
+												fs.remove(q, function(e){
+													if (e) {
+														console.log(e)
+													}
+													console.log(imgp, thumbp)
+
+												})
+											})	
+										}
+									})
+								}
+							})
+						});
+						next(null, req);
+					});
+					
+				})
+			},
+			function(req, next){
+				Content.find({}).sort({index:1}).lean().exec(function(err, data){
+					if (err) {
+						return next(err)
+					}
+					data.forEach(function(doc, i){
+						if (doc.index !== i) {
+							doc.index = i;
+							Content.findOneAndUpdate({_id: doc._id}, {$set: {index: i}}, {safe: true}, function(err, doc){
+								if(err){
+									return next(err)
+								}
+							})
+							/*doc.save(function(err){
+								if (err) {
+									console.log(err);
+								} else {
+									console.log('saved')
+								}
+							})*/
+						}
+					})
+					next(null)
+				})
+			}
+		], function(err){
+			if (err) {
+				return next(err)
+			}
+			return next();
+		})
+
+	}
 }
 
 function rmFile(req, res, next) {
@@ -304,7 +391,7 @@ function ensureCurly(req, res, next) {
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new')
+			return res.redirect('/api/new/'+encodeURIComponent('General Provisions.')+'')
 		}
 		data.forEach(function(doc){
 			//console.log(doc.index)
@@ -329,7 +416,7 @@ function ensureContent(req, res, next) {
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new')
+			return res.redirect('/api/new/'+encodeURIComponent('General Provisions.')+'')
 		} else {
 			return next()
 		}
@@ -387,10 +474,10 @@ router.get('/runtests', function(req, res, next){
 		By = webdriver.By,
 		until = webdriver.until,
 		test = webdriver.testing;
-		var driver = new webdriver.Builder().
+	var driver = new webdriver.Builder().
 		withCapabilities(webdriver.Capabilities.chrome()).build();
-		 
-		driver.get('http://'+process.env.DEVAPPURL+'');
+	//Content.remove
+		/*driver.get('http://'+process.env.DEVAPPURL+'');
 		driver.wait(
       until.elementLocated(webdriver.By.css('#description')),
 			12000
@@ -411,7 +498,7 @@ router.get('/runtests', function(req, res, next){
 			})
 		}, function(err) {
 			return next(err)
-		});
+		});*/
 		/*
 		driver.wait(
 			until.elementLocated(webdriver.By.css('#vue')),
@@ -500,11 +587,12 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 			if (err) {
 				console.log(err)
 			}
+			
 			if (data.length === 0) return;
 			if (data.length > 0) {
 				// I either add the 1 here or in template. A conundrum.
 				//chind = i + 1;
-				dat.push(data)
+				dat.splice(0, 0, data)
 				//ff.shift();
 			}
 		})
@@ -517,7 +605,7 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new');
+			return res.redirect('/api/new/'+encodeURIComponent('General Provisions.')+'');
 		}
 		//console.log(data)
 		Diffs.find({}).sort({date:1}).exec(function(err, diffs){
@@ -555,7 +643,7 @@ router.get('/export', ensureCurly, function(req, res, next){
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new');
+			return res.redirect('/api/new/'+encodeURIComponent('General Provisions.')+'');
 		}
 		// console.log(data)
 		var dat = []
@@ -574,7 +662,7 @@ router.get('/export', ensureCurly, function(req, res, next){
 			})
 		});
 
-		Diffs.find({}).sort({date:1}).exec(function(err, diffs){
+		Diffs.find({}).sort({date:1}).lean().exec(function(err, diffs){
 			if (err) {
 				return next(err) 
 			}
@@ -593,8 +681,64 @@ router.get('/export', ensureCurly, function(req, res, next){
 				//data: data,
 				dat: dat,
 				str: str,
-				exports: true/*,
-				diff: (!diffs[diffs.length-1] ? null : diffs[diffs.length-1].dif)*/
+				exports: true
+				/*,
+				diff: (!diffs[diffs.length-1] ? null : JSON.parse(JSON.stringify(diffs[diffs.length-1].dif)))*/
+			});
+		})
+			
+		
+	});
+})
+
+router.get('/diff', function(req, res, next){
+	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
+	req.session.refer = newrefer;
+	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+		if (err) {
+			return next(err)
+		}
+		if (data.length === 0) {
+			return res.redirect('/api/new/'+encodeURIComponent('General Provisions.')+'');
+		}
+		// console.log(data)
+		var dat = []
+		ff.forEach(function(key, i) {
+			Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+				if (err) {
+					console.log(err)
+				}
+				if (data.length === 0) return;
+				if (data.length > 0) {
+					// I either add the 1 here or in template. A conundrum.
+					//chind = i + 1;
+					dat.push(data)
+					//ff.shift();
+				}
+			})
+		});
+
+		Diffs.find({}).sort({date:1}).lean().exec(function(err, diffs){
+			if (err) {
+				return next(err) 
+			}
+			//console.log(diffs)
+			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
+				doctype: 'xml',
+				csrfToken: req.csrfToken(),
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				//data: data,
+				dat: dat,
+				appURL: req.app.locals.appURL
+			});
+			//console.log(str)
+			return res.render('diff', {
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				//data: data,
+				dat: dat,
+				str: str,
+				exports: true,
+				diff: (!diffs[diffs.length-1] ? null : JSON.parse(JSON.stringify(diffs[diffs.length-1].dif)))
 			});
 		})
 			
@@ -603,47 +747,72 @@ router.get('/export', ensureCurly, function(req, res, next){
 })
 
 router.post('/diff', function(req, res, next){
-	Diffs.find({}).sort({date:1}).exec(function(err, diffs){
+	async.waterfall([
+		function(next){
+			Diffs.find({}).sort({date:1}).exec(function(err, diffs){
+				if (err) {
+					return next(err)
+				}
+				//diff.forEach(function(part){
+					//console.log(part)
+					
+				//})
+				///var textDiff = diff.main((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str)
+				
+				//var newdf = HtmlDiff((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str, 'diff', 'diff', 'form,input,label,iframe,object,math,svg,script,video,head,style').toString()//new Diff({timeout:60});
+				//console.log(newdf)
+				//var newdf = diff.main((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str);
+				//if (diffs.length === 0 || newdf.split('</ins>')[1] || newdf.split('</del>')[1]) {
+
+				var Diff = require('diff');
+				var diff = Diff.diffWordsWithSpace((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str);
+				console.log('sent this diff')
+				//console.log(diff)
+				var diffss = [];
+				if (diff.length) {
+					diff.forEach(function(dif){
+						//console.log(dif)
+						diffss.push({
+							count: dif.count,
+							value: dif.value,
+							added: dif.added,
+							removed: dif.removed
+						})
+					})
+				}
+				next(null, diffss, req)
+			})
+		},
+		function(diffs, req, next){
+			// diffs may be []
+			if (diffs.length === 0) {
+				next(null)
+			} else {
+				var newdiff = new Diffs({
+					date: new Date(),
+					dif: diffs,
+					str: req.body.str
+				});
+				newdiff.save(function(err){
+					if (err) {
+						next(err)
+					} else {
+						next (null, newdiff)
+					}
+					
+				})
+			}
+		}
+	], function(err, diff){
 		if (err) {
 			return next(err)
 		}
-		//console.log(req.body);
-		//var Diff = require('text-diff');
-		var Diff = require('diff');
-		var diff = Diff.diffChars((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str);
-		diff.forEach(function(part){
-			//console.log(part)
-			
-		})
-		///var textDiff = diff.main((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str)
-		
-		//var newdf = HtmlDiff((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str, 'diff', 'diff', 'form,input,label,iframe,object,math,svg,script,video,head,style').toString()//new Diff({timeout:60});
-		//console.log(newdf)
-		//var newdf = diff.main((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str);
-		//if (diffs.length === 0 || newdf.split('</ins>')[1] || newdf.split('</del>')[1]) {
-		if (diff.length) {
-			var newdiff = new Diffs({
-				date: new Date(),
-				dif: [...diff],
-				str: req.body.str
-			});
-			newdiff.save(function(err){
-				if (err) {
-					return next(err)
-				} else {
-					return res.status(200).send(diff)
-				}
-				
-			})
-
+		if (!diff) {
+			return res.status(200).send(null)
 		} else {
-			return res.status(200).send('unchanged');
+			return res.status(200).send(diff)
 		}
-		//console.log(newdf)
-		/*if (!newdiff) {
-			return next(new Error('no newdiff'))
-		}*/
-	});
+	})
 });
 
 router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
@@ -663,6 +832,19 @@ router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
 	return res.status(200).send('ok')
 	
 });
+
+router.post('/checkchaptername/:name', function(req, res, next){
+	Content.findOne({'chapter.str': {$regex:RegExp(''+req.params.name +'\.?$'), $options: 'im'}}, function(err, doc){
+		if (err) {
+			return next(err)
+		}
+		if (!doc) {
+			return res.status(200).send(null)
+		} else {
+			return res.status(200).send(doc.chapter.str)
+		}
+	})
+})
 
 router.get('/list/:id/:index', function(req, res, next){
 	Content.findOne({_id: req.params.id}, function(err, doc){
@@ -745,7 +927,7 @@ router.get('/api/importtxt', function(req, res, next){
 	})
 })
 
-router.post('/api/importtxt/:type/:chtitle', uploadmedia.single('txt'), function(req, res, next){
+router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('txt'), function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	async.waterfall([
@@ -754,11 +936,21 @@ router.post('/api/importtxt/:type/:chtitle', uploadmedia.single('txt'), function
 				if (err) {
 					next(err)
 				}
-				var chtitle = decodeURIComponent(req.params.chtitle);
+				var str = content.toString();
+				var newchtitlestr = str.split(/(^Chapter \d{1,3}.+$)/m)[1];
+				var newcontentstr = str.split(/(^Chapter \d{1,3}.+$)/m)[2];
+				//console.log(str.split(/(^Chapter \d{1,3}\..+$)/m))
+				var newch;
+				if (newchtitlestr) {
+					var newcharr = newchtitlestr.split(/\d/g);
+					newch = newcharr[newcharr.length - 1].trim().replace('.', '');
+				} else {
+					newch = decodeURIComponent(req.params.chtitle);
+				}
 				var entry = [];
 				//var json = require('d3').csvParse(content);
 				//console.log(content)
-				var str = content.toString();
+				//console.log(newch)
 				// description
 				// non-capturing marker at title.chapter.section index with global and multiple modifier
 				// Used to split the text into an array
@@ -771,10 +963,11 @@ router.post('/api/importtxt/:type/:chtitle', uploadmedia.single('txt'), function
 				// isolate description
 				var descrx = /(?:[\n])(.*)/si
 				//remove stray spaces
-				var dat = str.split(drx).filter(function(item){
+				var dat = newcontentstr.split(drx).filter(function(item){
 					return item !== ''
 				}).map(function(it){
 					var num;
+					//console.log(it)
 					if (numrx.exec(it)) {
 						num = numrx.exec(it)
 					} else {
@@ -790,7 +983,8 @@ router.post('/api/importtxt/:type/:chtitle', uploadmedia.single('txt'), function
 						''
 					);
 					desc = desc.replace(/^([A-Z]\.)/gm, '  \n**$1**').replace(/[\s\.]([A-Z]\.)/g, '  \n  \n**$1**');
-
+					
+					
 					return {
 						num: num[0],
 						title: (trx.exec(it) ? trx.exec(it)[1] : '').trim(),
@@ -799,62 +993,53 @@ router.post('/api/importtxt/:type/:chtitle', uploadmedia.single('txt'), function
 					}
 					
 				});
-				next(null, dat, chtitle);
+				next(null, dat, newch);
 			})
 		},
 		function(dat, chtitle, next){
 			dat.forEach(function(item, i){
-				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png')
-				fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.png')
-
-				var entry = new Content({
-					index: i,
-					type: 'Feature',
-					title: {
-						ind: parseInt(item.num.split('.')[0], 10),
-						str: 'Subdivisions'
-					},
-					chapter: {
-						ind: parseInt(item.num.split('.')[1], 10),
-						str: chtitle
-					},
-					section: {
-						ind: parseInt(item.num.split('.')[2], 10),
-						str: item.title
-					},
-					properties: {
-						section: item.num,
-						published: true,
-						label: 'Edit Subtitle',
-						title: curly(item.title),
-						place: 'Edit Place',
-						description: require('marked')(curly(item.desc)),
-						current: false,
-						media: [
-							{
-								index: 0,
-								name: 'Sample image',
-								image_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.png',
-								image: '/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png',
-								thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png',
-								thumb: '/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png',
-								caption: 'Sample caption',
-								postscript: 'Sample postscript',
-								url: 'https://pu.bli.sh'
-							}
-						]
-					},
-					geometry: {
-						type: 'Point',
-						coordinates: [-112.014717, 41.510488]
-					}
-				});
-				entry.save(function(err){
-					if (err) {
-						console.log(err)
-					}
-				})
+				if (item.num !== '') {
+					//fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png')
+					//fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.png')
+					//console.log(item)
+					var entry = new Content({
+						index: i,
+						type: 'Feature',
+						title: {
+							ind: parseInt(item.num.split('.')[0], 10),
+							str: 'Subdivisions'
+						},
+						chapter: {
+							ind: parseInt(item.num.split('.')[1], 10),
+							str: chtitle
+						},
+						section: {
+							ind: parseInt(item.num.split('.')[2], 10),
+							str: item.title
+						},
+						properties: {
+							section: item.num,
+							published: true,
+							label: 'Edit Subtitle',
+							title: curly(item.title),
+							place: 'Edit Place',
+							description: require('marked')(curly(item.desc)),
+							current: false,
+							media: []
+						},
+						geometry: {
+							type: 'Point',
+							coordinates: [-112.014717, 41.510488]
+						}
+					});
+					entry.save(function(err){
+						if (err) {
+							console.log(err)
+						}
+					})
+				}
 			});
+
 			next(null)
 		},
 		function(next) {
@@ -913,7 +1098,7 @@ router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req,
 	})
 })
 
-router.get('/api/new', function(req, res, next){
+router.get('/api/new/:chtitle', function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	//console.log(outputPath)
 	var csrf = req.csrfToken();
@@ -935,7 +1120,7 @@ router.get('/api/new', function(req, res, next){
 				if (data.length > 0) {
 					// I either add the 1 here or in template. A conundrum.
 					chind = i + 1;
-					ff.shift();
+					//ff.shift();
 				}
 			})
 		});
@@ -950,7 +1135,7 @@ router.get('/api/new', function(req, res, next){
 			// collection
 			chapter: {
 				ind: chind,
-				str: ff[0] 
+				str: req.params.chtitle 
 			},
 			// document
 			section: {
@@ -1204,6 +1389,41 @@ router.post('/api/new', function(req, res, next) {
 	
 })
 
+router.post('/api/newmap/:id/:index', uploadmedia.single('img'), function(req, res, next) {
+	Content.findOne({_id: req.params.id}, function(err, doc){
+		if (err) {
+			return next(err) 
+		}
+		var index = parseInt(req.params.index, 10);
+		//fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png')
+		//fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png')
+		var media = {
+			index: index,
+			name: 'Image '+(index + 1)+'',
+			image: '/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
+			image_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
+			iframe: null,
+			thumb: '/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png',
+			thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png',
+			caption: '',
+			postscript: '',
+			featured: false
+		}
+		Content.findOneAndUpdate({_id: req.params.id}, {$push:{'properties.media': media}}, {safe:true, new:true}, function(err, doc){
+			if (err) {
+				return next(err)
+			}
+			/*return res.status(200).send(pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
+				img: media,
+				doc: doc,
+				i: index
+				
+			}))*/
+			return res.status(200).send(doc)
+		})
+	})
+})
+
 router.post('/api/newmedia/:id/:index', function(req, res, next) {
 	Content.findOne({_id: req.params.id}, function(err, doc){
 		if (err) {
@@ -1234,7 +1454,7 @@ router.post('/api/newmedia/:id/:index', function(req, res, next) {
 				i: index
 				
 			}))*/
-			return res.status(200).send(doc)
+			return res.status(200).send(media)
 		})
 	})
 	

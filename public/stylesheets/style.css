@@ -298,6 +298,15 @@ div.thumbnails {
 	position: absolute!important;
 }
 
+breadcrumbs {
+	bottom: 0;
+	z-index: 999999999999;
+	padding: 3px;
+	width: 100%;
+	background-color: var(--primary);
+	text-align: right;
+	float: right;
+}
 .breadcrumbs {
 	color: #4e003a;
 	color: var(--quinary);
@@ -367,8 +376,8 @@ em {
 	margin: 0 auto;
 	justify-content: center;
 	width: auto;
-	left: 150px;
-	right: 150px;
+	left: auto;
+	right: 33px;
 }
 .submenu.static {
 	display: inline-block!important;
@@ -813,8 +822,7 @@ input[type="text"], input[type="password"], input[type="email"], input[type="num
 	color: #000;
 	color: var(--secondary);
 	border: none;
-	border-bottom: 1px solid #4e003a;
-	border-bottom: 1px solid var(--quinary);
+	border-bottom: 1px solid #e1e1e1;
 	border-radius: 0;
 	outline: none;
 	height: 1.5rem;
@@ -829,6 +837,11 @@ input[type="text"], input[type="password"], input[type="email"], input[type="num
 	-webkit-transition: all 0.3s;
 	transition: all 0.3s;
 	pointer-events: all;
+}
+
+#description {
+	background-color: rgba(255,255,255,0);
+	
 }
 
 input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus, input[type="number"]:focus, textarea:focus, datalist:focus, select:focus {
@@ -917,11 +930,14 @@ a {
 	text-decoration: none;
 	color: inherit;
 }
-a:hover, a:hover span {
-	color: #888!important;
-	color: var(--highlight)!important;
+a.success:hover, a.success:hover span, button.success:hover span {
+	color: #fff!important;
+	
 }
-
+a.success:hover, a.success:hover, button.success:hover {
+	background-color: var(--quinary)!important;
+	
+}
 a:hover header {
 	color: #555!important;
 	color: var(--quarternary)!important
@@ -949,11 +965,12 @@ hr {
 }	
 
 .headrule {
-	border-top: 1px solid;
-margin-top: 20px;
-padding-top: 20px;
+	border-top: 1px solid rgb(242,242,242);
+	padding: 5px 0 8px 0;
 }
-
+section:hover {
+	background-color: #FDFEF7;
+}
 .tb-11-m0 {
 	width: 100%;
 	margin-right: 0;
@@ -1045,6 +1062,7 @@ maintitle {
 	background-color: var(--primary);
 	padding: 45px; 
 	pointer-events: auto;
+	min-height: auto!important;
 }
 rss {
 	text-align:right; 
@@ -1055,10 +1073,15 @@ table {
 }
 
 ins {
-	color: green;
+	color: green!important;
 }
 del {
-	color: red;
+	color: red!important;
+}
+#diff {
+	/*position: fixed;
+	z-index: 999;
+	height: 100vh; width:50vw; right:0;display: inline-block; position: absolute; background-color: rgb(255, 255, 255); overflow-y: scroll; pointer-events: all;*/
 }
 
 .danger {

@@ -1,5 +1,6 @@
 extends layout
 block page
+	- var menu = "publish"
 block content
 	
 	div#vue
@@ -7,12 +8,3 @@ block content
 		div.centerallwrap
 			
 			!= str
-
-		
-			div#diff(v-if="diff", style="height:50vh;display: inline-block;position: relative;background-color: #fff;overflow-y: scroll;pointer-events: all;height: 50vh;")
-				span(v-for="part in diff")
-					span(v-if="part.added", v-html="getHTML('ins',part.value)", style="color: 'green';")
-					span(v-if="part.removed", v-html="getHTML('del',part.value)", style="color: 'red';")
-					span(v-else-if="part.value", v-html="getHTML('span',part.value)", style="color: 'grey';")
-				//!= diff.dif
-				//span(v-for="part in diff", v-html="part.value")

@@ -1,5 +1,6 @@
 var express = require('express');
 var csrf = require('csurf');
+var cors = require('cors');
 var marked = require('marked');
 var favicon = require('serve-favicon');
 var session = require('express-session');
@@ -38,6 +39,22 @@ marked.setOptions({
 });
 app.locals.$ = require('jquery');
 app.locals.md = marked;
+
+app.use(cors());
+
+app.use(function(req, res, next) {
+		res.set({
+			'Access-Control-Allow-Origin' : req.headers.origin,
+			'Access-Control-Allow-Methods' : 'GET, POST, HEAD, OPTIONS',
+			'Access-Control-Allow-Headers' : 'Cache-Control, Origin, Content-Type, Accept',
+			'Access-Control-Allow-Credentials' : true
+		});
+
+		//app.use(helmet.noCache({}));
+
+		next();
+});
+
 var store = new MongoDBStore(
 	{
 		mongooseConnection: mongoose.connection,
