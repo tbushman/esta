@@ -92,7 +92,10 @@ html
 							console.log(self.diff[0].value)
 					}*/
 					if (self.dat) {
-						self.dat = self.dat.reverse()
+						self.dat.sort(function(a,b){
+							return a[0].chapter.ind > b[0].chapter.ind
+						})
+						//self.dat = self.dat.reverse()
 					}
 					if (!self.data || self.data === '') {
 						//self.dat.forEach(function(data))
