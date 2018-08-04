@@ -5,7 +5,7 @@ block content
 	div#vue
 		include includes/menu.pug
 		div.centerallwrap
-			maintitle.centerall
+			maintitle.centerall(style="height:100vh;")
 				chapter(v-for="(ch,n) in dat", v-bind:id="n", v-bind:key="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
 					taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 						//(v-if="(ch[n-1] && parseInt(doc.chapter.ind, 10) > parseInt(ch[i - 1]].chapter.ind, 10))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
@@ -19,13 +19,14 @@ block content
 									span(v-text="' '") 
 									span(v-text="ch[0].title.str")
 								p.tb-font-xxl Table of Contents
+				chapter(v-for="(ch,n) in dat", v-bind:id="n", v-bind:key="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+					taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 
+					
 						celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 							a(v-bind:href="'/menu/'+ch[0].title.ind+'/'+ch[0].chapter.ind+''")
 								header.row.tb-font-l Chapter 
 									bd.bd(v-text="ch[0].chapter.ind")
 									span(v-text="' '")
 									span(v-text="ch[0].chapter.str")
-
-
 					//!= str

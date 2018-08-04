@@ -1,5 +1,9 @@
 div.menu.static
+	div.dropdown.static(v-bind:href="'/'", style="float: left; left:26px; right:auto;")
+		a.submenu.drop.static
+			span Brigham City
 	div.dropdown.static
+		
 		a.submenu.drop.static(v-bind:href="'/'")
 			span.tb-font-l(v-text="'Home'")
 		a.submenu.drop.static(v-bind:href="'/api/importtxt'")
