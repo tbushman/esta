@@ -391,7 +391,7 @@ function ensureCurly(req, res, next) {
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new/'+encodeURIComponent('General Provisions.')+'')
+			return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'')
 		}
 		data.forEach(function(doc){
 			//console.log(doc.index)
@@ -416,7 +416,7 @@ function ensureContent(req, res, next) {
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new/'+encodeURIComponent('General Provisions.')+'')
+			return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'')
 		} else {
 			return next()
 		}
@@ -582,57 +582,67 @@ router.get('/runtests', function(req, res, next){
 
 router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 	var dat = []
-	ff.forEach(function(key, i) {
-		Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
-			if (err) {
-				console.log(err)
-			}
-			
-			if (data.length === 0) return;
-			if (data.length > 0) {
-				// I either add the 1 here or in template. A conundrum.
-				//chind = i + 1;
-				dat.splice(0, 0, data)
-				//ff.shift();
-			}
-		})
-	});
-	
-	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
-	req.session.refer = newrefer;
-	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+	Content.distinct('chapter.str', function(err, distinct){
 		if (err) {
 			return next(err)
 		}
-		if (data.length === 0) {
-			return res.redirect('/api/new/'+encodeURIComponent('General Provisions.')+'');
+		if (distinct.length === 0) {
+			Content.find({}).sort({index:1}).lean().exec(function(err, data){
+				if (err) {
+					return next(err)
+				}
+				dat.push(data)
+			})
+		} else {
+			console.log(distinct)
+			distinct.forEach(function(key, i) {
+				Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+					if (err) {
+						console.log(err)
+					}
+					
+					if (data.length === 0) return;
+					if (data.length > 0) {
+						// I either add the 1 here or in template. A conundrum.
+						dat.splice(0, 0, data)
+					}
+				})
+			});
 		}
-		//console.log(data)
-		Diffs.find({}).sort({date:1}).exec(function(err, diffs){
-			if (err) {
-				return next(err) 
-			}
-			//console.log(diffs)
-			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
-				doctype: 'xml',
-				csrfToken: req.csrfToken(),
-				menu: !req.session.menu ? 'view' : req.session.menu,
-				//data: data,
-				dat: dat,
-				appURL: req.app.locals.appURL
-			});
-			//console.log(str)
-			return res.render('agg', {
-				menu: !req.session.menu ? 'view' : req.session.menu,
-				dat: dat,
-				//data: data,
-				str: str/*,
-				diff: (!diffs[diffs.length-1] ? null : diffs[diffs.length-1].dif)*/
-			});
-		})
-			
 		
+		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
+		req.session.refer = newrefer;
+		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+			if (err) {
+				return next(err)
+			}
+			if (data.length === 0) {
+				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
+			}
+			Diffs.find({}).sort({date:1}).exec(function(err, diffs){
+				if (err) {
+					return next(err) 
+				}
+				var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
+					doctype: 'xml',
+					csrfToken: req.csrfToken(),
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					ff: distinct,
+					dat: dat,
+					appURL: req.app.locals.appURL
+				});
+				return res.render('agg', {
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					dat: dat,
+					ff: distinct,
+					str: str
+				});
+			})
+				
+			
+		});
 	});
+	
 });
 
 router.get('/export', ensureCurly, function(req, res, next){
@@ -643,49 +653,58 @@ router.get('/export', ensureCurly, function(req, res, next){
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new/'+encodeURIComponent('General Provisions.')+'');
+			return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
 		}
 		// console.log(data)
 		var dat = []
-		ff.forEach(function(key, i) {
-			Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
-				if (err) {
-					console.log(err)
-				}
-				if (data.length === 0) return;
-				if (data.length > 0) {
-					// I either add the 1 here or in template. A conundrum.
-					//chind = i + 1;
-					dat.push(data)
-					//ff.shift();
-				}
-			})
-		});
-
-		Diffs.find({}).sort({date:1}).lean().exec(function(err, diffs){
+	Content.distinct('chapter.str', function(err, distinct){
 			if (err) {
-				return next(err) 
+				return next(err)
 			}
-			//console.log(diffs)
-			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
-				doctype: 'xml',
-				csrfToken: req.csrfToken(),
-				menu: !req.session.menu ? 'view' : req.session.menu,
-				//data: data,
-				dat: dat,
-				appURL: req.app.locals.appURL
-			});
-			//console.log(str)
-			return res.render('export', {
-				menu: !req.session.menu ? 'view' : req.session.menu,
-				//data: data,
-				dat: dat,
-				str: str,
-				exports: true
-				/*,
-				diff: (!diffs[diffs.length-1] ? null : JSON.parse(JSON.stringify(diffs[diffs.length-1].dif)))*/
-			});
+			if (distinct.length === 0) {
+				Content.find({}).sort({index:1}).lean().exec(function(err, data){
+					if (err) {
+						return next(err)
+					}
+					dat.push(data)
+				})
+			} else {
+				distinct.forEach(function(key, i) {
+					Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+						if (err) {
+							console.log(err)
+						}
+						if (data.length === 0) return;
+						if (data.length > 0) {
+							// I either add the 1 here or in template. A conundrum.
+							dat.splice(0, 0, data)
+						}
+					})
+				});
+			}
+
+			Diffs.find({}).sort({date:1}).lean().exec(function(err, diffs){
+				if (err) {
+					return next(err) 
+				}
+				var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
+					doctype: 'xml',
+					csrfToken: req.csrfToken(),
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					ff: distinct,
+					dat: dat,
+					appURL: req.app.locals.appURL
+				});
+				return res.render('export', {
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					ff: distinct,
+					dat: dat,
+					str: str,
+					exports: true
+				});
+			})
 		})
+		
 			
 		
 	});
@@ -699,48 +718,59 @@ router.get('/diff', function(req, res, next){
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new/'+encodeURIComponent('General Provisions.')+'');
+			return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
 		}
 		// console.log(data)
 		var dat = []
-		ff.forEach(function(key, i) {
-			Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
-				if (err) {
-					console.log(err)
-				}
-				if (data.length === 0) return;
-				if (data.length > 0) {
-					// I either add the 1 here or in template. A conundrum.
-					//chind = i + 1;
-					dat.push(data)
-					//ff.shift();
-				}
-			})
-		});
-
-		Diffs.find({}).sort({date:1}).lean().exec(function(err, diffs){
+	Content.distinct('chapter.str', function(err, distinct){
 			if (err) {
-				return next(err) 
+				return next(err)
 			}
-			//console.log(diffs)
-			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
-				doctype: 'xml',
-				csrfToken: req.csrfToken(),
-				menu: !req.session.menu ? 'view' : req.session.menu,
-				//data: data,
-				dat: dat,
-				appURL: req.app.locals.appURL
-			});
-			//console.log(str)
-			return res.render('diff', {
-				menu: !req.session.menu ? 'view' : req.session.menu,
-				//data: data,
-				dat: dat,
-				str: str,
-				exports: true,
-				diff: (!diffs[diffs.length-1] ? null : JSON.parse(JSON.stringify(diffs[diffs.length-1].dif)))
-			});
+			if (distinct.length === 0) {
+				Content.find({}).sort({index:1}).lean().exec(function(err, data){
+					if (err) {
+						return next(err)
+					}
+					dat.push(data)
+				})
+			} else {
+				distinct.forEach(function(key, i) {
+					Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+						if (err) {
+							console.log(err)
+						}
+						if (data.length === 0) return;
+						if (data.length > 0) {
+							// I either add the 1 here or in template. A conundrum.
+							dat.push(data)
+						}
+					})
+				});
+			}
+
+			Diffs.find({}).sort({date:1}).lean().exec(function(err, diffs){
+				if (err) {
+					return next(err) 
+				}
+				var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
+					doctype: 'xml',
+					csrfToken: req.csrfToken(),
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					ff: distinct,
+					dat: dat,
+					appURL: req.app.locals.appURL
+				});
+				return res.render('diff', {
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					ff: distinct,
+					dat: dat,
+					str: str,
+					exports: true,
+					diff: (!diffs[diffs.length-1] ? null : JSON.parse(JSON.stringify(diffs[diffs.length-1].dif)))
+				});
+			})
 		})
+		
 			
 		
 	});
@@ -868,12 +898,9 @@ router.get('/list/:id/:index', function(req, res, next){
 					
 				});
 				return res.render('single', {
-					//data: data,
 					doc: doc,
 					mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
 					str: str
-					/*,
-					diff:*/
 				})
 			})
 		})
@@ -902,18 +929,15 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 		if (err) {
 			return next(err)
 		}
-		//console.log([data])
 		var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 			doctype: 'xml',
 			csrfToken: req.csrfToken(),
 			menu: !req.session.menu ? 'view' : req.session.menu,
-			//data: data,
 			dat: [data],
 			appURL: req.app.locals.appURL
 		});
 		return res.render('publish', {
 			menu: !req.session.menu ? 'view' : req.session.menu,
-			//data: data,
 			dat: [data],
 			str: str,
 			exports: false
@@ -939,19 +963,15 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 				var str = content.toString();
 				var newchtitlestr = str.split(/(^Chapter \d{1,3}.+$)/m)[1];
 				var newcontentstr = str.split(/(^Chapter \d{1,3}.+$)/m)[2];
-				//console.log(str.split(/(^Chapter \d{1,3}\..+$)/m))
 				var newch;
 				if (newchtitlestr) {
 					var newcharr = newchtitlestr.split(/\d/g);
-					newch = newcharr[newcharr.length - 1].trim().replace('.', '');
+					newch = newcharr[newcharr.length - 1].replace('.', '').trim();
 				} else {
 					newch = decodeURIComponent(req.params.chtitle);
 				}
 				var entry = [];
-				//var json = require('d3').csvParse(content);
-				//console.log(content)
-				//console.log(newch)
-				// description
+
 				// non-capturing marker at title.chapter.section index with global and multiple modifier
 				// Used to split the text into an array
 				var drx = /(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)(?=\d{1,3}\.\d{1,3}\.\d{1,4}\.\s*?)/gm
@@ -967,18 +987,15 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 					return item !== ''
 				}).map(function(it){
 					var num;
-					//console.log(it)
 					if (numrx.exec(it)) {
 						num = numrx.exec(it)
 					} else {
 						num = ['']
 					}
-					//console.log(/\r/g.test(it))
+					it = it.replace(/\u2028/g, '  \n').replace(/\u2029/g, '  \n');
 					var desc = (descrx.exec(it) ? 
 						descrx.exec(it)[1].toString().trim().replace(/(\d|\w\.)\t/g, '$1 ').replace(/(\t)/g, '  \t').replace(/(\v)/g, '   \n  \n').replace(/\u2028/g, '  \n  \n')
 						.replace(/[\n ](\d\.)/g, '  \n  \n$1')
-						//.replace(/^([A-Z]\.)/gm, '  \n- **$1**')
-						//.replace(/[\s\.]([A-Z]\.)/g, '  \n  \n- **$1**')
 						: 
 						''
 					);
@@ -989,7 +1006,6 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 						num: num[0],
 						title: (trx.exec(it) ? trx.exec(it)[1] : '').trim(),
 						desc: desc.toString()
-						//.replace(/(\t)/g, '  ').replace(/(\n)/g, '\n  ').replace(/(\r)/g, '\r  ').replace(/(\s{2})/g, ' ').replace(/(\s{3})/g, '  ').replace(/(\\n)/g, '  \n').replace(/(\\r)/g, '  \r')
 					}
 					
 				});
@@ -997,68 +1013,78 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 			})
 		},
 		function(dat, chtitle, next){
-			dat.forEach(function(item, i){
-				if (item.num !== '') {
-					//fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_0.png')
-					//fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_0.png')
-					//console.log(item)
-					var entry = new Content({
-						index: i,
-						type: 'Feature',
-						title: {
-							ind: parseInt(item.num.split('.')[0], 10),
-							str: 'Subdivisions'
-						},
-						chapter: {
-							ind: parseInt(item.num.split('.')[1], 10),
-							str: chtitle
-						},
-						section: {
-							ind: parseInt(item.num.split('.')[2], 10),
-							str: item.title
-						},
-						properties: {
-							section: item.num,
-							published: true,
-							label: 'Edit Subtitle',
-							title: curly(item.title),
-							place: 'Edit Place',
-							description: require('marked')(curly(item.desc)),
-							current: false,
-							media: []
-						},
-						geometry: {
-							type: 'Point',
-							coordinates: [-112.014717, 41.510488]
-						}
-					});
-					entry.save(function(err){
-						if (err) {
-							console.log(err)
-						}
-					})
+			Content.find({}, function(err, data){
+				if (err) {
+					return next(err)
 				}
-			});
+				var startind = data.length;
+				dat.forEach(function(item, i){
+					if (item.num !== '') {
+						var entry = new Content({
+							index: startind + i,
+							type: 'Feature',
+							title: {
+								ind: parseInt(item.num.split('.')[0], 10),
+								str: 'Subdivisions'
+							},
+							chapter: {
+								ind: parseInt(item.num.split('.')[1], 10),
+								str: chtitle
+							},
+							section: {
+								ind: parseInt(item.num.split('.')[2], 10),
+								str: item.title
+							},
+							properties: {
+								section: item.num,
+								published: true,
+								label: 'Edit Subtitle',
+								title: curly(item.title),
+								place: 'Edit Place',
+								description: require('marked')(curly(item.desc)),
+								current: false,
+								media: []
+							},
+							geometry: {
+								type: 'Point',
+								coordinates: [-112.014717, 41.510488]
+							}
+						});
+						entry.save(function(err){
+							if (err) {
+								console.log(err)
+							}
+						})
+					}
+				});
 
-			next(null)
+				next(null)
+
+			})
 		},
 		function(next) {
 			var dat = []
-			ff.forEach(function(key, i) {
-				Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
-					if (err) {
-						console.log(err)
-					}
-					if (data.length === 0) return;
-					if (data.length > 0) {
-						// I either add the 1 here or in template. A conundrum.
-						//chind = i + 1;
-						dat.push(data)
-						//ff.shift();
-					}
-				})
-			});
-			next(null, dat)
+		Content.distinct('chapter.str', function(err, distinct){
+				if (err) {
+					return next(err)
+				}
+				distinct.forEach(function(key, i) {
+					Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+						if (err) {
+							console.log(err)
+						}
+						if (data.length === 0) return;
+						if (data.length > 0) {
+							// I either add the 1 here or in template. A conundrum.
+							//chind = i + 1;
+							dat.splice(0,0,data)
+							//ff.shift();
+						}
+					})
+				});
+				next(null, dat)
+			})
+			
 		}
 	], function(err, data){
 		if (err) {
@@ -1108,90 +1134,74 @@ router.get('/api/new/:chtitle', function(req, res, next){
 		}
 		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png')
 		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png')
-		
-		var firstfew = ['Short Title', 'Purposes', 'Final Plat Required Before Lots May Be Sold', 'Enactment', 'Subdivision Defined']
 		var chind = 1;
-		ff.forEach(function(key, i) {
-			Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+		var secind = '10';
+		Content.find({'chapter.str': {$regex:decodeURIComponent(req.params.chtitle)}}, function(err, chunk){
+			if (err) {
+				return next(err)
+			}
+			var content = new Content({
+				type: 'Feature',
+				index: data.length,
+				// db
+				title: {
+					ind: 25,
+					str: 'Subdivisions' 
+				},
+				chapter: {
+					ind: (chunk.length === 0 ? 1 : chunk[0].chapter.ind),
+					str: (chunk.length === 0 ? 'General Provisions.' : chunk[0].chapter.str )
+				},
+				section: {
+					ind: (chunk.length === 0 ? 1 + '0' : (chunk.length + 1) + '0'),
+					str: 'Introduction' 
+				},
+				properties: {
+					section: '25.'+chind+'.'+secind,
+					published: true,
+					label: 'Edit Subtitle',
+					title: 'Edit Title',
+					place: 'Edit Place',
+					description: require('marked')('Sample text with  \n  \n**A.** lists and  \n  \n1. More  \n2. lists'),
+					current: false,
+					time: {
+						begin: moment().utc().format(),
+						end: moment().add(1, 'hours').utc().format()
+					},
+					media: [
+						{
+							index: 0,
+							name: 'Sample image',
+							image_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png',
+							image: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
+							thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
+							thumb: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
+							caption: 'Sample caption',
+							postscript: 'Sample postscript',
+							url: 'https://pu.bli.sh'
+						}
+					]		
+				},
+				geometry: {
+					type: 'Point',
+					coordinates: [-112.014717, 41.510488]
+				}
+			});
+			content.save(function(err){
 				if (err) {
 					console.log(err)
 				}
-				if (data.length === 0) return;
-				if (data.length > 0) {
-					// I either add the 1 here or in template. A conundrum.
-					chind = i + 1;
-					//ff.shift();
-				}
-			})
-		});
-		var content = new Content({
-			type: 'Feature',
-			index: data.length,
-			// db
-			title: {
-				ind: 25,
-				str: 'Subdivisions' 
-			},
-			// collection
-			chapter: {
-				ind: chind,
-				str: req.params.chtitle 
-			},
-			// document
-			section: {
-				ind: 1,
-				str: 'Introduction' 
-			},
-			properties: {
-				section: '25.'+chind+'.0'+1,
-				published: true,
-				label: 'Edit Subtitle',
-				title: 'Edit Title',
-				place: 'Edit Place',
-				description: require('marked')('Sample text with  \n  \n**A.** lists and  \n  \n1. More  \n2. lists'),
-				current: false,
-				time: {
-					begin: moment().utc().format(),
-					end: moment().add(1, 'hours').utc().format()
-				},
-				media: [
-					{
-						index: 0,
-						name: 'Sample image',
-						image_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png',
-						image: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
-						thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
-						thumb: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
-						caption: 'Sample caption',
-						postscript: 'Sample postscript',
-						url: 'https://pu.bli.sh'
+				Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+					if (err) {
+						return next(err)
 					}
-				]		
-			},
-			geometry: {
-				type: 'Point',
-				coordinates: [-112.014717, 41.510488]
-			}
-		});
-		content.save(function(err){
-			if (err) {
-				console.log(err)
-			}
-			Content.find({}).sort( { index: 1 } ).exec(function(err, data){
-				if (err) {
-					return next(err)
-				}
-				/*
-				return res.render('edit', {
-					menu: !req.session.menu ? 'edit' : req.session.menu,
-					data: data,
-					doc: content,
-					csrfToken: csrf,
-					info: "Edit this entry now or later"
-				});*/
-				return res.redirect('/')
+					return res.redirect('/')
+				});
 			});
-		});
+			
+
+		})
+		
 	});
 });
 
@@ -1213,7 +1223,6 @@ router.post('/api/editcontent/:id', function(req, res, next){
 		function(next){
 			
 			Content.findOne({_id: req.params.id},function(err, doc) {
-			//dbFindOne(Content, req.params.id, function(err, doc){
 				if (err) {
 					return next(err)
 				}
@@ -1226,10 +1235,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						//console.log(body[thiskey])
 						var thisbody = body[thiskey];
 						if (thisbody && thisbody.split('').length > 100) {
-							//fs.writefile
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
 							var thumburl = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
-							//console.log(body, thumbbuf, thumburl)
 							thumburls.push(thumburl.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', ''))
 							count++;
 							fs.writeFile(thumburl, thumbbuf, function(err) {
@@ -1395,8 +1402,6 @@ router.post('/api/newmap/:id/:index', uploadmedia.single('img'), function(req, r
 			return next(err) 
 		}
 		var index = parseInt(req.params.index, 10);
-		//fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png')
-		//fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png')
 		var media = {
 			index: index,
 			name: 'Image '+(index + 1)+'',
@@ -1413,12 +1418,6 @@ router.post('/api/newmap/:id/:index', uploadmedia.single('img'), function(req, r
 			if (err) {
 				return next(err)
 			}
-			/*return res.status(200).send(pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
-				img: media,
-				doc: doc,
-				i: index
-				
-			}))*/
 			return res.status(200).send(doc)
 		})
 	})
@@ -1448,12 +1447,6 @@ router.post('/api/newmedia/:id/:index', function(req, res, next) {
 			if (err) {
 				return next(err)
 			}
-			/*return res.status(200).send(pug.renderFile(path.join(__dirname, '../views/includes/editmedia.pug'), {
-				img: media,
-				doc: doc,
-				i: index
-				
-			}))*/
 			return res.status(200).send(media)
 		})
 	})
