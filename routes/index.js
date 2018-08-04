@@ -19,7 +19,7 @@ var pug = require('pug');
 var Content = require('../models/content.js');
 var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
-var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Intent and Purpose', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
+var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Preliminary Subdivision Applications', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
 
 dotenv.load();
 var upload = multer();
