@@ -74,6 +74,7 @@ html
 					}
 				},
 				mounted: function(){
+					console.log(this.export)
 					var self = this;
 					self.dindexes = (self.data && self.data !== '' ? self.data.map(function(doc){
 						return doc.index;
