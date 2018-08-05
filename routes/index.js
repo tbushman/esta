@@ -594,7 +594,7 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 				dat.push(data)
 			})
 		} else {
-			console.log(distinct)
+			//console.log(distinct)
 			distinct.forEach(function(key, i) {
 				Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
 					if (err) {
