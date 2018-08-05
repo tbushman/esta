@@ -22,3 +22,20 @@ maintitle.centerall
 					//form.row.form(v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)
 					include editor.pug
+
+div.menu.static
+	div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;")
+		a.submenu.drop.static(v-on:click="document.getElementById('viewer').scrollIntoView()")
+			span Map
+div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: none;")
+	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
+		,
+		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
+		, 
+		v-bind:width="wWidth +'px'",
+		v-bind:height="wHeight+'px'",
+		style="pointer-events: none;"
+		)
+		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")
+
+#map

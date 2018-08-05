@@ -506,6 +506,7 @@ breadcrumbs a {
 	margin: 0;
 	overflow-x: hidden;
 	overflow-y: scroll;
+	/*pointer-events: all;*/
 }
 
 .centerall {
@@ -515,7 +516,6 @@ breadcrumbs a {
 	z-index: 1;
 	pointer-events: all;
 	padding: 45px;
-	pointer-events: auto;
 	min-height: 100%;
 	position: relative;
 	display: inline-block;
