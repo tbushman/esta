@@ -74,7 +74,14 @@ html
 					}
 				},
 				mounted: function(){
-					console.log(this.export)
+					console.log(this.export);
+					$(document).ready(function(){
+						document.addEventListener('keydown', function(event) {
+						  var keyName = event.key;
+							if (keyName === 'Enter') event.preventDefault()
+						  //alert('keypress event\n\n' + 'key: ' + keyName);
+						});
+					})
 					var self = this;
 					$(document).on('click', '.href', function(e){
 						e.stopPropagation();
@@ -120,22 +127,22 @@ html
 						}
 					}
 
-					setTimeout(function(){
-						if (!self.tinymce && $('#description')[0] && tinymce) {
-							self.tinymce = tinymce.init({
-								menubar: false,
-								statusbar: false,
-								theme: 'inlite',
-								inline: true,
-								selector: "#description",
-								plugins: 'table',
-								selectiion_toolbar: 'undo redo | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify alignnone | outdent indent blockquote | subscript superscript | bullist numlist | link unlink | table',
-								table_toolbar: "tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol"
+					if (!self.tinymce && $('#description')[0] && tinymce) {
+						self.tinymce = tinymce.init({
+							menubar: false,
+							statusbar: false,
+							theme: 'inlite',
+							inline: true,
+							selector: "#description",
+							//plugins: 'table',
+							plugins: 'lists',
+							selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | link unlink | table ',
+							//selectiion_toolbar: 'undo redo | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify alignnone | outdent indent blockquote | subscript superscript | bullist numlist | link unlink | table',
+							//table_toolbar: "tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol"
 
-							});
+						});
 
-						}
-					}, 500);
+					}
 					
 					self.loadMap(function(map, dataLayer){
 						if (!map) return;

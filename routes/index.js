@@ -20,10 +20,15 @@ var Content = require('../models/content.js');
 var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
 var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Preliminary Subdivision Applications', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
-
+var marked = require('marked');
 dotenv.load();
 var upload = multer();
 
+marked.setOptions({
+	gfm: true,
+	smartLists: true,
+	xhtml: true
+})
  
 
 var geolocation = require ('google-geolocation') ({
@@ -992,10 +997,33 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 					} else {
 						num = ['']
 					}
-					it = it.replace(/\u2028/g, '  \n  \n').replace(/\u2029/g, '  \n  \n');
+					console.log('newline then digit')
+					console.log(/(^\d)/gm.test(it))
+					console.log('test (\d|\w\.)\t')
+					console.log(/(\d|\w\.)\t/g.test(it))
+					console.log('test (\t)')
+					console.log(/(\t)/g.test(it))
+					console.log('test/(\v)/g')
+					console.log(/(\v)/g.test(it))
+					console.log('test/\u2028/g')
+					console.log(/\u2028/g.test(it))
+					console.log('test/[\n ](\d\.)/g')
+					console.log(/[\n ](\d\.)/g.test(it))
+					console.log('test /\:\s+(\d{1,2}\.)/g')
+					console.log(/\:\s+(\d{1,2}\.)/g.test(it))
+					console.log('test /^([A-Z]\.)/gm')
+					console.log(/^([A-Z]\.)/gm.test(it))
+					console.log('test /[\s\.]([A-Z]\.)/g')
+					console.log(/[\s\.]([A-Z]\.)/g.test(it))
+					it = it.replace(/\u2028/g, '  \n  \n');
 					var desc = (descrx.exec(it) ? 
-						descrx.exec(it)[1].toString().trim().replace(/(\d|\w\.)\t/g, '$1 ').replace(/(\t)/g, '  \t').replace(/(\v)/g, '   \n  \n').replace(/\u2028/g, '  \n  \n')
-						.replace(/[\n ](\d\.)/g, '  \n  \n$1')
+						descrx.exec(it)[1].toString().trim()
+						//.replace(/(^\d)/gm, '  \n  \n$1')
+						.replace(/^(\d|\w\.)\t/gm, '$1\\t')
+						//.replace(/(\t)/g, '  \t')
+						.replace(/(\v)/g, '   \n  \n')
+						.replace(/\u2028/g, '  \n  \n')
+						//.replace(/[\n ](\d\.)/g, '  \n  \n$1')
 						: 
 						''
 					);
@@ -1041,7 +1069,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 								label: 'Edit Subtitle',
 								title: curly(item.title),
 								place: 'Edit Place',
-								description: require('marked')(curly(item.desc)),
+								description: marked(curly(item.desc)),
 								current: false,
 								media: []
 							},
