@@ -997,7 +997,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 					} else {
 						num = ['']
 					}
-					console.log('newline then digit')
+				/*	console.log('newline then digit')
 					console.log(/(^\d)/gm.test(it))
 					console.log('test (\d|\w\.)\t')
 					console.log(/(\d|\w\.)\t/g.test(it))
@@ -1014,12 +1014,13 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 					console.log('test /^([A-Z]\.)/gm')
 					console.log(/^([A-Z]\.)/gm.test(it))
 					console.log('test /[\s\.]([A-Z]\.)/g')
-					console.log(/[\s\.]([A-Z]\.)/g.test(it))
+					console.log(/[\s\.]([A-Z]\.)/g.test(it))*/
 					it = it.replace(/\u2028/g, '  \n  \n');
 					var desc = (descrx.exec(it) ? 
 						descrx.exec(it)[1].toString().trim()
 						//.replace(/(^\d)/gm, '  \n  \n$1')
 						.replace(/^(\d|\w\.)\t/gm, '$1\\t')
+						.replace(/\s{2,3}(\d{1,4}\.)/g, '  \n$1')
 						//.replace(/(\t)/g, '  \t')
 						.replace(/(\v)/g, '   \n  \n')
 						.replace(/\u2028/g, '  \n  \n')
