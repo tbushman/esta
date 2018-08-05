@@ -76,6 +76,9 @@ html
 				mounted: function(){
 					console.log(this.export)
 					var self = this;
+					$(document).on('click', '.href', function(e){
+						e.stopPropagation();
+					});
 					self.dindexes = (self.data && self.data !== '' ? self.data.map(function(doc){
 						return doc.index;
 					}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );

@@ -1,5 +1,5 @@
 celll.tb-07-m0.tb-font-l(aid5:cellstyle="head")
-	a(v-bind:href="'/list/'+doc._id+'/null'", aid:pstyle="header")
+	a.href(v-bind:href="'/list/'+doc._id+'/null'", aid:pstyle="header")
 		bd.bd(v-if="doc.title !== undefined", v-text="doc.title.ind+'.'+doc.chapter.ind+'.'+doc.section.ind", aid:cstyle="bold")
 		span(v-text="' '")
 		span(v-text="doc.section.str")

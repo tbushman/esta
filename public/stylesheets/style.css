@@ -487,20 +487,25 @@ em {
 	min-width: 45px;
 }
 /**/
-
+breadcrumbs, celll {
+	pointer-events: none;
+}
+breadcrumbs a {
+	pointer-events: all;
+	z-index: 999;
+}
 .breadcrumbs {
 	max-width: 500px;
 }
 
 .centerallwrap {
-	display: block;
-	position: absolute;
+	display: inline-block;
+	position: relative;
 	height: 100vh;
 	width: 100%;
 	margin: 0;
 	overflow-x: hidden;
 	overflow-y: scroll;
-	pointer-events: all;
 }
 
 .centerall {
@@ -511,8 +516,9 @@ em {
 	pointer-events: all;
 	padding: 45px;
 	pointer-events: auto;
-	position: relative;
 	min-height: 100%;
+	position: relative;
+	display: inline-block;
 }
 .centerall section {
 	width: 100%;
@@ -1073,7 +1079,9 @@ rss {
 table {
 	table-layout: fixed;
 }
-
+celll {
+	z-index: 99999;
+}
 ins {
 	color: green!important;
 }
