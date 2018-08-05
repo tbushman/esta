@@ -1015,12 +1015,13 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 					console.log(/^([A-Z]\.)/gm.test(it))
 					console.log('test /[\s\.]([A-Z]\.)/g')
 					console.log(/[\s\.]([A-Z]\.)/g.test(it))*/
+					
 					it = it.replace(/\u2028/g, '  \n  \n');
 					var desc = (descrx.exec(it) ? 
 						descrx.exec(it)[1].toString().trim()
 						//.replace(/(^\d)/gm, '  \n  \n$1')
 						.replace(/^(\d|\w\.)\t/gm, '$1\\t')
-						.replace(/\s{2,3}(\d{1,4}\.)/g, '  \n$1')
+						.replace(/\s{2,7}(\d{1,4}\.)/g, '  \n$1')
 						//.replace(/(\t)/g, '  \t')
 						.replace(/(\v)/g, '   \n  \n')
 						.replace(/\u2028/g, '  \n  \n')
