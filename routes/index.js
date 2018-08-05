@@ -992,7 +992,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 					} else {
 						num = ['']
 					}
-					it = it.replace(/\u2028/g, '  \n').replace(/\u2029/g, '  \n');
+					it = it.replace(/\u2028/g, '  \n  \n').replace(/\u2029/g, '  \n  \n');
 					var desc = (descrx.exec(it) ? 
 						descrx.exec(it)[1].toString().trim().replace(/(\d|\w\.)\t/g, '$1 ').replace(/(\t)/g, '  \t').replace(/(\v)/g, '   \n  \n').replace(/\u2028/g, '  \n  \n')
 						.replace(/[\n ](\d\.)/g, '  \n  \n$1')
