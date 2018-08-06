@@ -585,12 +585,13 @@ html
 						//L.tileLayer('http://{s}.tiles.mapbox.com/v3/tbushman.iba1gl27/{z}/{x}/{y}.png').addTo(map);
 						
 						//L.tileLayer('http://tile.thunderforest.com/outdoors/${z}/${x}/${y}.png').addTo(map);
+						self.map = map
 						if (!self.dataLayer && self.doc) {
 							// generate geographic points from data
 							if (self.doc && self.doc !== '') {
 								var myRenderer = L.canvas({ padding: 0.5 });
 								//dataLayer = L.GeoJSON.geometryToLayer(self.doc).addTo(map);
-								dataLayer = L.GeoJSON.geometryToLayer(self.doc, {
+								self.dataLayer = L.GeoJSON.geometryToLayer(self.doc, {
 									// MongoDB stores coordinates as [lng, lat]
 									// Leaflet uses [lat, lng]
 									
@@ -639,8 +640,10 @@ html
 										
 									}
 								})//.addTo(map);
-								map.addLayer(dataLayer);
-								/*L.NewPolygonControl = L.Control.extend({
+								
+								//cb(map, dataLayer)
+								self.map.addLayer(self.dataLayer);
+								L.NewPolygonControl = L.Control.extend({
 
 									options: {
 											position: 'topleft'
@@ -750,8 +753,8 @@ html
 
 								map.addControl(new L.NewMarkerControl());
 								map.addControl(new L.NewLineControl());
-								
-								map.addControl(new L.NewPolygonControl());*/
+								*/
+								self.map.addControl(new L.NewPolygonControl());
 								/*map.addControl(new L.NewRectangleControl());
 								map.addControl(new L.NewCircleControl());*/
 								// wip ctrl-z undo
@@ -785,20 +788,19 @@ html
 										
 										
 									})*/
-								/*var deleteShape = function (e) {
-									var dl = dataLayer
-									console.log(e.latlng, dataLayer.editor)
-								  if ((e.originalEvent.ctrlKey || e.originalEvent.metaKey) && dataLayer.editEnabled()) {
-										dataLayer.editor.deleteShapeAt(e.latlng)
-										dataLayer.toggleEdit
+								var deleteShape = function (e) {
+									console.log(e.latlng, self.dataLayer.editor)
+								  if ((e.originalEvent.ctrlKey || e.originalEvent.metaKey) && self.dataLayer.editEnabled()) {
+										self.dataLayer.editor.deleteShapeAt(e.latlng)
+										self.dataLayer.toggleEdit
 										//map.addLayer(dl)
-										//dataLayer.editor.refresh()
+										self.dataLayer.editor.refresh()
 										//dataLayer.setLatLngs([e.latlng,e.latlng,e.latlng,e.latlng]); 
 										//dataLayer.redraw(); dataLayer.toggleEdit; /*dataLayer.editor.deleteShapeAt(e.latlng);
 									}
 								};
-								dataLayer.on('click', L.DomEvent.stop).on('click', deleteShape, dataLayer);
-								dataLayer.on('dblclick', L.DomEvent.stop).on('dblclick', dataLayer.toggleEdit);*/
+								self.dataLayer.on('click', L.DomEvent.stop).on('click', deleteShape, dataLayer);
+								self.dataLayer.on('dblclick', L.DomEvent.stop).on('dblclick', self.dataLayer.toggleEdit);
 								/*map.on('layeradd', function (e) {
 									console.log(e.layer instanceof L.GeoJSON)
 										if (e.layer instanceof L.polygon) e.layer.on('click', L.DomEvent.stop).on('click', deleteShape, e.layer);
@@ -827,7 +829,7 @@ html
 									})
 									self.doc.geometry.coordinates = [latlngs]
 								})*/
-								dataLayer.on('dragend', function(e){
+								self.dataLayer.on('dragend', function(e){
 									var latlngs = []
 									e.target.getLatLngs().forEach(function(latlng){
 										
@@ -846,7 +848,7 @@ html
 									dataCoords = self.doc.geometry.coordinates[0][0];
 
 								}
-								dataLayer.enableEdit();
+								self.dataLayer.enableEdit();
 
 								self.lMarker = L.marker([dataCoords[1], dataCoords[0]], {draggable: true}).addTo(map);
 
@@ -860,9 +862,9 @@ html
 											this._redrawBounds.extend(layer._pxBounds.max.add([padding, padding]));
 									}
 							});
-							map.panTo(new L.LatLng(dataCoords[1], dataCoords[0]));
+							self.map.panTo(new L.LatLng(dataCoords[1], dataCoords[0]));
 							
-							cb(map, dataLayer, dataCoords)
+							cb(self.map, self.dataLayer, dataCoords)
 
 						} else {
 							cb(null)
