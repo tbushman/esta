@@ -499,14 +499,14 @@ breadcrumbs a {
 }
 
 .centerallwrap {
-	display: inline-block;
+	display: block;
 	position: relative;
 	height: 100vh;
 	width: 100%;
 	margin: 0;
 	overflow-x: hidden;
 	overflow-y: scroll;
-	/*pointer-events: all;*/
+	
 }
 
 .centerall {
@@ -514,6 +514,7 @@ breadcrumbs a {
 	overflow-y: hidden;
 	overflow-x: hidden;
 	z-index: 1;
+	
 	pointer-events: all;
 	padding: 45px;
 	min-height: 100%;

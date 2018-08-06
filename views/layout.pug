@@ -373,6 +373,7 @@ html
 					addMapBlob: function() {
 						var self = this;
 						var ind = self.doc.properties.media.length;
+						$('div.centerallwrap').css('pointer-events', 'auto')
 						self.dataLayer.disableEdit();
 						self.addNewMedia(self.doc._id, ind, function(){
 							//var canvas = document.querySelector('canvas.leaflet-zoom-animated');

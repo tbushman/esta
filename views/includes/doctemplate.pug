@@ -1,4 +1,4 @@
-maintitle.centerall
+maintitle.centerall(style="clip-path: url(#myPath);pointer-events:visiblePoint;")
 		
 	chapter
 		section.row
@@ -25,9 +25,10 @@ maintitle.centerall
 
 div.menu.static
 	div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;")
-		a.submenu.drop.static(v-on:click="document.getElementById('viewer').scrollIntoView()")
+		a.submenu.drop.static(v-on:click="document.getElementById('viewer').scrollIntoView();$('div.centerallwrap').css('pointer-events', 'unset');")
 			span Map
 div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: none;")
+	
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
 		,
 		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
@@ -36,5 +37,10 @@ div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: n
 		v-bind:height="wHeight+'px'",
 		style="pointer-events: none;"
 		)
+		//
+			defs
+				clipPath#myPath(fill="none", clipPathUnits="objectBoundingBox")
+					path#path(v-bind:d="dPath", fill="none")
+				use(clip-path="url(#myPath)", xlink:href="#path")
 		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")
 
