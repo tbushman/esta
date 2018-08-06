@@ -1388,7 +1388,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					coordinates: JSON.parse(body.latlng)
 				}
 			}
-			console.log(body.latlng)
+			//console.log(body.latlng)
 			//console.log(entry)
 			var entrymedia = []
 			var thumbs = thumburls;
@@ -1580,8 +1580,10 @@ router.post('/api/deletemedia/:id/:index', function(req, res, next) {
 					var oldThumbPath = glob.sync(otp, options)[0];
 					var newImgPath = glob.sync(nip, options)[0];
 					var newThumbPath = glob.sync(ntp, options)[0];
-					fs.moveSync(oldImgPath, newImgPath, { overwrite: true });
-					fs.moveSync(oldThumbPath, newThumbPath, { overwrite: true });
+					if (fs.existsSync(oldImgPath)) {
+						fs.moveSync(oldImgPath, newImgPath, { overwrite: true });
+						fs.moveSync(oldThumbPath, newThumbPath, { overwrite: true });
+					}
 					media[i].image_abs = newImgPath;
 					media[i].thumb_abs = newThumbPath;
 					media[i].image = newImgPath.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
@@ -1594,7 +1596,7 @@ router.post('/api/deletemedia/:id/:index', function(req, res, next) {
 					return next(err)
 				}
 				// if deleted media was featured, assign featured value to first media
-				if (thisdoc.properties.media[index].featured) {
+				if (thisdoc.properties.media[index] && thisdoc.properties.media[index].featured) {
 					Content.findOneAndUpdate({_id: id, 'properties.media.index': 0}, {$set: {'properties.media.$.featured': true}}, function(err, doc) {
 						if (err) {
 							return next(err)

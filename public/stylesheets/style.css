@@ -749,9 +749,9 @@ span.img {
 }
 
 span.img > img {
-	top: -50%;
+	
 	position: absolute;
-	height: 200%;
+	height: 100%;
 	width: auto;
 }
 .flexcontainr {
