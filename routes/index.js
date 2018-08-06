@@ -1388,7 +1388,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					coordinates: JSON.parse(body.latlng)
 				}
 			}
-			console.log(body.latlng)
+			//console.log(body.latlng)
 			//console.log(entry)
 			var entrymedia = []
 			var thumbs = thumburls;
