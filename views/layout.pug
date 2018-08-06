@@ -8,6 +8,7 @@ html
 		//link(rel="stylesheet", href="/stylesheets/simplemde.min.css")
 		link(rel="stylesheet", href="/stylesheets/style.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
+		link(rel="stylesheet", href="/stylesheets/leaflet.draw.css")
 
 		style(id="style", type="text/css")
 		script(type="text/javascript", src="/scripts/vue.min.js")
@@ -18,6 +19,10 @@ html
 		//script(type="text/javascript", src="/scripts/simplemde.min.js")
 		script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
 		script(type="text/javascript", src="/scripts/leaflet.js")
+		//script(type="text/javascript", src="/scripts/leaflet.draw.js")
+		//script(type="text/javascript", src="/scripts/Leaflet.draw.drag-src.js")
+		script(type="text/javascript", src="/scripts/Path.Drag.js")
+		script(type="text/javascript", src="/scripts/Leaflet.Editable.js")
 		script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.0.2/mocha.min.js")
 		script(type='text/javascript', src='/scripts/leaflet-image_0_4_0.js')
 	body
@@ -61,7 +66,9 @@ html
 						ff: this.parseObj(!{JSON.stringify(ff)}),//['General Provisions.', 'Concept Plan.', 'Sketch Plan.', 'Preliminary Subdivision Applications.', 'Final Subdivision Applications.', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final.', 'Subdivision Ordinance Amendments.', 'Noticing Requirements.', 'Appeals.', 'Special Excepetions.', 'Design and Construction Standards.', 'Guarantees for Subdivision Improvements, Facilities, and Amenities.', 'Definitions.'],
 						accordions: (this.parseObj(!{JSON.stringify(dat)}) !== '' && this.parseBool(!{JSON.stringify(exports)}) ? this.parseObj(!{JSON.stringify(dat)}).map(function(data){return data.map(function(doc){return doc.index})}): [[]]),
 						uploadisreplace: false,
-						uploadchtitle: null
+						uploadchtitle: null,
+						dragind: null,
+						latlngs: null
 					}
 				},
 				updated: function(){
@@ -134,59 +141,24 @@ html
 							theme: 'inlite',
 							inline: true,
 							selector: "#description",
-							//plugins: 'table',
+							plugins: 'table',
 							plugins: 'lists',
 							selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | link unlink | table ',
 							//selectiion_toolbar: 'undo redo | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify alignnone | outdent indent blockquote | subscript superscript | bullist numlist | link unlink | table',
-							//table_toolbar: "tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol"
+							table_toolbar: "tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol"
 
 						});
 
 					}
 					
-					self.loadMap(function(map, dataLayer){
+					self.loadMap(function(map, dataLayer, dataCoords){
 						if (!map) return;
 						self.map = map;
 						self.dataLayer = dataLayer;
-						self.lMarker.on('dragend', function(event){
-							var marker = event.target;
-							var position = event.target.getLatLng();
-							var lat = position.lat;
-							var lng = position.lng;
-							self.lMarker.setLatLng(new L.LatLng(position.lat, position.lng),{draggable:'true'});
-							self.map.panTo(new L.LatLng(position.lat, position.lng))
-							self.position.lng = lng;
-							self.position.lat = lat;
-							self.doc.geometry.coordinates = [lng, lat];
-							console.log(self.doc.geometry.coordinates)
-						})
-						self.dataLayer.on('click', function(event) {
-							//$('.module').removeClass('full');
-							latlng = event.latlng;
+						var point = self.map.latLngToLayerPoint(new L.LatLng(dataCoords[1], dataCoords[0]))
+						var bounds = self.dataLayer.getBounds();
+						self.map.fitBounds(bounds);
 
-							width = self.wWidth;
-							height = self.wHeight;
-							pWidth = 0.5 * width;
-							pHeight = 0.5 * height;
-
-							zoom = map.getZoom();
-							var latlng = event.latlng;
-							var dx = map.latLngToLayerPoint(latlng).x;
-							var dy = map.latLngToLayerPoint(latlng).y;
-							
-							self.coincidentVectors(dx, dy, function(ret){
-								if (ret) {
-									console.log(ret)
-									console.log('coincidences')
-									// coincidents
-									list = ret;
-								} else {
-									// single click
-								}
-								
-							});
-							
-						});
 						self.panZoom();
 						
 					})
@@ -195,6 +167,27 @@ html
 					
 				},
 				methods: {
+					dragEnd: function(event, layer) {
+						var marker = event.target;
+						var position = event.target.getLatLng();
+						var lat = position.lat;
+						var lng = position.lng;
+						self.lMarker.setLatLng(new L.LatLng(position.lat, position.lng),{draggable:'true'});
+						self.map.panTo(new L.LatLng(position.lat, position.lng))
+						self.position.lng = lng;
+						self.position.lat = lat;
+						//self.doc.geometry.coordinates = [lng, lat];
+						//console.log(self.doc.geometry.coordinates)
+						if (self.dragind) {
+							console.log(self.doc.geometry.coordinates[0][self.dragind])
+							//console.log(self.dataLayer.getLatLngs())
+							self.doc.geometry.coordinates[0][self.dragind] = [lng,lat];
+							/*self.dataLayer.onEachFeature = function(feature, layer) {
+								layer.setLatLngs(self.doc.geometry.coordinates[0])
+							}*/
+						}
+
+					},
 					featureImg: function(ind){
 						var self = this;
 						var index = parseInt(ind, 10);
@@ -352,8 +345,9 @@ html
 								contentType: false,
 								success: function(response) { 
 									self.doc = response;
-									var bounds = self.dataLayer.getBounds();
-									self.map.fitBounds(bounds);
+									/*var bounds = self.dataLayer.getBounds();
+									self.map.fitBounds(bounds);*/
+									window.location.reload(true)
 								}
 								
 							})
@@ -378,12 +372,14 @@ html
 					addMapBlob: function() {
 						var self = this;
 						var ind = self.doc.properties.media.length;
+						self.dataLayer.disableEdit();
 						self.addNewMedia(self.doc._id, ind, function(){
 							//var canvas = document.querySelector('canvas.leaflet-zoom-animated');
 							leafletImage(self.map, function(err, canvas){
 								if (err) {
 									return console.log(err)
 								}
+								console.log(canvas)
 								setTimeout(function(){
 									var img = document.querySelector('img#return'+ind+'');
 									self.uploadBlob(img, canvas, ind, function(){
@@ -559,6 +555,7 @@ html
 							zoomControl: false,
 							minZoom: 2,
 							maxZoom: 18,
+							editable: true,
 							renderer: L.canvas(),
 							preferCanvas: true
 						});
@@ -580,29 +577,35 @@ html
 						//L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', options3).addTo(map);
 						//var canvas = L.tileLayer.canvas();
 						//canvas.drawTile = function(can, )
-						L.tileLayer('https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A', {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(100)}).addTo(map);
-						//var tileCanvas = L.tileLayer.canvas('https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A', {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(100)})//.addTo(map); //slc transit
+						L.tileLayer('https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A', {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000)}).addTo(map);
+						//var tileCanvas = L.tileLayer.canvas('https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A', {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(100)}).addTo(map); //slc transit
 						//tileCanvas.drawTile = function()
 						//var stamenLayer = new L.StamenTileLayer('terrain');
 						//map.addLayer(stamenLayer)
 						//L.tileLayer('http://{s}.tiles.mapbox.com/v3/tbushman.iba1gl27/{z}/{x}/{y}.png').addTo(map);
 						
 						//L.tileLayer('http://tile.thunderforest.com/outdoors/${z}/${x}/${y}.png').addTo(map);
+						self.map = map
 						if (!self.dataLayer && self.doc) {
 							// generate geographic points from data
 							if (self.doc && self.doc !== '') {
 								var myRenderer = L.canvas({ padding: 0.5 });
 								//dataLayer = L.GeoJSON.geometryToLayer(self.doc).addTo(map);
-								dataLayer = L.geoJSON([self.doc], {
+								self.dataLayer = L.GeoJSON.geometryToLayer(self.doc, {
 									// MongoDB stores coordinates as [lng, lat]
 									// Leaflet uses [lat, lng]
-									onEachFeature: function (feature) {
+									
+									onEachFeature: function (feature, layer) {
 										if (feature.geometry.type === 'Point') {
+										}
+										if (feature.geometry.type === 'Polygon') {
+											//layer.setLatLngs(self.doc.geometry.coordinates[0])
+											//self.latlngs = layer.getLatLngs()
 										}
 										
 									},
 									geometryToLayer: function(feature) {
-										if (feature.geometry.type === 'LineString') {
+										if (feature.geometry.type === 'Polygon') {
 											//console.log(feature.geometry.type )
 											var geojsonPolygonOptions = {
 												fillColor: 'var(--highlight)',
@@ -610,9 +613,12 @@ html
 												weight: 2,
 												opacity: 1,
 												fillOpacity: 0.8,
-												className: feature._id+'@'+feature.authorname+''
+												className: feature._id
+												
 											};
 											var polygon = L.polygon(feature.geometry.coordinates, geojsonPolygonOptions);
+											//polygon.enableEdit();
+											//polygon.on('dblclick', L.DomEvent.stop).on('dblclick', dataLayer.toggleEdit);
 											return polygon;
 										}
 									},
@@ -626,41 +632,244 @@ html
 												weight: 2,
 												opacity: 1,
 												fillOpacity: 0.8,
-												className: feature._id+'@'+feature.authorname+'@'+map.latLngToLayerPoint(latlng).x+','+map.latLngToLayerPoint(latlng).y+''
+												className: feature._id+'@'+map.latLngToLayerPoint(latlng).x+','+map.latLngToLayerPoint(latlng).y+''
 											};
 											var circleMarker = L.circleMarker(latlng, geojsonMarkerOptions);
 											return circleMarker;
 										}
 										
 									}
-								}).addTo(map);
-								dataCoords = self.doc.geometry.coordinates;
+								})//.addTo(map);
+								
+								//cb(map, dataLayer)
+								self.map.addLayer(self.dataLayer);
+								L.NewPolygonControl = L.Control.extend({
+
+									options: {
+											position: 'topleft'
+									},
+
+									onAdd: function (map) {
+										var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
+												link = L.DomUtil.create('a', '', container);
+
+										link.href = '#';
+										link.title = 'Create a new polygon';
+										link.innerHTML = '▱';
+										L.DomEvent.on(link, 'click', L.DomEvent.stop)
+														  .on(link, 'click', function () {
+																map.editTools.startPolygon();
+														  });
+
+										return container;
+									}
+								});
+								/** 
+									* https://github.com/w8r 
+								**/
+								/*L.EditControl = L.Control.extend({
+									options: {
+										position: 'topleft',
+										callback: null,
+										kind: '',
+										html: ''
+									},
+
+									onAdd: function (map) {
+										var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
+											link = L.DomUtil.create('a', '', container);
+										link.href = '#';
+										link.title = 'Create a new ' + this.options.kind;
+										link.innerHTML = this.options.html;
+										L.DomEvent.on(link, 'click', L.DomEvent.stop)
+										  .on(link, 'click', function () {
+												window.LAYER = this.options.callback.call(map.editTools);
+										}, this);
+										return container;
+									}
+
+								});*/
+								/*
+								L.NewLineControl = L.EditControl.extend({
+									options: {
+										position: 'topleft',
+										callback: map.editTools.startPolyline,
+										kind: 'line',
+										html: '\\/\\'
+									}
+								});
+								*/
+								/*L.NewPolygonControl = L.EditControl.extend({
+									options: {
+										position: 'topleft',
+										callback: map.editTools.startPolygon,
+										kind: 'polygon',
+										html: '▰'
+									}
+								})*/
+									/*
+									onAdd: function(map) {
+										var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
+										link = L.DomUtil.create('a', '', container);
+
+										link.href = '#';
+										link.title = 'Create a new polygon';
+										link.innerHTML = '▱';
+										L.DomEvent.on(link, 'click', L.DomEvent.stop)
+										.on(link, 'click', function () {
+												map.editTools.startPolygon();
+										});
+										
+										return container;
+									}
+								})
+								;
+								/*
+								L.NewMarkerControl = L.EditControl.extend({
+									options: {
+										position: 'topleft',
+										callback: map.editTools.startMarker,
+										kind: 'marker',
+										html: '🖈'
+									}
+								});
+
+								L.NewRectangleControl = L.EditControl.extend({
+									options: {
+										position: 'topleft',
+										callback: map.editTools.startRectangle,
+										kind: 'rectangle',
+										html: '⬛'
+									}
+								});
+								L.NewCircleControl = L.EditControl.extend({
+									options: {
+										position: 'topleft',
+										callback: map.editTools.startCircle,
+										kind: 'circle',
+										html: '⬤'
+									}
+								});
+
+								map.addControl(new L.NewMarkerControl());
+								map.addControl(new L.NewLineControl());
+								*/
+								self.map.addControl(new L.NewPolygonControl());
+								/*map.addControl(new L.NewRectangleControl());
+								map.addControl(new L.NewCircleControl());*/
+								// wip ctrl-z undo
+								/*var Z = 90, latlng, redoBuffer = [],
+										onKeyDown = function (e) {
+										if (e.keyCode == Z) {
+												if (!dataLayer.editTools._drawingEditor) return;
+												if (e.shiftKey) {
+														if (redoBuffer.length) dataLayer.editTools._drawingEditor.push(redoBuffer.pop());
+												} else {
+														latlng = dataLayer.editTools._drawingEditor.pop();
+														if (latlng) redoBuffer.push(latlng);
+												}
+										}
+								}
+								L.DomEvent.addListener(document, 'keydown', onKeyDown, map);
+								map.on('editable:drawing:end', function () {
+										redoBuffer = [];
+								});*/
+								//console.log(dataLayer.getLatLngs());
+								/*var vectors = [...documentQuerySelectorAll('.leaflet-marker-icon')]
+								vectors.forEach(function(v){
+									v.onclick = function(e){
+										
+									}
+								})*/
+								
+								/*$(document).on('click', '.leaflet-marker-icon', function(e){
+									var latlngs = []
+									/*e.target.getLatLngs().forEach(function(latlng){
+										
+										
+									})*/
+								var deleteShape = function (e) {
+									console.log(e.latlng, self.dataLayer.editor)
+								  if ((e.originalEvent.ctrlKey || e.originalEvent.metaKey) && self.dataLayer.editEnabled()) {
+										self.dataLayer.editor.deleteShapeAt(e.latlng)
+										self.dataLayer.toggleEdit
+										//map.addLayer(dl)
+										self.dataLayer.editor.refresh()
+										//dataLayer.setLatLngs([e.latlng,e.latlng,e.latlng,e.latlng]); 
+										//dataLayer.redraw(); dataLayer.toggleEdit; /*dataLayer.editor.deleteShapeAt(e.latlng);
+									}
+								};
+								self.dataLayer.on('click', L.DomEvent.stop).on('click', deleteShape, dataLayer);
+								self.dataLayer.on('dblclick', L.DomEvent.stop).on('dblclick', self.dataLayer.toggleEdit);
+								/*map.on('layeradd', function (e) {
+									console.log(e.layer instanceof L.GeoJSON)
+										if (e.layer instanceof L.polygon) e.layer.on('click', L.DomEvent.stop).on('click', deleteShape, e.layer);
+										if (e.layer instanceof L.polygon) e.layer.on('dblclick', L.DomEvent.stop).on('dblclick', e.layer.toggleEdit);
+								});*/
+								/*map.on('click', function(){
+									var latlngs = []
+									dataLayer.getLatLngs().forEach(function(latlng){
+										latlng.forEach(function(ll){
+											console.log(ll.lng)
+											latlngs.push([ll.lng,ll.lat])
+										})
+										latlngs.push([latlng[0].lng, latlng[0].lat])
+									})
+									self.doc.geometry.coordinates = [latlngs]
+								})
+								dataLayer.on('click', function(e){
+									var latlngs = []
+									e.target.getLatLngs().forEach(function(latlng){
+										
+										latlng.forEach(function(ll){
+											console.log(ll.lng)
+											latlngs.push([ll.lng,ll.lat])
+										})
+										latlngs.push([latlng[0].lng, latlng[0].lat])
+									})
+									self.doc.geometry.coordinates = [latlngs]
+								})*/
+								self.dataLayer.on('dragend', function(e){
+									var latlngs = []
+									e.target.getLatLngs().forEach(function(latlng){
+										
+										latlng.forEach(function(ll){
+											console.log(ll)
+											latlngs.push([ll.lng,ll.lat])
+										})
+										latlngs.push([latlng[0].lng, latlng[0].lat])
+									})
+									self.doc.geometry.coordinates = [latlngs]
+								})
+								//dataLayer.on('dblclick', L.DomEvent.stop).on('dblclick', dataLayer.toggleEdit);
+								if (!Array.isArray(self.doc.geometry.coordinates[0])) {
+									dataCoords = self.doc.geometry.coordinates;
+								} else {
+									dataCoords = self.doc.geometry.coordinates[0][0];
+
+								}
+								self.dataLayer.enableEdit();
+
+								self.lMarker = L.marker([dataCoords[1], dataCoords[0]], {draggable: true}).addTo(map);
+
 							}
-							self.lMarker = L.marker([dataCoords[1], dataCoords[0]], {draggable: true}).addTo(map);
-							//map.panTo(new L.LatLng(dataCoords[1], dataCoords[0]));
-							var bounds = dataLayer.getBounds();
-							map.fitBounds(bounds);
-							cb(map, dataLayer)
+							L.Canvas.include({
+									_extendRedrawBounds: function (layer) {
+											if (!layer._pxBounds) return;
+											var padding = (layer.options.weight || 0) + 1;
+											this._redrawBounds = this._redrawBounds || new L.Bounds();
+											this._redrawBounds.extend(layer._pxBounds.min.subtract([padding, padding]));
+											this._redrawBounds.extend(layer._pxBounds.max.add([padding, padding]));
+									}
+							});
+							self.map.panTo(new L.LatLng(dataCoords[1], dataCoords[0]));
+							
+							cb(self.map, self.dataLayer, dataCoords)
 
 						} else {
 							cb(null)
 							console.log('when?')
 						}
-					},
-					coincidentVectors: function(dx, dy, cb) {
-						var self = this;
-						
-						var point = L.point(dx,dy);
-						var vector = self.dataLayer.closestLayerPoint(point);
-						var position = self.map.layerPointToLatLng(vector);
-						self.map.panTo(position);
-						var ind;
-						self.doc.geometry.coordinates.forEach(function(coord, i){
-							if (coord[0] === position.lat && coord[1] === position.lng) {
-								ind = i;
-							} 
-						})
-						self.lMarker.setLatLng(new L.LatLng(position.lat, position.lng),{draggable:'true'});
 					}
 				}
 			});

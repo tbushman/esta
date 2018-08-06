@@ -330,8 +330,10 @@ function renameEachImgDir(data, direction, indexes, oldInd, next) {
 				var oldThumbDir = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(oldInd ? oldInd : doc.index)+'';
 				var newImgDir = ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'';
 				var newThumbDir = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'';
-				fs.moveSync(oldImgDir, newImgDir, { overwrite: true });
-				fs.moveSync(oldThumbDir, newThumbDir, { overwrite: true });
+				if (fs.existsSync(oldImgDir)) {
+					fs.moveSync(oldImgDir, newImgDir, { overwrite: true });
+					fs.moveSync(oldThumbDir, newThumbDir, { overwrite: true });
+				}
 				count++;
 			}
 			cb(null, qs)
@@ -1076,8 +1078,17 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 								media: []
 							},
 							geometry: {
-								type: 'Point',
-								coordinates: [-112.014717, 41.510488]
+								type: 'Polygon',
+								coordinates:
+								[
+									[
+										[-112.014822, 41.510547],
+										[-112.014822, 41.510838],
+										[-112.014442, 41.510838],
+										[-112.014442, 41.510547],
+										[-112.014822, 41.510547]
+									]
+								]
 							}
 						});
 						entry.save(function(err){
@@ -1133,24 +1144,37 @@ router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req,
 			return console.log(err)
 		}
 		//console.log(req.file)
-		var entry = [];
+		var entry = [[]];
 		var json = require('d3').csvParse(content);
 		for (var i in json) {
 			if (!isNaN(parseFloat(json[i].longitude))) {
 				var coords = [parseFloat(json[i].longitude), parseFloat(json[i].latitude)];
-				entry.push(coords)
+				entry[0].push(coords)
 			}
 		}
 		var geo = {
-			type: 'LineString',
+			type: 'Polygon',
 			coordinates: entry
 		}
-		Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
+		Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: null }}, function(err, doc){
 			if (err) {
 				return next(err)
 			}
-			return res.status(200).send(doc)
+			
+			Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
+				if (err) {
+					return next(err)
+				}
+				/*Content.findOneAndUpdate({_id: req.params.id}, {$set:{'geometry.type': 'Polygon'}}, {safe: true, new: true}, function(err, doc){
+					if (err) {
+						return next(err)
+					}*/
+					return res.status(200).send(doc)
+				//})
+			})
+			
 		})
+		
 	})
 })
 
@@ -1213,8 +1237,17 @@ router.get('/api/new/:chtitle', function(req, res, next){
 					]		
 				},
 				geometry: {
-					type: 'Point',
-					coordinates: [-112.014717, 41.510488]
+					type: 'Polygon',
+					coordinates:
+					[
+						[
+							[-112.014822, 41.510547],
+							[-112.014822, 41.510838],
+							[-112.014442, 41.510838],
+							[-112.014442, 41.510547],
+							[-112.014822, 41.510547]
+						]
+					]
 				}
 			});
 			content.save(function(err){
@@ -1351,10 +1384,11 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					media: []
 				},
 				geometry: {
-					type: "Point",
-					coordinates: [parseFloat(body.lng), parseFloat(body.lat)]
+					type: "Polygon",
+					coordinates: JSON.parse(body.latlng)
 				}
 			}
+			console.log(body.latlng)
 			//console.log(entry)
 			var entrymedia = []
 			var thumbs = thumburls;

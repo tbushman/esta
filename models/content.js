@@ -1,6 +1,8 @@
 var mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
-var Content = new Schema({
+    Schema = mongoose.Schema,
+		Content = require('mongoose-geojson-schema');
+
+var GeoJSON = new Schema({
 	type: String,
 	index: Number,
 	title: {
@@ -37,17 +39,14 @@ var Content = new Schema({
 			}
 		]
 	},
-	geometry: {
-		'type': {type: String},
-		coordinates: { type: [Number] }
-	}
+	geometry: Schema.Types.Polygon
 }, 
 //{pluralize: false}
 {collection: 'ordinancer'}
 );
 
-Content.index({ geometry: '2dsphere' });
-module.exports = mongoose.model('Content', Content);
+GeoJSON.index({ geometry: '2dsphere' });
+module.exports = mongoose.model('Content', GeoJSON);
 /*function(dbc){ 
 	
 	return mongoose.model(dbc.collection, Content, dbc.collection);
