@@ -21,6 +21,7 @@ var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
 var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Preliminary Subdivision Applications', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
 var marked = require('marked');
+var InDesign = require('async-indesign-script');
 dotenv.load();
 var upload = multer();
 
@@ -653,7 +654,17 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 });
 
 router.get('/export', ensureCurly, function(req, res, next){
-	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
+	
+	const id = new InDesign({
+    version: 'CS6'
+	});
+	console.log(path.join(__dirname, '/../..', 'indd/example.jsx'))
+	id.run(path.join(__dirname, '/../..', 'indd/example.jsx'), {
+	    message: 'hi from node'
+	}, function(res) {
+	    console.log(res);
+	});
+	/*var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 	req.session.refer = newrefer;
 	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
 		if (err) {
@@ -714,7 +725,7 @@ router.get('/export', ensureCurly, function(req, res, next){
 		
 			
 		
-	});
+	});*/
 })
 
 router.get('/diff', function(req, res, next){

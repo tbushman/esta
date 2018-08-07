@@ -20,6 +20,7 @@
   "dependencies": {
     "@tinymce/tinymce-vue": "^1.0.8",
     "async": "^2.6.1",
+    "async-indesign-script": "^1.0.3",
     "body-parser": "^1.18.3",
     "connect-mongo": "^2.0.1",
     "cookie-parser": "^1.4.3",
