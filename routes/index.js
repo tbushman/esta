@@ -654,54 +654,45 @@ router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
 });
 
 router.get('/export', ensureCurly, function(req, res, next){
-	
-	const id = new InDesign({
-    version: 'CS6'
-	});
-	console.log(path.join(__dirname, '/../..', 'indd/example.jsx'))
-	id.run(path.join(__dirname, '/../..', 'indd/example.jsx'), {
-	    message: 'hi from node'
-	}, function(res) {
-	    console.log(res);
-	});
-	/*var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
-	req.session.refer = newrefer;
-	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+	var dat = []
+	Content.distinct('chapter.str', function(err, distinct){
 		if (err) {
 			return next(err)
 		}
-		if (data.length === 0) {
-			return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
+		if (distinct.length === 0) {
+			Content.find({}).sort({index:1}).lean().exec(function(err, data){
+				if (err) {
+					return next(err)
+				}
+				dat.push(data)
+			})
+		} else {
+			//console.log(distinct)
+			distinct.forEach(function(key, i) {
+				Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+					if (err) {
+						console.log(err)
+					}
+					
+					if (data.length === 0) return;
+					if (data.length > 0) {
+						// I either add the 1 here or in template. A conundrum.
+						dat.splice(0, 0, data)
+					}
+				})
+			});
 		}
-		// console.log(data)
-		var dat = []
-	Content.distinct('chapter.str', function(err, distinct){
+		
+		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
+		req.session.refer = newrefer;
+		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
 			if (err) {
 				return next(err)
 			}
-			if (distinct.length === 0) {
-				Content.find({}).sort({index:1}).lean().exec(function(err, data){
-					if (err) {
-						return next(err)
-					}
-					dat.push(data)
-				})
-			} else {
-				distinct.forEach(function(key, i) {
-					Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
-						if (err) {
-							console.log(err)
-						}
-						if (data.length === 0) return;
-						if (data.length > 0) {
-							// I either add the 1 here or in template. A conundrum.
-							dat.splice(0, 0, data)
-						}
-					})
-				});
+			if (data.length === 0) {
+				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
 			}
-
-			Diffs.find({}).sort({date:1}).lean().exec(function(err, diffs){
+			Diffs.find({}).sort({date:1}).exec(function(err, diffs){
 				if (err) {
 					return next(err) 
 				}
@@ -715,17 +706,44 @@ router.get('/export', ensureCurly, function(req, res, next){
 				});
 				return res.render('export', {
 					menu: !req.session.menu ? 'view' : req.session.menu,
-					ff: distinct,
 					dat: dat,
+					ff: distinct,
 					str: str,
 					exports: true
 				});
 			})
-		})
-		
+				
 			
-		
-	});*/
+		});
+	});
+	/**/
+})
+
+router.post('/api/export', function(req, res, next){
+  var body = req.body;
+	console.log(req.body.xml)
+  var xmlbuf = new Buffer(body.xml, 'utf8'); // decode
+  var indd = path.join(__dirname, '/../../indd')
+  var xmlurl = path.join(__dirname, '/../../indd') + '/xml.xml';
+	console.log(xmlurl)
+  fs.writeFile(xmlurl, xmlbuf, function(err) {
+    if(err) {
+      console.log("err", err);
+    } 
+  })
+  const id = new InDesign({
+    version: 'CS6'
+  });
+  console.log(path.join(__dirname, '/../..', 'indd/example.jsx'))
+  id.run(path.join(__dirname, '/../..', 'indd/example.jsx'), {
+      message: 'hi from node',
+      dirname: path.join(__dirname, '/../..'),
+      xmlurl: 'xml.xml'
+  }, function(res) {
+      console.log(res);
+			return res.redirect('/')
+  });
+
 })
 
 router.get('/diff', function(req, res, next){

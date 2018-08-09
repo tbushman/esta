@@ -1,14 +1,6 @@
-//v-for="doc in data.filter(function(doc, i, arr){return parseInt(doc.chapter.ind, 10) > parseInt(arr[i - 1].chapter.ind) })"
-//section.headrule(v-for="doc in data.reduce(function(accumulator, currentValue, currentIndex, array) {if (parseInt(currentValue.chapter.ind, 10) > parseInt([array][currentIndex - 1].chapter.ind, 10)) {return [...accumulator, currentValue];}}, [data[0]])", v-if="RegExp(ch+'*').test(doc.chapter.str)")
-	//v-show="(i === 0 || data[dindexes.indexOf(doc.index)].chapter.ind !== data[dindexes.indexOf(doc.index) - 1].chapter.ind)"
-	//v-show="(!data[dindexes.indexOf(doc.index) - 1] ? (true === true) : (data[dindexes.indexOf(doc.index)].chapter.ind !== data[dindexes.indexOf(doc.index) - 1].chapter.ind))")
 maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
 	chapter(v-if="dat.length > 0", v-for="(data, n) in dat", v-bind:id="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
 		taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-			//(v-if="(ch[n-1] && parseInt(doc.chapter.ind, 10) > parseInt(ch[i - 1]].chapter.ind, 10))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-			
-			//v-for="doc in data", v-if="(!data[dindexes.indexOf(doc.index) - 1] ? (true === true) : (data[dindexes.indexOf(doc.index)].chapter.ind !== data[dindexes.indexOf(doc.index) - 1].chapter.ind))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry", v-once)
-			//v-show="(!data[dindexes.indexOf(doc.index) - 1] ? (true === true) : (data[dindexes.indexOf(doc.index)].chapter.ind !== data[dindexes.indexOf(doc.index) - 1].chapter.ind))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 			celll(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 				a(v-bind:href="'/'")
 					header.row.tb-font-l Title 
@@ -24,8 +16,6 @@ maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:ai
 						span(v-text="data[0].chapter.str")
 			celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 		section.headline.headrule(v-for="(doc, i) in data", v-on:click="accordion(n, doc.index)",  xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/", style="margin-top: 15px;")
-			//
-
 			taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 				include header.pug
 				include body.pug

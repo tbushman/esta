@@ -97,6 +97,30 @@ html
 						return doc.index;
 					}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
 					self.dindexes.sort();
+					if (self.export && self.export !== '') {
+						setTimeout(function(){
+							var fd = new FormData();
+							var innerhtmldiv = $('div.centerallwrap')[0];
+							if (!innerhtmldiv) return;
+							var innerhtml = $(innerhtmldiv).html().toString();
+							console.log(innerhtml)
+							fd.append("xml", innerhtml);
+							
+							var uploadurl = '/api/export';
+							$.ajax({
+								url: uploadurl,
+								type: 'POST',
+								data: fd,
+								processData: false,
+								contentType: false,
+								success: function(res) { 
+									cb(res)
+								}
+								
+							})
+						}, 5000)
+						
+					}
 					/*if (self.export) {
 						//console.log(self.diff[0].value)
 						if (!self.doc || self.doc === '') {
@@ -115,6 +139,7 @@ html
 						})
 						//self.dat = self.dat.reverse()
 					}
+					console.log(self.dat)
 					if (!self.data || self.data === '') {
 						//self.dat.forEach(function(data))
 						if (self.dat[0] && self.dat[0][0].chapter.ind === self.dat[self.dat.length - 1][0].chapter.ind) {
@@ -135,6 +160,7 @@ html
 					}
 
 					if (!self.tinymce && $('#description')[0] && tinymce) {
+						console.log('shouldn\'t be')
 						self.tinymce = tinymce.init({
 							menubar: false,
 							statusbar: false,
