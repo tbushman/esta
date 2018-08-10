@@ -724,7 +724,12 @@ router.post('/api/export', function(req, res, next){
 	console.log(req.body.xml)
   var xmlbuf = new Buffer(body.xml, 'utf8'); // decode
   var indd = path.join(__dirname, '/../../indd')
-  var xmlurl = path.join(__dirname, '/../../indd') + '/xml.xml';
+
+/* ALERT 
+	possible path problem right here 
+	could be + '/xml.xml'
+*/
+  var xmlurl = path.join(__dirname, '/../../indd') + 'xml.xml';
 	console.log(xmlurl)
   fs.writeFile(xmlurl, xmlbuf, function(err) {
     if(err) {
@@ -736,12 +741,12 @@ router.post('/api/export', function(req, res, next){
   });
   console.log(path.join(__dirname, '/../..', 'indd/example.jsx'))
   id.run(path.join(__dirname, '/../..', 'indd/example.jsx'), {
-      message: 'hi from node',
-      dirname: path.join(__dirname, '/../..'),
-      xmlurl: 'xml.xml'
+		message: 'hi from node',
+		dirname: path.join(__dirname, '/../..'),
+		xmlurl: 'xml.xml'
   }, function(res) {
-      console.log(res);
-			return res.redirect('/')
+		console.log(res);
+		return res.redirect('/')
   });
 
 })
@@ -1012,12 +1017,12 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 				// Used to split the text into an array
 				var drx = /(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)(?=\d{1,3}\.\d{1,3}\.\d{1,4}\.\s*?)/gm
 				// title.chapter.section index
-				var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)/si
+				var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)/i
 				var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
 				// title rx
-				var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n[\w])/si
+				var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n[\w])/i
 				// isolate description
-				var descrx = /(?:[\n])(.*)/si
+				var descrx = /(?:[\n])(.*)/i
 				//remove stray spaces
 				var dat = newcontentstr.split(drx).filter(function(item){
 					return item !== ''
