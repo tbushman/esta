@@ -1017,12 +1017,12 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 				// Used to split the text into an array
 				var drx = /(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)(?=\d{1,3}\.\d{1,3}\.\d{1,4}\.\s*?)/gm
 				// title.chapter.section index
-				var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)/i
+				var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)/si
 				var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
 				// title rx
-				var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n[\w])/i
+				var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n[\w])/si
 				// isolate description
-				var descrx = /(?:[\n])(.*)/i
+				var descrx = /(?:[\n])(.*)/si
 				//remove stray spaces
 				var dat = newcontentstr.split(drx).filter(function(item){
 					return item !== ''
