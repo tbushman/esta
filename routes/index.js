@@ -123,21 +123,24 @@ var storage = multer.diskStorage({
 var uploadmedia = multer({ storage: storage/*, limits: {files: 1}*/ });
 
 var removeExtras = function(str){
-	var desc = str.trim()
-		.replace(/\u2028/g, '  \n  \n')
-		.replace(/\s{2,7}(\d{1,4}\.)/g, '  \n$1')
-		.replace(/(\v)/g, '   \n  \n')
-		.replace(/(?:<br>|<br \/>){1,7}(?:&nbsp;){1,7}/g, '  \n  \n')
-		.replace(/(<br>|<br \/>)/g, '  \n')
-		.replace(/&nbsp;&nbsp;/g, '')
-		.replace(/&nbsp;/g, '')
-		.replace(/^(\d|\w\.)\t/gm, '$1\\t')
-		.replace(/^([A-Z]\.)/gm, '  \n**$1**')
-		.replace(/[\s\.]([A-Z]\.)/g, '  \n  \n**$1**')
-		.replace(/\s\t(\d{1,4}\.)/g, '  \n$1')
-		.replace(/\s{2,7}\t(\d)/g, '  \n$1')
-		.replace(/\s{2,7}\t/g, '  \n')
-		.replace(/\\t(\d)/g, '$1');
+	var desc = null;
+	if (str) {
+		desc = str.trim()
+			.replace(/\u2028/g, '  \n  \n')
+			.replace(/\s{2,7}(\d{1,4}\.)/g, '  \n$1')
+			.replace(/(\v)/g, '   \n  \n')
+			.replace(/(?:<br>|<br \/>){1,7}(?:&nbsp;){1,7}/g, '  \n  \n')
+			.replace(/(<br>|<br \/>)/g, '  \n')
+			.replace(/&nbsp;&nbsp;/g, '')
+			.replace(/&nbsp;/g, '')
+			.replace(/^(\d|\w\.)\t/gm, '$1\\t')
+			.replace(/^([A-Z]\.)/gm, '  \n**$1**')
+			.replace(/[\s\.]([A-Z]\.)/g, '  \n  \n**$1**')
+			.replace(/\s\t(\d{1,4}\.)/g, '  \n$1')
+			.replace(/\s{2,7}\t(\d)/g, '  \n$1')
+			.replace(/\s{2,7}\t/g, '  \n')
+			.replace(/\\t(\d)/g, '$1');
+	}
 	return desc;
 }
 
