@@ -26,7 +26,7 @@ var upload = multer();
 
 marked.setOptions({
 	gfm: true,
-	//smartLists: true,
+	smartLists: true,
 	smartypants: true,
 	xhtml: true/*,
 	breaks: true*/
@@ -123,15 +123,15 @@ var storage = multer.diskStorage({
 var uploadmedia = multer({ storage: storage/*, limits: {files: 1}*/ });
 
 var removeExtras = function(str){
-	
+
+		console.log(/\u2028/g.test(str)); //true
+		console.log(/\s{2,7}(\d{1,4}\.)/g.test(str)); //flase
+		console.log(/(\v)/g.test(str)); //false
 		console.log(/(?:<br>|<br \/>){1,7}(?:&nbsp;){1,7}/g.test(str)); //true
 		console.log(/(<br>|<br \/>)/g.test(str)); //true
 		console.log(/&nbsp;&nbsp;/g.test(str)); //true
 		console.log(/&nbsp;/g.test(str)); //true
 		console.log(/^(\d|\w\.)\t/gm.test(str)); //false
-		console.log(/\s{2,7}(\d{1,4}\.)/g.test(str)); //flase
-		console.log(/(\v)/g.test(str)); //false
-		console.log(/\u2028/g.test(str)); //true
 		console.log(/^([A-Z]\.)/gm.test(str)); //fffff>
 		console.log(/[\s\.]([A-Z]\.)/g.test(str));
 		console.log(/\s\t(\d{1,4}\.)/g.test(str));
@@ -140,14 +140,14 @@ var removeExtras = function(str){
 		console.log(/\\t(\d)/g.test(str))
 	
 	var desc = str.trim()
-		.replace(/(?:<br>|<br \/>){1,7}(?:&nbsp;){1,7}/g, '  \n')
-		.replace(/(<br>|<br \/>)/g, '')
+		.replace(/\u2028/g, '  \n  \n')
+		.replace(/\s{2,7}(\d{1,4}\.)/g, '  \n$1')
+		.replace(/(\v)/g, '   \n  \n')
+		.replace(/(?:<br>|<br \/>){1,7}(?:&nbsp;){1,7}/g, '  \n  \n')
+		.replace(/(<br>|<br \/>)/g, '  \n')
 		.replace(/&nbsp;&nbsp;/g, '')
 		.replace(/&nbsp;/g, '')
 		.replace(/^(\d|\w\.)\t/gm, '$1\\t')
-		.replace(/\s{2,7}(\d{1,4}\.)/g, '  \n$1')
-		.replace(/(\v)/g, '   \n  \n')
-		.replace(/\u2028/g, '  \n  \n')
 		.replace(/^([A-Z]\.)/gm, '  \n**$1**')
 		.replace(/[\s\.]([A-Z]\.)/g, '  \n  \n**$1**')
 		.replace(/\s\t(\d{1,4}\.)/g, '  \n$1')
@@ -438,7 +438,7 @@ function ensureHyperlink(req, res, next) {
 		}
 		data.forEach(function(doc){
 			//console.log(doc.properties.description)
-			var numrx = /(\s\d{1,3}\.\d{1,3}\.\d{0,4}\s)/;
+			var numrx = /(\s\d{1,3}\.\d{1,3}\.{0,1}\d{0,4}\s)/;
       var desc = removeExtras(doc.properties.description);
 			var hls = numrx.test(desc);
 			if (desc) {
@@ -454,9 +454,13 @@ function ensureHyperlink(req, res, next) {
 						if (ind !== -1 && spl[ind+1].substring(0,1) !== '<') {
 							var s = h.split('.');
 							var title = s[0].trim();
-							var chap = s[1].trim();
-							var sect = s[2].trim();
-							spl.splice(ind, 1, '<a href="/menu/'+title+'/'+chap+'#'+sect+'">'+h.trim()+'</a>');
+							var chap = s[1];
+							var sect = s[2];
+							chap = (chap.substring(0,1) === '0' ? chap.slice(1) : chap);
+							sect = (sect ? ''+(sect.trim().substring(0,1) === '0' ? sect.trim().slice(1) : sect.trim()) : '');
+							var id =(sect ? ''+(sect.trim().substring(0,1) === '0' ? sect.trim().slice(1) : sect.trim()) : '')
+							
+							spl.splice(ind, 1, `<a onclick="$('#${id.trim()}').click()" class="hl" href="/menu/${title}/${chap}#${sect}">${h.trim()}</a>`);
 							//console.log(spl.splice(ind, 1, `<a href="/menu/${title}/${chap}#${sect}">${h}</a>`))
 						} else {
 							console.log(spl[ind+1].substring(0, 1))
@@ -1497,7 +1501,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					title: body.title ? curly(body.title) : '',
 					label: body.label ? curly(body.label) : '',
 					place: body.place ? curly(body.place) : '',
-					description: desc ? (desc.substr(0) !== '<' ? marked(desc) : desc) : '',
+					description: desc ? marked(body.description) : '',
 					time: {
 						begin: new Date(body.datebegin),
 						end: moment().utc().format()

@@ -265,7 +265,9 @@ h1, .tb-font-xxxl {
 	text-transform: uppercase;
 	letter-spacing: 0.01em;
 }
-
+.hl {
+	color: tomato;
+}
 i.fas {
 	color: #990066;
 	color: var(--quarternary);
