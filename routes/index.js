@@ -20,15 +20,16 @@ var Content = require('../models/content.js');
 var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
 var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Preliminary Subdivision Applications', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
-var marked = require('marked');
 var InDesign = require('async-indesign-script');
 dotenv.load();
 var upload = multer();
 
 marked.setOptions({
 	gfm: true,
-	smartLists: true,
-	xhtml: true
+	//smartLists: true,
+	smartypants: true,
+	xhtml: true/*,
+	breaks: true*/
 })
  
 
@@ -120,6 +121,41 @@ var storage = multer.diskStorage({
   }
 });
 var uploadmedia = multer({ storage: storage/*, limits: {files: 1}*/ });
+
+var removeExtras = function(str){
+	
+		console.log(/(?:<br>|<br \/>){1,7}(?:&nbsp;){1,7}/g.test(str)); //true
+		console.log(/(<br>|<br \/>)/g.test(str)); //true
+		console.log(/&nbsp;&nbsp;/g.test(str)); //true
+		console.log(/&nbsp;/g.test(str)); //true
+		console.log(/^(\d|\w\.)\t/gm.test(str)); //false
+		console.log(/\s{2,7}(\d{1,4}\.)/g.test(str)); //flase
+		console.log(/(\v)/g.test(str)); //false
+		console.log(/\u2028/g.test(str)); //true
+		console.log(/^([A-Z]\.)/gm.test(str)); //fffff>
+		console.log(/[\s\.]([A-Z]\.)/g.test(str));
+		console.log(/\s\t(\d{1,4}\.)/g.test(str));
+		console.log(/\s{2,7}\t(\d)/g.test(str));
+		console.log(/\s{2,7}\t/g.test(str));
+		console.log(/\\t(\d)/g.test(str))
+	
+	var desc = str.trim()
+		.replace(/(?:<br>|<br \/>){1,7}(?:&nbsp;){1,7}/g, '  \n')
+		.replace(/(<br>|<br \/>)/g, '')
+		.replace(/&nbsp;&nbsp;/g, '')
+		.replace(/&nbsp;/g, '')
+		.replace(/^(\d|\w\.)\t/gm, '$1\\t')
+		.replace(/\s{2,7}(\d{1,4}\.)/g, '  \n$1')
+		.replace(/(\v)/g, '   \n  \n')
+		.replace(/\u2028/g, '  \n  \n')
+		.replace(/^([A-Z]\.)/gm, '  \n**$1**')
+		.replace(/[\s\.]([A-Z]\.)/g, '  \n  \n**$1**')
+		.replace(/\s\t(\d{1,4}\.)/g, '  \n$1')
+		.replace(/\s{2,7}\t(\d)/g, '  \n$1')
+		.replace(/\s{2,7}\t/g, '  \n')
+		.replace(/\\t(\d)/g, '$1');
+	return desc;
+}
 
 var curly = function(str){
 	//console.log(/\\n/g.test(str))
@@ -392,6 +428,55 @@ function emptyDirs(index, next) {
 	})
 }
 
+function ensureHyperlink(req, res, next) {
+  Content.find({}, function(err, data) {
+		if (err){
+			return next(err)
+		}
+		if (data.length === 0) {
+			return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'')
+		}
+		data.forEach(function(doc){
+			//console.log(doc.properties.description)
+			var numrx = /(\s\d{1,3}\.\d{1,3}\.\d{0,4}\s)/;
+      var desc = removeExtras(doc.properties.description);
+			var hls = numrx.test(desc);
+			if (desc) {
+				var spl = desc.split(numrx);
+				console.log(spl)
+				if (hls) {
+					var hs = numrx.exec(desc)
+					hs.forEach(function(h){
+						var ind = spl.indexOf(h);
+						console.log(ind)
+						//console.log(spl[ind+1].substring(0,1))
+						//h = h.trim();
+						if (ind !== -1 && spl[ind+1].substring(0,1) !== '<') {
+							var s = h.split('.');
+							var title = s[0].trim();
+							var chap = s[1].trim();
+							var sect = s[2].trim();
+							spl.splice(ind, 1, '<a href="/menu/'+title+'/'+chap+'#'+sect+'">'+h.trim()+'</a>');
+							//console.log(spl.splice(ind, 1, `<a href="/menu/${title}/${chap}#${sect}">${h}</a>`))
+						} else {
+							console.log(spl[ind+1].substring(0, 1))
+						}
+						
+					});
+					doc.properties.description = marked(spl.join(' '));
+					doc.save(function(err){
+						if (err) {
+							console.log(err)
+						}
+					})
+				}
+
+			}
+
+    });
+		return next()
+  });
+}
 
 function ensureCurly(req, res, next) {
 	Content.find({}, function(err, data) {
@@ -588,7 +673,7 @@ router.get('/runtests', function(req, res, next){
 
 //router.all(/.*/, ensureContent)
 
-router.get('/', ensureCurly/*, ensureEscape*/, function(req, res, next){
+router.get('/', /*ensureCurly, ensureEscape,*/ ensureHyperlink, function(req, res, next){
 	var dat = []
 	Content.distinct('chapter.str', function(err, distinct){
 		if (err) {
@@ -1107,7 +1192,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 								label: 'Edit Subtitle',
 								title: curly(item.title),
 								place: 'Edit Place',
-								description: marked(curly(item.desc)),
+								description: marked(item.desc),
 								current: false,
 								media: []
 							},
@@ -1250,7 +1335,7 @@ router.get('/api/new/:chtitle', function(req, res, next){
 					label: 'Edit Subtitle',
 					title: 'Edit Title',
 					place: 'Edit Place',
-					description: require('marked')('Sample text with  \n  \n**A.** lists and  \n  \n1. More  \n2. lists'),
+					description: marked('Sample text with  \n  \n**A.** lists and  \n  \n1. More  \n2. lists'),
 					current: false,
 					time: {
 						begin: moment().utc().format(),
@@ -1386,6 +1471,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			var straight = function(str) {
 				return str.replace(/(\d\s*)\u201d/g, '$1\"').replace(/(\d\s*)\u2019/g, "$1'")
 			}
+			var desc = removeExtras(body.description);
+			console.log(desc, body.description);
 			var end;
 			var current;
 			var entry = {
@@ -1410,7 +1497,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					title: body.title ? curly(body.title) : '',
 					label: body.label ? curly(body.label) : '',
 					place: body.place ? curly(body.place) : '',
-					description: body.description ? curly(body.description) : '',
+					description: desc ? (desc.substr(0) !== '<' ? marked(desc) : desc) : '',
 					time: {
 						begin: new Date(body.datebegin),
 						end: moment().utc().format()
