@@ -799,7 +799,7 @@ a.img {
 }
 
 a.img img {
-	position: absolute;
+	/*position: absolute;
 	width: auto;
 	min-width: 100%;
 	height: auto;
@@ -809,7 +809,12 @@ a.img img {
   height: auto;
 	-ms-transform: translate(-50%,-50%);
 	-webkit-transform: translate(-50%,-50%);
-	transform: translate(-50%,-50%);
+	transform: translate(-50%,-50%);*/
+	width: 100%;
+	height: auto;
+	top: 0;
+	transform: none;
+	left: 0;
 }
 
 

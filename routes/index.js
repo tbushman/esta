@@ -1459,7 +1459,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				return str.replace(/(\d\s*)\u201d/g, '$1\"').replace(/(\d\s*)\u2019/g, "$1'")
 			}
 			var desc = removeExtras(body.description);
-			console.log(desc, body.description);
+			//console.log(desc, body.description);
 			var end;
 			var current;
 			var entry = {

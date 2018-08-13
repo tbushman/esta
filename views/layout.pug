@@ -424,7 +424,7 @@ html
 					addNewMedia: function(id, index, cb) {
 						var self = this;
 						$.post('/api/newmedia/'+id+'/'+index+'', function(res) {
-							self.doc.properties.media.push(res)
+							self.doc.properties.media.push(res);
 							cb()
 						})
 					},
@@ -543,7 +543,7 @@ html
 						can.height = h;
 						can.width = w;
 						var ctx = can.getContext('2d');
-						
+						console.log(w,h)
 						ctx.drawImage(img, 0, 0, w, h);
 						self.uploadBlob(img, can, imgindex, function(){
 							var can = $('#canvas'+imgindex+'')[0];
