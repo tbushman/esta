@@ -442,10 +442,10 @@ function ensureHyperlink(req, res, next) {
 							var chap = s[1];
 							var sect = s[2];
 							var cha = (chap.substring(0,1) === '0' ? chap.slice(1) : chap);
-							var sec = (sect ? ''+(sect.trim().substring(0,1) === '0' ? sect.trim().slice(1) : sect.trim()) : '');
+							var sec = (sect ? '#'+(sect.trim().substring(0,1) === '0' ? sect.trim().slice(1) : sect.trim()) : '');
 							var id =(sect ? ''+(sect.trim().substring(0,1) === '0' ? sect.trim().slice(1) : sect.trim()) : '')
 							
-							spl.splice(ind, 1, `<a onclick="$('#${id.trim()}').click()" class="hl" href="/menu/${title}/${cha}#${sec}">${h.trim()}</a>`);
+							spl.splice(ind, 1, `<a onclick="$('#${id.trim()}').click()" class="hl" href="/menu/${title}/${cha}${sec}">${h.trim()}</a>`);
 							//console.log(spl.splice(ind, 1, `<a href="/menu/${title}/${chap}#${sect}">${h}</a>`))
 						}
 						
