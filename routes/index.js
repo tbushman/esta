@@ -123,22 +123,6 @@ var storage = multer.diskStorage({
 var uploadmedia = multer({ storage: storage/*, limits: {files: 1}*/ });
 
 var removeExtras = function(str){
-
-		console.log(/\u2028/g.test(str)); //true
-		console.log(/\s{2,7}(\d{1,4}\.)/g.test(str)); //flase
-		console.log(/(\v)/g.test(str)); //false
-		console.log(/(?:<br>|<br \/>){1,7}(?:&nbsp;){1,7}/g.test(str)); //true
-		console.log(/(<br>|<br \/>)/g.test(str)); //true
-		console.log(/&nbsp;&nbsp;/g.test(str)); //true
-		console.log(/&nbsp;/g.test(str)); //true
-		console.log(/^(\d|\w\.)\t/gm.test(str)); //false
-		console.log(/^([A-Z]\.)/gm.test(str)); //fffff>
-		console.log(/[\s\.]([A-Z]\.)/g.test(str));
-		console.log(/\s\t(\d{1,4}\.)/g.test(str));
-		console.log(/\s{2,7}\t(\d)/g.test(str));
-		console.log(/\s{2,7}\t/g.test(str));
-		console.log(/\\t(\d)/g.test(str))
-	
 	var desc = str.trim()
 		.replace(/\u2028/g, '  \n  \n')
 		.replace(/\s{2,7}(\d{1,4}\.)/g, '  \n$1')
@@ -443,12 +427,10 @@ function ensureHyperlink(req, res, next) {
 			var hls = numrx.test(desc);
 			if (desc) {
 				var spl = desc.split(numrx);
-				console.log(spl)
 				if (hls) {
 					var hs = numrx.exec(desc)
 					hs.forEach(function(h){
 						var ind = spl.indexOf(h);
-						console.log(ind)
 						//console.log(spl[ind+1].substring(0,1))
 						//h = h.trim();
 						if (ind !== -1 && spl[ind+1].substring(0,1) !== '<') {
@@ -456,14 +438,12 @@ function ensureHyperlink(req, res, next) {
 							var title = s[0].trim();
 							var chap = s[1];
 							var sect = s[2];
-							chap = (chap.substring(0,1) === '0' ? chap.slice(1) : chap);
-							sect = (sect ? ''+(sect.trim().substring(0,1) === '0' ? sect.trim().slice(1) : sect.trim()) : '');
+							var cha = (chap.substring(0,1) === '0' ? chap.slice(1) : chap);
+							var sec = (sect ? ''+(sect.trim().substring(0,1) === '0' ? sect.trim().slice(1) : sect.trim()) : '');
 							var id =(sect ? ''+(sect.trim().substring(0,1) === '0' ? sect.trim().slice(1) : sect.trim()) : '')
 							
-							spl.splice(ind, 1, `<a onclick="$('#${id.trim()}').click()" class="hl" href="/menu/${title}/${chap}#${sect}">${h.trim()}</a>`);
+							spl.splice(ind, 1, `<a onclick="$('#${id.trim()}').click()" class="hl" href="/menu/${title}/${cha}#${sec}">${h.trim()}</a>`);
 							//console.log(spl.splice(ind, 1, `<a href="/menu/${title}/${chap}#${sect}">${h}</a>`))
-						} else {
-							console.log(spl[ind+1].substring(0, 1))
 						}
 						
 					});
