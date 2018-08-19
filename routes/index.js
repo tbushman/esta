@@ -725,7 +725,7 @@ router.get('/', /*ensureCurly, ensureEscape,*/ ensureHyperlink, function(req, re
 	
 });
 
-router.get('/export', ensureCurly, function(req, res, next){
+router.get('/export'/*, ensureCurly*/, function(req, res, next){
 	var dat = []
 	Content.distinct('chapter.str', function(err, distinct){
 		if (err) {
@@ -768,7 +768,7 @@ router.get('/export', ensureCurly, function(req, res, next){
 				if (err) {
 					return next(err) 
 				}
-				var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
+				var str = pug.renderFile(path.join(__dirname, '../views/includes/exporttemplate.pug'), {
 					doctype: 'xml',
 					csrfToken: req.csrfToken(),
 					menu: !req.session.menu ? 'view' : req.session.menu,
@@ -793,16 +793,12 @@ router.get('/export', ensureCurly, function(req, res, next){
 
 router.post('/api/export', function(req, res, next){
   var body = req.body;
-	console.log(req.body.xml)
+	//console.log(req.body.xml)
   var xmlbuf = new Buffer(body.xml, 'utf8'); // decode
   var indd = path.join(__dirname, '/../../indd')
 
-/* ALERT 
-	possible path problem right here 
-	could be + '/xml.xml'
-*/
-  var xmlurl = path.join(__dirname, '/../../indd') + 'xml.xml';
-	console.log(xmlurl)
+  var xmlurl = path.join(__dirname, '/../../indd') + '/xml.xml';
+	//console.log(xmlurl)
   fs.writeFile(xmlurl, xmlbuf, function(err) {
     if(err) {
       console.log("err", err);
@@ -811,14 +807,15 @@ router.post('/api/export', function(req, res, next){
   const id = new InDesign({
     version: 'CS6'
   });
-  console.log(path.join(__dirname, '/../..', 'indd/example.jsx'))
-  id.run(path.join(__dirname, '/../..', 'indd/example.jsx'), {
+  //console.log(path.join(__dirname, '/../..', 'indd/importIndd.jsx'))
+  id.run(path.join(__dirname, '/../..', 'indd/importIndd.jsx'), {
 		message: 'hi from node',
 		dirname: path.join(__dirname, '/../..'),
 		xmlurl: 'xml.xml'
   }, function(res) {
-		console.log(res);
-		return res.redirect('/')
+		//console.log(res);
+		//return res.redirect('/')
+		return res.status(200).send('ok')
   });
 
 })
