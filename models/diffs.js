@@ -12,4 +12,4 @@ var Diffs = new Schema({
 	}],
 	str: String
 });
-module.exports = mongoose.model('Diffs', Diffs)
+module.exports = Diffs;//mongoose.model('Diffs', Diffs)
