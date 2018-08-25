@@ -546,39 +546,50 @@ function ensureEscape(req, res, next) {
 	})
 }
 
-function getDat(cb){
-	var dat = []
-	Content.distinct('chapter.ind', function(err, distinct){
+function getDat(req, res, next){
+	async.waterfall([
+		function(cb){
+			var dat = []
+			Content.distinct('chapter.ind', function(err, distinct){
+				if (err) {
+					cb(err)
+				}
+				if (distinct.length === 0) {
+					Content.find({}).sort({index:1}).lean().exec(function(err, data){
+						if (err) {
+							cb(err)
+						}
+						dat.push(data)
+						cb(null, dat, [1])
+					})
+				} else {
+					distinct.forEach(function(key, i) {
+						Content.find({'chapter.ind':key}).sort({index:1}).lean().exec(function(err, data){
+							if (err) {
+								cb(err)
+							}
+							
+							if (data.length === 0) return;
+							if (data.length > 0) {
+								dat.push(data)
+							}
+						})
+					});
+					cb(null, dat, distinct)
+				}
+				
+			});
+		}
+	], function(err, dat, distinct){
 		if (err) {
 			return next(err)
 		}
-		if (distinct.length === 0) {
-			Content.find({}).sort({index:1}).lean().exec(function(err, data){
-				if (err) {
-					return next(err)
-				}
-				dat.push(data)
-			})
-		} else {
-			//console.log(distinct)
-			distinct.sort();
-			//console.log(distinct)
-			distinct.forEach(function(key, i) {
-				Content.find({'chapter.ind':key}).sort({index:1}).lean().exec(function(err, data){
-					if (err) {
-						console.log(err)
-					}
-					
-					if (data.length === 0) return;
-					if (data.length > 0) {
-						dat.push(data)
-					}
-				})
-			});
-		}
-		cb(dat, distinct)
-	});
+		req.dat = dat;
+		req.distinct = distinct;
+		return next()
+	})
 }
+
 
 function getDat64(next){
 	async.waterfall([
@@ -759,8 +770,8 @@ router.get('/runtests', function(req, res, next){
 
 //router.all(/.*/, ensureContent)
 
-router.get('/', /*ensureCurly, ensureEscape,*/ ensureHyperlink, function(req, res, next){
-	getDat(function(dat, distinct){
+router.get('/', getDat,/*ensureCurly, ensureEscape,*/ ensureHyperlink, function(req, res, next){
+	//getDat(function(dat, distinct){
 		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 		req.session.refer = newrefer;
 		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
@@ -774,25 +785,25 @@ router.get('/', /*ensureCurly, ensureEscape,*/ ensureHyperlink, function(req, re
 				doctype: 'xml',
 				csrfToken: req.csrfToken(),
 				menu: !req.session.menu ? 'view' : req.session.menu,
-				ff: distinct,
-				dat: dat,
+				ff: req.distinct,
+				dat: req.dat,
 				appURL: req.app.locals.appURL
 			});
 			return res.render('agg', {
 				menu: !req.session.menu ? 'view' : req.session.menu,
-				dat: dat,
-				ff: distinct,
+				dat: req.dat,
+				ff: req.distinct,
 				str: str
 			});
 				
 			
 		});
-	})
+	//})
 	
 });
 
-router.get('/exportpdf', function(req, res, next){
-	getDat(function(dat, distinct){
+router.get('/exportpdf', getDat, function(req, res, next){
+	//getDat(function(dat, distinct){
 		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 		req.session.refer = newrefer;
 		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
@@ -806,21 +817,21 @@ router.get('/exportpdf', function(req, res, next){
 				doctype: 'xml',
 				csrfToken: req.csrfToken(),
 				menu: !req.session.menu ? 'view' : req.session.menu,
-				ff: distinct,
+				ff: req.distinct,
 				dat: dat,
 				appURL: req.app.locals.appURL
 			});
 			return res.render('export', {
 				menu: !req.session.menu ? 'view' : req.session.menu,
 				dat: dat,
-				ff: distinct,
+				ff: req.distinct,
 				str: str,
 				exports: true
 			});
 				
 			
 		});
-	})
+	//})
 
 });
 
@@ -879,7 +890,7 @@ router.get('/exportword', function(req, res, next){
 				}
 			});
 			
-			var path = p + '/'+now+'.docx';
+			var path = path.join(p, '/'+now+'.docx');
 			fs.writeFile(path, docx, function(err){
 				if (err) {
 					return next(err)
@@ -987,141 +998,6 @@ router.post('/api/exportindd/:version', function(req, res, next){
   });
 
 })
-
-router.get('/diff', function(req, res, next){
-	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
-	req.session.refer = newrefer;
-	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
-		if (err) {
-			return next(err)
-		}
-		if (data.length === 0) {
-			return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
-		}
-		// console.log(data)
-		var dat = []
-		Content.distinct('chapter.str', function(err, distinct){
-			if (err) {
-				return next(err)
-			}
-			if (distinct.length === 0) {
-				Content.find({}).sort({index:1}).lean().exec(function(err, data){
-					if (err) {
-						return next(err)
-					}
-					dat.push(data)
-				})
-			} else {
-				distinct.forEach(function(key, i) {
-					Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
-						if (err) {
-							console.log(err)
-						}
-						if (data.length === 0) return;
-						if (data.length > 0) {
-							// I either add the 1 here or in template. A conundrum.
-							dat.push(data)
-						}
-					})
-				});
-			}
-
-			Diffs.find({}).sort({date:1}).lean().exec(function(err, diffs){
-				if (err) {
-					return next(err) 
-				}
-				var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
-					doctype: 'xml',
-					csrfToken: req.csrfToken(),
-					menu: !req.session.menu ? 'view' : req.session.menu,
-					ff: distinct,
-					dat: dat,
-					appURL: req.app.locals.appURL
-				});
-				return res.render('diff', {
-					menu: !req.session.menu ? 'view' : req.session.menu,
-					ff: distinct,
-					dat: dat,
-					str: str,
-					exports: true,
-					diff: (!diffs[diffs.length-1] ? null : JSON.parse(JSON.stringify(diffs[diffs.length-1].dif)))
-				});
-			})
-		})
-		
-			
-		
-	});
-})
-
-router.post('/diff', function(req, res, next){
-	async.waterfall([
-		function(next){
-			Diffs.find({}).sort({date:1}).exec(function(err, diffs){
-				if (err) {
-					return next(err)
-				}
-				//diff.forEach(function(part){
-					//console.log(part)
-					
-				//})
-				///var textDiff = diff.main((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str)
-				
-				//var newdf = HtmlDiff((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str, 'diff', 'diff', 'form,input,label,iframe,object,math,svg,script,video,head,style').toString()//new Diff({timeout:60});
-				//console.log(newdf)
-				//var newdf = diff.main((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str);
-				//if (diffs.length === 0 || newdf.split('</ins>')[1] || newdf.split('</del>')[1]) {
-
-				var Diff = require('diff');
-				var diff = Diff.diffWordsWithSpace((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str);
-				//console.log('sent this diff')
-				//console.log(diff)
-				var diffss = [];
-				if (diff.length) {
-					diff.forEach(function(dif){
-						//console.log(dif)
-						diffss.push({
-							count: dif.count,
-							value: dif.value,
-							added: dif.added,
-							removed: dif.removed
-						})
-					})
-				}
-				next(null, diffss, req)
-			})
-		},
-		function(diffs, req, next){
-			// diffs may be []
-			if (diffs.length === 0) {
-				next(null)
-			} else {
-				var newdiff = new Diffs({
-					date: new Date(),
-					dif: diffs,
-					str: req.body.str
-				});
-				newdiff.save(function(err){
-					if (err) {
-						next(err)
-					} else {
-						next (null, newdiff)
-					}
-					
-				})
-			}
-		}
-	], function(err, diff){
-		if (err) {
-			return next(err)
-		}
-		if (!diff) {
-			return res.status(200).send(null)
-		} else {
-			return res.status(200).send(diff)
-		}
-	})
-});
 
 router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
