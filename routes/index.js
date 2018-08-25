@@ -441,9 +441,9 @@ function ensureHyperlink(req, res, next) {
 							var title = s[0].trim();
 							var chap = s[1];
 							var sect = s[2];
-							var cha = (chap.substring(0,1) === '0' ? chap.slice(1) : chap);
-							var sec = (sect ? '#'+(sect.trim().substring(0,1) === '0' ? sect.trim().slice(1) : sect.trim()) : '');
-							var id =(sect ? ''+(sect.trim().substring(0,1) === '0' ? sect.trim().slice(1) : sect.trim()) : '')
+							var cha = chap;//(chap.substring(0,1) === '0' ? chap.slice(1) : chap);
+							var sec = (sect ? '#'+sect.trim() : '');//(sect ? '#'+(sect.trim().substring(0,1) === '0' ? sect.trim().slice(1) : sect.trim()) : '');
+							var id =(sect ? sect.trim() : '')
 							
 							spl.splice(ind, 1, `<a onclick="$('#${id.trim()}').click()" class="hl" href="/menu/${title}/${cha}${sec}">${h.trim()}</a>`);
 							//console.log(spl.splice(ind, 1, `<a href="/menu/${title}/${chap}#${sect}">${h}</a>`))
@@ -545,6 +545,105 @@ function ensureEscape(req, res, next) {
 		return next()
 	})
 }
+
+function getDat(cb){
+	var dat = []
+	Content.distinct('chapter.ind', function(err, distinct){
+		if (err) {
+			return next(err)
+		}
+		if (distinct.length === 0) {
+			Content.find({}).sort({index:1}).lean().exec(function(err, data){
+				if (err) {
+					return next(err)
+				}
+				dat.push(data)
+			})
+		} else {
+			//console.log(distinct)
+			distinct.sort();
+			//console.log(distinct)
+			distinct.forEach(function(key, i) {
+				Content.find({'chapter.ind':key}).sort({index:1}).lean().exec(function(err, data){
+					if (err) {
+						console.log(err)
+					}
+					
+					if (data.length === 0) return;
+					if (data.length > 0) {
+						dat.push(data)
+					}
+				})
+			});
+		}
+		cb(dat, distinct)
+	});
+}
+
+function getDat64(next){
+	async.waterfall([
+		function(cb){
+			var dat = []
+			Content.distinct('chapter.ind', function(err, distinct){
+				if (err) {
+					return next(err)
+				}
+				if (distinct.length === 0) {
+					Content.find({}).sort({index:1}).lean().exec(function(err, data){
+						if (err) {
+							return next(err)
+						}
+						data.forEach(function(doc){
+							if (doc.properties !== undefined) {
+								if (doc.properties.media.length > 0) {
+									doc.properties.media.forEach(function(img){
+										var imageAsBase64 = fs.readFileSync(''+publishers+'/pu'+img.image, 'base64')
+										img.image = 'data:image/png;base64,'+imageAsBase64
+									})
+								}
+							}
+						})
+						dat.push(data)
+					})
+				} else {
+					//console.log(distinct)
+					distinct.sort();
+					//console.log(distinct)
+					distinct.forEach(function(key, i) {
+						Content.find({'chapter.ind':key}).sort({index:1}).lean().exec(function(err, data){
+							if (err) {
+								console.log(err)
+							}
+							
+							if (data.length === 0) return;
+							if (data.length > 0) {
+								data.forEach(function(doc){
+									if (doc.properties !== undefined) {
+										if (doc.properties.media.length > 0) {
+											doc.properties.media.forEach(function(img){
+												var imageAsBase64 = fs.readFileSync(''+publishers+'/pu'+img.image, 'base64')
+												img.image = 'data:image/png;base64,'+imageAsBase64
+											})
+										}
+									}
+								})
+								dat.push(data)
+							}
+						})
+					});
+				}
+				cb(null, dat)
+			})
+		}
+	], function(err, dat) {
+		if (err) {
+			console.log(err)
+		}
+		//console.log(dat)
+		next(dat)
+	})
+}
+
 
 router.get('/runtests', function(req, res, next){
 	let chromedriver = require('chromedriver');
@@ -661,35 +760,7 @@ router.get('/runtests', function(req, res, next){
 //router.all(/.*/, ensureContent)
 
 router.get('/', /*ensureCurly, ensureEscape,*/ ensureHyperlink, function(req, res, next){
-	var dat = []
-	Content.distinct('chapter.str', function(err, distinct){
-		if (err) {
-			return next(err)
-		}
-		if (distinct.length === 0) {
-			Content.find({}).sort({index:1}).lean().exec(function(err, data){
-				if (err) {
-					return next(err)
-				}
-				dat.push(data)
-			})
-		} else {
-			//console.log(distinct)
-			distinct.forEach(function(key, i) {
-				Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
-					if (err) {
-						console.log(err)
-					}
-					
-					if (data.length === 0) return;
-					if (data.length > 0) {
-						// I either add the 1 here or in template. A conundrum.
-						dat.splice(0, 0, data)
-					}
-				})
-			});
-		}
-		
+	getDat(function(dat, distinct){
 		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 		req.session.refer = newrefer;
 		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
@@ -699,33 +770,133 @@ router.get('/', /*ensureCurly, ensureEscape,*/ ensureHyperlink, function(req, re
 			if (data.length === 0) {
 				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
 			}
-			Diffs.find({}).sort({date:1}).exec(function(err, diffs){
-				if (err) {
-					return next(err) 
-				}
-				var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
-					doctype: 'xml',
-					csrfToken: req.csrfToken(),
-					menu: !req.session.menu ? 'view' : req.session.menu,
-					ff: distinct,
-					dat: dat,
-					appURL: req.app.locals.appURL
-				});
-				return res.render('agg', {
-					menu: !req.session.menu ? 'view' : req.session.menu,
-					dat: dat,
-					ff: distinct,
-					str: str
-				});
-			})
+			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
+				doctype: 'xml',
+				csrfToken: req.csrfToken(),
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				ff: distinct,
+				dat: dat,
+				appURL: req.app.locals.appURL
+			});
+			return res.render('agg', {
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				dat: dat,
+				ff: distinct,
+				str: str
+			});
 				
 			
 		});
-	});
+	})
 	
 });
 
-router.get('/export', ensureCurly, function(req, res, next){
+router.get('/exportpdf', function(req, res, next){
+	getDat(function(dat, distinct){
+		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
+		req.session.refer = newrefer;
+		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+			if (err) {
+				return next(err)
+			}
+			if (data.length === 0) {
+				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
+			}
+			var str = pug.renderFile(path.join(__dirname, '../views/includes/exporttemplate.pug'), {
+				doctype: 'xml',
+				csrfToken: req.csrfToken(),
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				ff: distinct,
+				dat: dat,
+				appURL: req.app.locals.appURL
+			});
+			return res.render('export', {
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				dat: dat,
+				ff: distinct,
+				str: str,
+				exports: true
+			});
+				
+			
+		});
+	})
+
+});
+
+router.get('/exportword', function(req, res, next){
+	getDat64(function(dat){
+		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
+		req.session.refer = newrefer;
+		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+			if (err) {
+				return next(err)
+			}
+			if (data.length === 0) {
+				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
+			}
+			var HtmlDocx = require('html-docx-js');
+			var path = require('path');
+			var pugpath = path.join(__dirname, '../views/includes/exportword.pug');
+			var pugviewpath = path.join(__dirname, '../views/includes/exportwordview.pug');
+			var now = Date.now();
+			var str = pug.renderFile(pugpath, {
+				md: require('marked'),
+				doctype: 'html',
+				hrf: '/publishers/ordinancer/word/'+now+'.docx',
+				dat: dat.sort(function(a,b){
+					//console.log(a[0].chapter.ind)
+					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+						return -1
+					} else {
+						return 1
+					}
+				})
+			});
+			var viewstr = pug.renderFile(pugviewpath, {
+				md: require('marked'),
+				doctype: 'html',
+				hrf: '/publishers/ordinancer/word/'+now+'.docx',
+				dat: dat.sort(function(a,b){
+					//console.log(a[0].chapter.ind)
+					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+						return -1
+					} else {
+						return 1
+					}
+				})
+			});
+			var docx = HtmlDocx.asBlob(str);
+			var p = ''+publishers+'/pu/publishers/ordinancer/word';
+					
+			fs.access(p, function(err) {
+				if (err && err.code === 'ENOENT') {
+					mkdirp(p, function(err){
+						if (err) {
+							console.log("err", err);
+						}
+					})
+				}
+			});
+			
+			var path = p + '/'+now+'.docx';
+			fs.writeFile(path, docx, function(err){
+				if (err) {
+					return next(err)
+				}
+				res.send(viewstr)
+				//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
+			});
+			//return res.send(str)
+			
+			
+		});
+	})
+
+});
+
+
+router.get('/exportindd'/*, ensureCurly*/, function(req, res, next){
 	var dat = []
 	Content.distinct('chapter.str', function(err, distinct){
 		if (err) {
@@ -764,26 +935,21 @@ router.get('/export', ensureCurly, function(req, res, next){
 			if (data.length === 0) {
 				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
 			}
-			Diffs.find({}).sort({date:1}).exec(function(err, diffs){
-				if (err) {
-					return next(err) 
-				}
-				var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
-					doctype: 'xml',
-					csrfToken: req.csrfToken(),
-					menu: !req.session.menu ? 'view' : req.session.menu,
-					ff: distinct,
-					dat: dat,
-					appURL: req.app.locals.appURL
-				});
-				return res.render('export', {
-					menu: !req.session.menu ? 'view' : req.session.menu,
-					dat: dat,
-					ff: distinct,
-					str: str,
-					exports: true
-				});
-			})
+			var str = pug.renderFile(path.join(__dirname, '../views/includes/exportindd.pug'), {
+				doctype: 'xml',
+				csrfToken: req.csrfToken(),
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				ff: distinct,
+				dat: dat,
+				appURL: req.app.locals.appURL
+			});
+			return res.render('export', {
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				dat: dat,
+				ff: distinct,
+				str: str,
+				exports: true
+			});
 				
 			
 		});
@@ -791,18 +957,16 @@ router.get('/export', ensureCurly, function(req, res, next){
 	/**/
 })
 
-router.post('/api/export', function(req, res, next){
+
+
+router.post('/api/exportindd/:version', function(req, res, next){
   var body = req.body;
-	console.log(req.body.xml)
+	//console.log(req.body.xml)
   var xmlbuf = new Buffer(body.xml, 'utf8'); // decode
   var indd = path.join(__dirname, '/../../indd')
 
-/* ALERT 
-	possible path problem right here 
-	could be + '/xml.xml'
-*/
-  var xmlurl = path.join(__dirname, '/../../indd') + 'xml.xml';
-	console.log(xmlurl)
+  var xmlurl = path.join(__dirname, '/../../indd') + '/xml.xml';
+	//console.log(xmlurl)
   fs.writeFile(xmlurl, xmlbuf, function(err) {
     if(err) {
       console.log("err", err);
@@ -811,14 +975,15 @@ router.post('/api/export', function(req, res, next){
   const id = new InDesign({
     version: 'CS6'
   });
-  console.log(path.join(__dirname, '/../..', 'indd/example.jsx'))
-  id.run(path.join(__dirname, '/../..', 'indd/example.jsx'), {
+  //console.log(path.join(__dirname, '/../..', 'indd/importIndd.jsx'))
+  id.run(path.join(__dirname, '/../..', 'indd/importIndd.jsx'), {
 		message: 'hi from node',
 		dirname: path.join(__dirname, '/../..'),
 		xmlurl: 'xml.xml'
   }, function(res) {
-		console.log(res);
-		return res.redirect('/')
+		//console.log(res);
+		//return res.redirect('/')
+		return res.status(200).send('ok')
   });
 
 })
@@ -835,7 +1000,7 @@ router.get('/diff', function(req, res, next){
 		}
 		// console.log(data)
 		var dat = []
-	Content.distinct('chapter.str', function(err, distinct){
+		Content.distinct('chapter.str', function(err, distinct){
 			if (err) {
 				return next(err)
 			}
@@ -909,7 +1074,7 @@ router.post('/diff', function(req, res, next){
 
 				var Diff = require('diff');
 				var diff = Diff.diffWordsWithSpace((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str);
-				console.log('sent this diff')
+				//console.log('sent this diff')
 				//console.log(diff)
 				var diffss = [];
 				if (diff.length) {
@@ -998,23 +1163,18 @@ router.get('/list/:id/:index', function(req, res, next){
 			if (err) {
 				return next(err)
 			}
-			Diffs.find({}).sort({date:1}).exec(function(err, diffs){
-				if (err) {
-					return next(err)
-				}
-				var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
-					csrfToken: req.csrfToken(),
-					menu: !req.session.menu ? 'view' : req.session.menu,
-					//data: data,
-					doc: doc,
-					appURL: req.app.locals.appURL
-					
-				});
-				return res.render('single', {
-					doc: doc,
-					mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
-					str: str
-				})
+			var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
+				csrfToken: req.csrfToken(),
+				menu: !req.session.menu ? 'view' : req.session.menu,
+				//data: data,
+				doc: doc,
+				appURL: req.app.locals.appURL
+				
+			});
+			return res.render('single', {
+				doc: doc,
+				mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
+				str: str
 			})
 		})
 	})
@@ -1022,26 +1182,33 @@ router.get('/list/:id/:index', function(req, res, next){
 
 router.get('/menu/:title/:chapter', function(req, res, next){
 	var key, val;
+	var key2 = null, val2;
 	var find = {}
 
 	if (!req.params.chapter || req.params.chapter === 'null') {
 		if (!req.params.title) {
 			return res.redirect('/')
 		}
-		key = 'title.ind'
-		val = parseInt(req.params.title, 10)
+		key = 'title.ind';
+		val = ''+req.params.title;
 		
 			
 	} else {
-		key = 'chapter.ind'
-		val = parseInt(req.params.chapter, 10)
+		key = 'chapter.ind';
+		val = ''+req.params.chapter;
+		key2 = 'title.ind';
+		val2 = req.params.title;
 		
 	}
 	find[key] = val;
+	/*if (key2) {
+		find[key2] = val2;
+	}*/
 	Content.find(find).sort( { index: 1 } ).lean().exec(function(err, data){
 		if (err) {
 			return next(err)
 		}
+		//console.log(data)
 		var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 			doctype: 'xml',
 			csrfToken: req.csrfToken(),
@@ -1056,6 +1223,7 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 			exports: false
 		})
 	})
+	
 })
 
 router.get('/api/importtxt', function(req, res, next){
@@ -1064,7 +1232,7 @@ router.get('/api/importtxt', function(req, res, next){
 	})
 })
 
-router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('txt'), function(req, res, next){
+router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.single('txt'), function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	async.waterfall([
@@ -1090,9 +1258,9 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 				var drx = /(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)(?=\d{1,3}\.\d{1,3}\.\d{1,4}\.\s*?)/gm
 				// title.chapter.section index
 				var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)/si
-				var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
+				//var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
 				// title rx
-				var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n[\w])/si
+				var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n)/si
 				// isolate description
 				var descrx = /(?:[\n])(.*)/si
 				//remove stray spaces
@@ -1138,19 +1306,30 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 						''
 					);
 					desc = desc.replace(/^([A-Z]\.)/gm, '  \n**$1**').replace(/[\s\.]([A-Z]\.)/g, '  \n  \n**$1**');
-					
-					
+					var num = num[0]
+					num = num.split('.');
+					var end = num.pop();
+					num = num.join('.');
+					//console.log(num)
 					return {
-						num: num[0],
+						num: num,
 						title: (trx.exec(it) ? trx.exec(it)[1] : '').trim(),
 						desc: desc.toString()
 					}
 					
 				});
+				dat = dat.sort(function(a,b){
+					if (parseInt(a.num.split('.')[a.num.split('.').length-1], 10) < parseInt(b.num.split('.')[b.num.split('.').length-1], 10)) {
+						return -1;
+					} else {
+						return 1;
+					}
+				})
 				next(null, dat, newch);
 			})
 		},
 		function(dat, chtitle, next){
+			var newdate = new Date();
 			Content.find({}, function(err, data){
 				if (err) {
 					return next(err)
@@ -1158,50 +1337,107 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 				var startind = data.length;
 				dat.forEach(function(item, i){
 					if (item.num !== '') {
-						var entry = new Content({
-							index: startind + i,
-							type: 'Feature',
-							title: {
-								ind: parseInt(item.num.split('.')[0], 10),
-								str: 'Subdivisions'
-							},
-							chapter: {
-								ind: parseInt(item.num.split('.')[1], 10),
-								str: chtitle
-							},
-							section: {
-								ind: parseInt(item.num.split('.')[2], 10),
-								str: item.title
-							},
-							properties: {
-								section: item.num,
-								published: true,
-								label: 'Edit Subtitle',
-								title: curly(item.title),
-								place: 'Edit Place',
-								description: marked(item.desc),
-								current: false,
-								media: []
-							},
-							geometry: {
-								type: 'Polygon',
-								coordinates:
-								[
-									[
-										[-112.014822, 41.510547],
-										[-112.014822, 41.510838],
-										[-112.014442, 41.510838],
-										[-112.014442, 41.510547],
-										[-112.014822, 41.510547]
-									]
-								]
-							}
-						});
-						entry.save(function(err){
+						Content.findOne({'properties.section': item.num}, function(err, doc){
 							if (err) {
-								console.log(err)
+								return next(err)
+							}
+							if (!doc) {
+								var entry = new Content({
+									index: i,
+									type: 'Feature',
+									title: {
+										ind: item.num.split('.')[0],
+										str: 'Subdivisions'
+									},
+									chapter: {
+										ind: item.num.split('.')[1],
+										str: chtitle
+									},
+									section: {
+										ind: item.num.split('.')[2],
+										str: item.title
+									},
+									properties: {
+										section: item.num,
+										published: true,
+										label: 'Edit Subtitle',
+										title: curly(item.title),
+										place: 'Edit Place',
+										description: marked(item.desc),
+										current: false,
+										media: [],
+										diffs: []
+									},
+									geometry: {
+										type: 'Polygon',
+										coordinates:
+										[
+											[
+												[-112.014822, 41.510547],
+												[-112.014822, 41.510838],
+												[-112.014442, 41.510838],
+												[-112.014442, 41.510547],
+												[-112.014822, 41.510547]
+											]
+										]
+									}
+								});
+								entry.save(function(err){
+									if (err) {
+										console.log(err)
+									}
+								})
+							} else {
+								var Diff = require('diff');
+									 
+								var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(item.desc));
+								//console.log('sent this diff')
+								//console.log(diff)
+								var diffss = [];
+								if (diff.length) {
+									diff.forEach(function(dif){
+										//console.log(dif)
+										diffss.push({
+											count: dif.count,
+											value: dif.value,
+											added: dif.added,
+											removed: dif.removed
+										})
+									})
+								}
+								
+								Content.findOneAndUpdate(
+								{_id: doc._id}, 
+								{$set:{'properties.title':curly(item.title)}}, 
+								{safe:true,new:true}, 
+								function(err, doc){
+									if (err) {
+										return next(err)
+									}
+									Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.description': marked(item.desc)}}, {safe:true, new:true}, function(err, doc){
+										if (err) {
+											return next(err)
+										}
+										if (diffss.length > 0) {
+											var newdiff = {
+												date: newdate,
+												dif: diffss,
+												str: marked(item.desc)
+											};
+											Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
+												if (err) {
+													return next(err)
+												}
+												
+											})
+										}
+									})
+									
+								})
 							}
 						})
+						
+						
 					}
 				});
 
@@ -1211,7 +1447,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc', rmDocs, uploadmedia.single('
 		},
 		function(next) {
 			var dat = []
-		Content.distinct('chapter.str', function(err, distinct){
+			Content.distinct('chapter.str', function(err, distinct){
 				if (err) {
 					return next(err)
 				}
@@ -1309,20 +1545,20 @@ router.get('/api/new/:chtitle', function(req, res, next){
 					str: 'Subdivisions' 
 				},
 				chapter: {
-					ind: (chunk.length === 0 ? 1 : chunk[0].chapter.ind),
+					ind: (chunk.length === 0 ? '01' : chunk[0].chapter.ind),
 					str: (chunk.length === 0 ? 'General Provisions.' : chunk[0].chapter.str )
 				},
 				section: {
-					ind: (chunk.length === 0 ? 1 + '0' : (chunk.length + 1) + '0'),
-					str: 'Introduction' 
+					ind: (chunk.length === 0 ? '010' : ((chunk.length + 1 >= 10 ? '' : '0') + (chunk.length + 1) + '0')),
+					str: 'Short Title.' 
 				},
 				properties: {
-					section: '25.'+chind+'.'+secind,
+					section: '25.'+(chunk.length === 0 ? '01' : chunk[0].chapter.ind)+'.'+(chunk.length === 0 ? '010' : ((chunk.length + 1 >= 10 ? '' : '0') + (chunk.length + 1) + '0')),
 					published: true,
 					label: 'Edit Subtitle',
-					title: 'Edit Title',
+					title: 'Short Title.',
 					place: 'Edit Place',
-					description: marked('Sample text with  \n  \n**A.** lists and  \n  \n1. More  \n2. lists'),
+					description: marked(curly('This Ordinance shall be known and may be cited as the “Brigham City Subdivision Ordinance” and may be identified within this document and other documents as “the Ordinance,” “this Ordinance,” “Subdivision Ordinance,” or “Land Use Ordinance.” This Ordinance shall be considered and may be identified as a Brigham City Land Use Ordinance, as defined by Utah Code.')),
 					current: false,
 					time: {
 						begin: moment().utc().format(),

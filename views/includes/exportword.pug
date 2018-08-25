@@ -1,0 +1,73 @@
+doctype strict
+html
+	head
+		meta(charset="utf-8")
+		meta(http-equiv="X-UA-Compatible", content="IE=edge; charset=utf-8")
+		title= appTitle
+		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+		style(type="text/css")
+			include ../../public/stylesheets/styleword.css
+	body
+		div.centerallwrap(style="background-color: #fff; pointer-events:all;")
+			
+			div.centerall
+				each data, n in dat
+					div#chapter
+						table(style="width:100%; table-layout: auto;")
+							tr.tb-font-l
+								td
+									span.bd #{data[0].title.ind}
+										span .
+										span #{data[0].chapter.ind}
+										span &nbsp
+								td
+									span #{data[0].chapter.str}
+							each doc, i in data
+								tr.tb-font-m
+									td
+										span.bd #{doc.title.ind}
+											span .
+											span #{doc.chapter.ind}
+											span .
+											span #{doc.section.ind}
+									td
+										span #{doc.section.str}
+				each data, n in dat
+					div#chapter
+						table(style="width:100%;table-layout: auto;")
+							tr.tb-font-l
+								td 
+									span Title 
+									span.bd #{data[0].title.ind}
+									span &nbsp
+									span #{data[0].title.str}
+
+							tr.tb-font-l
+								td
+									span Chapter 
+									span.bd #{data[0].chapter.ind}
+									span &nbsp
+									span #{data[0].chapter.str}
+						each doc, i in data
+							div.headline.headrule(style="margin-top: 15px;")
+								table(style="width:100%")
+									tr
+										td.tb-font-l(colspan="2", style="vertical-align: bottom;")
+											span.bd #{doc.title.ind}
+												span .
+												span #{doc.chapter.ind}
+												span .
+												span #{doc.section.ind}
+											span &nbsp
+												span #{doc.section.str}
+											
+									tr
+										td.tb-font-s(colspan=(doc.properties.media.length > 0 ? 1 : 2) )
+											!= md(doc.properties.description)
+										if (doc.properties.media.length > 0)
+											td
+											
+												each img, j in doc.properties.media
+													a.img
+														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
+													p.tb-font-xxs(style="position: absolute;") #{img.caption}

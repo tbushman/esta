@@ -1,20 +1,21 @@
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema,
-		Content = require('mongoose-geojson-schema');
+		Content = require('mongoose-geojson-schema'),
+		Diffs = require('./diffs.js');
 
 var GeoJSON = new Schema({
 	type: String,
 	index: Number,
 	title: {
-		ind: Number,
+		ind: String,
 		str: String 
 	},
 	chapter: {
-		ind: Number,
+		ind: String,
 		str: String 
 	},
 	section: {
-		ind: Number,
+		ind: String,
 		str: String 
 	},
 	properties: {
@@ -37,7 +38,8 @@ var GeoJSON = new Schema({
 				postscript: String,
 				url: String
 			}
-		]
+		],
+		diffs: [Diffs]
 	},
 	geometry: Schema.Types.Polygon
 }, 
