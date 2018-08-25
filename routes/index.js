@@ -838,19 +838,34 @@ router.get('/exportword', function(req, res, next){
 			var HtmlDocx = require('html-docx-js');
 			var path = require('path');
 			var pugpath = path.join(__dirname, '../views/includes/exportword.pug');
+			var pugviewpath = path.join(__dirname, '../views/includes/exportwordview.pug');
+			var now = Date.now();
 			var str = pug.renderFile(pugpath, {
 				md: require('marked'),
 				doctype: 'html',
+				hrf: '/publishers/ordinancer/word/'+now+'.docx',
 				dat: dat.sort(function(a,b){
 					console.log(a[0].chapter.ind)
-					if (a[0].chapter.ind < b[0].chapter.ind) {
+					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
 						return -1
 					} else {
 						return 1
 					}
 				})
 			});
-			
+			var viewstr = pug.renderFile(pugviewpath, {
+				md: require('marked'),
+				doctype: 'html',
+				hrf: '/publishers/ordinancer/word/'+now+'.docx',
+				dat: dat.sort(function(a,b){
+					console.log(a[0].chapter.ind)
+					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+						return -1
+					} else {
+						return 1
+					}
+				})
+			});
 			var docx = HtmlDocx.asBlob(str);
 			var p = ''+publishers+'/pu/publishers/ordinancer/word';
 					
@@ -863,10 +878,18 @@ router.get('/exportword', function(req, res, next){
 					})
 				}
 			});
-			var now = Date.now();
+			
 			var path = p + '/'+now+'.docx';
-			fs.writeFileSync(path, docx);
-			return res.send(str);
+			fs.writeFile(path, docx, function(err){
+				if (err) {
+					return next(err)
+				}
+				res.send(viewstr)
+				//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
+			});
+			//return res.send(str)
+			
+			
 		});
 	})
 
@@ -1167,24 +1190,25 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 			return res.redirect('/')
 		}
 		key = 'title.ind';
-		val = req.params.title;
+		val = ''+req.params.title;
 		
 			
 	} else {
 		key = 'chapter.ind';
-		val = req.params.chapter;
+		val = ''+req.params.chapter;
 		key2 = 'title.ind';
 		val2 = req.params.title;
 		
 	}
 	find[key] = val;
-	if (key2) {
+	/*if (key2) {
 		find[key2] = val2;
-	}
+	}*/
 	Content.find(find).sort( { index: 1 } ).lean().exec(function(err, data){
 		if (err) {
 			return next(err)
 		}
+		console.log(data)
 		var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 			doctype: 'xml',
 			csrfToken: req.csrfToken(),
@@ -1199,6 +1223,7 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 			exports: false
 		})
 	})
+	
 })
 
 router.get('/api/importtxt', function(req, res, next){
@@ -1304,6 +1329,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 			})
 		},
 		function(dat, chtitle, next){
+			var newdate = new Date();
 			Content.find({}, function(err, data){
 				if (err) {
 					return next(err)
@@ -1371,14 +1397,12 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 								if (diff.length) {
 									diff.forEach(function(dif){
 										//console.log(dif)
-										if (dif.added || dif.removed){
-											diffss.push({
-												count: dif.count,
-												value: dif.value,
-												added: dif.added,
-												removed: dif.removed
-											})
-										}
+										diffss.push({
+											count: dif.count,
+											value: dif.value,
+											added: dif.added,
+											removed: dif.removed
+										})
 									})
 								}
 								
@@ -1396,7 +1420,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 										}
 										if (diffss.length > 0) {
 											var newdiff = {
-												date: new Date(),
+												date: newdate,
 												dif: diffss,
 												str: marked(item.desc)
 											};

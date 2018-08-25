@@ -21,9 +21,10 @@ html
 		script(type="text/javascript", src="/scripts/leaflet.js")
 		//script(type="text/javascript", src="/scripts/leaflet.draw.js")
 		//script(type="text/javascript", src="/scripts/Leaflet.draw.drag-src.js")
+		//script(defer src="https://use.fontawesome.com/releases/v5.2.0/js/all.js", integrity="sha384-4oV5EgaV02iISL2ban6c/RmotsABqE4yZxZLcYMAdG7FAPsyHYAPpywE9PJo+Khy", crossorigin="anonymous")
 		script(type="text/javascript", src="/scripts/Path.Drag.js")
 		script(type="text/javascript", src="/scripts/Leaflet.Editable.js")
-		script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.0.2/mocha.min.js")
+		//script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.0.2/mocha.min.js")
 		script(type='text/javascript', src='/scripts/leaflet-image_0_4_0.js')
 	body
 		block page
@@ -60,7 +61,7 @@ html
 						dPath: this.dPathAttr(),
 						tinymce: null,
 						str: this.parseObj(!{JSON.stringify(str)}),
-						diff: (!this.parseObj(!{JSON.stringify(diff)}) || this.parseObj(!{JSON.stringify(diff)}) === '' ? null : this.parseObj(!{JSON.stringify(diff)})),
+						diff: null,
 						web: true,
 						export: this.parseBool(!{JSON.stringify(exports)}),
 						ff: this.parseObj(!{JSON.stringify(ff)}),//['General Provisions.', 'Concept Plan.', 'Sketch Plan.', 'Preliminary Subdivision Applications.', 'Final Subdivision Applications.', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final.', 'Subdivision Ordinance Amendments.', 'Noticing Requirements.', 'Appeals.', 'Special Excepetions.', 'Design and Construction Standards.', 'Guarantees for Subdivision Improvements, Facilities, and Amenities.', 'Definitions.'],
@@ -161,6 +162,7 @@ html
 
 					if (!self.tinymce && $('#description')[0] && tinymce) {
 						console.log('shouldn\'t be')
+						console.log($('#description')[0])
 						self.tinymce = tinymce.init({
 							menubar: false,
 							statusbar: false,
@@ -194,6 +196,19 @@ html
 					
 				},
 				methods: {
+					changeDiff: function(doc) {
+						var self = this;
+						var input = document.getElementById('diff'+doc.index);
+						if (input.value >= doc.properties.diffs.length) {
+							self.diff = null;
+						} else {
+							self.diff = {
+								index: doc.index,
+								ind: input.value
+							}
+						}
+						
+					},
 					dragEnd: function(event, layer) {
 						var marker = event.target;
 						var position = event.target.getLatLng();

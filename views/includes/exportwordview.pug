@@ -11,6 +11,10 @@ html
 		div.centerallwrap(style="background-color: #fff; pointer-events:all;")
 			
 			div.centerall
+				a.tb-06-m0.block.success(role="button", href= hrf, title="Download Word File") Click here to download Word File
+				div.tb-01-m0 &nbsp
+				a.tb-03-m0.block.danger(role="button", href="/exportword", title="Page blank -- reload")
+					span Blank page? Click to reload
 				each data, n in dat
 					div#chapter
 						table(style="width:100%; table-layout: auto;")

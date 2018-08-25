@@ -197,9 +197,9 @@ a span, a img {
 
 h5, .tb-font-m {
 	font-family: var(--bfontname), var(--bfonttype)!important;
-	font-size: 1.2rem;
+	font-size: 1.1rem;
 	font-weight: 300;
-	line-height: 1.4rem;
+	line-height: 1.3rem;
 	padding: 18px 0 0 0;
 	padding: calc(var(--thumbw) / 2.5) 0 0 0;
 	color: #000;
@@ -817,6 +817,13 @@ a.img img {
 	left: 0;
 }
 
+a.accordion .ui path {
+	fill: #fff;
+}
+
+a.accordion:hover .ui path {
+	fill: tomato;
+}
 
 /*
 	form elements
@@ -837,7 +844,7 @@ textarea {
 	font-family: var(--afontname), calc(var(--afonttype))!important;
 }
 
-input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="tel"], textarea, datalist, select {
+input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="tel"], textarea, select {
 	line-height: normal;
 	background-color: #fff;
 	background-color: var(--primary);

@@ -825,7 +825,7 @@ button, a[role="button"], input[type="submit"] {
 	color: #fff;
 }
 button:hover, a[role="button"]:hover, input[type="submit"]:hover{
-	background-color: #9e1f63;
+	background-color: tomato;
 }
 button span, a[role="button"] span {
 	color: #fff;

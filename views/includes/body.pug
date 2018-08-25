@@ -1,7 +1,23 @@
-celll#description.tb-07-m0.tb-font-s(v-show="(accordions[n].indexOf(doc.index) !== -1)", v-html="doc.properties.description", aid:pstyle="p", aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="desc")
+celll.tb-07-m0.tb-font-s(v-if="!diff || diff.index !== doc.index", v-show="(accordions[n].indexOf(doc.index) !== -1)", v-html="doc.properties.description", aid:pstyle="p", aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="desc")
+celll.tb-07-m0.tb-font-s(v-if="diff && diff.index === doc.index", v-show="(accordions[n].indexOf(doc.index) !== -1)", aid:pstyle="p", aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="desc")
+	span(v-for="part in doc.properties.diffs[diff.ind].dif")
+		ins(v-if="part.added", v-html="part.value", style="color: 'green';")
+		del(v-else-if="part.removed", v-html="part.value", style="color: 'red';")
+		span(v-else-if="part.value", v-html="part.value", style="color: 'grey';")
+	
+
 celll.tb-03-m0(v-show="(accordions[n].indexOf(doc.index) !== -1)", aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="imgs")
 
 	a.img(v-if="doc.properties !== undefined", v-for="img in doc.properties.media", v-bind:href="'/list/'+doc._id+'/null'")
 		breadcrumbs.tb-font-xxs(v-text="img.caption", aid:pstyle="breadcrumbs", style="position: absolute;")
-		img(v-bind:src="img.image+'?version='+doc.__v", alt="(img.caption !== 'Sample caption' ? img.caption : '' )")
+		img(v-bind:src="img.image+'?version='+doc.__v", v-bind:alt="(img.caption !== 'Sample caption' ? img.caption : '' )")
 
+//
+celll.tb-11-m0(v-if="doc.properties.diffs.length > 0", v-show="(accordions[n].indexOf(doc.index) !== -1)")
+	
+	label.tb-11-m0(v-if="doc.properties.diffs.length > 0", v-show="(accordions[n].indexOf(doc.index) !== -1)", v-bind:for="'diff'+doc.index", v-text="'Revision timeline'")
+	input(v-if="doc.properties.diffs.length > 0", v-show="(accordions[n].indexOf(doc.index) !== -1)", v-bind:id="'diff'+doc.index", v-on:change="changeDiff(doc)", v-bind:value="(!diff ? doc.properties.diffs.length : diff.ind)", v-bind:min="0", v-bind:max="doc.properties.diffs.length", v-bind:list="'tickmarks'+doc.index", type="range", step="1", style="pointer-events: auto; width: 100%; margin: 0;")
+	//output(v-bind:for="'diff'+doc.index")
+	datalist(v-if="doc.properties.diffs.length > 0", v-show="(accordions[n].indexOf(doc.index) !== -1)", v-bind:id="'tickmarks'+doc.index", style="width: 100%;display:flex;")
+		option.tb-font-xs(v-for="(date, k) in doc.properties.diffs", v-bind:value="k", v-bind:label="moment(date.date).format('MM/DD/YYYY')", v-bind:style="{width: (doc.properties.diffs.length * 0.5) * 100 + '%'}")
+		option.tb-font-xs(v-bind:value="doc.properties.diffs.length", v-bind:label="'Current'", v-bind:style="{width: (doc.properties.diffs.length * 0.5) * 100 + '%', 'text-align': 'right'}")
