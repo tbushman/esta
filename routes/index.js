@@ -560,9 +560,9 @@ function getDat(cb){
 				dat.push(data)
 			})
 		} else {
-			console.log(distinct)
+			//console.log(distinct)
 			distinct.sort();
-			console.log(distinct)
+			//console.log(distinct)
 			distinct.forEach(function(key, i) {
 				Content.find({'chapter.ind':key}).sort({index:1}).lean().exec(function(err, data){
 					if (err) {
@@ -606,9 +606,9 @@ function getDat64(next){
 						dat.push(data)
 					})
 				} else {
-					console.log(distinct)
+					//console.log(distinct)
 					distinct.sort();
-					console.log(distinct)
+					//console.log(distinct)
 					distinct.forEach(function(key, i) {
 						Content.find({'chapter.ind':key}).sort({index:1}).lean().exec(function(err, data){
 							if (err) {
@@ -639,7 +639,7 @@ function getDat64(next){
 		if (err) {
 			console.log(err)
 		}
-		console.log(dat)
+		//console.log(dat)
 		next(dat)
 	})
 }
@@ -845,7 +845,7 @@ router.get('/exportword', function(req, res, next){
 				doctype: 'html',
 				hrf: '/publishers/ordinancer/word/'+now+'.docx',
 				dat: dat.sort(function(a,b){
-					console.log(a[0].chapter.ind)
+					//console.log(a[0].chapter.ind)
 					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
 						return -1
 					} else {
@@ -858,7 +858,7 @@ router.get('/exportword', function(req, res, next){
 				doctype: 'html',
 				hrf: '/publishers/ordinancer/word/'+now+'.docx',
 				dat: dat.sort(function(a,b){
-					console.log(a[0].chapter.ind)
+					//console.log(a[0].chapter.ind)
 					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
 						return -1
 					} else {
@@ -1074,7 +1074,7 @@ router.post('/diff', function(req, res, next){
 
 				var Diff = require('diff');
 				var diff = Diff.diffWordsWithSpace((diffs.length === 0 ? req.body.str : diffs[diffs.length - 1].str), req.body.str);
-				console.log('sent this diff')
+				//console.log('sent this diff')
 				//console.log(diff)
 				var diffss = [];
 				if (diff.length) {
@@ -1208,7 +1208,7 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 		if (err) {
 			return next(err)
 		}
-		console.log(data)
+		//console.log(data)
 		var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 			doctype: 'xml',
 			csrfToken: req.csrfToken(),
@@ -1310,7 +1310,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 					num = num.split('.');
 					var end = num.pop();
 					num = num.join('.');
-					console.log(num)
+					//console.log(num)
 					return {
 						num: num,
 						title: (trx.exec(it) ? trx.exec(it)[1] : '').trim(),
@@ -1391,8 +1391,8 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 								var Diff = require('diff');
 									 
 								var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(item.desc));
-								console.log('sent this diff')
-								console.log(diff)
+								//console.log('sent this diff')
+								//console.log(diff)
 								var diffss = [];
 								if (diff.length) {
 									diff.forEach(function(dif){
