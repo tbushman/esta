@@ -826,7 +826,7 @@ router.get('/exportpdf', getDat, function(req, res, next){
 				dat: req.dat,
 				ff: req.distinct,
 				str: str,
-				exports: false
+				exports: true
 			});
 				
 			
@@ -835,10 +835,13 @@ router.get('/exportpdf', getDat, function(req, res, next){
 
 });
 
-router.post('/api/exportpdf', function(req, res, next){
+router.post('/api/exportpdf', getDat, function(req, res, next){
+	var body = req.body;
+	//console.log(req.body.xml)
+  var htmlbuf = new Buffer(body.pdf, 'utf8'); // decode
 	var now = Date.now();
 	var p = ''+publishers+'/pu/publishers/ordinancer/pdf';
-			
+		
 	fs.access(p, function(err) {
 		if (err && err.code === 'ENOENT') {
 			mkdirp(p, function(err){
@@ -848,9 +851,49 @@ router.post('/api/exportpdf', function(req, res, next){
 			})
 		}
 	});
-	var electronPDF = require('electron-pdf');
-	spawn('electron-pdf https://ta.bli.sh/exportpdf '+path.join(p, '/'+now+'.pdf'))
-	return res.redirect('/exportpdf')
+	var htmlurl = path.join(p, '/'+now+'.html');
+	var pdfurl = path.join(p, '/'+now+'.pdf');
+	//console.log(xmlurl)
+  fs.writeFile(htmlurl, htmlbuf, function(err) {
+		if(err) {
+			console.log("err", err);
+		}
+		//var electronPDF = require('electron-pdf');
+		//spawn('electron-pdf https://ta.bli.sh/exportpdf '+path.join(p, '/'+now+'.pdf'))
+		var juice = require('juice');
+		var pdf = require('html-pdf');
+		var html = fs.readFileSync(htmlurl, 'utf8') || htmlbuf;
+		html = juice(html);
+		var options = { 
+			format: 'Letter'
+			//,base: req.protocol + '://' + req.get('host')
+		 	//base: 'file://' + path.join(__dirname, '../public') */
+		};
+		
+		//console.log('file://' + path.join(__dirname, '../public'))
+		pdf.create(html, options).toFile(pdfurl, function(err, result) {
+		  if (err) return console.log(err);
+			console.log(result)
+			//return res.redirect('/publishers/ordinancer/pdf/'+now+'.pdf');
+			var pugviewpath = path.join(__dirname, '../views/includes/exporttemplate.pug');
+			var viewstr = pug.renderFile(pugviewpath, {
+				md: require('marked'),
+				doctype: 'html',
+				hrf: '/publishers/ordinancer/pdf/'+now+'.docx',
+				dat: req.dat.sort(function(a,b){
+					//console.log(a[0].chapter.ind)
+					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+						return -1
+					} else {
+						return 1
+					}
+				})
+			});
+			return res.status(200).send(viewstr);
+		});
+	})
+	
+	
 })
 
 router.get('/exportword', function(req, res, next){
@@ -864,6 +907,7 @@ router.get('/exportword', function(req, res, next){
 			if (data.length === 0) {
 				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
 			}
+			var juice = require('juice');
 			var HtmlDocx = require('html-docx-js');
 			var path = require('path');
 			var pugpath = path.join(__dirname, '../views/includes/exportword.pug');
@@ -895,7 +939,7 @@ router.get('/exportword', function(req, res, next){
 					}
 				})
 			});
-			var docx = HtmlDocx.asBlob(str);
+			var docx = HtmlDocx.asBlob(juice(str));
 			var p = ''+publishers+'/pu/publishers/ordinancer/word';
 					
 			fs.access(p, function(err) {

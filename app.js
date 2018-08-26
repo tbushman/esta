@@ -30,7 +30,7 @@ var csrfProtection = csrf({ cookie: true });
 
 var app = express();
 app.locals.appTitle = 'Ordinancer';
-app.locals.appURL = (process.env.NODE_ENV === 'production' ? 'ord.bli.sh' : 'localhost:'+process.env.PORT+'')
+app.locals.appURL = (process.env.NODE_ENV === 'production' ? 'ta.bli.sh' : 'localhost:'+process.env.PORT+'')
 app.locals.moment = require('moment');
 app.locals.pug = require('pug');
 marked.setOptions({

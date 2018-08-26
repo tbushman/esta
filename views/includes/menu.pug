@@ -1,18 +1,33 @@
-div.menu.static
-	div.dropdown.static(v-bind:href="'/'", style="float: left; left:26px; right:auto;")
-		a.submenu.drop.static
-			span Brigham City
-	div.dropdown.static
-		
-		a.submenu.drop.static(v-bind:href="'/'")
-			span.tb-font-l(v-text="'Home'")
-		a.submenu.drop.static(v-bind:href="'/api/importtxt'")
-			span.tb-font-l(v-text="'Import Chapter'")
-		if (menu === "map")
-			a.submenu.drop.static(v-on:click="addMapBlob")
-				span.tb-font-l(v-text="'Save Map'")
-		if (menu === "publish")
-			a.submenu.drop.static(v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].chapter.str)")
-				span.tb-font-l(v-text="'Add Section to Chapter '+dat[0][0].chapter.ind+''")
-		a.submenu.drop.static(v-bind:href="'/exportword'")
-			span.tb-font-l(v-text="'Export Word file'")
+- var menus = [ 'static', '' ]
+
+each mn, k in menus
+	div.menu(class= mn)
+		a.mainmenu(class= mn, title="Menu", style="pointer-events: auto;")
+			
+			svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px", width="30.1px", height="25px", viewBox="0 0 30.1 28", style="enable-background:new 0 0 30.1 28; padding: 0 0 0 8px;", xml:space="preserve")
+				path(style="fill:#000;", d="M1.103,4.464c-0.606,0-1.1-0.493-1.1-1.1v-2.3c0-0.606,0.493-1.1,1.1-1.1h27.893  c0.607,0,1.1,0.494,1.1,1.1v2.3c0,0.606-0.492,1.1-1.1,1.1H1.103z")
+				path(style="fill:#000;", d="M1.103,16.464c-0.606,0-1.1-0.493-1.1-1.1v-2.3c0-0.606,0.493-1.101,1.1-1.101h27.893  c0.607,0,1.1,0.494,1.1,1.101v2.3c0,0.606-0.492,1.1-1.1,1.1H1.103z")
+				path(style="fill:#000;", d="M1.103,27.962c-0.606,0-1.1-0.494-1.1-1.1v-2.301c0-0.605,0.493-1.1,1.1-1.1h27.893  c0.607,0,1.1,0.494,1.1,1.1v2.301c0,0.605-0.492,1.1-1.1,1.1H1.103z")
+
+
+		if (mn === 'static')
+			div.dropdown.static(v-bind:href="'/'", style="float: left; left:6px; right:auto; display: flex;")
+				a.submenu.drop(class= mn)
+					span Brigham City
+		div.dropdown(class= mn)
+			
+			a.submenu.drop(class= mn, v-bind:href="'/'")
+				span.tb-font-s(v-text="'Home'")
+			a.submenu.drop(class= mn, v-bind:href="'/api/importtxt'")
+				span.tb-font-s(v-text="'Import Chapter'")
+			if (menu === "map")
+				a.submenu.drop(class= mn, v-on:click="addMapBlob")
+					span.tb-font-s(v-text="'Save Map'")
+			if (menu === "publish")
+				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].chapter.str)")
+					span.tb-font-s(v-text="'Add Section to Ch. '+dat[0][0].chapter.ind+''")
+			//
+				a.submenu.drop(class= mn, v-bind:href="'/exportpdf'")
+					span.tb-font-s(v-text="'Export PDF file'")
+			a.submenu.drop(class= mn, v-bind:href="'/exportword'")
+				span.tb-font-s(v-text="'Export Word file'")

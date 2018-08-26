@@ -11,48 +11,53 @@ html
 		div.centerallwrap(style="background-color: #fff; pointer-events:all;")
 			
 			div.centerall
+				p.tb-font-xl Table of Contents
 				each data, n in dat
-					div#chapter
+					div#chapter.headline.headrule
 						table(style="width:100%; table-layout: auto;")
-							tr.tb-font-l
-								td
+							tr.tb-font-m(style="padding: 0;")
+								td(colspan="1")
 									span.bd #{data[0].title.ind}
 										span .
 										span #{data[0].chapter.ind}
 										span &nbsp
-								td
+								td(colspan="5")
 									span #{data[0].chapter.str}
 							each doc, i in data
-								tr.tb-font-m
-									td
+								tr.tb-font-s(style="padding: 0;")
+									td(colspan="1")
 										span.bd #{doc.title.ind}
 											span .
 											span #{doc.chapter.ind}
 											span .
 											span #{doc.section.ind}
-									td
+											span &nbsp
+									td(colspan="5")
 										span #{doc.section.str}
+				p.tb-11-m0.footrule &nbsp
 				each data, n in dat
 					div#chapter
 						table(style="width:100%;table-layout: auto;")
-							tr.tb-font-l
+							tr.tb-font-l(style="padding: 0;")
 								td 
 									span Title 
 									span.bd #{data[0].title.ind}
 									span &nbsp
 									span #{data[0].title.str}
 
-							tr.tb-font-l
+							tr.tb-font-l(style="padding: 0;")
 								td
 									span Chapter 
 									span.bd #{data[0].chapter.ind}
 									span &nbsp
 									span #{data[0].chapter.str}
+									p.tb-11-m0.headrule &nbsp
+
 						each doc, i in data
-							div.headline.headrule(style="margin-top: 15px;")
+							div(style="margin-top: 15px;")
 								table(style="width:100%")
 									tr
-										td.tb-font-l(colspan="2", style="vertical-align: bottom;")
+										td.tb-font-l(colspan=(doc.properties.media.length > 0 ? 1 : 3), style="vertical-align: top;")
 											span.bd #{doc.title.ind}
 												span .
 												span #{doc.chapter.ind}
@@ -60,14 +65,18 @@ html
 												span #{doc.section.ind}
 											span &nbsp
 												span #{doc.section.str}
+											span.tb-font-s
+												!= md(doc.properties.description)
 											
-									tr
-										td.tb-font-s(colspan=(doc.properties.media.length > 0 ? 1 : 2) )
-											!= md(doc.properties.description)
+									
+										//
+											td.tb-font-s(colspan=(doc.properties.media.length > 0 ? 1 : 3), style="vertical-align:top;" )
+												!= md(doc.properties.description)
 										if (doc.properties.media.length > 0)
-											td
+											td(colspan="2")
 											
 												each img, j in doc.properties.media
-													a.img
+													a.img.tb-11-m0
 														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
 													p.tb-font-xxs(style="position: absolute;") #{img.caption}
+					p.tb-11-m0.footrule &nbsp

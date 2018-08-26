@@ -10,7 +10,9 @@ html
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.draw.css")
 
-		style(id="style", type="text/css")
+		//
+			style(id="style", type="text/css")
+				include ../public/stylesheets/styleword.css
 		script(type="text/javascript", src="/scripts/vue.min.js")
 		script(type="text/javascript", src="/scripts/jquery.min.js")
 		script(type="text/javascript", src="/scripts/jquery-ui.min.js")
@@ -66,9 +68,13 @@ html
 						export: this.parseBool(!{JSON.stringify(exports)}),
 						ff: this.parseObj(!{JSON.stringify(ff)}),//['General Provisions.', 'Concept Plan.', 'Sketch Plan.', 'Preliminary Subdivision Applications.', 'Final Subdivision Applications.', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final.', 'Subdivision Ordinance Amendments.', 'Noticing Requirements.', 'Appeals.', 'Special Excepetions.', 'Design and Construction Standards.', 'Guarantees for Subdivision Improvements, Facilities, and Amenities.', 'Definitions.'],
 						accordions: (this.parseObj(!{JSON.stringify(dat)}) !== '' && this.parseBool(!{JSON.stringify(exports)}) ? this.parseObj(!{JSON.stringify(dat)}).map(function(data){return data.map(function(doc){return doc.index})}) : 
-							[
-								this.parseObj(!{JSON.stringify(dat)}).map(function(data){return []})
-							]
+							(
+								this.parseObj(!{JSON.stringify(dat)}) !== '' ?
+								[
+									this.parseObj(!{JSON.stringify(dat)}).map(function(data){return []})
+								] :
+								[[]]
+							)
 						),
 						uploadisreplace: false,
 						uploadchtitle: null,
@@ -102,16 +108,47 @@ html
 						return doc.index;
 					}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
 					self.dindexes.sort();
+					$('.drop').slideToggle(100);
+					$('.slidedown').slideToggle(100);
+					$('.mainmenu').on('click', function(){
+						if ($('.dropdown').hasClass('active')) {
+							$('.dropdown').removeClass('active');
+						} else {
+							$('.dropdown').addClass('active');
+						}
+						$('.drop').slideToggle(100);
+					});
+
 					if (self.export && self.export !== '') {
 						setTimeout(function(){
 							var fd = new FormData();
 							var innerhtmldiv = $('div.centerallwrap')[0];
 							if (!innerhtmldiv) return;
-							var innerhtml = $(innerhtmldiv).html().toString();
-							console.log(innerhtml)
-							fd.append("xml", innerhtml);
+							//https://stackoverflow.com/a/12523515/3530394
+							var getDocTypeAsString = function () { 
+							var node = document.doctype;
+							return node ? "<!DOCTYPE "
+							+ node.name
+							+ (node.publicId ? ' PUBLIC "' + node.publicId + '"' : '')
+							+ (!node.publicId && node.systemId ? ' SYSTEM' : '') 
+							+ (node.systemId ? ' "' + node.systemId + '"' : '')
+							+ '>\n' : '';
+							};
+
 							
-							var uploadurl = '/api/export';
+							var innerhtml = 
+							getDocTypeAsString() + 
+							'<html><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge; charset=utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>' + 
+							'<style>'+
+							$('#style').html() +
+							'</style></head><body>'+
+							//'<link rel="stylesheet" href="/stylesheets/style.css"/></head><body>' + 
+							//'<link rel="stylesheet" type="text/css" href="'+ ( '#{appURL}' === 'ta.bli.sh' ? 'https://' : 'http://' ) +''+ '#{appURL}' +'/stylesheets/styleword.css"/>'+
+							innerhtmldiv.outerHTML + '</body></html>';//$('html')[0].outerHtml.toString();
+							console.log(innerhtml)
+							fd.append("pdf", innerhtml);
+							
+							var uploadurl = '/api/exportpdf';
 							$.ajax({
 								url: uploadurl,
 								type: 'POST',
