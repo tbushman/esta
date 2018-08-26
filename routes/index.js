@@ -818,15 +818,15 @@ router.get('/exportpdf', getDat, function(req, res, next){
 				csrfToken: req.csrfToken(),
 				menu: !req.session.menu ? 'view' : req.session.menu,
 				ff: req.distinct,
-				dat: dat,
+				dat: req.dat,
 				appURL: req.app.locals.appURL
 			});
 			return res.render('export', {
 				menu: !req.session.menu ? 'view' : req.session.menu,
-				dat: dat,
+				dat: req.dat,
 				ff: req.distinct,
 				str: str,
-				exports: true
+				exports: false
 			});
 				
 			
@@ -834,6 +834,24 @@ router.get('/exportpdf', getDat, function(req, res, next){
 	//})
 
 });
+
+router.post('/api/exportpdf', function(req, res, next){
+	var now = Date.now();
+	var p = ''+publishers+'/pu/publishers/ordinancer/pdf';
+			
+	fs.access(p, function(err) {
+		if (err && err.code === 'ENOENT') {
+			mkdirp(p, function(err){
+				if (err) {
+					console.log("err", err);
+				}
+			})
+		}
+	});
+	var electronPDF = require('electron-pdf');
+	spawn('electron-pdf https://ta.bli.sh/exportpdf '+path.join(p, '/'+now+'.pdf'))
+	return res.redirect('/exportpdf')
+})
 
 router.get('/exportword', function(req, res, next){
 	getDat64(function(dat){
@@ -1282,38 +1300,36 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 									})
 								}
 								
-								Content.findOneAndUpdate(
-								{_id: doc._id}, 
-								{$set:{'properties.title':curly(item.title)}}, 
-								{safe:true,new:true}, 
-								function(err, doc){
+								Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.title':curly(item.title)}}, {safe:true,new:true}, function(err, doc){
 									if (err) {
 										return next(err)
 									}
-									Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.description': marked(item.desc)}}, {safe:true, new:true}, function(err, doc){
+									Content.findOneAndUpdate({_id: doc._id}, {$set:{'chapter.str': curly(chtitle)}}, {safe:true, new:true}, function(err, doc){
 										if (err) {
 											return next(err)
 										}
-										if (diffss.length > 0) {
-											var newdiff = {
-												date: newdate,
-												dif: diffss,
-												str: marked(item.desc)
-											};
-											Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
-												if (err) {
-													return next(err)
-												}
-												
-											})
-										}
+										Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.description': marked(item.desc)}}, {safe:true, new:true}, function(err, doc){
+											if (err) {
+												return next(err)
+											}
+											if (diffss.length > 0) {
+												var newdiff = {
+													date: newdate,
+													dif: diffss,
+													str: marked(item.desc)
+												};
+												Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
+													if (err) {
+														return next(err)
+													}
+													
+												})
+											}
+										})
 									})
-									
 								})
 							}
 						})
-						
-						
 					}
 				});
 

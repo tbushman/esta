@@ -1,12 +1,34 @@
 maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
-	//
-	chapter(v-for="(data, n) in dat", v-bind:id="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
-		taable(aid:table="table", v-bind:aid:trows="data.length" aid:tcols="2", aid5:tablestyle="entry")
+	a.tb-06-m0.block.success(v-on:click="exportPDF", role="button", title="Download Word File") Click here to download PDF File
+	div.tb-01-m0 &nbsp
+	a.tb-03-m0.block.danger(role="button", href="/exportpdf", title="Page blank -- reload")
+		span Blank page? Click to reload
+
+	header.row.tb-font-l Table of Contents
+	chapter.row(v-for="(data, n) in dat", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+		taable.row(aid:table="table", v-bind:aid:trows="data.length" aid:tcols="2", aid5:tablestyle="entry", style="width: 100%;")
 			celll(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
-				a(v-for="(doc, i) in data", v-bind:href="'/menu/'+doc.title.ind+'/'+doc.chapter.ind+''")
-					bd.bd(v-text="doc.title.str")
-					span(v-text="' '")
-					pg.bd(v-text="'##'")
+				a(v-bind:href="'#'+n+''")
+					header.row.tb-font-s
+						bd.bd(v-text="data[0].title.ind")
+						span.bd(v-text="'.'")
+						span.bd(v-text="data[0].chapter.ind")
+						span(v-text="' '")
+						span(v-text="data[0].chapter.str")
+	
+		taable.row(v-for="(doc, i) in data", aid:table="table", v-bind:aid:trows="data.length" aid:tcols="2", aid5:tablestyle="entry", style="width:100%;")
+			celll(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+				a(v-bind:href="'#'+n+''")
+					header.row.tb-font-s
+						bd.bd(v-text="doc.title.ind")
+						span.bd(v-text="'.'")
+						span.bd(v-text="doc.chapter.ind")
+						span.bd(v-text="'.'")
+						span.bd(v-text="doc.section.ind")
+						span(v-text="' '")
+						span(v-text="doc.section.str")
+
+	hr
 	chapter(v-for="(data, n) in dat", v-bind:id="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
 		taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 			celll(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
@@ -27,3 +49,4 @@ maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:ai
 			taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 				include header.pug
 				include bodyexport.pug
+

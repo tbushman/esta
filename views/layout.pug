@@ -196,6 +196,12 @@ html
 					
 				},
 				methods: {
+					exportPDF: function(e) {
+						$(e.target).hide();
+						$('.menu').hide();
+						$('.danger').hide();
+						$.post('/api/exportpdf')
+					},
 					changeDiff: function(doc) {
 						var self = this;
 						var input = document.getElementById('diff'+doc.index);
