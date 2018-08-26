@@ -1661,7 +1661,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						begin: new Date(body.datebegin),
 						end: moment().utc().format()
 					},
-					media: []
+					media: [],
+					diffs: doc.properties.diffs
 				},
 				geometry: {
 					type: "Polygon",
