@@ -503,6 +503,7 @@ function ensureContent(req, res, next) {
 	});
 }
 
+
 function ensureEscape(req, res, next) {
 	Content.find({}, function(err,data){
 		if (err) {
@@ -555,22 +556,36 @@ function getDat(req, res, next){
 					cb(err)
 				}
 				if (distinct.length === 0) {
-					Content.find({}).sort({index:1}).lean().exec(function(err, data){
+					Content.find({}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
 						if (err) {
 							cb(err)
 						}
+						data = data.sort(function(a,b){
+							if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+								return -1;
+							} else {
+								return 1;
+							}
+						})
 						dat.push(data)
 						cb(null, dat, [1])
 					})
 				} else {
 					distinct.forEach(function(key, i) {
-						Content.find({'chapter.ind':key}).sort({index:1}).lean().exec(function(err, data){
+						Content.find({'chapter.ind':key}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
 							if (err) {
 								cb(err)
 							}
 							
 							if (data.length === 0) return;
 							if (data.length > 0) {
+								data = data.sort(function(a,b){
+									if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+										return -1;
+									} else {
+										return 1;
+									}
+								})
 								dat.push(data)
 							}
 						})
@@ -600,10 +615,17 @@ function getDat64(next){
 					return next(err)
 				}
 				if (distinct.length === 0) {
-					Content.find({}).sort({index:1}).lean().exec(function(err, data){
+					Content.find({}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
 						if (err) {
 							return next(err)
 						}
+						data = data.sort(function(a,b){
+							if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+								return -1;
+							} else {
+								return 1;
+							}
+						})
 						data.forEach(function(doc){
 							if (doc.properties !== undefined) {
 								if (doc.properties.media.length > 0) {
@@ -621,13 +643,20 @@ function getDat64(next){
 					distinct.sort();
 					//console.log(distinct)
 					distinct.forEach(function(key, i) {
-						Content.find({'chapter.ind':key}).sort({index:1}).lean().exec(function(err, data){
+						Content.find({'chapter.ind':key}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
 							if (err) {
 								console.log(err)
 							}
 							
 							if (data.length === 0) return;
 							if (data.length > 0) {
+								data = data.sort(function(a,b){
+									if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+										return -1;
+									} else {
+										return 1;
+									}
+								})
 								data.forEach(function(doc){
 									if (doc.properties !== undefined) {
 										if (doc.properties.media.length > 0) {
@@ -1146,6 +1175,13 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 		if (err) {
 			return next(err)
 		}
+		data = data.sort(function(a,b){
+			if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+				return -1;
+			} else {
+				return 1;
+			}
+		})
 		//console.log(data)
 		var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 			doctype: 'xml',
@@ -1180,8 +1216,9 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 					next(err)
 				}
 				var str = content.toString();
-				var newchtitlestr = str.split(/(^Chapter \d{1,3}.+$)/m)[1];
-				var newcontentstr = str.split(/(^Chapter \d{1,3}.+$)/m)[2];
+				//console.log(str.split(/(^Chapter \d{1,3}.+$)/gm))
+				var newchtitlestr = str.split(/(^Chapter \d{1,3}.+$)/gm)[1];
+				var newcontentstr = str.split(/(^Chapter \d{1,3}.+$)/gm)[2];
 				var newch;
 				if (newchtitlestr) {
 					var newcharr = newchtitlestr.split(/\d/g);
@@ -1195,7 +1232,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 				// Used to split the text into an array
 				var drx = /(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)(?=\d{1,3}\.\d{1,3}\.\d{1,4}\.\s*?)/gm
 				// title.chapter.section index
-				var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)/si
+				var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1}[\s\S]*?)/si
 				//var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
 				// title rx
 				var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n)/si
@@ -1246,7 +1283,9 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 					desc = desc.replace(/^([A-Z]\.)/gm, '  \n**$1**').replace(/[\s\.]([A-Z]\.)/g, '  \n  \n**$1**');
 					var num = num[0]
 					num = num.split('.');
-					var end = num.pop();
+					if (num[num.length-1] === '.') {
+						var end = num.pop();
+					}
 					num = num.join('.');
 					//console.log(num)
 					return {
@@ -1648,14 +1687,14 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				},
 				section: {
 					ind: doc.section.ind,
-					str: doc.section.str
+					str: (body.title ? curly(body.title) : doc.section.str)
 				},
 				properties: {
 					published: (!body.published ? false : true),
 					_id: id,
-					title: body.title ? curly(body.title) : '',
-					label: body.label ? curly(body.label) : '',
-					place: body.place ? curly(body.place) : '',
+					title: body.title ? curly(body.title) : doc.properties.title,
+					label: body.label ? curly(body.label) : doc.properties.label,
+					place: body.place ? curly(body.place) : doc.properties.place,
 					description: desc ? marked(body.description) : '',
 					time: {
 						begin: new Date(body.datebegin),

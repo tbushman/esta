@@ -20,6 +20,8 @@ maintitle(style="display: block; background-color: #fff; background-color: var(-
 				
 				form.tb-10-m0.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)
+					label(for="title") Edit Section Title
+					input#title(name="title", v-bind:value="doc.propeties.title")
 					include editor.pug
 				
 
