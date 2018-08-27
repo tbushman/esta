@@ -1225,7 +1225,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 					next(err)
 				}
 				var str = content.toString();
-				//console.log(str.split(/(^Chapter \d{1,3}.+$)/gm))
+				console.log(str.split(/(^Chapter \d{1,3}.+$)/gm))
 				var newchtitlestr = str.split(/(^Chapter \d{1,3}.+$)/gm)[1];
 				var newcontentstr = str.split(/(^Chapter \d{1,3}.+$)/gm)[2];
 				var newch;
