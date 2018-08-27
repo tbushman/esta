@@ -68,7 +68,8 @@ html
 											span &nbsp
 												span #{doc.section.str}
 											span.tb-font-s
-												!= md(doc.properties.description)
+												if (doc.properties.description)
+													!= md(doc.properties.description)
 											
 									
 										//
