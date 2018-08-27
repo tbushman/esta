@@ -1,10 +1,13 @@
-doctype xml
-w:document 
-	w:settings(xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main")
-		w:updateFields(w:val="true")
-	w:sectPr
-		w:pgNumType(w:start="2")
-	w:body
+doctype strict
+html
+	head
+		meta(charset="utf-8")
+		meta(http-equiv="X-UA-Compatible", content="IE=edge; charset=utf-8")
+		title= appTitle
+		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+		style(type="text/css")
+			include ../../public/stylesheets/styleword.css
+	body
 
 		style(type="text/css")
 			include ../../public/stylesheets/styleword.css
@@ -16,7 +19,7 @@ w:document
 				<!--[if supportFields]>
 				span(style='mso-element:field-begin')
 				span(style='mso-spacerun:yes')
-				| TOC \o "1-2" \h \z \\u \t "Subtitle 7;1"
+				| TOC \o "1-2" \h \z \t
 				span(style='mso-element:field-separator')
 				span.tb-font-xl(style='mso-no-proof:yes; font-size: 20px; color: red;') Table of contents - Please right-click here and then choose "Update Field" to initialize this field.
 				span(style='mso-element:field-end')
