@@ -150,15 +150,24 @@ var curly = function(str){
 	//console.log(str.match(/\"/g))
 	return str
 	
-	.replace(/'\b/g, "\u2018")     // Opening singles
-	.replace(/\b'/g, "\u2019")     // Closing singles
-	.replace(/"\b/g, "\u201c")     // Opening doubles
-	.replace(/\b"/g, "\u201d")     // Closing doubles
-	//.replace(/([a-z])'([a-z])/ig, '$1\u2019$2')     // Apostrophe
+	.replace(/'\b/g, "&lsquo;")     // Opening singles
+	.replace(/\b'/g, "&rsquo;")     // Closing singles
+	.replace(/"\b/g, "&ldquo;")     // Opening doubles
+	.replace(/\b"/g, "&rdquo;")     // Closing doubles
+	.replace(/(\.)"/g, "$1&rdquo;")     // Closing doubles
+	.replace(/u2018/g, "&lsquo;")
+	.replace(/u2019/g, "&rsquo;")
+	.replace(/u201c/g, "&ldquo;")
+	.replace(/u201d/g, "&rdquo;")
+	.replace(/[“]/g, "&ldquo;")
+	.replace(/[”]/g, "&rdquo;")
+	.replace(/[’]/g, "&rsquo;")
+	.replace(/[‘]/g, "&lsquo;")
+	//.replace(/([a-z])'([a-z])/ig, '$1&rsquo$2')     // Apostrophe
 	//
-	//.replace(/(\d\s*)\u201d/g, '$1\"')
-	//.replace(/(\d\s*)\u2019/g, "$1\'")
-	.replace(/([a-z])\u2018([a-z])/ig, '$1\u2019$2')
+	//.replace(/(\d\s*)&rdquo/g, '$1\"')
+	//.replace(/(\d\s*)&rsquo/g, "$1\'")
+	.replace(/([a-z])&lsquo([a-z])/ig, '$1&rsquo;$2')
 }
 
 function rmDocs(req, res, next) {
@@ -799,7 +808,7 @@ router.get('/runtests', function(req, res, next){
 
 //router.all(/.*/, ensureContent)
 
-router.get('/', getDat,/*ensureCurly, ensureEscape,*/ ensureHyperlink, function(req, res, next){
+router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function(req, res, next){
 	//getDat(function(dat, distinct){
 		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 		req.session.refer = newrefer;
@@ -1340,7 +1349,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 										label: 'Edit Subtitle',
 										title: curly(item.title),
 										place: 'Edit Place',
-										description: marked(item.desc),
+										description: marked(curly(item.desc)),
 										current: false,
 										media: [],
 										diffs: []
@@ -1367,7 +1376,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 							} else {
 								var Diff = require('diff');
 									 
-								var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(item.desc));
+								var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(item.desc)));
 								//console.log('sent this diff')
 								//console.log(diff)
 								var diffss = [];
@@ -1391,7 +1400,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 										if (err) {
 											return next(err)
 										}
-										Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.description': marked(item.desc)}}, {safe:true, new:true}, function(err, doc){
+										Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.description': marked(curly(item.desc))}}, {safe:true, new:true}, function(err, doc){
 											if (err) {
 												return next(err)
 											}
@@ -1399,7 +1408,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 												var newdiff = {
 													date: newdate,
 													dif: diffss,
-													str: marked(item.desc)
+													str: marked(curly(item.desc))
 												};
 												Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
 													if (err) {
@@ -1652,24 +1661,56 @@ router.post('/api/editcontent/:id', function(req, res, next){
 		},
 		function(doc, thumburls, imgs, body, next) {
 			//console.log(body)
-			var curly = function(str){
+			/*var curly = function(str){
 				return str
 				
-				.replace(/'\b/g, "\u2018")     // Opening singles
-				.replace(/\b'/g, "\u2019")     // Closing singles
-				.replace(/"\b/g, "\u201c")     // Opening doubles
-				.replace(/\b"/g, "\u201d")     // Closing doubles
-				.replace(/(\.)"/g, "$1\u201d")     // Closing doubles
+				.replace(/'\b/g, "&lsquo;")     // Opening singles
+				.replace(/\b'/g, "&rsquo;")     // Closing singles
+				.replace(/"\b/g, "&ldquo;")     // Opening doubles
+				.replace(/\b"/g, "&rdquo;")     // Closing doubles
+				.replace(/(\.)"/g, "$1&rdquo;")     // Closing doubles
+				.replace(/u2018/g, "&lsquo;")
+				.replace(/u2019/g, "&rsquo;")
+				.replace(/u201c/g, "&ldquo;")
+				.replace(/u201d/g, "&rdquo;")
+				.replace(/[“]/g, "&ldquo;")
+				.replace(/[”]/g, "&rdquo;")
+				.replace(/[’]/g, "&rsquo;")
+				.replace(/[‘]/g, "&lsquo;")
 				//
-				//.replace(/(\d\s*)\u201d/g, '$1 inches')
-				//.replace(/(\d\s*)\u2019/g, '$1 feet')
-				.replace(/([a-z])\u2018([a-z])/ig, '$1\u2019$2')
+				//.replace(/(\d\s*)&rdquo;/g, '$1 inches')
+				//.replace(/(\d\s*)&rsquo;/g, '$1 feet')
+				.replace(/([a-z])&lsquo;([a-z])/ig, '$1&rsquo;$2')
 			}
-			
+			*/
 			var straight = function(str) {
-				return str.replace(/(\d\s*)\u201d/g, '$1\"').replace(/(\d\s*)\u2019/g, "$1'")
+				return str.replace(/(\d\s*)&rdquo;/g, '$1\"').replace(/(\d\s*)&rsquo;/g, "$1'")
 			}
 			var desc = removeExtras(body.description);
+			var Diff = require('diff');
+			//console.log(doc.properties.description, marked(curly(desc)))
+			var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(desc)));
+			//console.log('sent this diff')
+			//console.log(diff)
+			var diffss = [];
+			if (diff.length) {
+				diff.forEach(function(dif){
+					//console.log(dif)
+					diffss.push({
+						count: dif.count,
+						value: dif.value,
+						added: dif.added,
+						removed: dif.removed
+					})
+				})
+			}
+			var newdate = new Date();
+
+			var newdiff = {
+				date: newdate,
+				dif: diffss,
+				str: marked(curly(desc))
+			};
 			//console.log(desc, body.description);
 			var end;
 			var current;
@@ -1695,7 +1736,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					title: body.title ? curly(body.title) : doc.properties.title,
 					label: body.label ? curly(body.label) : doc.properties.label,
 					place: body.place ? curly(body.place) : doc.properties.place,
-					description: desc ? marked(body.description) : '',
+					description: desc ? marked(curly(desc)) : doc.properties.description,
 					time: {
 						begin: new Date(body.datebegin),
 						end: moment().utc().format()
@@ -1745,9 +1786,13 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			
 			var set3 = {$set: {}};
 			set3.$set['geometry'] = entry.geometry;
+			
+			var set4 = {$push: {}};
+			var key4 = 'properties.diffs'
+			set4.$push[key4] = newdiff;
 
 			var options = {safe: true, new: true, upsert: false};
-			Content.findOneAndUpdate({_id: doc._id}, set1, options, function(err, doc) {
+			Content.findOneAndUpdate({_id: doc._id}, set1, options, function(err, docc) {
 				if (err) {
 					next(err) 
 				}
@@ -1758,10 +1803,14 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					Content.findOneAndUpdate({_id: doc._id}, set3, options, function(errr, doc) {
 						if (errr) {
 							next(errr)
-						} else {
-							next(null)
-
 						}
+						Content.findOneAndUpdate({_id: doc._id}, set4, options, function(errr, doc) {
+							if (errr) {
+								next(errr)
+							} else {
+								next(null)
+							}
+						})
 					})
 				})
 			})
