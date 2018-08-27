@@ -1225,7 +1225,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 					next(err)
 				}
 				var str = content.toString();
-				console.log(str.split(/(^Chapter \d{1,3}.+$)/gm))
+				//console.log(str.split(/(^Chapter \d{1,3}.+$)/gm))
 				var newchtitlestr = str.split(/(^Chapter \d{1,3}.+$)/gm)[1];
 				var newcontentstr = str.split(/(^Chapter \d{1,3}.+$)/gm)[2];
 				var newch;
@@ -1374,23 +1374,6 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 									}
 								})
 							} else {
-								var Diff = require('diff');
-									 
-								var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(item.desc)));
-								//console.log('sent this diff')
-								//console.log(diff)
-								var diffss = [];
-								if (diff.length) {
-									diff.forEach(function(dif){
-										//console.log(dif)
-										diffss.push({
-											count: dif.count,
-											value: dif.value,
-											added: dif.added,
-											removed: dif.removed
-										})
-									})
-								}
 								
 								Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.title':curly(item.title)}}, {safe:true,new:true}, function(err, doc){
 									if (err) {
@@ -1404,7 +1387,26 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 											if (err) {
 												return next(err)
 											}
-											if (diffss.length > 0) {
+											if (doc.properties.description) {
+												
+												var Diff = require('diff');
+													 
+												var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(item.desc)));
+												//console.log('sent this diff')
+												//console.log(diff)
+												var diffss = [];
+												if (diff.length) {
+													diff.forEach(function(dif){
+														//console.log(dif)
+														diffss.push({
+															count: dif.count,
+															value: dif.value,
+															added: dif.added,
+															removed: dif.removed
+														})
+													})
+												}
+
 												var newdiff = {
 													date: newdate,
 													dif: diffss,
