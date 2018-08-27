@@ -1,45 +1,33 @@
-doctype strict
-html
-	head
-		meta(charset="utf-8")
-		meta(http-equiv="X-UA-Compatible", content="IE=edge; charset=utf-8")
-		title= appTitle
-		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+doctype xml
+w:document 
+	w:settings(xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main")
+		w:updateFields(w:val="true")
+	w:sectPr
+		w:pgNumType(w:start="2")
+	w:body
+
 		style(type="text/css")
 			include ../../public/stylesheets/styleword.css
-	body
+
 		div.centerallwrap(style="background-color: #fff; pointer-events:all;")
 			
 			div.centerall
 				p.tb-font-xl Table of Contents
-				each data, n in dat
-					div#chapter.headline.headrule
-						table(style="width:100%; table-layout: auto;")
-							tr.tb-font-m(style="padding: 0;")
-								td(colspan="1")
-									span.bd #{data[0].title.ind}
-										span .
-										span #{data[0].chapter.ind}
-										span &nbsp
-								td(colspan="5")
-									span #{data[0].chapter.str}
-							each doc, i in data
-								tr.tb-font-s(style="padding: 0;")
-									td(colspan="1")
-										span.bd #{doc.title.ind}
-											span .
-											span #{doc.chapter.ind}
-											span .
-											span #{doc.section.ind}
-											span &nbsp
-									td(colspan="5")
-										span #{doc.section.str}
+				<!--[if supportFields]>
+				span(style='mso-element:field-begin')
+				span(style='mso-spacerun:yes')
+				| TOC \o "1-2" \h \z \\u \t "Subtitle 7;1"
+				span(style='mso-element:field-separator')
+				span.tb-font-xl(style='mso-no-proof:yes; font-size: 20px; color: red;') Table of contents - Please right-click here and then choose "Update Field" to initialize this field.
+				span(style='mso-element:field-end')
+				<![endif]-->
 				p.tb-11-m0.footrule &nbsp
 				each data, n in dat
 					div#chapter
-						table(style="width:100%;table-layout: auto;")
+						table(cellspacing="0px", style="width:100%;table-layout: auto;")
 							tr.tb-font-l(style="padding: 0;")
 								td 
+									
 									span Title 
 									span.bd #{data[0].title.ind}
 									span &nbsp
@@ -47,25 +35,27 @@ html
 
 							tr.tb-font-l(style="padding: 0;")
 								td
-									span Chapter 
-									span.bd #{data[0].chapter.ind}
-									span &nbsp
-									span #{data[0].chapter.str}
-									p.tb-11-m0.headrule &nbsp
+									h1
+										span Chapter 
+										span.bd #{data[0].chapter.ind}
+										span &nbsp
+										span #{data[0].chapter.str}
+
 
 						each doc, i in data
 							div(style="margin-top: 15px;")
-								table(style="width:100%")
+								table(cellspacing="0px", style="width:100%")
 									tr
-										td.tb-font-l(colspan=(doc.properties.media.length > 0 ? 1 : 3), style="vertical-align: top;")
-											span.bd #{doc.title.ind}
-												span .
-												span #{doc.chapter.ind}
-												span .
-												span #{doc.section.ind}
-											span &nbsp
-												span #{doc.section.str}
-											span.tb-font-s
+										td.tb-font-l.headrule(colspan=(doc.properties.media.length > 0 ? 1 : 3), style="vertical-align: top;")
+											h2
+												span.bd #{doc.title.ind}
+													span .
+													span #{doc.chapter.ind}
+													span .
+													span #{doc.section.ind}
+												span &nbsp
+													span #{doc.section.str}
+											span.tb-font-xs
 												if (doc.properties.description)
 													!= md(doc.properties.description)
 											
@@ -74,10 +64,11 @@ html
 											td.tb-font-s(colspan=(doc.properties.media.length > 0 ? 1 : 3), style="vertical-align:top;" )
 												!= md(doc.properties.description)
 										if (doc.properties.media.length > 0)
-											td(colspan="2")
+											td.headrule(colspan="2")
 											
 												each img, j in doc.properties.media
 													a.img.tb-11-m0
 														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
 													p.tb-font-xxs(style="position: absolute;") #{img.caption}
+					br
 					p.tb-11-m0.footrule &nbsp

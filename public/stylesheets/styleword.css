@@ -118,20 +118,20 @@ a span, a img {
 
 .tb-font-xxs {
 	font-family: "Overpass", sans-serif;
-	color: #481368;
+	color: #000;
 	font-size: 12px;
 	font-weight: 200;
-	line-height: 14px;
+	line-height: 15px;
 	padding: 8px 0 0 0;
 	letter-spacing: 0.04rem;
 }
 
 .tb-font-xs {
 	font-family: "Overpass", sans-serif;
-	color: #481368;
+	color: #000;
 	font-size: 14px;
 	font-weight: 400;
-	line-height: 16px;
+	line-height: 18px;
 	padding: 10px 0 0 0;
 	display: block;
 }
@@ -145,7 +145,7 @@ a span, a img {
 	text-transform: none;
 }
 
-h5, .tb-font-m {
+h2, .tb-font-m {
 	font-family: "Overpass", sans-serif;
 	font-size: 18px;
 	font-weight: 300;
@@ -154,7 +154,7 @@ h5, .tb-font-m {
 	color: #000;
 }
 
-h4, .tb-font-l {
+h1, .tb-font-l {
 	font-family: "Overpass", sans-serif;
 	color: #000;
 	font-size: 20px;
@@ -163,7 +163,7 @@ h4, .tb-font-l {
 	padding: 18px 0 0 0;
 }
 
-h3, .tb-font-xl {
+.tb-font-xl {
 	font-family: "Overpass", sans-serif;
 	color: #000;
 	font-size: 24px;
@@ -172,7 +172,7 @@ h3, .tb-font-xl {
 	padding: 24px 0 0 0;
 }
 
-h2, .tb-font-xxl {
+.tb-font-xxl {
 	font-family: "Overpass", sans-serif;
 	font-size: 28px;
 	font-weight: 400;
@@ -180,7 +180,7 @@ h2, .tb-font-xxl {
 	padding: 45px 0 0 0;
 }
 
-h1, .tb-font-xxxl {
+.tb-font-xxxl {
 	font-family: "Overpass", sans-serif;
 	font-size: 36px;
 	font-weight: 400;

@@ -195,7 +195,7 @@ a span, a img {
 	text-transform: none;
 }
 
-h5, .tb-font-m {
+.tb-font-m {
 	font-family: var(--bfontname), var(--bfonttype)!important;
 	font-size: 1.1rem;
 	font-weight: 300;
@@ -206,7 +206,7 @@ h5, .tb-font-m {
 	color: var(--secondary);
 }
 
-h4, .tb-font-l {
+.tb-font-l {
 	font-family: var(--afontname), var(--afonttype)!important;
 	color: #000;
 	color: var(--secondary);
@@ -217,7 +217,7 @@ h4, .tb-font-l {
 	padding: calc(var(--thumbw) / 3) 0 0 0;
 }
 
-h3, .tb-font-xl {
+.tb-font-xl {
 	font-family: var(--afontname), var(--afonttype)!important;
 	font-size: 1.6rem;
 	font-weight: 400;
@@ -226,7 +226,7 @@ h3, .tb-font-xl {
 	padding: calc(var(--thumbw) / 1.5) 0 0 0;
 }
 
-h2, .tb-font-xxl {
+.tb-font-xxl {
 	font-family: var(--afontname), var(--afonttype)!important;
 	font-size: 2rem;
 	font-weight: 400;
@@ -235,7 +235,7 @@ h2, .tb-font-xxl {
 	padding: var(--thumbw) 0 0 0;
 }
 
-h1, .tb-font-xxxl {
+.tb-font-xxxl {
 	font-family: var(--dfontname), var(--dfonttype)!important;
 	font-size: 3rem;
 	font-weight: 400;

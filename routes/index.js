@@ -964,6 +964,7 @@ router.get('/exportword', function(req, res, next){
 					}
 				})
 			});
+			//console.log(str)
 			var viewstr = pug.renderFile(pugviewpath, {
 				md: require('marked'),
 				doctype: 'html',
