@@ -18,14 +18,29 @@ each mn, k in menus
 			
 			a.submenu.drop(class= mn, v-bind:href="'/'")
 				span.tb-font-s(v-text="'Home'")
-			a.submenu.drop(class= mn, v-bind:href="'/api/importtxt'")
-				span.tb-font-s(v-text="'Import Chapter'")
+			a.submenu.drop(class= mn, title="Import")
+				span.tb-font-s(v-text="'Import'")
+			div.slidedown(class= mn)
+				a.submenu.drop(class= mn, v-bind:href="'/importgdrive'", title="Import Chapter from Google Drive")
+					if (mn !== "static")
+						.ui(class= mn)
+							i.fas.fa-angle-right
+					span.tb-font-l(v-text="'Import Chapter from Google Drive'")
+				a.submenu.drop(class= mn, v-bind:href="'/api/importtxt'", title="Import Chapter as plain text")
+					if (mn !== "static")
+						.ui(class= mn)
+							i.fas.fa-angle-right
+					span.tb-font-l(v-text="'Import Chapter as plain text'")
+				if (menu === "publish")
+					a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].chapter.str)", title="Import Chapter as plain text")
+						if (mn !== "static")
+							.ui(class= mn)
+								i.fas.fa-angle-right
+						span.tb-font-l(v-text="'Add Section to Ch. '+dat[0][0].chapter.ind+''")
+
 			if (menu === "map")
 				a.submenu.drop(class= mn, v-on:click="addMapBlob")
 					span.tb-font-s(v-text="'Save Map'")
-			if (menu === "publish")
-				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].chapter.str)")
-					span.tb-font-s(v-text="'Add Section to Ch. '+dat[0][0].chapter.ind+''")
 			//
 				a.submenu.drop(class= mn, v-bind:href="'/exportpdf'")
 					span.tb-font-s(v-text="'Export PDF file'")

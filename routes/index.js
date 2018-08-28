@@ -1,6 +1,6 @@
 var express = require('express');
 var async = require('async');
-//var passport = require('passport');
+var passport = require('passport');
 var router = express.Router();
 var mongoose = require('mongoose');
 var url = require('url');
@@ -21,6 +21,7 @@ var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
 var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Preliminary Subdivision Applications', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
 var InDesign = require('async-indesign-script');
+var googleAuth = require('google-auth-library');
 dotenv.load();
 var upload = multer();
 
@@ -435,7 +436,7 @@ function ensureHyperlink(req, res, next) {
 		data.forEach(function(doc){
 			//console.log(doc.properties.description)
 			var numrx = /(\s\d{1,3}\.\d{1,3}\.{0,1}\d{0,4}\s)/;
-      var desc = removeExtras(doc.properties.description);
+	  	var desc = removeExtras(doc.properties.description);
 			var hls = numrx.test(desc);
 			if (desc) {
 				var spl = desc.split(numrx);
@@ -469,9 +470,9 @@ function ensureHyperlink(req, res, next) {
 
 			}
 
-    });
+	  });
 		return next()
-  });
+	});
 }
 
 function ensureCurly(req, res, next) {
@@ -693,6 +694,30 @@ function getDat64(next){
 	})
 }
 
+function ensureAdmin(req, res, next) {
+	if (!req.user) {
+		return res.redirect('/login')
+	}
+	//req.session.userId = req.user._id;
+	Publisher.findOne({_id: req.session.userId}, function(err, pu){
+		if (err) {
+			return next(err)
+		}
+		
+		if (pu.admin) {
+			req.publisher = Publisher;
+			req.user = pu;
+			req.session.loggedin = req.user.username;
+			return next();
+		} else {
+			req.publisher = User;
+			req.session.loggedin = null;
+			return res.redirect('/')
+		}
+	})
+}
+
+
 
 router.get('/runtests', function(req, res, next){
 	let chromedriver = require('chromedriver');
@@ -707,7 +732,7 @@ router.get('/runtests', function(req, res, next){
 	//Content.remove
 		/*driver.get('http://'+process.env.DEVAPPURL+'');
 		driver.wait(
-      until.elementLocated(webdriver.By.css('#description')),
+	  	until.elementLocated(webdriver.By.css('#description')),
 			12000
 		).then(function(){
 			driver.findElement(webdriver.By.css('#description')).click();
@@ -716,10 +741,10 @@ router.get('/runtests', function(req, res, next){
 
 		driver.findElement(webdriver.By.name('description')).sendKeys('simple programmer');
 		driver.wait(
-      until.elementLocated(webdriver.By.id('submit_0')),
-      12000
-    )
-    .then(function(){
+	  	until.elementLocated(webdriver.By.id('submit_0')),
+	  	12000
+	  )
+	  .then(function(){
 			driver.findElement(webdriver.By.css('#submit_0')).click();
 			return res.render('test', {
 				info: 'ok'
@@ -770,27 +795,27 @@ router.get('/runtests', function(req, res, next){
 					if (!/^(\w[-:\w]*)(\/?)/.exec(input)) {
 						input = input.substr(1)
 						//console.log(input)
-			    }	else {
+				  }	else {
 						captures = /^(\w[-:\w]*)(\/?)/.exec(input);
 						input = input.substr(captures[0].length)
 						console.log(input)
 						console.log(captures)
-		      	//this.consume(captures[0].length);
-		      	/*var tok, name = captures[1];
-		      	if (':' == name[name.length - 1]) {
-		        	name = name.slice(0, -1);
-		        	tok = this.tok('tag', name);
-		        	this.defer(this.tok(':'));
-		        	while (' ' == this.input[0]) this.input = this.input.substr(1);
-			      } else {
-			        tok = this.tok('tag', name);
-			      }
-			      tok.selfClosing = !! captures[2];
+			  		//this.consume(captures[0].length);
+			  		/*var tok, name = captures[1];
+			  		if (':' == name[name.length - 1]) {
+			  	  	name = name.slice(0, -1);
+			  	  	tok = this.tok('tag', name);
+			  	  	this.defer(this.tok(':'));
+			  	  	while (' ' == this.input[0]) this.input = this.input.substr(1);
+				  	} else {
+				  	  tok = this.tok('tag', name);
+				  	}
+				  	tok.selfClosing = !! captures[2];
 						if (captures[2]) {
 							console.log('closing tag')
 							console.log(captures[2])
 						}
-			      //return tok;
+				  	//return tok;
 						/*assert.isTrue(
 							//.test
 						)
@@ -807,6 +832,7 @@ router.get('/runtests', function(req, res, next){
 })
 
 //router.all(/.*/, ensureContent)
+router.all('/api/*', ensureAdmin);
 
 router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function(req, res, next){
 	//getDat(function(dat, distinct){
@@ -839,6 +865,118 @@ router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function
 	//})
 	
 });
+
+router.get('/register', function(req, res, next){
+	return res.render('register', { csrfToken: req.csrfToken(), menu: 'register' } );
+})
+
+router.post('/register', function(req, res, next){
+	var admin;
+	Publisher.find({}, function(err, pubs){
+		if (err) {
+			return next(err)
+		}
+		/*if (pubs.length === 0 || req.body.username === 'tbushman' || req.body.username === 'rcain' || req.body.username === 'tb') {
+			admin = true;
+		} else {
+			admin = false;
+		}*/
+		admin = true;
+		Publisher.register(new Publisher({ userindex: pubs.length, username : req.body.username, email: req.body.email, admin: admin}), req.body.password, function(err, user) {
+			if (err) {
+				return res.render('register', {info: "Sorry. That username already exists. Try again."});
+			}
+			passport.authenticate('local')(req, res, function () {
+				Publisher.findOne({username: req.body.username}, function(error, pu){
+					if (error) {
+						return next(error)
+					}
+					req.session.userId = pu._id;
+					req.session.loggedin = pu.username;
+					return res.redirect('/api/publish');
+				})
+			});
+		});
+	})
+})
+
+router.get('/login', function(req, res, next){
+
+	return res.render('login', { 
+		user: req.user,
+		csrfToken: req.csrfToken(),
+		menu: 'login'
+	});
+});
+
+router.post('/login', passport.authenticate('local', {
+	failureRedirect: '/login'
+}), function(req, res, next) {
+
+	req.session.userId = req.user._id;
+	req.session.loggedin = req.user.username;
+	res.redirect('/api/publish');		
+});
+
+router.get('/auth/googledrive', passport.authenticate('google', {scope: 'https://www.googleapis.com/auth/drive'}), function(req, res, next){
+	return next();
+})
+
+router.get('/auth/google', passport.authenticate('google', {scope: 'https://www.googleapis.com/auth/userinfo.profile'}), function(req, res, next){
+	return next();
+});
+
+router.get('/auth/google/callback', passport.authenticate('google', { 
+	failureRedirect: '/' 
+}), function(req, res, next) {
+	req.session.userId = req.user._id;
+	req.session.loggedin = req.user.username;
+	if (req.user.admin && !req.session.authClient) {
+		return res.redirect('/auth/googledrive');
+	} else if (!req.user.admin) {
+		return res.redirect('/logout');
+	}
+	var auth = new googleAuth();
+	var authClient = new auth.OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+	authClient.setCredentials({refresh_token: req.user.garefresh, access_token: req.user.gaaccess});
+	req.session.authClient = authClient;
+	return res.redirect('/api/importgdrive');
+});
+
+router.get('/logout', function(req, res, next) {
+	var outputPath = url.parse(req.url).pathname;
+console.log(outputPath)
+	async.waterfall([
+		function(next){
+			req.session.userId = null;
+			req.session.loggedin = null;
+			req.logout();
+			next(null)
+		},
+		function(next) {
+			if (req.user || req.session) {
+				req.user = null;
+				req.session.destroy(function(err){
+					if (err) {
+						req.session = null;
+						//improve error handling
+						return res.redirect('/');
+					} else {
+						req.session = null;
+						return res.redirect('/');
+					}
+				});		
+			} else {
+				return res.redirect('/');
+			}
+		}
+	], function(err){
+		if (err) {
+			return next(err)
+		}
+	})	
+});
+
 
 router.get('/exportpdf', getDat, function(req, res, next){
 	//getDat(function(dat, distinct){
@@ -876,7 +1014,7 @@ router.get('/exportpdf', getDat, function(req, res, next){
 router.post('/api/exportpdf', getDat, function(req, res, next){
 	var body = req.body;
 	//console.log(req.body.xml)
-  var htmlbuf = new Buffer(body.pdf, 'utf8'); // decode
+	var htmlbuf = new Buffer(body.pdf, 'utf8'); // decode
 	var now = Date.now();
 	var p = ''+publishers+'/pu/publishers/ordinancer/pdf';
 		
@@ -892,7 +1030,7 @@ router.post('/api/exportpdf', getDat, function(req, res, next){
 	var htmlurl = path.join(p, '/'+now+'.html');
 	var pdfurl = path.join(p, '/'+now+'.pdf');
 	//console.log(xmlurl)
-  fs.writeFile(htmlurl, htmlbuf, function(err) {
+	fs.writeFile(htmlurl, htmlbuf, function(err) {
 		if(err) {
 			console.log("err", err);
 		}
@@ -910,7 +1048,7 @@ router.post('/api/exportpdf', getDat, function(req, res, next){
 		
 		//console.log('file://' + path.join(__dirname, '../public'))
 		pdf.create(html, options).toFile(pdfurl, function(err, result) {
-		  if (err) return console.log(err);
+			if (err) return console.log(err);
 			console.log(result)
 			//return res.redirect('/publishers/ordinancer/pdf/'+now+'.pdf');
 			var pugviewpath = path.join(__dirname, '../views/includes/exporttemplate.pug');
@@ -1072,31 +1210,31 @@ router.get('/exportindd'/*, ensureCurly*/, function(req, res, next){
 
 
 router.post('/api/exportindd/:version', function(req, res, next){
-  var body = req.body;
+	var body = req.body;
 	//console.log(req.body.xml)
-  var xmlbuf = new Buffer(body.xml, 'utf8'); // decode
-  var indd = path.join(__dirname, '/../../indd')
+	var xmlbuf = new Buffer(body.xml, 'utf8'); // decode
+	var indd = path.join(__dirname, '/../../indd')
 
-  var xmlurl = path.join(__dirname, '/../../indd') + '/xml.xml';
+	var xmlurl = path.join(__dirname, '/../../indd') + '/xml.xml';
 	//console.log(xmlurl)
-  fs.writeFile(xmlurl, xmlbuf, function(err) {
-    if(err) {
-      console.log("err", err);
-    } 
-  })
-  const id = new InDesign({
-    version: 'CS6'
-  });
-  //console.log(path.join(__dirname, '/../..', 'indd/importIndd.jsx'))
-  id.run(path.join(__dirname, '/../..', 'indd/importIndd.jsx'), {
+	fs.writeFile(xmlurl, xmlbuf, function(err) {
+	  if(err) {
+	  	console.log("err", err);
+	  } 
+	})
+	const id = new InDesign({
+	  version: 'CS6'
+	});
+	//console.log(path.join(__dirname, '/../..', 'indd/importIndd.jsx'))
+	id.run(path.join(__dirname, '/../..', 'indd/importIndd.jsx'), {
 		message: 'hi from node',
 		dirname: path.join(__dirname, '/../..'),
 		xmlurl: 'xml.xml'
-  }, function(res) {
+	}, function(res) {
 		//console.log(res);
 		//return res.redirect('/')
 		return res.status(200).send('ok')
-  });
+	});
 
 })
 
@@ -1208,6 +1346,30 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 		})
 	})
 	
+})
+
+router.get('/importgdrive', function(req, res, next){
+	if (!req.session.authClient) {
+		return res.redirect('/auth/google');
+	}
+	var authClient = req.session.authClient;
+	const drive = google.drive({version: 'v3', authClient});
+	drive.files.list({
+		pageSize: 10,
+		fields: 'nextPageToken, files(id, name)',
+	}, (err, res) => {
+		if (err) return console.log('The API returned an error: ' + err);
+		const files = res.data.files;
+		if (files.length) {
+			console.log('Files:');
+			files.map((file) => {
+				console.log(`${file.name} (${file.id})`);
+			});
+		} else {
+			console.log('No files found.');
+		}
+	});
+
 })
 
 router.get('/api/importtxt', function(req, res, next){

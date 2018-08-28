@@ -3,6 +3,7 @@ html
 	head
 		meta(charset="utf-8")
 		meta(http-equiv="X-UA-Compatible", content="IE=edge; charset=utf-8")
+		meta(name="google-site-verification", content="p4ANTDMaoAMsiWW5CwWtiY9v8mEPGv8KhQetzWrJlwc")
 		title= appTitle
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
 		//link(rel="stylesheet", href="/stylesheets/simplemde.min.css")
@@ -117,6 +118,30 @@ html
 							$('.dropdown').addClass('active');
 						}
 						$('.drop').slideToggle(100);
+					});
+					$('.submenu.drop').on('click', function(){
+						if (!$(this).next('.slidedown')) {
+							
+							return;
+						} else {
+							
+							$('.submenu.drop').not($(this)).removeClass('active');
+							$(this).next('.slidedown').slideToggle(100);
+							$(this).toggleClass('active');
+							if (!$('.submenu.drop').not($(this)).next('.slidedown a').attr('href')) {
+								$('.submenu.drop').not($(this)).next('.slidedown').slideUp(100);
+							} else {
+								
+								$(this).parent('.slidedown').slideUp(100);
+								if (!$(this).attr('href')) {
+									$(this).children('.ui').children('i').toggleClass('fa-angle-right');
+									$(this).children('.ui').children('i').toggleClass('fa-angle-down');
+								} else {
+									$('.dropdown').not($('.static')).slideUp(100);
+								}
+								//
+							}
+						}
 					});
 
 					if (self.export && self.export !== '') {

@@ -1,0 +1,31 @@
+extends layout
+block page
+	- var menu = 'login'
+block content
+	
+	.container
+		div.module.full
+			div.row(style="display: block; position: fixed; height: 100%;")
+				
+				div.centerallwrap
+					div.centerall
+						div.tb-10-m0.shift-00(style="padding-bottom: 50px")
+							span.tb-font-xl Enter username and password
+							form.row(enctype="multipart/form-data", method="POST", action="/login" )
+								input(type="hidden", name="_csrf", value= csrfToken)
+
+								div
+									label(for="username") Username
+									input(type="text", name="username", id="username")
+								div
+									label(for="password") Password
+									input(type="password", name="password", id="password")
+								p
+								button.block(type="submit", ariaDescription="Log in")
+									span Log in
+								//-
+									p.tb-font-xl.head First time here?
+									a.block(href="/register", role="button", ariaDescription="Register") 
+										span Register
+						
+							#info #{info}

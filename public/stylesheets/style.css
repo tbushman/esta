@@ -420,14 +420,11 @@ em {
 	background-color: #fff;
 	box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
 	height: calc(100% - 90px);
-	max-height: calc(100% - calc(var(--thumbw) * 2));
-	overflow-y: scroll;
+	overflow-y: hidden;
 	overflow-x: hidden;
 	position: fixed;
 	visibility: hidden;
 	pointer-events: none;
-	/*-webkit-clip-path: polygon(128px 0%, 100% 0%, 100% 100%, 0% 100%, 0% 10%);
-	clip-path: polygon(128px 0%, 100% 0%, 100% 100%, 0% 100%, 0% 10%);*/
 	padding: 0 20px;
 	
 	background-repeat: no-repeat;
@@ -501,8 +498,6 @@ a.menu.drop, a.submenu.drop {
 	background-color: rgba(255,255,255,0);
 	max-height: 100%;
 	position: fixed;
-	-webkit-clip-path: none;
-	clip-path: none;
 	box-shadow: none;
 	margin: 0 auto;
 	justify-content: center;
@@ -583,11 +578,9 @@ a.menu.drop, a.submenu.drop {
 	max-height: calc(100% - 80px);
 	overflow-y: hidden;
 	overflow-x: hidden;
-	-webkit-clip-path: polygon(0% 0%, 40% 0%, 100% 20%, 100% 100%, 0% 100%);
-	clip-path: polygon(0% 0%, 40% 0%, 100% 20%, 100% 100%, 0% 100%);
 	padding: 5px 0 10px 0;
 	border: 2px solid rgba(255,255,255,1);
-	max-width: 180px;
+	box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
 	/*transform: translate(-28%, 0%);*/
 	margin-left: 107px;
 }

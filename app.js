@@ -14,6 +14,10 @@ var bodyParser = require('body-parser');
 var fs = require('fs');
 var url = require('url');
 var multer = require('multer');
+var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
+var GoogleStrategy = require('passport-google-oauth2').Strategy;
+var Publisher = require('./models/publishers');
 var Content = require('./models/content');
 var publishers = path.join(__dirname, '/../..');
 var spawn = require('child_process').exec;
@@ -53,6 +57,66 @@ app.use(function(req, res, next) {
 		//app.use(helmet.noCache({}));
 
 		next();
+});
+passport.use(new LocalStrategy(Publisher.authenticate()));
+passport.use(new GoogleStrategy({
+	clientID: process.env.GOOGLE_OAUTH_CLIENTID,
+	clientSecret: process.env.GOOGLE_OAUTH_SECRET,
+	callbackURL: (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV)
+	},
+	function(request, accessToken, refreshToken, profile, done) {
+		Publisher.find({}, function(err, data){
+			if (err) {
+				return done(err)
+			}
+			Publisher.findOne({ 'google.oauthID': profile.id }, function(err, user) {
+				if(err) {
+					console.log(err);  // handle errors!
+				}
+				if (!err && user !== null) {
+					done(null, user);
+				} else {
+					user = new Publisher({
+						index: data.length,
+						username: profile.name.replace(/\s/g, ''),
+						email: profile.emails[0],
+						admin: true,
+						avatar: profile.picture,
+						gaaccess: accessToken,
+						garefresh: refreshToken,
+						google: {
+							oauthID: profile.id,
+							name: profile.displayName,
+							created: Date.now()
+						}
+					});
+					user.save(function(err) {
+						if(err) {
+							console.log(err);  // handle errors!
+						} else {
+							console.log("saving user ...");
+							done(null, user);
+						}
+					});
+				}
+			});
+		})
+		
+	}
+));
+// serialize and deserialize
+passport.serializeUser(function(user, done) {
+  done(null, user._id);
+});
+passport.deserializeUser(function(id, done) {
+	Publisher.findOne({_id: id}, function(err, user){
+
+		if(!err) {
+			done(null, user);
+		} else {
+			done(err, null);
+		}
+	});
 });
 
 var store = new MongoDBStore(
