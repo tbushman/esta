@@ -58,6 +58,7 @@ app.use(function(req, res, next) {
 
 		next();
 });
+app.use( passport.initialize());
 passport.use(new LocalStrategy(Publisher.authenticate()));
 passport.use(new GoogleStrategy({
 	clientID: process.env.GOOGLE_OAUTH_CLIENTID,
@@ -74,16 +75,23 @@ passport.use(new GoogleStrategy({
 					console.log(err);  // handle errors!
 				}
 				if (!err && user !== null) {
-					done(null, user);
+					user.gaaccess = accessToken;
+					user.save(function(err){
+						if (err) {
+							return done(err)
+						}
+						done(null, user);
+					})
 				} else {
+					console.log(accessToken, refreshToken)
 					user = new Publisher({
-						index: data.length,
-						username: profile.name.replace(/\s/g, ''),
-						email: profile.emails[0],
+						userindex: data.length,
+						username: profile.name.givenName,
+						email: profile.emails[0].value,
 						admin: true,
 						avatar: profile.picture,
 						gaaccess: accessToken,
-						garefresh: refreshToken,
+						garefresh: refreshToken.access_token,
 						google: {
 							oauthID: profile.id,
 							name: profile.displayName,

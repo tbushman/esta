@@ -35,6 +35,7 @@
     "fsxt": "^8.1.0",
     "google-auth-library": "^1.6.1",
     "google-geolocation": "^1.0.2",
+    "googleapis": "^33.0.0",
     "html-docx-js": "^0.3.1",
     "html-pdf": "^2.2.0",
     "http": "0.0.0",

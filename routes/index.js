@@ -15,13 +15,15 @@ var spawn = require("child_process").exec;
 var dotenv = require('dotenv');
 var marked = require('marked');
 var pug = require('pug');
-//var Publisher = require('../models/publishers.js');
+var Publisher = require('../models/publishers.js');
 var Content = require('../models/content.js');
 var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
 var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Preliminary Subdivision Applications', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
 var InDesign = require('async-indesign-script');
-var googleAuth = require('google-auth-library');
+//const google = require("googleapis"); 
+var {google} = require('googleapis');
+//var {googleAuth} = require('google-auth-library');
 dotenv.load();
 var upload = multer();
 
@@ -918,11 +920,11 @@ router.post('/login', passport.authenticate('local', {
 	res.redirect('/api/publish');		
 });
 
-router.get('/auth/googledrive', passport.authenticate('google', {scope: 'https://www.googleapis.com/auth/drive'}), function(req, res, next){
+/*router.get('/auth/googledrive', passport.authenticate('google', {scope: 'https://www.googleapis.com/auth/drive'}), function(req, res, next){
 	return next();
-})
+})*/
 
-router.get('/auth/google', passport.authenticate('google', {scope: 'https://www.googleapis.com/auth/userinfo.profile'}), function(req, res, next){
+router.get('/auth/google', passport.authenticate('google', {scope: ['https://www.googleapis.com/auth/plus.login', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.file']}), function(req, res, next){
 	return next();
 });
 
@@ -931,16 +933,14 @@ router.get('/auth/google/callback', passport.authenticate('google', {
 }), function(req, res, next) {
 	req.session.userId = req.user._id;
 	req.session.loggedin = req.user.username;
-	if (req.user.admin && !req.session.authClient) {
+	/*if (req.user.admin && !req.session.authClient) {
 		return res.redirect('/auth/googledrive');
 	} else if (!req.user.admin) {
 		return res.redirect('/logout');
-	}
-	var auth = new googleAuth();
-	var authClient = new auth.OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
-	authClient.setCredentials({refresh_token: req.user.garefresh, access_token: req.user.gaaccess});
-	req.session.authClient = authClient;
-	return res.redirect('/api/importgdrive');
+	}*/
+	//var auth = new googleAuth();
+	req.session.authClient = true;
+	return res.redirect('/importgdrive');
 });
 
 router.get('/logout', function(req, res, next) {
@@ -1352,23 +1352,32 @@ router.get('/importgdrive', function(req, res, next){
 	if (!req.session.authClient) {
 		return res.redirect('/auth/google');
 	}
-	var authClient = req.session.authClient;
-	const drive = google.drive({version: 'v3', authClient});
-	drive.files.list({
-		pageSize: 10,
-		fields: 'nextPageToken, files(id, name)',
-	}, (err, res) => {
-		if (err) return console.log('The API returned an error: ' + err);
-		const files = res.data.files;
-		if (files.length) {
-			console.log('Files:');
-			files.map((file) => {
-				console.log(`${file.name} (${file.id})`);
-			});
-		} else {
-			console.log('No files found.');
+	var OAuth2 = google.auth.OAuth2;
+	Publisher.findOne({_id: req.session.userId}, function(err, pu){
+		if (err) {
+			return next(err)
 		}
-	});
+		var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+		authClient.setCredentials({refresh_token: pu.garefresh, access_token: pu.gaaccess});
+		google.options({auth:authClient})
+
+		const drive = google.drive({version: 'v3'});
+		drive.files.list({
+			pageSize: 10,
+			fields: 'nextPageToken, files(id, name)',
+		}, (err, res) => {
+			if (err) return console.log('The API returned an error: ' + err);
+			const files = res.data.files;
+			if (files.length) {
+				console.log('Files:');
+				files.map((file) => {
+					console.log(`${file.name} (${file.id})`);
+				});
+			} else {
+				console.log('No files found.');
+			}
+		});
+	})
 
 })
 

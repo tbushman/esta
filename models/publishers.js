@@ -4,8 +4,7 @@ var mongoose = require('mongoose'),
 
 var Publisher = new Schema({
 	userindex: {
-		type: Number,
-		unique: true
+		type: Number
 	},
 	username: {
 		type: String,
