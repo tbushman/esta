@@ -83,7 +83,7 @@ html
 						uploadchtitle: null,
 						dragind: null,
 						latlngs: null,
-						gp: this.parseObj(!{JSON.stringify(gp)})
+						gp: (#{session.importgdrive} ? this.parseObj(!{JSON.stringify(gp)}) : null)
 					}
 				},
 				updated: function(){
@@ -96,7 +96,6 @@ html
 					}
 				},
 				mounted: function(){
-					console.log(this.export);
 					$(document).ready(function(){
 						document.addEventListener('keydown', function(event) {
 						  var keyName = event.key;
@@ -211,18 +210,6 @@ html
 						}, 5000)
 						
 					}
-					/*if (self.export) {
-						//console.log(self.diff[0].value)
-						if (!self.doc || self.doc === '') {
-							self.sendDiff(function(diffs){
-								self.diff = diffs.dif;
-							});
-						} else {
-						}
-					} else {
-						if (self.diff)
-							console.log(self.diff[0].value)
-					}*/
 					if (self.dat) {
 						self.dat.sort(function(a,b){
 							return a[0].chapter.ind > b[0].chapter.ind
@@ -289,23 +276,6 @@ html
 						var self = this;
 						console.log(gapi)
 						self.initPicker(self.gp.access_token)
-						//gapi.load('client', self.handleGapiClient());
-
-						/*gapi.load('auth2',function(){
-							gapi.auth2.authorize({
-								clientId: self.gp.google_key,
-								scope: self.gp.scope
-							}, self.initPicker)
-						});*/
-						/*gapi.auth2.authorize({
-							apiKey: self.gp.google_key,
-							discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-							clientId: self.gp.google_clientid, scope: self.gp.scope, immediate: false
-						}, 
-							self.initPicker(self.gp.access_token));*/
-						
-						/**/
-						
 					},
 					
 					insertFile: function(fileData, callback) {
@@ -430,7 +400,6 @@ html
 					// Create and render a Picker object for picking user Photos.
 					createPicker: function(authresult) {
 						var self = this;
-						console.log(authresult)
 						if (self.gp && self.gp.access_token) {
 							var picker = new google.picker.PickerBuilder().
 								addView(google.picker.ViewId.DOCUMENTS).
@@ -439,8 +408,6 @@ html
 								setCallback(self.pickerCallback).
 								build();
 							picker.setVisible(true);
-							console.log(picker)
-							//self.picker = picker;
 						}
 					},
 					// A simple callback implementation.
@@ -456,62 +423,10 @@ html
 					},
 					initGdocFileUploader: function(file, type){
 						var self = this;
-						console.log(file);
-						/*gapi.load('client', {
-							callback: function() {
-								gapi.client.init({
-									apiKey: self.gp.picker_key,
-									discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-									clientId: self.gp.google_clientid,
-									scope: self.gp.scope.join(' ')
-								}).then(function(){
-									
-									self.handleGapiClient(
-										//new Blob([file], {mimeType: 'application/vnd.google-apps.document'})
-										file
-									);
-									
-								})
-								.catch(function(err){
-									console.log(err)
-								})
-							},
-							onerror: function() {
-								alert('gapi.client failed to load!');
-							},
-							timeout: 5000, // 5 seconds.
-							ontimeout: function() {
-								alert('gapi.client could not load in a timely manner!');
-							}
-							
-						})*/
 						$.post('/api/importgdoc/'+file.id, function(err, doc){
-							console.log(err, doc)
+							
+							window.location.href = '/'
 						})
-						/*var reader = new FileReader();
-						var self = this;
-						reader.onloadend = function(e) {
-							var fd = new FormData();
-
-							fd.append(type, file);
-							var uploadurl = '/api/importgdoc/'+file.id;
-							$.ajax({
-								url: uploadurl,
-								type: 'POST',
-								data: fd,
-								processData: false,
-								contentType: false,
-								success: function(response) { 
-									self.uploadTxt(response)
-								}
-								
-							})
-						}
-						reader.readAsDataURL(new Blob([file], {type : 'application/vnd.google-apps.document'}))
-						*//**/
-
-					
-						
 					},
 					exportPDF: function(e) {
 						$(e.target).hide();
@@ -1244,4 +1159,3 @@ html
 					}
 				}
 			});
-	

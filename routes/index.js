@@ -1,5 +1,5 @@
 var express = require('express');
-var async = require('async');
+var asynk = require('async');
 var passport = require('passport');
 var router = express.Router();
 var mongoose = require('mongoose');
@@ -186,10 +186,10 @@ var curly = function(str){
 
 
 function textImporter(req, str, cb) {
-	async.waterfall([
+	asynk.waterfall([
 		function(next){
 				
-			console.log(str.split(/(^Chapter \d{1,3}.+$)/gm))
+			//console.log(str.split(/(^Chapter \d{1,3}.+$)/gm))
 			var newchtitlestr = str.split(/(^Chapter \d{1,3}.+$)/gm)[1];
 			var newcontentstr = str.split(/(^Chapter \d{1,3}.+$)/gm)[2];
 			var newch;
@@ -208,7 +208,7 @@ function textImporter(req, str, cb) {
 			var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1}[\s\S]*?)/si
 			//var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
 			// title rx
-			var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n)/si
+			var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1})(.*?)(?=[\n\.])/si
 			// isolate description
 			var descrx = /(?:[\n])(.*)/si
 			//remove stray spaces
@@ -251,7 +251,7 @@ function textImporter(req, str, cb) {
 					.replace(/\u2028/g, '  \n  \n')
 					//.replace(/[\n ](\d\.)/g, '  \n  \n$1')
 					: 
-					''
+					(trx.exec(it) ? trx.exec(it)[2] : '')
 				);
 				desc = desc.replace(/^([A-Z]\.)/gm, '  \n**$1**').replace(/[\s\.]([A-Z]\.)/g, '  \n  \n**$1**');
 				var num = num[0]
@@ -389,12 +389,14 @@ function textImporter(req, str, cb) {
 						})
 					}
 				});
+				next(null)
 			})
 		}
 	], function(err){
 		if (err) {
 			return cb(err)
 		}
+		console.log('yay')
 		cb(null)
 	})
 }
@@ -403,7 +405,7 @@ function rmDocs(req, res, next) {
 	///api/importtxt/:type/:chtitle/:rmdoc
 	//\b(\w)
 	if (req.params.rmdoc) {
-		async.waterfall([
+		asynk.waterfall([
 			function(next){
 				Content.find({'chapter.str': {$regex: RegExp(''+decodeURIComponent(req.params.chtitle)+'\.?$')}}, function(err, data){
 					if (err) {
@@ -526,7 +528,7 @@ function rmFile(req, res, next) {
 }
 function renameEachImgDir(data, direction, indexes, oldInd, next) {
 	
-	async.waterfall([
+	asynk.waterfall([
 		
 		function(cb) {
 			var qs = [];
@@ -601,7 +603,7 @@ function renameEachImgDir(data, direction, indexes, oldInd, next) {
 			cb(null, qs)
 		},
 		function(qs, cb) {
-			async.eachSeries(qs, function(q, nxt){
+			asynk.eachSeries(qs, function(q, nxt){
 				Content.findOne(q.query, function(err, doc){
 					if (err) {
 						nxt(err)
@@ -786,7 +788,7 @@ function ensureEscape(req, res, next) {
 }
 
 function getDat(req, res, next){
-	async.waterfall([
+	asynk.waterfall([
 		function(cb){
 			var dat = []
 			Content.distinct('chapter.ind', function(err, distinct){
@@ -845,7 +847,7 @@ function getDat(req, res, next){
 
 
 function getDat64(next){
-	async.waterfall([
+	asynk.waterfall([
 		function(cb){
 			var dat = []
 			Content.distinct('chapter.ind', function(err, distinct){
@@ -958,6 +960,7 @@ function tokenHandler(authClient, authCode, next) {
 }
 
 router.get('/runtests', function(req, res, next){
+	req.session.importgdrive = false;
 	let chromedriver = require('chromedriver');
 	var mocha = require('mocha');
 	var assert = require('chai').assert;
@@ -1068,12 +1071,22 @@ router.get('/runtests', function(req, res, next){
 		//driver.quit();
 	
 })
+/*router.all(/^\/((?!importgdrive|auth).*)$/, function(req, res, next){
+	req.session.importgdrive = false;
+	return next()
+})*/
 
-//router.all(/.*/, ensureContent)
+/*router.all(/(.*)/, function(req, res, next){
+	if (!req.session.importgdrive) {
+		req.session.importgdrive = false;
+	}
+	return next()
+})*/
 router.all('/api/*', ensureAdmin);
 
 router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function(req, res, next){
 	//getDat(function(dat, distinct){
+	
 		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 		req.session.refer = newrefer;
 		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
@@ -1132,7 +1145,7 @@ router.post('/register', function(req, res, next){
 					}
 					req.session.userId = pu._id;
 					req.session.loggedin = pu.username;
-					return res.redirect('/api/publish');
+					return res.redirect('/');
 				})
 			});
 		});
@@ -1262,7 +1275,7 @@ router.post('/api/importgdoc/:fileid', function(req, res, next) {
 				.then(function(file){
 					var dlurl = file.data.webContentLink.split('&')[0];
 					console.log(dlurl);
-
+					//https://stackoverflow.com/a/29296405/3530394
 					require('request').get({
 						url: dlurl,
 						encoding: null,
@@ -1276,125 +1289,48 @@ router.post('/api/importgdoc/:fileid', function(req, res, next) {
 							return next(error)
 						}
 						result.pipe(dest);
-						fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx', result.body)
-						setTimeout(function(){
+						async function fsWriteFile(cbk) {
+							await fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx', result.body);
 							var mammoth = require('mammoth');
 							mammoth.extractRawText({path: ''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx'})
 							.then(function(result){
 								var text = result.value;
-								console.log(text)
+								//console.log(text)
 								var messages = result.messages;
-								console.log(messages)
+								//console.log(messages)
 								var str = text.toString();
 								textImporter(req, str, function(err){
 									if (err) {
 										return next(err)
 									}
-									var dat = []
-									Content.distinct('chapter.str', function(err, distinct){
-										if (err) {
-											return next(err)
-										}
-										distinct.forEach(function(key, i) {
-											Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
-												if (err) {
-													console.log(err)
-												}
-												if (data.length === 0) return;
-												if (data.length > 0) {
-													// I either add the 1 here or in template. A conundrum.
-													//chind = i + 1;
-													dat.splice(0,0,data)
-													//ff.shift();
-												}
-											})
-										});
-										//next(null, dat)
-										return res.status(200).send(data)
-									})
+									//console.log('hooray')
+									req.session.importgdrive = false;
+									//console.log(req.session)
+									//return res.status(200).send(data)
+									return cbk()
 								})
 
 							})
 							.done()
-						}, 5000)
-						/*async.doWhilst(
-							function(){
-								fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx', result.body)
-								//cb(null, ''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx')
-							}, 
-							function(cb) {
-								var check = require(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx') !== null;
-								if (check) {
-									//check_if_file_null
-									cb(null, check);
-								} else {
-									cb(null)
-								}
-								//return check;
-							},
-							function (err) {
-								if (err) {
-									console.log(err)
-								}
-								if (!err && check) {
-									//var str = fs.readFileSync(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.txt', 'utf8')
-									//var str2 = str.toString()
-									
-								}
-								
-								
-					    }
-						);*/
-						/*fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.txt', result.body, function(err){
-							if (err) {
-								return next(err)
-							}
-							
-						})*/
-					})
-					//.pipe(dest)
-					
-					/*drive.files.export({
-						fileId, mimeType: 'text/plain'
-					}).then(function(result){
-						
-						
-						var path = path.join(p, '/'+now+'.txt');
-						fs.writeFile(path, result, function(err){
-							if (err) {
-								return next(err)
-							}
-							return res.status(200).send(require(p))
-							//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
-						});
-						
-						//var file = require(dest)
-						//return res.status(200).send(result)
-					}).catch(function(err){
-						if (err){
-							return next(err)
 						}
-					})*/
+						
+						fsWriteFile(function(){
+							return res.status(200).send('ok')
+						});
+					})
 				})
-					
-				
-
 			})
-
 		})
 	});
-
-
-		/**/
-	
 })
+
 
 router.get('/importgdrive', function(req, res, next){
 	req.session.importgdrive = true;
 	if (!req.session.authClient) {
 		return res.redirect('/auth/google');
 	}
-	delete req.session.importgdrive;
+	//req.session.importgdrive = false;
 	var OAuth2 = google.auth.OAuth2;
 	Publisher.findOne({_id: req.session.userId}, function(err, pu){
 		if (err) {
@@ -1419,7 +1355,7 @@ router.get('/importgdrive', function(req, res, next){
 				req.session.gp = {
 					google_key: process.env.GOOGLE_KEY,
 					scope: ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.file'],
-					google_clientid: process.env.GOOGLE_OAUTH_CLIENTID,
+					//google_clientid: process.env.GOOGLE_OAUTH_CLIENTID,
 					access_token: pu.gaaccess,
 					picker_key: process.env.GOOGLE_PICKER_KEY
 				}
@@ -1435,7 +1371,7 @@ router.get('/importgdrive', function(req, res, next){
 router.get('/logout', function(req, res, next) {
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
-	async.waterfall([
+	asynk.waterfall([
 		function(next){
 			req.session.userId = null;
 			req.session.loggedin = null;
@@ -1468,6 +1404,7 @@ router.get('/logout', function(req, res, next) {
 
 router.get('/exportpdf', getDat, function(req, res, next){
 	//getDat(function(dat, distinct){
+	req.session.importgdrive = false;
 		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 		req.session.refer = newrefer;
 		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
@@ -1561,6 +1498,7 @@ router.post('/api/exportpdf', getDat, function(req, res, next){
 })
 
 router.get('/exportword', function(req, res, next){
+	req.session.importgdrive = false;
 	getDat64(function(dat){
 		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 		req.session.refer = newrefer;
@@ -1634,6 +1572,7 @@ router.get('/exportword', function(req, res, next){
 });
 
 router.get('/exportindd'/*, ensureCurly*/, function(req, res, next){
+	req.session.importgdrive = false;
 	var dat = []
 	Content.distinct('chapter.str', function(err, distinct){
 		if (err) {
@@ -1755,6 +1694,7 @@ router.post('/checkchaptername/:name', function(req, res, next){
 })
 
 router.get('/list/:id/:index', function(req, res, next){
+	req.session.importgdrive = false;
 	Content.findOne({_id: req.params.id}, function(err, doc){
 		if (err) {
 			return next(err)
@@ -1781,6 +1721,7 @@ router.get('/list/:id/:index', function(req, res, next){
 })
 
 router.get('/menu/:title/:chapter', function(req, res, next){
+	req.session.importgdrive = false;
 	var key, val;
 	var key2 = null, val2;
 	var find = {}
@@ -1834,6 +1775,7 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 })
 
 router.get('/api/importtxt', function(req, res, next){
+	req.session.importgdrive = false;
 	return res.render('import', {
 		info: 'Please enter Chapter name exactly as it appears in the document'
 	})
@@ -1922,6 +1864,7 @@ router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req,
 })
 
 router.get('/api/new/:chtitle', function(req, res, next){
+	req.session.importgdrive = false;
 	var outputPath = url.parse(req.url).pathname;
 	//console.log(outputPath)
 	var csrf = req.csrfToken();
@@ -2025,7 +1968,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	var body = req.body;
 	var keys = Object.keys(body);
 	//console.log(body.lat, body.lng)
-	async.waterfall([
+	asynk.waterfall([
 		function(next){
 			
 			Content.findOne({_id: req.params.id},function(err, doc) {
