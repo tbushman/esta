@@ -162,26 +162,30 @@ var curly = function(str){
 	//console.log(/\\n/g.test(str))
 	//console.log(str.match(/\s/g))
 	//console.log(str.match(/\"/g))
-	return str
-	
-	.replace(/'\b/g, "&lsquo;")     // Opening singles
-	.replace(/\b'/g, "&rsquo;")     // Closing singles
-	.replace(/"\b/g, "&ldquo;")     // Opening doubles
-	.replace(/\b"/g, "&rdquo;")     // Closing doubles
-	.replace(/(\.)"/g, "$1&rdquo;")     // Closing doubles
-	.replace(/u2018/g, "&lsquo;")
-	.replace(/u2019/g, "&rsquo;")
-	.replace(/u201c/g, "&ldquo;")
-	.replace(/u201d/g, "&rdquo;")
-	.replace(/[“]/g, "&ldquo;")
-	.replace(/[”]/g, "&rdquo;")
-	.replace(/[’]/g, "&rsquo;")
-	.replace(/[‘]/g, "&lsquo;")
-	//.replace(/([a-z])'([a-z])/ig, '$1&rsquo$2')     // Apostrophe
-	//
-	//.replace(/(\d\s*)&rdquo/g, '$1\"')
-	//.replace(/(\d\s*)&rsquo/g, "$1\'")
-	.replace(/([a-z])&lsquo([a-z])/ig, '$1&rsquo;$2')
+	if (!str){
+		return ''
+	} else {
+		return str
+		
+		.replace(/'\b/g, "&lsquo;")     // Opening singles
+		.replace(/\b'/g, "&rsquo;")     // Closing singles
+		.replace(/"\b/g, "&ldquo;")     // Opening doubles
+		.replace(/\b"/g, "&rdquo;")     // Closing doubles
+		.replace(/(\.)"/g, "$1&rdquo;")     // Closing doubles
+		.replace(/u2018/g, "&lsquo;")
+		.replace(/u2019/g, "&rsquo;")
+		.replace(/u201c/g, "&ldquo;")
+		.replace(/u201d/g, "&rdquo;")
+		.replace(/[“]/g, "&ldquo;")
+		.replace(/[”]/g, "&rdquo;")
+		.replace(/[’]/g, "&rsquo;")
+		.replace(/[‘]/g, "&lsquo;")
+		//.replace(/([a-z])'([a-z])/ig, '$1&rsquo$2')     // Apostrophe
+		//
+		//.replace(/(\d\s*)&rdquo/g, '$1\"')
+		//.replace(/(\d\s*)&rsquo/g, "$1\'")
+		.replace(/([a-z])&lsquo([a-z])/ig, '$1&rsquo;$2')
+	}
 }
 
 
@@ -1970,6 +1974,9 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	var body = req.body;
 	var keys = Object.keys(body);
 	//console.log(body.lat, body.lng)
+	if (!body.description){
+		body.description = ''
+	}
 	asynk.waterfall([
 		function(next){
 			
@@ -1997,8 +2004,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 							})
 
 						} else {
-							thumburls.push(body[thiskey])
-							count++
+								thumburls.push(body[thiskey])
+								count++
 						}						
 					} else {
 						count = count;
@@ -2051,7 +2058,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			var desc = removeExtras(body.description);
 			var Diff = require('diff');
 			//console.log(doc.properties.description, marked(curly(desc)))
-			var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(desc)));
+			var diff = Diff.diffWordsWithSpace((!doc.properties.description ? '' : doc.properties.description), marked(curly((!desc ? '' : desc))));
 			//console.log('sent this diff')
 			//console.log(diff)
 			var diffss = [];

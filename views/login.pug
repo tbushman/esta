@@ -10,27 +10,29 @@ block content
 				div.centerallwrap
 					div.centerall
 						div.tb-10-m0.shift-00(style="padding-bottom: 50px")
-							span.tb-font-xl Enter username and password
-							form.row(enctype="multipart/form-data", method="POST", action="/login" )
-								input(type="hidden", name="_csrf", value= csrfToken)
+							//
+								span.tb-font-xl Enter username and password
+								form.row(enctype="multipart/form-data", method="POST", action="/login" )
+									input(type="hidden", name="_csrf", value= csrfToken)
 
-								div
-									label(for="username") Username
-									input(type="text", name="username", id="username")
-								div
-									label(for="password") Password
-									input(type="password", name="password", id="password")
-								p
-								button.block(type="submit", ariaDescription="Log in")
-									span Log in
-								//-
-									p.tb-font-xl.head First time here?
-									a.block(href="/register", role="button", ariaDescription="Register") 
-										span Register
-							p.tb-font-xl First time authenticating?
-							a.tb-03-m0.block.spacer.success(href="/register", title="Register")
-								span Register
-							p.tb-font-xl Or authenticate with Google:
+									div
+										label(for="username") Username
+										input(type="text", name="username", id="username")
+									div
+										label(for="password") Password
+										input(type="password", name="password", id="password")
+									p
+									button.block(type="submit", ariaDescription="Log in")
+										span Log in
+									//-
+										p.tb-font-xl.head First time here?
+										a.block(href="/register", role="button", ariaDescription="Register") 
+											span Register
+								p.tb-font-xl First time authenticating?
+								a.tb-03-m0.block.spacer.success(href="/register", title="Register")
+									span Register
+								p.tb-font-xl Or 
+							p.tb-font-xl Authenticate with Google:
 							a.tb-03-m0.block.spacer.danger(href="/auth/google", title="Authenticate with Google")
 								span Google
 
