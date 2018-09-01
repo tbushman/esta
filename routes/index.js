@@ -1086,7 +1086,9 @@ router.all('/api/*', ensureAdmin);
 
 router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function(req, res, next){
 	//getDat(function(dat, distinct){
-	
+	if (!req.session.importgdrive) {
+		req.session.importgdrive = false;
+	}
 		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 		req.session.refer = newrefer;
 		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
