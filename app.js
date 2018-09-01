@@ -43,7 +43,6 @@ marked.setOptions({
 });
 app.locals.$ = require('jquery');
 app.locals.md = marked;
-
 app.use(cors());
 
 app.use(function(req, res, next) {
@@ -58,74 +57,71 @@ app.use(function(req, res, next) {
 
 		next();
 });
-app.use( passport.initialize());
 passport.use(new LocalStrategy(Publisher.authenticate()));
 passport.use(new GoogleStrategy({
 	clientID: process.env.GOOGLE_OAUTH_CLIENTID,
 	clientSecret: process.env.GOOGLE_OAUTH_SECRET,
-	callbackURL: (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV)
+	callbackURL: (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV),
+	passReqToCallback: true
 	},
-	function(request, accessToken, refreshToken, profile, done) {
+	function(req, accessToken, refreshToken, profile, done) {
+		console.log(accessToken, refreshToken, profile)
 		Publisher.find({}, function(err, data){
 			if (err) {
 				return done(err)
 			}
-			Publisher.findOne({ 'google.oauthID': profile.id }, function(err, user) {
+			Publisher.find({ 'google.oauthID': profile.id }, function(err, users) {
 				if(err) {
 					console.log(err);  // handle errors!
 				}
-				if (!err && user !== null) {
-					user.gaaccess = accessToken;
-					user.save(function(err){
-						if (err) {
-							return done(err)
-						}
-						done(null, user);
-					})
+				//console.log(profile, user)
+				if (!err && users.length > 0) {
+					done(null, users[0]);
 				} else {
-					console.log(accessToken, refreshToken)
-					user = new Publisher({
-						userindex: data.length,
-						username: profile.name.givenName,
-						email: profile.emails[0].value,
-						admin: true,
-						avatar: profile.picture,
-						gaaccess: accessToken,
-						garefresh: refreshToken.access_token,
-						google: {
-							oauthID: profile.id,
-							name: profile.displayName,
-							created: Date.now()
+					Publisher.findOne({_id: req.session.userId}, function(err, pu){
+						if (err) {
+							console.log(err)
 						}
-					});
-					user.save(function(err) {
-						if(err) {
-							console.log(err);  // handle errors!
+						if (!pu) {
+							//console.log(accessToken, refreshToken)
+							user = new Publisher({
+								userindex: data.length,
+								username: profile.name.givenName,
+								email: profile.emails[0].value,
+								admin: true,
+								avatar: profile.photos[0].value,
+								gaaccess: accessToken,
+								garefresh: refreshToken,
+								google: {
+									oauthID: profile.id,
+									name: profile.displayName,
+									created: Date.now()
+								}
+							});
+							user.save(function(err) {
+								if(err) {
+									console.log(err);  // handle errors!
+								} else {
+									console.log("saving user ...");
+									done(null, user);
+								}
+							});
 						} else {
-							console.log("saving user ...");
-							done(null, user);
+							Publisher.findOneAndUpdate({_id: req.session.userId}, {$set:{gaaccess: accessToken, garefresh: refreshToken, 'google.oauthID': profile.id, 'google.name': profile.displayName, 'google.created': Date.now()}}, {safe:true, new:true}, function(err, pu){
+								if (err) {
+									console.log(err)
+								}
+								done(null, pu)
+							})
 						}
-					});
+					})
+					
 				}
 			});
 		})
 		
 	}
 ));
-// serialize and deserialize
-passport.serializeUser(function(user, done) {
-  done(null, user._id);
-});
-passport.deserializeUser(function(id, done) {
-	Publisher.findOne({_id: id}, function(err, user){
-
-		if(!err) {
-			done(null, user);
-		} else {
-			done(err, null);
-		}
-	});
-});
 
 var store = new MongoDBStore(
 	{
@@ -160,6 +156,24 @@ app.use(express.static(path.join(__dirname, '../../pu/publishers')));
 app.use('/publishers', express.static(path.join(__dirname, '../../pu/publishers')));
 app.use(favicon(path.join(__dirname, 'public/images', 'favicon.ico')));
 app.use(session(sess));
+app.use( passport.initialize());
+app.use( passport.session());
+
+// serialize and deserialize
+passport.serializeUser(function(user, done) {
+  done(null, user._id);
+});
+passport.deserializeUser(function(id, done) {
+	Publisher.findOne({_id: id}, function(err, user){
+
+		if(!err) {
+			done(null, user);
+		} else {
+			done(err, null);
+		}
+	});
+});
+
 if (app.get('env') === 'production') {
 	app.set('trust proxy', 1)
 }
@@ -170,9 +184,9 @@ app.use(function (req, res, next) {
   res.locals.session = req.session;
   next();
 });
-app.get(/^(\/|\/api\/new|\/api\/editcontent)/, csrfProtection);
+app.get(/^(\/|\/register$|\/login$|\/api\/new|\/api\/editcontent)/, csrfProtection);
 // ensure multer parses before csrf
-app.post(/^(\/api\/editcontent)/, upload.array(), parseBody, csrfProtection);
+app.post(/^(\/register$|\/login$\/api\/editcontent)/, upload.array(), parseBody, csrfProtection);
 app.post(/^(\/diff)/, upload.array(), parseBody);
 //app.post(/^(\/api\/uploadmedia)/, parseBody)
 app.post(/^(\/api\/export)/, upload.array(), parseBody);

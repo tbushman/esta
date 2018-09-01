@@ -14,6 +14,7 @@ html
 		//
 			style(id="style", type="text/css")
 				include ../public/stylesheets/styleword.css
+			script(type="text/javascript", v-on:load="onGapiLoad()", src="https://apis.google.com/js/api.js")
 		script(type="text/javascript", src="/scripts/vue.min.js")
 		script(type="text/javascript", src="/scripts/jquery.min.js")
 		script(type="text/javascript", src="/scripts/jquery-ui.min.js")
@@ -33,7 +34,8 @@ html
 		block page
 		block header
 		block content
-		
+		div#gpresult
+
 		#map
 
 		script(type="text/javascript").
@@ -80,7 +82,8 @@ html
 						uploadisreplace: false,
 						uploadchtitle: null,
 						dragind: null,
-						latlngs: null
+						latlngs: null,
+						gp: (#{session.importgdrive} ? this.parseObj(!{JSON.stringify(gp)}) : null)
 					}
 				},
 				updated: function(){
@@ -93,7 +96,6 @@ html
 					}
 				},
 				mounted: function(){
-					console.log(this.export);
 					$(document).ready(function(){
 						document.addEventListener('keydown', function(event) {
 						  var keyName = event.key;
@@ -143,7 +145,19 @@ html
 							}
 						}
 					});
-
+					if (self.gp && self.gp !== '') {
+						/*var document = window.document;
+						#{$ScriptJS}('https://apis.google.com/js/api.js', function(){
+							self.onGapiLoad()
+						});*/
+						let script = document.createElement('script')
+						script.setAttribute('src', 'https://apis.google.com/js/api.js')
+						script.async = true
+						script.onload = () => {
+							self.onGapiLoad()
+						}
+						document.head.appendChild(script)
+					}
 					if (self.export && self.export !== '') {
 						setTimeout(function(){
 							var fd = new FormData();
@@ -196,18 +210,6 @@ html
 						}, 5000)
 						
 					}
-					/*if (self.export) {
-						//console.log(self.diff[0].value)
-						if (!self.doc || self.doc === '') {
-							self.sendDiff(function(diffs){
-								self.diff = diffs.dif;
-							});
-						} else {
-						}
-					} else {
-						if (self.diff)
-							console.log(self.diff[0].value)
-					}*/
 					if (self.dat) {
 						self.dat.sort(function(a,b){
 							return a[0].chapter.ind > b[0].chapter.ind
@@ -270,6 +272,162 @@ html
 					
 				},
 				methods: {
+					onGapiLoad: function() {
+						var self = this;
+						console.log(gapi)
+						self.initPicker(self.gp.access_token)
+					},
+					
+					insertFile: function(fileData, callback) {
+						var self = this;
+						var boundary = '-------314159265358979323846';
+						var delimiter = "\r\n--" + boundary + "\r\n";
+						var close_delim = "\r\n--" + boundary + "--";
+
+					  var reader = new FileReader();
+					  reader.readAsBinaryString(fileData);
+					  reader.onload = function(e) {
+							var contentType = 
+								//'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+								fileData.type || 'application/octet-stream';
+							var metadata = {
+							  'name': fileData.fileName,
+							  'mimeType': contentType,
+								'Content-Type': contentType,
+								'Content-Length': fileData.size
+							};
+							var base64Data = btoa(reader.result);
+							var multipartRequestBody =
+									delimiter +
+									'Content-Type: application/json\r\n\r\n' +
+									JSON.stringify(metadata) +
+									delimiter +
+									'Content-Type: ' + 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'+ '\r\n' +
+									'Content-Transfer-Encoding: base64\r\n' +
+									'\r\n' +
+									base64Data +
+									close_delim;
+
+							var request = gapi.client.request({
+									'path': '/upload/drive/v3/files',
+									'method': 'POST',
+									'params': {'uploadType': 'multipart'},
+									'headers': {
+										//'X-Upload-Content-Type' : fileData.type,
+										//'Content-Type': 'application/json; charset=UTF-8',
+										'Authorization': 'Bearer ' + self.gp.picker_token,
+										'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
+									},
+									'body': multipartRequestBody});
+							if (!callback) {
+							  callback = function(file) {
+									console.log(file)
+							  };
+							}
+							request.execute(callback);
+					  }
+					},
+					handleGapiClient: function(file){
+						var self = this;
+						//gapi.client.setApiKey(self.gp.google_key);
+						/*gapi.client.load('drive', 'v3', function(){
+							self.initPicker(self.gp.access_token)
+						})
+						*/
+						console.log('client loaded')
+						gapi.client.load('drive', 'v3', function(){
+							var drive = gapi.client.drive;
+							var request = drive.files.get({
+								fileId: file.id,
+								fields: 'webContentLink'
+							})
+							request.then(function(response){
+								console.log(response)
+								var webContentLink = response.result.webContentLink.split('&')[0]
+								$.get(webContentLink, function(err, result){
+									console.log(err, result)
+								})
+								/*self.insertFile(response.result.webContentLink, function(err, fl){
+									if (err) {
+										console.log(err)
+									}
+									var fileId = fl.id;
+									drive.files.export({
+										fileId, mimeType: 'text/plain'
+									}).then( function(result){
+										if (err){
+											console.log(err)
+										}
+										console.log(result)
+										self.uploadTxt(result)
+									}).catch(function(err){
+										if (err) {
+											console.log(err)
+										}
+									})
+								})*/
+							}).catch(function(err){
+								if (err) {
+									console.log(err)
+								}
+							})
+							
+							/*console.log(drive)//({version: 'v3'});
+							*/
+							
+						});
+						
+						
+
+					},
+					initPicker: function(authresult) {
+						var self = this;
+						
+								gapi.load('picker', {
+									callback: function() {
+										self.createPicker(authresult);
+									},
+									onerror: function() {
+										alert('gapi.client failed to load!');
+									},
+									timeout: 5000, // 5 seconds.
+									ontimeout: function() {
+										alert('gapi.client could not load in a timely manner!');
+									}
+								});
+
+					},
+					// Create and render a Picker object for picking user Photos.
+					createPicker: function(authresult) {
+						var self = this;
+						if (self.gp && self.gp.access_token) {
+							var picker = new google.picker.PickerBuilder().
+								addView(google.picker.ViewId.DOCUMENTS).
+								setOAuthToken(authresult).
+								setDeveloperKey(self.gp.picker_key).
+								setCallback(self.pickerCallback).
+								build();
+							picker.setVisible(true);
+						}
+					},
+					// A simple callback implementation.
+					pickerCallback: function (data) {
+						var self = this;
+						google.picker.Response.ACTION
+						var url = 'nothing';
+						if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+							var doc = data[google.picker.Response.DOCUMENTS][0];
+							url = doc[google.picker.Document.URL];
+							self.initGdocFileUploader(doc, 'doc');
+						}
+					},
+					initGdocFileUploader: function(file, type){
+						var self = this;
+						$.post('/api/importgdoc/'+file.id, function(err, doc){
+							
+							window.location.href = '/'
+						})
+					},
 					exportPDF: function(e) {
 						$(e.target).hide();
 						$('.menu').hide();
@@ -422,11 +580,10 @@ html
 						$.post('/panzoom/'+self.map.getCenter().lat+'/'+self.map.getCenter().lng+'/'+self.map.getZoom()+'', function(result){
 						})
 					},
-					importTxt: function(e){
-						var self = this;
-						var file = document.getElementById('importtxt').files[0];//e.target.files[0];
+					uploadTxt: function(file) {
+						console.log(file)
 						var reader = new FileReader();
-						
+						var self = this;
 						reader.onloadend = function(e) {
 							var fd = new FormData();
 
@@ -446,6 +603,12 @@ html
 							})
 						}
 						reader.readAsDataURL(file)
+
+					},
+					importTxt: function(e){
+						var self = this;
+						var file = document.getElementById('importtxt').files[0];//e.target.files[0];
+						self.uploadTxt(file);
 					},
 					importCsv: function(e){
 
@@ -996,4 +1159,3 @@ html
 					}
 				}
 			});
-	

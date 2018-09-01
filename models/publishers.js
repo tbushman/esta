@@ -8,7 +8,6 @@ var Publisher = new Schema({
 	},
 	username: {
 		type: String,
-		unique: true,
 		trim: true
 	},
 	garefresh: String,
