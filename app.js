@@ -70,13 +70,13 @@ passport.use(new GoogleStrategy({
 			if (err) {
 				return done(err)
 			}
-			Publisher.find({ 'google.oauthID': profile.id }, function(err, users) {
+			Publisher.findOne({ 'google.oauthID': profile.id }, function(err, user) {
 				if(err) {
 					console.log(err);  // handle errors!
 				}
 				//console.log(profile, user)
-				if (!err && users.length > 0) {
-					done(null, users[0]);
+				if (!err && user !== null) {
+					done(null, user);
 				} else {
 					Publisher.findOne({_id: req.session.userId}, function(err, pu){
 						if (err) {
