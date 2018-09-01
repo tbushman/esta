@@ -64,7 +64,7 @@ passport.use(new GoogleStrategy({
 	callbackURL: (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV)
 	//,passReqToCallback: true
 	},
-	function(req, accessToken, refreshToken, profile, done) {
+	function(accessToken, refreshToken, profile, done) {
 		console.log(accessToken, refreshToken, profile)
 		Publisher.find({}, function(err, data){
 			if (err) {
