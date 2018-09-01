@@ -113,8 +113,8 @@ passport.use(new GoogleStrategy({
 								}
 								done(null, pu)
 							})*/
-						}
-					})
+						//}
+					//})
 					
 				}
 			});
