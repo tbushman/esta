@@ -61,8 +61,8 @@ passport.use(new LocalStrategy(Publisher.authenticate()));
 passport.use(new GoogleStrategy({
 	clientID: process.env.GOOGLE_OAUTH_CLIENTID,
 	clientSecret: process.env.GOOGLE_OAUTH_SECRET,
-	callbackURL: (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV),
-	passReqToCallback: true
+	callbackURL: (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV)
+	//,passReqToCallback: true
 	},
 	function(req, accessToken, refreshToken, profile, done) {
 		console.log(accessToken, refreshToken, profile)
@@ -78,11 +78,11 @@ passport.use(new GoogleStrategy({
 				if (!err && user !== null) {
 					done(null, user);
 				} else {
-					Publisher.findOne({_id: req.session.userId}, function(err, pu){
+					/*Publisher.findOne({_id: req.session.userId}, function(err, pu){
 						if (err) {
 							console.log(err)
 						}
-						if (!pu) {
+						if (!pu) {*/
 							//console.log(accessToken, refreshToken)
 							user = new Publisher({
 								userindex: data.length,
@@ -106,13 +106,13 @@ passport.use(new GoogleStrategy({
 									done(null, user);
 								}
 							});
-						} else {
+						/*} else {
 							Publisher.findOneAndUpdate({_id: req.session.userId}, {$set:{gaaccess: accessToken, garefresh: refreshToken, 'google.oauthID': profile.id, 'google.name': profile.displayName, 'google.created': Date.now()}}, {safe:true, new:true}, function(err, pu){
 								if (err) {
 									console.log(err)
 								}
 								done(null, pu)
-							})
+							})*/
 						}
 					})
 					
