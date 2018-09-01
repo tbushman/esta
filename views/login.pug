@@ -5,7 +5,7 @@ block content
 	
 	.container
 		div.module.full
-			div.row(style="display: block; position: fixed; height: 100%;")
+			div.row(style="display: block; position: fixed; height: 100%; background-color:var(--primary); background-color: #fff;")
 				
 				div.centerallwrap
 					div.centerall
@@ -27,5 +27,8 @@ block content
 									p.tb-font-xl.head First time here?
 									a.block(href="/register", role="button", ariaDescription="Register") 
 										span Register
-						
+							p.tb-font-xl Or authenticate with Google:
+							a.tb-03-m0.block.danger(href="/auth/google", title="Authenticate with Google")
+								span Google
+
 							#info #{info}

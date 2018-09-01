@@ -21,7 +21,7 @@ var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
 var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Preliminary Subdivision Applications', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
 var InDesign = require('async-indesign-script');
-//const google = require("googleapis"); 
+//var google = require("googleapis"); 
 var {google} = require('googleapis');
 //var {googleAuth} = require('google-auth-library');
 dotenv.load();
@@ -53,7 +53,7 @@ function geoLocate(ip, zoom, cb) {
 		mac = dat[0].split(' ')[3];
 	})
 	// Configure API parameters
-	const params = {
+	var params = {
 		wifiAccessPoints: [{
 			macAddress: ''+mac+'',
 			signalStrength: -65,
@@ -88,6 +88,10 @@ var storage = multer.diskStorage({
 		} else if (req.params.type === 'txt') {
 			p = ''+publishers+'/pu/publishers/ordinancer/txt'
 			q = ''+publishers+'/pu/publishers/ordinancer/txt/thumbs'
+		} else if (req.params.type === 'doc') {
+			var os = require('os');
+			p = os.tmpdir() + '/gdoc';
+			q = ''+publishers+'/pu/publishers/ordinancer/tmp';
 		} else {
 			p = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+''
 			q = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+''
@@ -100,12 +104,19 @@ var storage = multer.diskStorage({
 					if (err) {
 						console.log("err", err);
 					}
-					mkdirp(q, function(err){
-						if (err) {
-							console.log("err", err);
+					fs.access(q, function(err){
+						if (err && err.code === 'ENOENT') {
+							mkdirp(q, function(err){
+								if (err) {
+									console.log("err", err);
+								}
+								cb(null, p)
+							})
+						} else {
+							cb(null, p)
 						}
-						cb(null, p)
 					})
+					
 				})
 			} else {
 				cb(null, p)
@@ -171,6 +182,221 @@ var curly = function(str){
 	//.replace(/(\d\s*)&rdquo/g, '$1\"')
 	//.replace(/(\d\s*)&rsquo/g, "$1\'")
 	.replace(/([a-z])&lsquo([a-z])/ig, '$1&rsquo;$2')
+}
+
+
+function textImporter(req, str, cb) {
+	async.waterfall([
+		function(next){
+				
+			console.log(str.split(/(^Chapter \d{1,3}.+$)/gm))
+			var newchtitlestr = str.split(/(^Chapter \d{1,3}.+$)/gm)[1];
+			var newcontentstr = str.split(/(^Chapter \d{1,3}.+$)/gm)[2];
+			var newch;
+			if (newchtitlestr) {
+				var newcharr = newchtitlestr.split(/\d/g);
+				newch = newcharr[newcharr.length - 1].replace('.', '').trim();
+			} else {
+				newch = decodeURIComponent(req.params.chtitle);
+			}
+			var entry = [];
+
+			// non-capturing marker at title.chapter.section index with global and multiple modifier
+			// Used to split the text into an array
+			var drx = /(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)(?=\d{1,3}\.\d{1,3}\.\d{1,4}\.\s*?)/gm
+			// title.chapter.section index
+			var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1}[\s\S]*?)/si
+			//var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
+			// title rx
+			var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n)/si
+			// isolate description
+			var descrx = /(?:[\n])(.*)/si
+			//remove stray spaces
+			var dat = newcontentstr.split(drx).filter(function(item){
+				return item !== ''
+			}).map(function(it){
+				var num;
+				if (numrx.exec(it)) {
+					num = numrx.exec(it)
+				} else {
+					num = ['']
+				}
+			/*	console.log('newline then digit')
+				console.log(/(^\d)/gm.test(it))
+				console.log('test (\d|\w\.)\t')
+				console.log(/(\d|\w\.)\t/g.test(it))
+				console.log('test (\t)')
+				console.log(/(\t)/g.test(it))
+				console.log('test/(\v)/g')
+				console.log(/(\v)/g.test(it))
+				console.log('test/\u2028/g')
+				console.log(/\u2028/g.test(it))
+				console.log('test/[\n ](\d\.)/g')
+				console.log(/[\n ](\d\.)/g.test(it))
+				console.log('test /\:\s+(\d{1,2}\.)/g')
+				console.log(/\:\s+(\d{1,2}\.)/g.test(it))
+				console.log('test /^([A-Z]\.)/gm')
+				console.log(/^([A-Z]\.)/gm.test(it))
+				console.log('test /[\s\.]([A-Z]\.)/g')
+				console.log(/[\s\.]([A-Z]\.)/g.test(it))*/
+				
+				it = it.replace(/\u2028/g, '  \n  \n');
+				var desc = (descrx.exec(it) ? 
+					descrx.exec(it)[1].toString().trim()
+					//.replace(/(^\d)/gm, '  \n  \n$1')
+					.replace(/^(\d|\w\.)\t/gm, '$1\\t')
+					.replace(/\s{2,7}(\d{1,4}\.)/g, '  \n$1')
+					//.replace(/(\t)/g, '  \t')
+					.replace(/(\v)/g, '   \n  \n')
+					.replace(/\u2028/g, '  \n  \n')
+					//.replace(/[\n ](\d\.)/g, '  \n  \n$1')
+					: 
+					''
+				);
+				desc = desc.replace(/^([A-Z]\.)/gm, '  \n**$1**').replace(/[\s\.]([A-Z]\.)/g, '  \n  \n**$1**');
+				var num = num[0]
+				num = num.split('.');
+				if (num[num.length-1] === '.') {
+					var end = num.pop();
+				}
+				num = num.join('.');
+				//console.log(num)
+				return {
+					num: num,
+					title: (trx.exec(it) ? trx.exec(it)[1] : '').trim(),
+					desc: desc.toString()
+				}
+				
+			});
+			dat = dat.sort(function(a,b){
+				if (parseInt(a.num.split('.')[a.num.split('.').length-1], 10) < parseInt(b.num.split('.')[b.num.split('.').length-1], 10)) {
+					return -1;
+				} else {
+					return 1;
+				}
+			})
+			next(null, dat, newch);
+		},
+		function(dat, chtitle, next){
+			var newdate = new Date();
+			Content.find({}, function(err, data){
+				if (err) {
+					return next(err)
+				}
+				var startind = data.length;
+				dat.forEach(function(item, i){
+					if (item.num !== '') {
+						Content.findOne({'properties.section': item.num}, function(err, doc){
+							if (err) {
+								return next(err)
+							}
+							if (!doc) {
+								var entry = new Content({
+									index: i,
+									type: 'Feature',
+									title: {
+										ind: item.num.split('.')[0],
+										str: 'Subdivisions'
+									},
+									chapter: {
+										ind: item.num.split('.')[1],
+										str: chtitle
+									},
+									section: {
+										ind: item.num.split('.')[2],
+										str: item.title
+									},
+									properties: {
+										section: item.num,
+										published: true,
+										label: 'Edit Subtitle',
+										title: curly(item.title),
+										place: 'Edit Place',
+										description: marked(curly(item.desc)),
+										current: false,
+										media: [],
+										diffs: []
+									},
+									geometry: {
+										type: 'Polygon',
+										coordinates:
+										[
+											[
+												[-112.014822, 41.510547],
+												[-112.014822, 41.510838],
+												[-112.014442, 41.510838],
+												[-112.014442, 41.510547],
+												[-112.014822, 41.510547]
+											]
+										]
+									}
+								});
+								entry.save(function(err){
+									if (err) {
+										console.log(err)
+									}
+								})
+							} else {
+								
+								Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.title':curly(item.title)}}, {safe:true,new:true}, function(err, doc){
+									if (err) {
+										return next(err)
+									}
+									Content.findOneAndUpdate({_id: doc._id}, {$set:{'chapter.str': curly(chtitle)}}, {safe:true, new:true}, function(err, doc){
+										if (err) {
+											return next(err)
+										}
+										Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.description': marked(curly(item.desc))}}, {safe:true, new:true}, function(err, doc){
+											if (err) {
+												return next(err)
+											}
+											if (doc.properties.description) {
+												
+												var Diff = require('diff');
+													 
+												var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(item.desc)));
+												//console.log('sent this diff')
+												//console.log(diff)
+												var diffss = [];
+												if (diff.length) {
+													diff.forEach(function(dif){
+														//console.log(dif)
+														diffss.push({
+															count: dif.count,
+															value: dif.value,
+															added: dif.added,
+															removed: dif.removed
+														})
+													})
+												}
+
+												var newdiff = {
+													date: newdate,
+													dif: diffss,
+													str: marked(curly(item.desc))
+												};
+												Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
+													if (err) {
+														return next(err)
+													}
+													
+												})
+											}
+										})
+									})
+								})
+							}
+						})
+					}
+				});
+			})
+		}
+	], function(err){
+		if (err) {
+			return cb(err)
+		}
+		cb(null)
+	})
 }
 
 function rmDocs(req, res, next) {
@@ -697,7 +923,7 @@ function getDat64(next){
 }
 
 function ensureAdmin(req, res, next) {
-	if (!req.user) {
+	if (!req.isAuthenticated()) {
 		return res.redirect('/login')
 	}
 	//req.session.userId = req.user._id;
@@ -719,7 +945,17 @@ function ensureAdmin(req, res, next) {
 	})
 }
 
-
+function tokenHandler(authClient, authCode, next) {
+	
+	authClient.getToken(authCode).then(function(resp){
+		if (resp.tokens) {
+			next(null, resp.tokens)
+		} else {
+			next(new Error('no tokens'))
+		}
+	});
+	
+}
 
 router.get('/runtests', function(req, res, next){
 	let chromedriver = require('chromedriver');
@@ -859,7 +1095,8 @@ router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function
 				menu: !req.session.menu ? 'view' : req.session.menu,
 				dat: req.dat,
 				ff: req.distinct,
-				str: str
+				str: str,
+				gp: (req.session.authClient ? req.session.gp : null)
 			});
 				
 			
@@ -924,7 +1161,11 @@ router.post('/login', passport.authenticate('local', {
 	return next();
 })*/
 
-router.get('/auth/google', passport.authenticate('google', {scope: ['https://www.googleapis.com/auth/plus.login', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.file']}), function(req, res, next){
+router.get('/auth/google', passport.authenticate('google', {scope: 
+	[
+		'https://www.googleapis.com/auth/plus.login', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile', 
+		'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.file'
+	]}), function(req, res, next){
 	return next();
 });
 
@@ -933,19 +1174,267 @@ router.get('/auth/google/callback', passport.authenticate('google', {
 }), function(req, res, next) {
 	req.session.userId = req.user._id;
 	req.session.loggedin = req.user.username;
-	/*if (req.user.admin && !req.session.authClient) {
-		return res.redirect('/auth/googledrive');
-	} else if (!req.user.admin) {
-		return res.redirect('/logout');
-	}*/
-	//var auth = new googleAuth();
 	req.session.authClient = true;
-	return res.redirect('/importgdrive');
+	if (!req.session.importgdrive) {
+		return res.redirect('/');
+		
+	} else {
+		return res.redirect('/importgdrive');
+	}
+	
 });
+
+/*router.post('/api/importdoc/:type/:fileid', uploadmedia.single('doc'), function(req, res, next){
+	fs.readFile(req.file.path, 'utf8', function (err, content) {
+		if (err) {
+			next(err)
+		}
+		var fileId = req.params.fileid;
+		var now = Date.now();
+		var dest = ''+publishers+'/pu/publishers/ordinancer/txt/'+now+'.txt'
+		
+		var OAuth2 = google.auth.OAuth2;
+		Publisher.findOne({_id: req.session.userId}, function(err, pu){
+			if (err) {
+				return next(err)
+			}
+			var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+			authClient.setCredentials({refresh_token: pu.garefresh, access_token: pu.gaaccess});
+			google.options({auth:authClient})
+			req.session.authClient = true;
+			var drive = google.drive({version: 'v3'});
+			drive.files.export({
+				fileId, mimeType: 'text/plain'
+			}, function(err, result){
+				if (err){
+					return next(err)
+				}
+				var file = require(dest)
+				return res.status(200).send(file)
+			})
+		})
+	})
+})*/
+
+function mkdirpIfNeeded(p, cb){
+	fs.access(p, function(err) {
+		if (err && err.code === 'ENOENT') {
+			mkdirp(p, function(err){
+				if (err) {
+					console.log("err", err);
+				} else {
+					cb()
+				}
+			})
+		} else {
+			cb()
+		}
+	})
+	
+}
+
+router.post('/api/importgdoc/:fileid', function(req, res, next) {
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+	var fileId = req.params.fileid;
+	var now = Date.now();
+	var os = require('os');
+		//(publishers + '/ordinancer/tmp/'+now+'.txt').toString()//);
+	var p = ''+publishers+'/pu/publishers/ordinancer/tmp';
+	mkdirpIfNeeded(p, function(){
+
+		var dest = fs.createWriteStream(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx');
+		dest.on('open', function(){
+			var OAuth2 = google.auth.OAuth2;
+			Publisher.findOne({_id: req.session.userId}, function(err, pu){
+				if (err) {
+					return next(err)
+				}
+				var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+				authClient.setCredentials({refresh_token: pu.garefresh, access_token: pu.gaaccess});
+				google.options({auth:authClient})
+				req.session.authClient = true;
+				var drive = google.drive({version: 'v3'});
+				drive.files.get({
+					fileId: fileId,
+					fields: 'webContentLink'
+				})
+				.then(function(file){
+					var dlurl = file.data.webContentLink.split('&')[0];
+					console.log(dlurl);
+
+					require('request').get({
+						url: dlurl,
+						encoding: null,
+						headers: {
+							Authorization: 'Bearer'+ pu.gaaccess
+						}
+					}//)
+					//.on('response'
+					, function(error, result){
+						if (error) {
+							return next(error)
+						}
+						result.pipe(dest);
+						fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx', result.body)
+						setTimeout(function(){
+							var mammoth = require('mammoth');
+							mammoth.extractRawText({path: ''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx'})
+							.then(function(result){
+								var text = result.value;
+								console.log(text)
+								var messages = result.messages;
+								console.log(messages)
+								var str = text.toString();
+								textImporter(req, str, function(err){
+									if (err) {
+										return next(err)
+									}
+									var dat = []
+									Content.distinct('chapter.str', function(err, distinct){
+										if (err) {
+											return next(err)
+										}
+										distinct.forEach(function(key, i) {
+											Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+												if (err) {
+													console.log(err)
+												}
+												if (data.length === 0) return;
+												if (data.length > 0) {
+													// I either add the 1 here or in template. A conundrum.
+													//chind = i + 1;
+													dat.splice(0,0,data)
+													//ff.shift();
+												}
+											})
+										});
+										//next(null, dat)
+										return res.status(200).send(data)
+									})
+								})
+
+							})
+							.done()
+						}, 5000)
+						/*async.doWhilst(
+							function(){
+								fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx', result.body)
+								//cb(null, ''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx')
+							}, 
+							function(cb) {
+								var check = require(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx') !== null;
+								if (check) {
+									//check_if_file_null
+									cb(null, check);
+								} else {
+									cb(null)
+								}
+								//return check;
+							},
+							function (err) {
+								if (err) {
+									console.log(err)
+								}
+								if (!err && check) {
+									//var str = fs.readFileSync(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.txt', 'utf8')
+									//var str2 = str.toString()
+									
+								}
+								
+								
+					    }
+						);*/
+						/*fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.txt', result.body, function(err){
+							if (err) {
+								return next(err)
+							}
+							
+						})*/
+					})
+					//.pipe(dest)
+					
+					/*drive.files.export({
+						fileId, mimeType: 'text/plain'
+					}).then(function(result){
+						
+						
+						var path = path.join(p, '/'+now+'.txt');
+						fs.writeFile(path, result, function(err){
+							if (err) {
+								return next(err)
+							}
+							return res.status(200).send(require(p))
+							//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
+						});
+						
+						//var file = require(dest)
+						//return res.status(200).send(result)
+					}).catch(function(err){
+						if (err){
+							return next(err)
+						}
+					})*/
+				})
+					
+				
+
+			})
+
+		})
+	});
+
+
+		/**/
+	
+})
+
+router.get('/importgdrive', function(req, res, next){
+	req.session.importgdrive = true;
+	if (!req.session.authClient) {
+		return res.redirect('/auth/google');
+	}
+	delete req.session.importgdrive;
+	var OAuth2 = google.auth.OAuth2;
+	Publisher.findOne({_id: req.session.userId}, function(err, pu){
+		if (err) {
+			return next(err)
+		}
+		/*var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+		authClient.setCredentials({refresh_token: pu.garefresh, access_token: pu.gaaccess});
+		google.options({auth:authClient})
+		req.session.authClient = true;
+		var drive = google.drive({version: 'v3'});
+		drive.files.list({
+			pageSize: 10,
+			fields: 'nextPageToken, files(id, name)',
+		}, (err, result) => {
+			if (err) return console.log('The API returned an error: ' + err);
+			var files = result.data.files;
+			if (files.length) {
+				console.log('Files:');
+				files.map((file) => {
+					console.log(`${file.name} (${file.id})`);
+				});*/
+				req.session.gp = {
+					google_key: process.env.GOOGLE_KEY,
+					scope: ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.file'],
+					google_clientid: process.env.GOOGLE_OAUTH_CLIENTID,
+					access_token: pu.gaaccess,
+					picker_key: process.env.GOOGLE_PICKER_KEY
+				}
+				return res.redirect('/')
+			/*} else {
+				console.log('No files found.');
+			}
+		});*/
+	})
+
+})
 
 router.get('/logout', function(req, res, next) {
 	var outputPath = url.parse(req.url).pathname;
-console.log(outputPath)
+	console.log(outputPath)
 	async.waterfall([
 		function(next){
 			req.session.userId = null;
@@ -976,7 +1465,6 @@ console.log(outputPath)
 		}
 	})	
 });
-
 
 router.get('/exportpdf', getDat, function(req, res, next){
 	//getDat(function(dat, distinct){
@@ -1145,7 +1633,6 @@ router.get('/exportword', function(req, res, next){
 
 });
 
-
 router.get('/exportindd'/*, ensureCurly*/, function(req, res, next){
 	var dat = []
 	Content.distinct('chapter.str', function(err, distinct){
@@ -1207,8 +1694,6 @@ router.get('/exportindd'/*, ensureCurly*/, function(req, res, next){
 	/**/
 })
 
-
-
 router.post('/api/exportindd/:version', function(req, res, next){
 	var body = req.body;
 	//console.log(req.body.xml)
@@ -1222,7 +1707,7 @@ router.post('/api/exportindd/:version', function(req, res, next){
 	  	console.log("err", err);
 	  } 
 	})
-	const id = new InDesign({
+	var id = new InDesign({
 	  version: 'CS6'
 	});
 	//console.log(path.join(__dirname, '/../..', 'indd/importIndd.jsx'))
@@ -1348,39 +1833,6 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 	
 })
 
-router.get('/importgdrive', function(req, res, next){
-	if (!req.session.authClient) {
-		return res.redirect('/auth/google');
-	}
-	var OAuth2 = google.auth.OAuth2;
-	Publisher.findOne({_id: req.session.userId}, function(err, pu){
-		if (err) {
-			return next(err)
-		}
-		var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
-		authClient.setCredentials({refresh_token: pu.garefresh, access_token: pu.gaaccess});
-		google.options({auth:authClient})
-
-		const drive = google.drive({version: 'v3'});
-		drive.files.list({
-			pageSize: 10,
-			fields: 'nextPageToken, files(id, name)',
-		}, (err, res) => {
-			if (err) return console.log('The API returned an error: ' + err);
-			const files = res.data.files;
-			if (files.length) {
-				console.log('Files:');
-				files.map((file) => {
-					console.log(`${file.name} (${file.id})`);
-				});
-			} else {
-				console.log('No files found.');
-			}
-		});
-	})
-
-})
-
 router.get('/api/importtxt', function(req, res, next){
 	return res.render('import', {
 		info: 'Please enter Chapter name exactly as it appears in the document'
@@ -1390,220 +1842,15 @@ router.get('/api/importtxt', function(req, res, next){
 router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.single('txt'), function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
-	async.waterfall([
-		function(next){
-			fs.readFile(req.file.path, 'utf8', function (err, content) {
-				if (err) {
-					next(err)
-				}
-				var str = content.toString();
-				//console.log(str.split(/(^Chapter \d{1,3}.+$)/gm))
-				var newchtitlestr = str.split(/(^Chapter \d{1,3}.+$)/gm)[1];
-				var newcontentstr = str.split(/(^Chapter \d{1,3}.+$)/gm)[2];
-				var newch;
-				if (newchtitlestr) {
-					var newcharr = newchtitlestr.split(/\d/g);
-					newch = newcharr[newcharr.length - 1].replace('.', '').trim();
-				} else {
-					newch = decodeURIComponent(req.params.chtitle);
-				}
-				var entry = [];
-
-				// non-capturing marker at title.chapter.section index with global and multiple modifier
-				// Used to split the text into an array
-				var drx = /(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)(?=\d{1,3}\.\d{1,3}\.\d{1,4}\.\s*?)/gm
-				// title.chapter.section index
-				var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1}[\s\S]*?)/si
-				//var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
-				// title rx
-				var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.)(.*?)(?=\n)/si
-				// isolate description
-				var descrx = /(?:[\n])(.*)/si
-				//remove stray spaces
-				var dat = newcontentstr.split(drx).filter(function(item){
-					return item !== ''
-				}).map(function(it){
-					var num;
-					if (numrx.exec(it)) {
-						num = numrx.exec(it)
-					} else {
-						num = ['']
-					}
-				/*	console.log('newline then digit')
-					console.log(/(^\d)/gm.test(it))
-					console.log('test (\d|\w\.)\t')
-					console.log(/(\d|\w\.)\t/g.test(it))
-					console.log('test (\t)')
-					console.log(/(\t)/g.test(it))
-					console.log('test/(\v)/g')
-					console.log(/(\v)/g.test(it))
-					console.log('test/\u2028/g')
-					console.log(/\u2028/g.test(it))
-					console.log('test/[\n ](\d\.)/g')
-					console.log(/[\n ](\d\.)/g.test(it))
-					console.log('test /\:\s+(\d{1,2}\.)/g')
-					console.log(/\:\s+(\d{1,2}\.)/g.test(it))
-					console.log('test /^([A-Z]\.)/gm')
-					console.log(/^([A-Z]\.)/gm.test(it))
-					console.log('test /[\s\.]([A-Z]\.)/g')
-					console.log(/[\s\.]([A-Z]\.)/g.test(it))*/
-					
-					it = it.replace(/\u2028/g, '  \n  \n');
-					var desc = (descrx.exec(it) ? 
-						descrx.exec(it)[1].toString().trim()
-						//.replace(/(^\d)/gm, '  \n  \n$1')
-						.replace(/^(\d|\w\.)\t/gm, '$1\\t')
-						.replace(/\s{2,7}(\d{1,4}\.)/g, '  \n$1')
-						//.replace(/(\t)/g, '  \t')
-						.replace(/(\v)/g, '   \n  \n')
-						.replace(/\u2028/g, '  \n  \n')
-						//.replace(/[\n ](\d\.)/g, '  \n  \n$1')
-						: 
-						''
-					);
-					desc = desc.replace(/^([A-Z]\.)/gm, '  \n**$1**').replace(/[\s\.]([A-Z]\.)/g, '  \n  \n**$1**');
-					var num = num[0]
-					num = num.split('.');
-					if (num[num.length-1] === '.') {
-						var end = num.pop();
-					}
-					num = num.join('.');
-					//console.log(num)
-					return {
-						num: num,
-						title: (trx.exec(it) ? trx.exec(it)[1] : '').trim(),
-						desc: desc.toString()
-					}
-					
-				});
-				dat = dat.sort(function(a,b){
-					if (parseInt(a.num.split('.')[a.num.split('.').length-1], 10) < parseInt(b.num.split('.')[b.num.split('.').length-1], 10)) {
-						return -1;
-					} else {
-						return 1;
-					}
-				})
-				next(null, dat, newch);
-			})
-		},
-		function(dat, chtitle, next){
-			var newdate = new Date();
-			Content.find({}, function(err, data){
-				if (err) {
-					return next(err)
-				}
-				var startind = data.length;
-				dat.forEach(function(item, i){
-					if (item.num !== '') {
-						Content.findOne({'properties.section': item.num}, function(err, doc){
-							if (err) {
-								return next(err)
-							}
-							if (!doc) {
-								var entry = new Content({
-									index: i,
-									type: 'Feature',
-									title: {
-										ind: item.num.split('.')[0],
-										str: 'Subdivisions'
-									},
-									chapter: {
-										ind: item.num.split('.')[1],
-										str: chtitle
-									},
-									section: {
-										ind: item.num.split('.')[2],
-										str: item.title
-									},
-									properties: {
-										section: item.num,
-										published: true,
-										label: 'Edit Subtitle',
-										title: curly(item.title),
-										place: 'Edit Place',
-										description: marked(curly(item.desc)),
-										current: false,
-										media: [],
-										diffs: []
-									},
-									geometry: {
-										type: 'Polygon',
-										coordinates:
-										[
-											[
-												[-112.014822, 41.510547],
-												[-112.014822, 41.510838],
-												[-112.014442, 41.510838],
-												[-112.014442, 41.510547],
-												[-112.014822, 41.510547]
-											]
-										]
-									}
-								});
-								entry.save(function(err){
-									if (err) {
-										console.log(err)
-									}
-								})
-							} else {
-								
-								Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.title':curly(item.title)}}, {safe:true,new:true}, function(err, doc){
-									if (err) {
-										return next(err)
-									}
-									Content.findOneAndUpdate({_id: doc._id}, {$set:{'chapter.str': curly(chtitle)}}, {safe:true, new:true}, function(err, doc){
-										if (err) {
-											return next(err)
-										}
-										Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.description': marked(curly(item.desc))}}, {safe:true, new:true}, function(err, doc){
-											if (err) {
-												return next(err)
-											}
-											if (doc.properties.description) {
-												
-												var Diff = require('diff');
-													 
-												var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(item.desc)));
-												//console.log('sent this diff')
-												//console.log(diff)
-												var diffss = [];
-												if (diff.length) {
-													diff.forEach(function(dif){
-														//console.log(dif)
-														diffss.push({
-															count: dif.count,
-															value: dif.value,
-															added: dif.added,
-															removed: dif.removed
-														})
-													})
-												}
-
-												var newdiff = {
-													date: newdate,
-													dif: diffss,
-													str: marked(curly(item.desc))
-												};
-												Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
-													if (err) {
-														return next(err)
-													}
-													
-												})
-											}
-										})
-									})
-								})
-							}
-						})
-					}
-				});
-
-				next(null)
-
-			})
-		},
-		function(next) {
+	fs.readFile(req.file.path, 'utf8', function (err, content) {
+		if (err) {
+			next(err)
+		}
+		var str = content.toString();
+		textImporter(req, str, function(err){
+			if (err) {
+				return next(err)
+			}
 			var dat = []
 			Content.distinct('chapter.str', function(err, distinct){
 				if (err) {
@@ -1623,16 +1870,12 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 						}
 					})
 				});
-				next(null, dat)
+				//next(null, dat)
+				return res.status(200).send(data)
 			})
-			
-		}
-	], function(err, data){
-		if (err) {
-			return next(err)
-		}
-		return res.status(200).send(data)
+		})
 	})
+
 })
 
 router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req, res, next){

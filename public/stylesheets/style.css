@@ -331,6 +331,10 @@ breadcrumbs {
 em {
 	font-style: italic;
 }
+/*google picker*/
+.picker-dialog {
+	pointer-events: all;
+}
 
 #map {
 	width: auto;
