@@ -21,6 +21,8 @@ var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
 var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Preliminary Subdivision Applications', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
 var InDesign = require('async-indesign-script');
+var juice = require('juice');
+var HtmlDocx = require('html-docx-js');
 //var google = require("googleapis"); 
 var {google} = require('googleapis');
 //var {googleAuth} = require('google-auth-library');
@@ -189,7 +191,7 @@ var curly = function(str){
 }
 
 
-function textImporter(req, str, cb) {
+function textImporter(req, str, gid, cb) {
 	asynk.waterfall([
 		function(next){
 				
@@ -225,25 +227,6 @@ function textImporter(req, str, cb) {
 				} else {
 					num = ['']
 				}
-			/*	console.log('newline then digit')
-				console.log(/(^\d)/gm.test(it))
-				console.log('test (\d|\w\.)\t')
-				console.log(/(\d|\w\.)\t/g.test(it))
-				console.log('test (\t)')
-				console.log(/(\t)/g.test(it))
-				console.log('test/(\v)/g')
-				console.log(/(\v)/g.test(it))
-				console.log('test/\u2028/g')
-				console.log(/\u2028/g.test(it))
-				console.log('test/[\n ](\d\.)/g')
-				console.log(/[\n ](\d\.)/g.test(it))
-				console.log('test /\:\s+(\d{1,2}\.)/g')
-				console.log(/\:\s+(\d{1,2}\.)/g.test(it))
-				console.log('test /^([A-Z]\.)/gm')
-				console.log(/^([A-Z]\.)/gm.test(it))
-				console.log('test /[\s\.]([A-Z]\.)/g')
-				console.log(/[\s\.]([A-Z]\.)/g.test(it))*/
-				
 				it = it.replace(/\u2028/g, '  \n  \n');
 				var desc = (descrx.exec(it) ? 
 					descrx.exec(it)[1].toString().trim()
@@ -279,9 +262,9 @@ function textImporter(req, str, cb) {
 					return 1;
 				}
 			})
-			next(null, dat, newch);
+			next(null, dat, newch, gid);
 		},
-		function(dat, chtitle, next){
+		function(dat, chtitle, gid, next){
 			var newdate = new Date();
 			Content.find({}, function(err, data){
 				if (err) {
@@ -294,6 +277,7 @@ function textImporter(req, str, cb) {
 							if (err) {
 								return next(err)
 							}
+							
 							if (!doc) {
 								var entry = new Content({
 									index: i,
@@ -316,6 +300,7 @@ function textImporter(req, str, cb) {
 										label: 'Edit Subtitle',
 										title: curly(item.title),
 										place: 'Edit Place',
+										//gid: (!gid ? null : gid),
 										description: marked(curly(item.desc)),
 										current: false,
 										media: [],
@@ -341,67 +326,72 @@ function textImporter(req, str, cb) {
 									}
 								})
 							} else {
-								
-								Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.title':curly(item.title)}}, {safe:true,new:true}, function(err, doc){
+								/*Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.gid': gid}}, {safe:true,new:true}, function(err, doc){
 									if (err) {
 										return next(err)
-									}
-									Content.findOneAndUpdate({_id: doc._id}, {$set:{'chapter.str': curly(chtitle)}}, {safe:true, new:true}, function(err, doc){
+									}*/
+									Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.title':curly(item.title)}}, {safe:true,new:true}, function(err, doc){
 										if (err) {
 											return next(err)
 										}
-										Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.description': marked(curly(item.desc))}}, {safe:true, new:true}, function(err, doc){
+										Content.findOneAndUpdate({_id: doc._id}, {$set:{'chapter.str': curly(chtitle)}}, {safe:true, new:true}, function(err, doc){
 											if (err) {
 												return next(err)
 											}
-											if (doc.properties.description) {
-												
-												var Diff = require('diff');
-													 
-												var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(item.desc)));
-												//console.log('sent this diff')
-												//console.log(diff)
-												var diffss = [];
-												if (diff.length) {
-													diff.forEach(function(dif){
-														//console.log(dif)
-														diffss.push({
-															count: dif.count,
-															value: dif.value,
-															added: dif.added,
-															removed: dif.removed
+											Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.description': marked(curly(item.desc))}}, {safe:true, new:true}, function(err, doc){
+												if (err) {
+													return next(err)
+												}
+												if (doc.properties.description) {
+													
+													var Diff = require('diff');
+														 
+													var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(item.desc)));
+													//console.log('sent this diff')
+													//console.log(diff)
+													var diffss = [];
+													if (diff.length) {
+														diff.forEach(function(dif){
+															//console.log(dif)
+															diffss.push({
+																count: dif.count,
+																value: dif.value,
+																added: dif.added,
+																removed: dif.removed
+															})
 														})
+													}
+
+													var newdiff = {
+														date: newdate,
+														dif: diffss,
+														str: marked(curly(item.desc))
+													};
+													Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
+														if (err) {
+															return next(err)
+														}
+														
 													})
 												}
-
-												var newdiff = {
-													date: newdate,
-													dif: diffss,
-													str: marked(curly(item.desc))
-												};
-												Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
-													if (err) {
-														return next(err)
-													}
-													
-												})
-											}
+											})
 										})
 									})
-								})
+								//})
+								
 							}
 						})
 					}
 				});
-				next(null)
+				next(null, dat[0].num.split('.')[1])
 			})
 		}
-	], function(err){
+	], function(err, chind){
 		if (err) {
 			return cb(err)
 		}
 		console.log('yay')
-		cb(null)
+		cb(null, chind)
 	})
 }
 
@@ -1252,6 +1242,209 @@ function mkdirpIfNeeded(p, cb){
 	
 }
 
+function getDocxBlob(now, dat, cb){
+	var pugpath = path.join(__dirname, '../views/includes/exportword.pug');
+	var str = pug.renderFile(pugpath, {
+		md: require('marked'),
+		doctype: 'html',
+		hrf: '/publishers/ordinancer/word/'+now+'.docx',
+		dat: dat.sort(function(a,b){
+			//console.log(a[0].chapter.ind)
+			if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+				return -1
+			} else {
+				return 1
+			}
+		})
+	});
+	//console.log(str)
+	var juiced = juice(str);
+	var docx = HtmlDocx.asBlob(juiced);
+	cb(docx)
+}
+
+
+/*router.post('/api/importgdriverev/:fileid', function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+	var fileId = req.params.fileid;
+	var now = Date.now();
+	var os = require('os');
+		//(publishers + '/ordinancer/tmp/'+now+'.txt').toString()//);
+	var p = ''+publishers+'/pu/publishers/ordinancer/tmp';
+	var OAuth2 = google.auth.OAuth2;
+	Publisher.findOne({_id: req.session.userId}, function(err, pu){
+		if (err) {
+			return next(err)
+		}
+		var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+		authClient.setCredentials({refresh_token: pu.garefresh, access_token: pu.gaaccess});
+		google.options({auth:authClient})
+		req.session.authClient = true;
+		var drive = google.drive({version: 'v3'});
+		drive.revisions.list({
+			fileId: fileId
+		}).then(function(rev){
+			//console.log(rev.data.revisions)
+			var revs = rev.data.revisions.sort(function(a,b){
+				if (a.modifiedTime < b.modifiedTime) {
+					return -1;
+				} else {
+					return 1;
+				}
+			})
+			var revId = revs[revs.length-1].id;
+			drive.revisions.get({
+				fileId: fileId,
+				revisionId: revId
+			})
+			.then(function(file){
+				console.log(file.downloadUrl)
+			})
+		}).catch(function(err){
+			console.log(err)
+		});
+		
+	})
+})*/
+
+router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
+	var fileId = req.params.fileid;
+	var chind = req.params.chind;
+	Content.find({'chapter.ind': chind}, function(err, data){
+		if (err) {
+			return next(err)
+		}
+		var dat = [data];
+		var now = Date.now();
+		getDocxBlob(now, dat, function(docx){
+			//console.log(docx)
+			Publisher.findOne({_id: req.session.userId}, function(err, pu){
+				if (err) {
+					return next(err)
+				}
+				var OAuth2 = google.auth.OAuth2;
+
+				var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+				authClient.setCredentials({refresh_token: pu.garefresh, access_token: pu.gaaccess});
+				google.options({auth:authClient})
+				req.session.authClient = true;
+				var drive = google.drive({version: 'v3'});
+				drive.files.get({
+					fileId: fileId
+				})
+				.then(function(file){
+					var mimeType = file.mimeType;
+					//var stats = fs.statSync(docx);
+					//var sb = stats['size'];
+					drive.files.list({
+						q: 'name="watch_docx"',
+						'name': 'watch_docx',
+						'mimeType': 'application/vnd.google-apps.folder'
+					})
+					.then(function(watch){
+						console.log('watch')
+						var flId = null;
+						if (!watch || watch.data.files.length < 1) {
+							var fileMetadata = {
+								
+							  'name': 'watch_docx',
+							  'mimeType': 'application/vnd.google-apps.folder'
+							};
+							drive.files.create({
+							  resource: fileMetadata,
+							  fields: 'id'
+							}, function (err, fl) {
+							  if (err) {
+							    // Handle error
+							    console.error(err);
+							  } else {
+									flId = fl.id;
+							    console.log('Folder Id: ', fl.id);
+							  }
+							});
+
+						} else {
+							flId = watch.data.files[0].id
+						}
+						
+						var fileMetadata = {
+							name: file.name + '_watch',
+							mimeType: mimeType,
+							parents: [flId]
+						}
+						var stream = require('stream');
+						var bufferStream = new stream.PassThrough();
+						bufferStream.end(docx);
+						//var toStream = require('blob-to-stream');
+						
+						var media = {
+							mimeType: mimeType,
+							body: bufferStream
+						}
+						drive.files.create({
+							resource: fileMetadata,
+							media: media
+						})
+						.then(function(fl){
+							drive.revisions.get({
+								fileId: fl
+							})
+							data.forEach(function(doc){
+								doc.properties.fileId = file.id;
+								var rev = file.data.revisions[file.data.revisions.length - 1];
+								doc.properties.revisionId = rev.id;
+								console.log(file)
+							})
+							data.save(function(err){
+								if (err) {
+									return next(err)
+								}
+								req.session.importgdrive = false
+								return res.redirect('/')
+							})
+							//console.log(file)
+						})
+						.catch(function(err){
+							console.log(err)
+						})
+
+						
+					})
+					.catch(function(err){
+						if (err) {
+							console.log(err)
+						}
+					})
+					/*//const url = 'https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=media';
+					//require('request').patch({
+					//require('request').post({
+						url: url,
+						headers: {
+							'Content-Type': mimeType,
+							'Content-Length': sb,
+							Authorization: 'Bearer'+ pu.gaaccess
+						},
+						body: docx
+					}//)
+					//.on('response'
+					, function(error, result){
+						if (error) {
+							return next(error)
+						}
+						
+					})*/
+
+				})
+				.catch(function(err){
+					console.log(err)
+				})
+			})
+		})
+		
+	})
+})
+
 router.post('/api/importgdoc/:fileid', function(req, res, next) {
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
@@ -1274,57 +1467,97 @@ router.post('/api/importgdoc/:fileid', function(req, res, next) {
 				google.options({auth:authClient})
 				req.session.authClient = true;
 				var drive = google.drive({version: 'v3'});
-				drive.files.get({
-					fileId: fileId,
-					fields: 'webContentLink'
-				})
-				.then(function(file){
-					var dlurl = file.data.webContentLink.split('&')[0];
-					console.log(dlurl);
-					//https://stackoverflow.com/a/29296405/3530394
-					require('request').get({
-						url: dlurl,
-						encoding: null,
-						headers: {
-							Authorization: 'Bearer'+ pu.gaaccess
+				drive.revisions.list({
+					fileId: fileId
+				}).then(function(rev){
+					//console.log(rev.data.revisions)
+					var revs = rev.data.revisions.sort(function(a,b){
+						if (a.modifiedTime < b.modifiedTime) {
+							return -1;
+						} else {
+							return 1;
 						}
-					}//)
-					//.on('response'
-					, function(error, result){
-						if (error) {
-							return next(error)
-						}
-						result.pipe(dest);
-						async function fsWriteFile(cbk) {
-							await fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx', result.body);
-							var mammoth = require('mammoth');
-							mammoth.extractRawText({path: ''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx'})
-							.then(function(result){
-								var text = result.value;
-								//console.log(text)
-								var messages = result.messages;
-								//console.log(messages)
-								var str = text.toString();
-								textImporter(req, str, function(err){
-									if (err) {
-										return next(err)
-									}
-									//console.log('hooray')
-									req.session.importgdrive = false;
-									//console.log(req.session)
-									//return res.status(200).send(data)
-									return cbk()
-								})
-
-							})
-							.done()
-						}
-						
-						fsWriteFile(function(){
-							return res.status(200).send('ok')
-						});
 					})
+					var revId = revs[revs.length-1].id;
+					/*drive.revisions.get({
+						fileId: fileId,
+						revisionId: revId,
+						alt: 'media'
+						/*,
+						fields: 'downloadUrl'
+					})*/
+					drive.files.get({
+						fileId: fileId,
+						fields: 'webContentLink'
+					})
+					.then(function(file){
+						//console.log(file)
+						//console.log(file.downloadUrl)
+						var dlurl = 
+						//file.downloadUrl
+						file.data.webContentLink.split('&')[0];
+						//console.log(dlurl);
+						//https://stackoverflow.com/a/29296405/3530394
+						require('request').get({
+							url: dlurl,
+							encoding: null,
+							headers: {
+								Authorization: 'Bearer'+ pu.gaaccess
+							}
+						}//)
+						//.on('response'
+						, function(error, result){
+							if (error) {
+								return next(error)
+							}
+							result.pipe(dest);
+							async function fsWriteFile(cbk) {
+								await fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx', result.body);
+								var mammoth = require('mammoth');
+								mammoth.extractRawText({path: ''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx'})
+								.then(function(result){
+									var text = result.value;
+									//console.log(text)
+									var messages = result.messages;
+									//console.log(messages)
+									var str = text.toString();
+									var gid = {
+										fileId: fileId,
+										revisionId: revId
+									}
+									textImporter(req, str, gid, function(err, chind){
+										if (err) {
+											return cbk(err)
+										}
+										//console.log('hooray')
+										req.session.importgdrive = false;
+										//console.log(req.session)
+										//return res.status(200).send(data)
+										return cbk(null, gid, chind)
+									})
+
+								})
+								.done()
+							}
+							
+							fsWriteFile(function(err, gid, chind){
+								if (err) {
+									return next(err)
+								}
+								return res.redirect('/api/exportgdriverev/'+gid.fileId+'/'+chind)
+								//return res.status(200).send('ok')
+							});
+						})
+					})
+					.catch(function(err){
+						console.log(err)
+					})
+					
 				})
+				.catch(function(err){
+					console.log(err)
+				}) 
+				
 			})
 		})
 	});
@@ -1515,60 +1748,45 @@ router.get('/exportword', function(req, res, next){
 			if (data.length === 0) {
 				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
 			}
-			var juice = require('juice');
-			var HtmlDocx = require('html-docx-js');
 			var path = require('path');
-			var pugpath = path.join(__dirname, '../views/includes/exportword.pug');
 			var pugviewpath = path.join(__dirname, '../views/includes/exportwordview.pug');
 			var now = Date.now();
-			var str = pug.renderFile(pugpath, {
-				md: require('marked'),
-				doctype: 'html',
-				hrf: '/publishers/ordinancer/word/'+now+'.docx',
-				dat: dat.sort(function(a,b){
-					//console.log(a[0].chapter.ind)
-					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
-						return -1
-					} else {
-						return 1
-					}
-				})
-			});
-			//console.log(str)
-			var viewstr = pug.renderFile(pugviewpath, {
-				md: require('marked'),
-				doctype: 'html',
-				hrf: '/publishers/ordinancer/word/'+now+'.docx',
-				dat: dat.sort(function(a,b){
-					//console.log(a[0].chapter.ind)
-					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
-						return -1
-					} else {
-						return 1
-					}
-				})
-			});
-			var docx = HtmlDocx.asBlob(juice(str));
-			var p = ''+publishers+'/pu/publishers/ordinancer/word';
-					
-			fs.access(p, function(err) {
-				if (err && err.code === 'ENOENT') {
-					mkdirp(p, function(err){
-						if (err) {
-							console.log("err", err);
+			getDocxBlob(now, dat, function(docx){
+				var viewstr = pug.renderFile(pugviewpath, {
+					md: require('marked'),
+					doctype: 'html',
+					hrf: '/publishers/ordinancer/word/'+now+'.docx',
+					dat: dat.sort(function(a,b){
+						//console.log(a[0].chapter.ind)
+						if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+							return -1
+						} else {
+							return 1
 						}
 					})
-				}
-			});
-			
-			var path = path.join(p, '/'+now+'.docx');
-			fs.writeFile(path, docx, function(err){
-				if (err) {
-					return next(err)
-				}
-				res.send(viewstr)
-				//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
-			});
+				});
+				var p = ''+publishers+'/pu/publishers/ordinancer/word';
+						
+				fs.access(p, function(err) {
+					if (err && err.code === 'ENOENT') {
+						mkdirp(p, function(err){
+							if (err) {
+								console.log("err", err);
+							}
+						})
+					}
+				});
+				
+				var path = path.join(p, '/'+now+'.docx');
+				fs.writeFile(path, docx, function(err){
+					if (err) {
+						return next(err)
+					}
+					res.send(viewstr)
+					//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
+				});
+
+			})
 			//return res.send(str)
 			
 			
@@ -1795,7 +2013,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 			next(err)
 		}
 		var str = content.toString();
-		textImporter(req, str, function(err){
+		textImporter(req, str, null, function(err, chind){
 			if (err) {
 				return next(err)
 			}

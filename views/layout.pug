@@ -83,7 +83,7 @@ html
 						uploadchtitle: null,
 						dragind: null,
 						latlngs: null,
-						gp: (#{session.importgdrive} ? this.parseObj(!{JSON.stringify(gp)}) : null)
+						gp: (this.parseObj(#{session.importgdrive}) !== '' ? this.parseObj(!{JSON.stringify(gp)}) : null)
 					}
 				},
 				updated: function(){
@@ -419,10 +419,23 @@ html
 							var doc = data[google.picker.Response.DOCUMENTS][0];
 							url = doc[google.picker.Document.URL];
 							self.initGdocFileUploader(doc, 'doc');
+							//self.initGdriveRevisionGetter(doc);
 						}
+					},
+					initGdriveRevisionGetter: function(file){
+						var self = this;
+						console.log(file)
+						$.post('/api/importgdriverev/'+file.id, function(err, doc){
+							
+							window.location.href = '/'
+						})
+						
+
+						
 					},
 					initGdocFileUploader: function(file, type){
 						var self = this;
+						
 						$.post('/api/importgdoc/'+file.id, function(err, doc){
 							
 							window.location.href = '/'

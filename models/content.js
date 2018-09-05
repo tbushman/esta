@@ -22,6 +22,10 @@ var GeoJSON = new Schema({
 		label: String,
 		section: String,
 		published: Boolean,
+		gid: {
+			fileId: String,
+			revisionId: String
+		},
 		title: String,
 		place: String,
 		description: String,
