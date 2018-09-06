@@ -1373,40 +1373,86 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 							mimeType: mimeType,
 							parents: [flId]
 						}
-						var stream = require('stream');
-						var bufferStream = new stream.PassThrough();
-						bufferStream.end(docx);
-						//var toStream = require('blob-to-stream');
+						/*var stream = require('stream');
+						var readable = new stream.Readable();
+						readable._read = function(){}
+						console.log(docx.toString('binary'))
+						readable.push(docx.toString('binary'));
+						readable.push(null);*/
+						var p = ''+publishers+'/pu/publishers/ordinancer/word';
+								
+						fs.access(p, function(err) {
+							if (err && err.code === 'ENOENT') {
+								mkdirp(p, function(err){
+									if (err) {
+										console.log("err", err);
+									}
+								})
+							}
+						});
 						
-						var media = {
-							mimeType: mimeType,
-							body: bufferStream
+						var pathh = path.join(p, '/'+now+'.docx');
+						async function fsWriteFile(cbk){
+							await fs.writeFile(pathh, docx)
+							cbk(null);
+							
+							//res.send(viewstr)
+							//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
+							
 						}
-						drive.files.create({
-							resource: fileMetadata,
-							media: media
-						})
-						.then(function(fl){
-							drive.revisions.get({
-								fileId: fl
+						
+						fsWriteFile(function(err){
+							if (err) {
+								return next(err)
+							}
+							var media = {
+								mimeType: mimeType,
+								body: fs.createReadStream(
+									path.join(p, '1536201305514.docx')
+								)
+							}
+							drive.files.create({
+								resource: fileMetadata,
+								media: media,
+								fields: 'id'
 							})
-							data.forEach(function(doc){
-								doc.properties.fileId = file.id;
-								var rev = file.data.revisions[file.data.revisions.length - 1];
-								doc.properties.revisionId = rev.id;
-								console.log(file)
+							.then(function(fl){
+								//console.log('createdfile')
+								//console.log(fl)
+								drive.revisions.list({
+									fileId: fl.data.id
+								})
+								.then(function(f){
+									console.log('revisions')
+									//console.log(f)
+									data.forEach(function(doc){
+										doc.properties.fileId = fl.data.id;
+										var rev = f.data.revisions[f.data.revisions.length - 1];
+										doc.properties.revisionId = rev.id;
+										//console.log(file)
+									})
+									data.save(function(err){
+										if (err) {
+											return next(err)
+										}
+										req.session.importgdrive = false
+										
+										return res.redirect('/')
+									})
+								})
+								.catch(function(err){
+									if (err) {
+										return next(err)
+									}
+								})
+							
+								//console.log(file)
 							})
-							data.save(function(err){
+							.catch(function(err){
 								if (err) {
 									return next(err)
 								}
-								req.session.importgdrive = false
-								return res.redirect('/')
 							})
-							//console.log(file)
-						})
-						.catch(function(err){
-							console.log(err)
 						})
 
 						
@@ -1748,7 +1794,7 @@ router.get('/exportword', function(req, res, next){
 			if (data.length === 0) {
 				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
 			}
-			var path = require('path');
+			
 			var pugviewpath = path.join(__dirname, '../views/includes/exportwordview.pug');
 			var now = Date.now();
 			getDocxBlob(now, dat, function(docx){
@@ -1777,8 +1823,8 @@ router.get('/exportword', function(req, res, next){
 					}
 				});
 				
-				var path = path.join(p, '/'+now+'.docx');
-				fs.writeFile(path, docx, function(err){
+				var pathh = path.join(p, '/'+now+'.docx');
+				fs.writeFile(pathh, docx, function(err){
 					if (err) {
 						return next(err)
 					}
