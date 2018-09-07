@@ -871,42 +871,52 @@ function getDat64(next){
 							}
 						})
 						dat.push(data)
+						cb(null, dat)
 					})
 				} else {
-					//console.log(distinct)
 					distinct.sort();
-					//console.log(distinct)
-					distinct.forEach(function(key, i) {
-						Content.find({'chapter.ind':key}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
-							if (err) {
-								console.log(err)
-							}
-							
-							if (data.length === 0) return;
-							if (data.length > 0) {
-								data = data.sort(function(a,b){
-									if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
-										return -1;
-									} else {
-										return 1;
-									}
-								})
-								data.forEach(function(doc){
-									if (doc.properties !== undefined) {
-										if (doc.properties.media.length > 0) {
-											doc.properties.media.forEach(function(img){
-												var imageAsBase64 = fs.readFileSync(''+publishers+'/pu'+img.image, 'base64')
-												img.image = 'data:image/png;base64,'+imageAsBase64
-											})
+
+					asynk.forEach(
+						distinct,
+						function(key, callback){
+							Content.find({'chapter.ind':key}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
+								if (err) {
+									console.log(err)
+								}
+								//console.log(data)
+								//if (data.length === 0) return;
+								if (data.length > 0) {
+									data = data.sort(function(a,b){
+										if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+											return -1;
+										} else {
+											return 1;
 										}
-									}
-								})
-								dat.push(data)
+									})
+									data.forEach(function(doc){
+										if (doc.properties !== undefined) {
+											if (doc.properties.media.length > 0) {
+												doc.properties.media.forEach(function(img){
+													var imageAsBase64 = fs.readFileSync(''+publishers+'/pu'+img.image, 'base64')
+													img.image = 'data:image/png;base64,'+imageAsBase64
+												})
+											}
+										}
+									})
+									dat.push(data)
+								}
+								callback();
+							})
+							
+						},
+						function(err){
+							if (err) {
+								cb(err)
 							}
-						})
-					});
+							cb(null, dat)
+						}
+					)
 				}
-				cb(null, dat)
 			})
 		}
 	], function(err, dat) {
@@ -1242,8 +1252,13 @@ function mkdirpIfNeeded(p, cb){
 	
 }
 
-function getDocxBlob(now, dat, cb){
-	var pugpath = path.join(__dirname, '../views/includes/exportword.pug');
+function getDocxBlob(now, dat, toc, cb){
+	var pugpath;
+	if (toc) {
+		pugpath = path.join(__dirname, '../views/includes/exportword.pug');
+	} else {
+		pugpath = path.join(__dirname, '../views/includes/exportwordnotoc.pug');
+	}
 	var str = pug.renderFile(pugpath, {
 		md: require('marked'),
 		doctype: 'html',
@@ -1308,16 +1323,11 @@ function getDocxBlob(now, dat, cb){
 	})
 })*/
 
-router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
-	var fileId = req.params.fileid;
-	var chind = req.params.chind;
-	Content.find({'chapter.ind': chind}, function(err, data){
-		if (err) {
-			return next(err)
-		}
-		var dat = [data];
-		var now = Date.now();
-		getDocxBlob(now, dat, function(docx){
+router.get('/api/exportgdrivewhole', function(req, res, next){
+	var now = Date.now();
+	getDat64(function(dat){
+		//console.log(dat)
+		getDocxBlob(now, dat, true, function(docx){
 			//console.log(docx)
 			Publisher.findOne({_id: req.session.userId}, function(err, pu){
 				if (err) {
@@ -1330,26 +1340,24 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 				google.options({auth:authClient})
 				req.session.authClient = true;
 				var drive = google.drive({version: 'v3'});
-				drive.files.get({
-					fileId: fileId
+				drive.files.list({
+					q: 'name="Brigham City Land Use Code Project" and mimeType="application/vnd.google-apps.folder"',
+					'name': 'Brigham City Land Use Code Project',
+					'mimeType': 'application/vnd.google-apps.folder'
 				})
-				.then(function(file){
-					var mimeType = file.mimeType;
-					//var stats = fs.statSync(docx);
-					//var sb = stats['size'];
+				.then(function(folder){
+					var mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 					drive.files.list({
-						q: 'name="watch_docx"',
-						'name': 'watch_docx',
-						'mimeType': 'application/vnd.google-apps.folder'
+						q: 'name="export_docx" and "'+folder.data.files[0].id+'" in parents and mimeType="application/vnd.google-apps.folder"'
 					})
 					.then(function(watch){
-						console.log('watch')
 						var flId = null;
 						if (!watch || watch.data.files.length < 1) {
 							var fileMetadata = {
 								
-							  'name': 'watch_docx',
-							  'mimeType': 'application/vnd.google-apps.folder'
+							  'name': 'export_docx',
+							  'mimeType': 'application/vnd.google-apps.folder',
+								'parents': [""+folder.data.files[0].id+""]
 							};
 							drive.files.create({
 							  resource: fileMetadata,
@@ -1359,8 +1367,7 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 							    // Handle error
 							    console.error(err);
 							  } else {
-									flId = fl.id;
-							    console.log('Folder Id: ', fl.id);
+									flId = fl.data.id;
 							  }
 							});
 
@@ -1369,16 +1376,10 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 						}
 						
 						var fileMetadata = {
-							name: file.name + '_watch',
+							name: dat[0][0].title.str + now,
 							mimeType: mimeType,
 							parents: [flId]
 						}
-						/*var stream = require('stream');
-						var readable = new stream.Readable();
-						readable._read = function(){}
-						console.log(docx.toString('binary'))
-						readable.push(docx.toString('binary'));
-						readable.push(null);*/
 						var p = ''+publishers+'/pu/publishers/ordinancer/word';
 								
 						fs.access(p, function(err) {
@@ -1395,10 +1396,7 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 						async function fsWriteFile(cbk){
 							await fs.writeFile(pathh, docx)
 							cbk(null);
-							
-							//res.send(viewstr)
-							//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
-							
+
 						}
 						
 						fsWriteFile(function(err){
@@ -1408,7 +1406,8 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 							var media = {
 								mimeType: mimeType,
 								body: fs.createReadStream(
-									path.join(p, '1536201305514.docx')
+									pathh
+									//path.join(p, '1536201305514.docx')
 								)
 							}
 							drive.files.create({
@@ -1417,36 +1416,15 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 								fields: 'id'
 							})
 							.then(function(fl){
-								//console.log('createdfile')
-								//console.log(fl)
-								drive.revisions.list({
-									fileId: fl.data.id
-								})
-								.then(function(f){
-									console.log('revisions')
-									//console.log(f)
-									data.forEach(function(doc){
-										doc.properties.fileId = fl.data.id;
-										var rev = f.data.revisions[f.data.revisions.length - 1];
-										doc.properties.revisionId = rev.id;
-										//console.log(file)
-									})
-									data.save(function(err){
-										if (err) {
-											return next(err)
-										}
-										req.session.importgdrive = false
-										
-										return res.redirect('/')
-									})
-								})
-								.catch(function(err){
+								req.session.importgdrive = false
+								var open = require('open');
+								open('https://drive.google.com/drive/folders/'+flId+'', function(err){
 									if (err) {
 										return next(err)
 									}
+									return res.redirect('/')
 								})
-							
-								//console.log(file)
+								//return res.redirect('https://drive.google.com/drive/folders/'+flId)
 							})
 							.catch(function(err){
 								if (err) {
@@ -1454,36 +1432,182 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 								}
 							})
 						})
-
-						
 					})
 					.catch(function(err){
 						if (err) {
-							console.log(err)
+							return next(err)
 						}
 					})
-					/*//const url = 'https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=media';
-					//require('request').patch({
-					//require('request').post({
-						url: url,
-						headers: {
-							'Content-Type': mimeType,
-							'Content-Length': sb,
-							Authorization: 'Bearer'+ pu.gaaccess
-						},
-						body: docx
-					}//)
-					//.on('response'
-					, function(error, result){
-						if (error) {
-							return next(error)
-						}
-						
-					})*/
-
 				})
 				.catch(function(err){
-					console.log(err)
+					if (err) {
+						return next(err)
+					}
+				})
+				
+			})
+		})
+	})
+})
+
+router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
+	var fileId = req.params.fileid;
+	var chind = req.params.chind;
+	Content.find({'chapter.ind': chind}).lean().exec(function(err, data){
+		if (err) {
+			return next(err)
+		}
+		data = data.sort(function(a,b){
+			if (parseInt(a.chapter.ind, 10) < parseInt(b.chapter.ind, 10)) {
+				return -1;
+			} else {
+				return 1;
+			}
+		})
+		var dat = [data];
+		var now = Date.now();
+		getDocxBlob(now, dat, false, function(docx){
+			//console.log(docx)
+			Publisher.findOne({_id: req.session.userId}, function(err, pu){
+				if (err) {
+					return next(err)
+				}
+				var OAuth2 = google.auth.OAuth2;
+
+				var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+				authClient.setCredentials({refresh_token: pu.garefresh, access_token: pu.gaaccess});
+				google.options({auth:authClient})
+				req.session.authClient = true;
+				var drive = google.drive({version: 'v3'});
+				drive.files.get({
+					fileId: fileId,
+					fields: 'id,name'
+				})
+				.then(function(file){
+					//console.log(file)
+					drive.files.list({
+						q: 'name="Brigham City Land Use Code Project" and mimeType="application/vnd.google-apps.folder"',
+						'name': 'Brigham City Land Use Code Project',
+						'mimeType': 'application/vnd.google-apps.folder'
+					})
+					.then(function(folder){
+						var mimeType = file.mimeType;
+						drive.files.list({
+							q: 'name="watch_docx" and "'+folder.data.files[0].id+'" in parents and mimeType="application/vnd.google-apps.folder"'
+						})
+						.then(function(watch){
+							var flId = null;
+							if (!watch || watch.data.files.length < 1) {
+								var fileMetadata = {
+									
+								  'name': 'watch_docx',
+								  'mimeType': 'application/vnd.google-apps.folder',
+									'parents': [""+folder.data.files[0].id+""]
+								};
+								drive.files.create({
+								  resource: fileMetadata,
+								  fields: 'id'
+								}, function (err, fl) {
+								  if (err) {
+								    // Handle error
+								    console.error(err);
+								  } else {
+										flId = fl.data.id;
+								  }
+								});
+
+							} else {
+								flId = watch.data.files[0].id
+							}
+							
+							var fileMetadata = {
+								name: file.data.name + '_watch',
+								mimeType: mimeType,
+								parents: [flId]
+							}
+							var p = ''+publishers+'/pu/publishers/ordinancer/word';
+									
+							fs.access(p, function(err) {
+								if (err && err.code === 'ENOENT') {
+									mkdirp(p, function(err){
+										if (err) {
+											console.log("err", err);
+										}
+									})
+								}
+							});
+							
+							var pathh = path.join(p, '/'+now+'.docx');
+							async function fsWriteFile(cbk){
+								await fs.writeFile(pathh, docx)
+								cbk(null);
+
+							}
+							
+							fsWriteFile(function(err){
+								if (err) {
+									return next(err)
+								}
+								var media = {
+									mimeType: mimeType,
+									body: fs.createReadStream(
+										pathh
+										//path.join(p, '1536201305514.docx')
+									)
+								}
+								drive.files.create({
+									resource: fileMetadata,
+									media: media,
+									fields: 'id'
+								})
+								.then(function(fl){
+									//console.log('createdfile')
+									//console.log(fl)
+									drive.revisions.list({
+										fileId: fl.data.id
+									})
+									.then(function(f){
+										data.forEach(function(doc){
+											doc.properties.fileId = fl.data.id;
+											var rev = f.data.revisions[f.data.revisions.length - 1];
+											doc.properties.revisionId = rev.id;
+											doc.save(function(err){
+												if (err) {
+													return next(err)
+												}
+											})
+										})
+										req.session.importgdrive = false
+										
+										return res.redirect('/')
+									})
+									.catch(function(err){
+										if (err) {
+											return next(err)
+										}
+									})
+								})
+								.catch(function(err){
+									if (err) {
+										return next(err)
+									}
+								})
+							})
+						})
+						.catch(function(err){
+							if (err) {
+								return next(err)
+							}
+						})
+					})
+					.catch(function(err){
+						if (err) {
+							return next(err)
+						}
+					})
+				})
+				.catch(function(err){
+					return next(err)
 				})
 			})
 		})
@@ -1797,7 +1921,7 @@ router.get('/exportword', function(req, res, next){
 			
 			var pugviewpath = path.join(__dirname, '../views/includes/exportwordview.pug');
 			var now = Date.now();
-			getDocxBlob(now, dat, function(docx){
+			getDocxBlob(now, dat, true, function(docx){
 				var viewstr = pug.renderFile(pugviewpath, {
 					md: require('marked'),
 					doctype: 'html',
