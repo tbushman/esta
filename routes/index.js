@@ -21,6 +21,8 @@ var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
 var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Preliminary Subdivision Applications', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
 var InDesign = require('async-indesign-script');
+var juice = require('juice');
+var HtmlDocx = require('html-docx-js');
 //var google = require("googleapis"); 
 var {google} = require('googleapis');
 //var {googleAuth} = require('google-auth-library');
@@ -189,7 +191,7 @@ var curly = function(str){
 }
 
 
-function textImporter(req, str, cb) {
+function textImporter(req, str, gid, cb) {
 	asynk.waterfall([
 		function(next){
 				
@@ -225,25 +227,6 @@ function textImporter(req, str, cb) {
 				} else {
 					num = ['']
 				}
-			/*	console.log('newline then digit')
-				console.log(/(^\d)/gm.test(it))
-				console.log('test (\d|\w\.)\t')
-				console.log(/(\d|\w\.)\t/g.test(it))
-				console.log('test (\t)')
-				console.log(/(\t)/g.test(it))
-				console.log('test/(\v)/g')
-				console.log(/(\v)/g.test(it))
-				console.log('test/\u2028/g')
-				console.log(/\u2028/g.test(it))
-				console.log('test/[\n ](\d\.)/g')
-				console.log(/[\n ](\d\.)/g.test(it))
-				console.log('test /\:\s+(\d{1,2}\.)/g')
-				console.log(/\:\s+(\d{1,2}\.)/g.test(it))
-				console.log('test /^([A-Z]\.)/gm')
-				console.log(/^([A-Z]\.)/gm.test(it))
-				console.log('test /[\s\.]([A-Z]\.)/g')
-				console.log(/[\s\.]([A-Z]\.)/g.test(it))*/
-				
 				it = it.replace(/\u2028/g, '  \n  \n');
 				var desc = (descrx.exec(it) ? 
 					descrx.exec(it)[1].toString().trim()
@@ -279,9 +262,9 @@ function textImporter(req, str, cb) {
 					return 1;
 				}
 			})
-			next(null, dat, newch);
+			next(null, dat, newch, gid);
 		},
-		function(dat, chtitle, next){
+		function(dat, chtitle, gid, next){
 			var newdate = new Date();
 			Content.find({}, function(err, data){
 				if (err) {
@@ -294,6 +277,7 @@ function textImporter(req, str, cb) {
 							if (err) {
 								return next(err)
 							}
+							
 							if (!doc) {
 								var entry = new Content({
 									index: i,
@@ -316,6 +300,7 @@ function textImporter(req, str, cb) {
 										label: 'Edit Subtitle',
 										title: curly(item.title),
 										place: 'Edit Place',
+										//gid: (!gid ? null : gid),
 										description: marked(curly(item.desc)),
 										current: false,
 										media: [],
@@ -341,67 +326,72 @@ function textImporter(req, str, cb) {
 									}
 								})
 							} else {
-								
-								Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.title':curly(item.title)}}, {safe:true,new:true}, function(err, doc){
+								/*Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.gid': gid}}, {safe:true,new:true}, function(err, doc){
 									if (err) {
 										return next(err)
-									}
-									Content.findOneAndUpdate({_id: doc._id}, {$set:{'chapter.str': curly(chtitle)}}, {safe:true, new:true}, function(err, doc){
+									}*/
+									Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.title':curly(item.title)}}, {safe:true,new:true}, function(err, doc){
 										if (err) {
 											return next(err)
 										}
-										Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.description': marked(curly(item.desc))}}, {safe:true, new:true}, function(err, doc){
+										Content.findOneAndUpdate({_id: doc._id}, {$set:{'chapter.str': curly(chtitle)}}, {safe:true, new:true}, function(err, doc){
 											if (err) {
 												return next(err)
 											}
-											if (doc.properties.description) {
-												
-												var Diff = require('diff');
-													 
-												var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(item.desc)));
-												//console.log('sent this diff')
-												//console.log(diff)
-												var diffss = [];
-												if (diff.length) {
-													diff.forEach(function(dif){
-														//console.log(dif)
-														diffss.push({
-															count: dif.count,
-															value: dif.value,
-															added: dif.added,
-															removed: dif.removed
+											Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.description': marked(curly(item.desc))}}, {safe:true, new:true}, function(err, doc){
+												if (err) {
+													return next(err)
+												}
+												if (doc.properties.description) {
+													
+													var Diff = require('diff');
+														 
+													var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(item.desc)));
+													//console.log('sent this diff')
+													//console.log(diff)
+													var diffss = [];
+													if (diff.length) {
+														diff.forEach(function(dif){
+															//console.log(dif)
+															diffss.push({
+																count: dif.count,
+																value: dif.value,
+																added: dif.added,
+																removed: dif.removed
+															})
 														})
+													}
+
+													var newdiff = {
+														date: newdate,
+														dif: diffss,
+														str: marked(curly(item.desc))
+													};
+													Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
+														if (err) {
+															return next(err)
+														}
+														
 													})
 												}
-
-												var newdiff = {
-													date: newdate,
-													dif: diffss,
-													str: marked(curly(item.desc))
-												};
-												Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
-													if (err) {
-														return next(err)
-													}
-													
-												})
-											}
+											})
 										})
 									})
-								})
+								//})
+								
 							}
 						})
 					}
 				});
-				next(null)
+				next(null, dat[0].num.split('.')[1])
 			})
 		}
-	], function(err){
+	], function(err, chind){
 		if (err) {
 			return cb(err)
 		}
 		console.log('yay')
-		cb(null)
+		cb(null, chind)
 	})
 }
 
@@ -881,42 +871,52 @@ function getDat64(next){
 							}
 						})
 						dat.push(data)
+						cb(null, dat)
 					})
 				} else {
-					//console.log(distinct)
 					distinct.sort();
-					//console.log(distinct)
-					distinct.forEach(function(key, i) {
-						Content.find({'chapter.ind':key}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
-							if (err) {
-								console.log(err)
-							}
-							
-							if (data.length === 0) return;
-							if (data.length > 0) {
-								data = data.sort(function(a,b){
-									if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
-										return -1;
-									} else {
-										return 1;
-									}
-								})
-								data.forEach(function(doc){
-									if (doc.properties !== undefined) {
-										if (doc.properties.media.length > 0) {
-											doc.properties.media.forEach(function(img){
-												var imageAsBase64 = fs.readFileSync(''+publishers+'/pu'+img.image, 'base64')
-												img.image = 'data:image/png;base64,'+imageAsBase64
-											})
+
+					asynk.forEach(
+						distinct,
+						function(key, callback){
+							Content.find({'chapter.ind':key}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
+								if (err) {
+									console.log(err)
+								}
+								//console.log(data)
+								//if (data.length === 0) return;
+								if (data.length > 0) {
+									data = data.sort(function(a,b){
+										if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+											return -1;
+										} else {
+											return 1;
 										}
-									}
-								})
-								dat.push(data)
+									})
+									data.forEach(function(doc){
+										if (doc.properties !== undefined) {
+											if (doc.properties.media.length > 0) {
+												doc.properties.media.forEach(function(img){
+													var imageAsBase64 = fs.readFileSync(''+publishers+'/pu'+img.image, 'base64')
+													img.image = 'data:image/png;base64,'+imageAsBase64
+												})
+											}
+										}
+									})
+									dat.push(data)
+								}
+								callback();
+							})
+							
+						},
+						function(err){
+							if (err) {
+								cb(err)
 							}
-						})
-					});
+							cb(null, dat)
+						}
+					)
 				}
-				cb(null, dat)
 			})
 		}
 	], function(err, dat) {
@@ -1252,6 +1252,369 @@ function mkdirpIfNeeded(p, cb){
 	
 }
 
+function getDocxBlob(now, dat, toc, cb){
+	var pugpath;
+	if (toc) {
+		pugpath = path.join(__dirname, '../views/includes/exportword.pug');
+	} else {
+		pugpath = path.join(__dirname, '../views/includes/exportwordnotoc.pug');
+	}
+	var str = pug.renderFile(pugpath, {
+		md: require('marked'),
+		doctype: 'html',
+		hrf: '/publishers/ordinancer/word/'+now+'.docx',
+		dat: dat.sort(function(a,b){
+			//console.log(a[0].chapter.ind)
+			if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+				return -1
+			} else {
+				return 1
+			}
+		})
+	});
+	//console.log(str)
+	var juiced = juice(str);
+	var docx = HtmlDocx.asBlob(juiced);
+	cb(docx)
+}
+
+
+/*router.post('/api/importgdriverev/:fileid', function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+	var fileId = req.params.fileid;
+	var now = Date.now();
+	var os = require('os');
+		//(publishers + '/ordinancer/tmp/'+now+'.txt').toString()//);
+	var p = ''+publishers+'/pu/publishers/ordinancer/tmp';
+	var OAuth2 = google.auth.OAuth2;
+	Publisher.findOne({_id: req.session.userId}, function(err, pu){
+		if (err) {
+			return next(err)
+		}
+		var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+		authClient.setCredentials({refresh_token: pu.garefresh, access_token: pu.gaaccess});
+		google.options({auth:authClient})
+		req.session.authClient = true;
+		var drive = google.drive({version: 'v3'});
+		drive.revisions.list({
+			fileId: fileId
+		}).then(function(rev){
+			//console.log(rev.data.revisions)
+			var revs = rev.data.revisions.sort(function(a,b){
+				if (a.modifiedTime < b.modifiedTime) {
+					return -1;
+				} else {
+					return 1;
+				}
+			})
+			var revId = revs[revs.length-1].id;
+			drive.revisions.get({
+				fileId: fileId,
+				revisionId: revId
+			})
+			.then(function(file){
+				console.log(file.downloadUrl)
+			})
+		}).catch(function(err){
+			console.log(err)
+		});
+		
+	})
+})*/
+
+router.get('/api/exportgdrivewhole', function(req, res, next){
+	var now = Date.now();
+	getDat64(function(dat){
+		//console.log(dat)
+		getDocxBlob(now, dat, true, function(docx){
+			//console.log(docx)
+			Publisher.findOne({_id: req.session.userId}, function(err, pu){
+				if (err) {
+					return next(err)
+				}
+				var OAuth2 = google.auth.OAuth2;
+
+				var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+				authClient.setCredentials({refresh_token: pu.garefresh, access_token: pu.gaaccess});
+				google.options({auth:authClient})
+				req.session.authClient = true;
+				var drive = google.drive({version: 'v3'});
+				drive.files.list({
+					q: 'name="Brigham City Land Use Code Project" and mimeType="application/vnd.google-apps.folder"',
+					'name': 'Brigham City Land Use Code Project',
+					'mimeType': 'application/vnd.google-apps.folder'
+				})
+				.then(function(folder){
+					var mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+					drive.files.list({
+						q: 'name="export_docx" and "'+folder.data.files[0].id+'" in parents and mimeType="application/vnd.google-apps.folder"'
+					})
+					.then(function(watch){
+						var flId = null;
+						if (!watch || watch.data.files.length < 1) {
+							var fileMetadata = {
+								
+							  'name': 'export_docx',
+							  'mimeType': 'application/vnd.google-apps.folder',
+								'parents': [""+folder.data.files[0].id+""]
+							};
+							drive.files.create({
+							  resource: fileMetadata,
+							  fields: 'id'
+							}, function (err, fl) {
+							  if (err) {
+							    // Handle error
+							    console.error(err);
+							  } else {
+									flId = fl.data.id;
+							  }
+							});
+
+						} else {
+							flId = watch.data.files[0].id
+						}
+						
+						var fileMetadata = {
+							name: dat[0][0].title.str + now,
+							mimeType: mimeType,
+							parents: [flId]
+						}
+						var p = ''+publishers+'/pu/publishers/ordinancer/word';
+								
+						fs.access(p, function(err) {
+							if (err && err.code === 'ENOENT') {
+								mkdirp(p, function(err){
+									if (err) {
+										console.log("err", err);
+									}
+								})
+							}
+						});
+						
+						var pathh = path.join(p, '/'+now+'.docx');
+						async function fsWriteFile(cbk){
+							await fs.writeFile(pathh, docx)
+							cbk(null);
+
+						}
+						
+						fsWriteFile(function(err){
+							if (err) {
+								return next(err)
+							}
+							var media = {
+								mimeType: mimeType,
+								body: fs.createReadStream(
+									pathh
+									//path.join(p, '1536201305514.docx')
+								)
+							}
+							drive.files.create({
+								resource: fileMetadata,
+								media: media,
+								fields: 'id'
+							})
+							.then(function(fl){
+								req.session.importgdrive = false
+								var open = require('open');
+								open('https://drive.google.com/drive/folders/'+flId+'', function(err){
+									if (err) {
+										return next(err)
+									}
+									return res.redirect('/')
+								})
+								//return res.redirect('https://drive.google.com/drive/folders/'+flId)
+							})
+							.catch(function(err){
+								if (err) {
+									return next(err)
+								}
+							})
+						})
+					})
+					.catch(function(err){
+						if (err) {
+							return next(err)
+						}
+					})
+				})
+				.catch(function(err){
+					if (err) {
+						return next(err)
+					}
+				})
+				
+			})
+		})
+	})
+})
+
+router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
+	var fileId = req.params.fileid;
+	var chind = req.params.chind;
+	Content.find({'chapter.ind': chind}).lean().exec(function(err, data){
+		if (err) {
+			return next(err)
+		}
+		data = data.sort(function(a,b){
+			if (parseInt(a.chapter.ind, 10) < parseInt(b.chapter.ind, 10)) {
+				return -1;
+			} else {
+				return 1;
+			}
+		})
+		var dat = [data];
+		var now = Date.now();
+		getDocxBlob(now, dat, false, function(docx){
+			//console.log(docx)
+			Publisher.findOne({_id: req.session.userId}, function(err, pu){
+				if (err) {
+					return next(err)
+				}
+				var OAuth2 = google.auth.OAuth2;
+
+				var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+				authClient.setCredentials({refresh_token: pu.garefresh, access_token: pu.gaaccess});
+				google.options({auth:authClient})
+				req.session.authClient = true;
+				var drive = google.drive({version: 'v3'});
+				drive.files.get({
+					fileId: fileId,
+					fields: 'id,name'
+				})
+				.then(function(file){
+					//console.log(file)
+					drive.files.list({
+						q: 'name="Brigham City Land Use Code Project" and mimeType="application/vnd.google-apps.folder"',
+						'name': 'Brigham City Land Use Code Project',
+						'mimeType': 'application/vnd.google-apps.folder'
+					})
+					.then(function(folder){
+						var mimeType = file.mimeType;
+						drive.files.list({
+							q: 'name="watch_docx" and "'+folder.data.files[0].id+'" in parents and mimeType="application/vnd.google-apps.folder"'
+						})
+						.then(function(watch){
+							var flId = null;
+							if (!watch || watch.data.files.length < 1) {
+								var fileMetadata = {
+									
+								  'name': 'watch_docx',
+								  'mimeType': 'application/vnd.google-apps.folder',
+									'parents': [""+folder.data.files[0].id+""]
+								};
+								drive.files.create({
+								  resource: fileMetadata,
+								  fields: 'id'
+								}, function (err, fl) {
+								  if (err) {
+								    // Handle error
+								    console.error(err);
+								  } else {
+										flId = fl.data.id;
+								  }
+								});
+
+							} else {
+								flId = watch.data.files[0].id
+							}
+							
+							var fileMetadata = {
+								name: file.data.name + '_watch',
+								mimeType: mimeType,
+								parents: [flId]
+							}
+							var p = ''+publishers+'/pu/publishers/ordinancer/word';
+									
+							fs.access(p, function(err) {
+								if (err && err.code === 'ENOENT') {
+									mkdirp(p, function(err){
+										if (err) {
+											console.log("err", err);
+										}
+									})
+								}
+							});
+							
+							var pathh = path.join(p, '/'+now+'.docx');
+							async function fsWriteFile(cbk){
+								await fs.writeFile(pathh, docx)
+								cbk(null);
+
+							}
+							
+							fsWriteFile(function(err){
+								if (err) {
+									return next(err)
+								}
+								var media = {
+									mimeType: mimeType,
+									body: fs.createReadStream(
+										pathh
+										//path.join(p, '1536201305514.docx')
+									)
+								}
+								drive.files.create({
+									resource: fileMetadata,
+									media: media,
+									fields: 'id'
+								})
+								.then(function(fl){
+									//console.log('createdfile')
+									//console.log(fl)
+									drive.revisions.list({
+										fileId: fl.data.id
+									})
+									.then(function(f){
+										data.forEach(function(doc){
+											doc.properties.fileId = fl.data.id;
+											var rev = f.data.revisions[f.data.revisions.length - 1];
+											doc.properties.revisionId = rev.id;
+											doc.save(function(err){
+												if (err) {
+													return next(err)
+												}
+											})
+										})
+										req.session.importgdrive = false
+										
+										return res.redirect('/')
+									})
+									.catch(function(err){
+										if (err) {
+											return next(err)
+										}
+									})
+								})
+								.catch(function(err){
+									if (err) {
+										return next(err)
+									}
+								})
+							})
+						})
+						.catch(function(err){
+							if (err) {
+								return next(err)
+							}
+						})
+					})
+					.catch(function(err){
+						if (err) {
+							return next(err)
+						}
+					})
+				})
+				.catch(function(err){
+					return next(err)
+				})
+			})
+		})
+		
+	})
+})
+
 router.post('/api/importgdoc/:fileid', function(req, res, next) {
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
@@ -1274,57 +1637,97 @@ router.post('/api/importgdoc/:fileid', function(req, res, next) {
 				google.options({auth:authClient})
 				req.session.authClient = true;
 				var drive = google.drive({version: 'v3'});
-				drive.files.get({
-					fileId: fileId,
-					fields: 'webContentLink'
-				})
-				.then(function(file){
-					var dlurl = file.data.webContentLink.split('&')[0];
-					console.log(dlurl);
-					//https://stackoverflow.com/a/29296405/3530394
-					require('request').get({
-						url: dlurl,
-						encoding: null,
-						headers: {
-							Authorization: 'Bearer'+ pu.gaaccess
+				drive.revisions.list({
+					fileId: fileId
+				}).then(function(rev){
+					//console.log(rev.data.revisions)
+					var revs = rev.data.revisions.sort(function(a,b){
+						if (a.modifiedTime < b.modifiedTime) {
+							return -1;
+						} else {
+							return 1;
 						}
-					}//)
-					//.on('response'
-					, function(error, result){
-						if (error) {
-							return next(error)
-						}
-						result.pipe(dest);
-						async function fsWriteFile(cbk) {
-							await fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx', result.body);
-							var mammoth = require('mammoth');
-							mammoth.extractRawText({path: ''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx'})
-							.then(function(result){
-								var text = result.value;
-								//console.log(text)
-								var messages = result.messages;
-								//console.log(messages)
-								var str = text.toString();
-								textImporter(req, str, function(err){
-									if (err) {
-										return next(err)
-									}
-									//console.log('hooray')
-									req.session.importgdrive = false;
-									//console.log(req.session)
-									//return res.status(200).send(data)
-									return cbk()
-								})
-
-							})
-							.done()
-						}
-						
-						fsWriteFile(function(){
-							return res.status(200).send('ok')
-						});
 					})
+					var revId = revs[revs.length-1].id;
+					/*drive.revisions.get({
+						fileId: fileId,
+						revisionId: revId,
+						alt: 'media'
+						/*,
+						fields: 'downloadUrl'
+					})*/
+					drive.files.get({
+						fileId: fileId,
+						fields: 'webContentLink'
+					})
+					.then(function(file){
+						//console.log(file)
+						//console.log(file.downloadUrl)
+						var dlurl = 
+						//file.downloadUrl
+						file.data.webContentLink.split('&')[0];
+						//console.log(dlurl);
+						//https://stackoverflow.com/a/29296405/3530394
+						require('request').get({
+							url: dlurl,
+							encoding: null,
+							headers: {
+								Authorization: 'Bearer'+ pu.gaaccess
+							}
+						}//)
+						//.on('response'
+						, function(error, result){
+							if (error) {
+								return next(error)
+							}
+							result.pipe(dest);
+							async function fsWriteFile(cbk) {
+								await fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx', result.body);
+								var mammoth = require('mammoth');
+								mammoth.extractRawText({path: ''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx'})
+								.then(function(result){
+									var text = result.value;
+									//console.log(text)
+									var messages = result.messages;
+									//console.log(messages)
+									var str = text.toString();
+									var gid = {
+										fileId: fileId,
+										revisionId: revId
+									}
+									textImporter(req, str, gid, function(err, chind){
+										if (err) {
+											return cbk(err)
+										}
+										//console.log('hooray')
+										req.session.importgdrive = false;
+										//console.log(req.session)
+										//return res.status(200).send(data)
+										return cbk(null, gid, chind)
+									})
+
+								})
+								.done()
+							}
+							
+							fsWriteFile(function(err, gid, chind){
+								if (err) {
+									return next(err)
+								}
+								return res.redirect('/api/exportgdriverev/'+gid.fileId+'/'+chind)
+								//return res.status(200).send('ok')
+							});
+						})
+					})
+					.catch(function(err){
+						console.log(err)
+					})
+					
 				})
+				.catch(function(err){
+					console.log(err)
+				}) 
+				
 			})
 		})
 	});
@@ -1515,60 +1918,45 @@ router.get('/exportword', function(req, res, next){
 			if (data.length === 0) {
 				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
 			}
-			var juice = require('juice');
-			var HtmlDocx = require('html-docx-js');
-			var path = require('path');
-			var pugpath = path.join(__dirname, '../views/includes/exportword.pug');
+			
 			var pugviewpath = path.join(__dirname, '../views/includes/exportwordview.pug');
 			var now = Date.now();
-			var str = pug.renderFile(pugpath, {
-				md: require('marked'),
-				doctype: 'html',
-				hrf: '/publishers/ordinancer/word/'+now+'.docx',
-				dat: dat.sort(function(a,b){
-					//console.log(a[0].chapter.ind)
-					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
-						return -1
-					} else {
-						return 1
-					}
-				})
-			});
-			//console.log(str)
-			var viewstr = pug.renderFile(pugviewpath, {
-				md: require('marked'),
-				doctype: 'html',
-				hrf: '/publishers/ordinancer/word/'+now+'.docx',
-				dat: dat.sort(function(a,b){
-					//console.log(a[0].chapter.ind)
-					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
-						return -1
-					} else {
-						return 1
-					}
-				})
-			});
-			var docx = HtmlDocx.asBlob(juice(str));
-			var p = ''+publishers+'/pu/publishers/ordinancer/word';
-					
-			fs.access(p, function(err) {
-				if (err && err.code === 'ENOENT') {
-					mkdirp(p, function(err){
-						if (err) {
-							console.log("err", err);
+			getDocxBlob(now, dat, true, function(docx){
+				var viewstr = pug.renderFile(pugviewpath, {
+					md: require('marked'),
+					doctype: 'html',
+					hrf: '/publishers/ordinancer/word/'+now+'.docx',
+					dat: dat.sort(function(a,b){
+						//console.log(a[0].chapter.ind)
+						if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+							return -1
+						} else {
+							return 1
 						}
 					})
-				}
-			});
-			
-			var path = path.join(p, '/'+now+'.docx');
-			fs.writeFile(path, docx, function(err){
-				if (err) {
-					return next(err)
-				}
-				res.send(viewstr)
-				//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
-			});
+				});
+				var p = ''+publishers+'/pu/publishers/ordinancer/word';
+						
+				fs.access(p, function(err) {
+					if (err && err.code === 'ENOENT') {
+						mkdirp(p, function(err){
+							if (err) {
+								console.log("err", err);
+							}
+						})
+					}
+				});
+				
+				var pathh = path.join(p, '/'+now+'.docx');
+				fs.writeFile(pathh, docx, function(err){
+					if (err) {
+						return next(err)
+					}
+					res.send(viewstr)
+					//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
+				});
+
+			})
 			//return res.send(str)
 			
 			
@@ -1795,7 +2183,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 			next(err)
 		}
 		var str = content.toString();
-		textImporter(req, str, function(err){
+		textImporter(req, str, null, function(err, chind){
 			if (err) {
 				return next(err)
 			}

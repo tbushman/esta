@@ -45,5 +45,18 @@ each mn, k in menus
 			//
 				a.submenu.drop(class= mn, v-bind:href="'/exportpdf'")
 					span.tb-font-s(v-text="'Export PDF file'")
-			a.submenu.drop(class= mn, v-bind:href="'/exportword'")
-				span.tb-font-s(v-text="'Export Word file'")
+			
+			a.submenu.drop(class= mn, title="Export")
+				span.tb-font-s(v-text="'Export'")
+			div.slidedown(class= mn)
+				a.submenu.drop(class= mn, v-bind:href="'/exportword'")
+					if (mn !== "static")
+						.ui(class= mn)
+							i.fas.fa-angle-right
+					span.tb-font-s(v-text="'Download Word file'")
+				
+				a.submenu.drop(class= mn, v-bind:href="'/api/exportgdrivewhole'")
+					if (mn !== "static")
+						.ui(class= mn)
+							i.fas.fa-angle-right
+					span.tb-font-s(v-text="'Save to Google Drive'")
