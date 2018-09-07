@@ -1417,14 +1417,14 @@ router.get('/api/exportgdrivewhole', function(req, res, next){
 							})
 							.then(function(fl){
 								req.session.importgdrive = false
-								var open = require('open');
+								/*var open = require('open');
 								open('https://drive.google.com/drive/folders/'+flId+'', function(err){
 									if (err) {
 										return next(err)
 									}
 									return res.redirect('/')
-								})
-								//return res.redirect('https://drive.google.com/drive/folders/'+flId)
+								})*/
+								return res.redirect('https://drive.google.com/drive/folders/'+flId)
 							})
 							.catch(function(err){
 								if (err) {
