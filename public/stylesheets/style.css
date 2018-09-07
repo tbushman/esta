@@ -186,7 +186,7 @@ a span, a img {
 	font-family: var(--bfontname), var(--bfonttype)!important;
 	color: #000;
 	color: var(--secondary);
-	font-size: 0.9rem;
+	font-size: 0.8rem;
 	font-weight: 200;
 	line-height: 1.1rem;
 	padding: 12px 0 0 0;
@@ -439,6 +439,7 @@ em {
 .dropdown.active {
 	visibility: visible;
 	pointer-events: auto;
+	overflow-y: scroll;
 }
 
 .drop {
@@ -469,15 +470,25 @@ em {
 	z-index: 3;
 }
 
+
 a.menu.drop, a.submenu.drop {
 	color: #000;
 	color: var(--secondary);
+}
+a.submenu.drop {
+	pointer-events: all;
 }
 .submenu:hover span, .submenu:hover i {
 	color: #000!important;
 	color: var(--secondary);
 }
 
+.submenu.drop .ui {
+	width: 15px;
+height: 15px;
+display: inline-block;
+
+}
 /*Static menu*/
 .menu.static {
 	min-height: auto;
@@ -546,6 +557,7 @@ a.menu.drop, a.submenu.drop {
 	line-height: var(--thumbw);
 	color: #000;
 	color: var(--secondary);
+	/*font-size: 15px;*/
 }
 .submenu.drop.static.active > span {
 	

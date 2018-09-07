@@ -25,19 +25,16 @@ each mn, k in menus
 				a.submenu.drop(class= mn, v-bind:href="'/importgdrive'", title="Import Chapter from Google Drive")
 					if (mn !== "static")
 						.ui(class= mn)
-							i.fas.fa-angle-right
-					span.tb-font-l(v-text="'Import Chapter from Google Drive'")
+							include angle.pug
+					span.tb-font-s(v-text="'Google Drive'")
 				a.submenu.drop(class= mn, v-bind:href="'/api/importtxt'", title="Import Chapter as plain text")
 					if (mn !== "static")
 						.ui(class= mn)
-							i.fas.fa-angle-right
-					span.tb-font-l(v-text="'Import Chapter as plain text'")
-				if (menu === "publish")
-					a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].chapter.str)", title="Import Chapter as plain text")
-						if (mn !== "static")
-							.ui(class= mn)
-								i.fas.fa-angle-right
-						span.tb-font-l(v-text="'Add Section to Ch. '+dat[0][0].chapter.ind+''")
+							include angle.pug
+					span.tb-font-s(v-text="'Upload'")
+			if (menu === "publish")
+				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].chapter.str)", title="Import Chapter as plain text")
+					span.tb-font-s(v-text="'Add Section to Ch. '+dat[0][0].chapter.ind+''")
 
 			if (menu === "map")
 				a.submenu.drop(class= mn, v-on:click="addMapBlob")
@@ -52,11 +49,11 @@ each mn, k in menus
 				a.submenu.drop(class= mn, v-bind:href="'/exportword'")
 					if (mn !== "static")
 						.ui(class= mn)
-							i.fas.fa-angle-right
+							include angle.pug
 					span.tb-font-s(v-text="'Download Word file'")
 				
 				a.submenu.drop(class= mn, v-bind:href="'/api/exportgdrivewhole'")
 					if (mn !== "static")
 						.ui(class= mn)
-							i.fas.fa-angle-right
+							include angle.pug
 					span.tb-font-s(v-text="'Save to Google Drive'")
