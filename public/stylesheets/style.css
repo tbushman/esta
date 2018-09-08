@@ -956,11 +956,17 @@ a.img img {
 }
 
 a.accordion .ui path {
-	fill: #fff;
+	fill: #e9e9e9;
 }
 
 a.accordion:hover .ui path {
 	fill: tomato;
+}
+
+.hang {
+	padding: 0 25% 0 12px;
+	position: absolute;
+	margin-top: -5px;
 }
 
 /*
