@@ -1097,7 +1097,10 @@ function ensureApiTokens(req, res, next){
 	var OAuth2 = google.auth.OAuth2;
 
 	var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
-	Publisher.findOne({_id: req.user._id}, function(err, pu){
+	/*if (!req.user) {
+		return res.redirect('/login')
+	}*/
+	Publisher.findOne({_id: req.session.userId}, function(err, pu){
 		if (err) {
 			return next(err)
 		}
