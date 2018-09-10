@@ -272,6 +272,10 @@ html
 					
 				},
 				methods: {
+					clickSlider: function(diff, doc){
+						//`<a v-bind:click="" >${diff.user.username}<img class="avatar" src="${diff.user.avatar}"></img></a>`
+						$('#diff'+doc.index).val(diff.index)
+					},
 					onGapiLoad: function() {
 						var self = this;
 						console.log(gapi)
@@ -399,6 +403,7 @@ html
 					},
 					// Create and render a Picker object for picking user Photos.
 					createPicker: function(authresult) {
+						console.log(authresult)
 						var self = this;
 						if (self.gp && self.gp.access_token) {
 							var picker = new google.picker.PickerBuilder().

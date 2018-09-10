@@ -262,9 +262,9 @@ function textImporter(req, str, gid, cb) {
 					return 1;
 				}
 			})
-			next(null, dat, newch, gid);
+			next(null, dat, newch, gid, req.user);
 		},
-		function(dat, chtitle, gid, next){
+		function(dat, chtitle, gid, pu, next){
 			var newdate = new Date();
 			Content.find({}, function(err, data){
 				if (err) {
@@ -334,7 +334,7 @@ function textImporter(req, str, gid, cb) {
 										if (err) {
 											return next(err)
 										}
-										Content.findOneAndUpdate({_id: doc._id}, {$set:{'chapter.str': curly(chtitle)}}, {safe:true, new:true}, function(err, doc){
+										Content.findOneAndUpdate({_id: doc._id}, {$set:{'chapter.str': curly(chtitle)}}, {safe:true, new:true}, function(err, docc){
 											if (err) {
 												return next(err)
 											}
@@ -342,11 +342,11 @@ function textImporter(req, str, gid, cb) {
 												if (err) {
 													return next(err)
 												}
-												if (doc.properties.description) {
+												if (docc.properties.description) {
 													
 													var Diff = require('diff');
 														 
-													var diff = Diff.diffWordsWithSpace(doc.properties.description, marked(curly(item.desc)));
+													var diff = Diff.diffChars(docc.properties.description, marked(curly(item.desc)));
 													//console.log('sent this diff')
 													//console.log(diff)
 													var diffss = [];
@@ -365,6 +365,11 @@ function textImporter(req, str, gid, cb) {
 													var newdiff = {
 														date: newdate,
 														dif: diffss,
+														user: {
+															_id: pu._id,
+															username: pu.username,
+															avatar: pu.avatar
+														},
 														str: marked(curly(item.desc))
 													};
 													Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
@@ -951,7 +956,7 @@ function ensureAdmin(req, res, next) {
 	})
 }
 
-function tokenHandler(authClient, authCode, next) {
+function tokenHandler(authClient, next) {
 	
 	authClient.getToken(authCode).then(function(resp){
 		if (resp.tokens) {
@@ -1086,15 +1091,58 @@ router.get('/runtests', function(req, res, next){
 	}
 	return next()
 })*/
-router.all('/api/*', ensureAdmin);
+
+
+function ensureApiTokens(req, res, next){
+	var OAuth2 = google.auth.OAuth2;
+
+	var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+	Publisher.findOne({_id: req.user._id}, function(err, pu){
+		if (err) {
+			return next(err)
+		}
+		if (!pu.admin) {
+			return res.redirect('/')
+		}
+		authClient.setCredentials({
+			refresh_token: pu.garefresh,
+			access_token: pu.gaaccess
+		});
+		google.options({auth:authClient})
+		authClient.refreshAccessToken()
+		.then(function(response){
+			if (!response.tokens && !response.credentials) {
+				return res.redirect('/login');
+  		}
+			var tokens = response.tokens || response.credentials;
+			Publisher.findOneAndUpdate({_id: req.user._id}, {$set:{garefresh:tokens.refresh_token, gaaccess:tokens.access_token}}, {safe:true,new:true}, function(err, pub){
+				if (err) {
+					return next(err)
+				}
+				if (req.session.importdrive) {
+					req.session.gp = {
+						google_key: process.env.GOOGLE_KEY,
+						scope: ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.file'],
+						//google_clientid: process.env.GOOGLE_OAUTH_CLIENTID,
+						access_token: pub.gaaccess,
+						picker_key: process.env.GOOGLE_PICKER_KEY
+					}
+					req.session.authClient = true;
+				}
+				return next()
+			})
+		})
+	})
+}
+
+router.all('/api/*', ensureAdmin, ensureApiTokens);
 
 router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function(req, res, next){
 	//getDat(function(dat, distinct){
+	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
+	req.session.refer = newrefer;
 	if (!req.session.importgdrive) {
 		req.session.importgdrive = false;
-	}
-		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
-		req.session.refer = newrefer;
 		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
 			if (err) {
 				return next(err)
@@ -1115,13 +1163,44 @@ router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function
 				dat: req.dat,
 				ff: req.distinct,
 				str: str,
-				gp: (req.session.authClient ? req.session.gp : null)
+				gp: (req.isAuthenticated() && req.session.authClient ? req.session.gp : null)
 			});
 				
 			
 		});
-	//})
-	
+	} else {
+		ensureApiTokens(req, res, function(err){
+			if (err) {
+				return next(err)
+			}
+			Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+				if (err) {
+					return next(err)
+				}
+				if (data.length === 0) {
+					return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
+				}
+				var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
+					doctype: 'xml',
+					csrfToken: req.csrfToken(),
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					ff: req.distinct,
+					dat: req.dat,
+					appURL: req.app.locals.appURL
+				});
+				return res.render('agg', {
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					dat: req.dat,
+					ff: req.distinct,
+					str: str,
+					gp: (req.isAuthenticated() && req.session.authClient ? req.session.gp : null)
+				});
+					
+				
+			});
+
+		})
+	}
 });
 
 router.get('/register', function(req, res, next){
@@ -1180,11 +1259,19 @@ router.post('/login', passport.authenticate('local', {
 	return next();
 })*/
 
-router.get('/auth/google', passport.authenticate('google', {scope: 
-	[
-		'https://www.googleapis.com/auth/plus.login', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile', 
-		'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.file'
-	]}), function(req, res, next){
+router.get('/auth/google', passport.authenticate('google', {
+	scope: 
+		[
+			//'https://www.googleapis.com/auth/plus.login', 
+			'https://www.googleapis.com/auth/userinfo.email', 
+			'https://www.googleapis.com/auth/userinfo.profile', 
+			'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.file'
+		],
+		authType: 'rerequest',
+		accessType: 'offline',
+		prompt: 'consent',
+		includeGrantedScopes: true
+	}), function(req, res, next){
 	return next();
 });
 
@@ -2207,7 +2294,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 					})
 				});
 				//next(null, dat)
-				return res.status(200).send(data)
+				return res.status(200).send(dat)
 			})
 		})
 	})
@@ -2372,6 +2459,10 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				if (err) {
 					return next(err)
 				}
+				var pu = req.user;
+				if (!pu) {
+					return res.redirect('/login')
+				}
 				var thumburls = [];
 				var count = 0;
 				var i = 0;
@@ -2399,11 +2490,11 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						count = count;
 					}
 				}
-				next(null, doc, thumburls, body, keys)
+				next(null, doc, thumburls, body, keys, pu)
 				
 			})
 		},
-		function(doc, thumburls, body, keys, next) {
+		function(doc, thumburls, body, keys, pu, next) {
 			var imgs = [];
 			var count = 0;
 			for (var k = 0; k < keys.length; k++) {
@@ -2414,9 +2505,9 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				}
 			}
 			//console.log(imgs)
-			next(null, doc, thumburls, imgs, body)
+			next(null, doc, thumburls, imgs, body, pu)
 		},
-		function(doc, thumburls, imgs, body, next) {
+		function(doc, thumburls, imgs, body, pu, next) {
 			//console.log(body)
 			/*var curly = function(str){
 				return str
@@ -2446,7 +2537,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			var desc = removeExtras(body.description);
 			var Diff = require('diff');
 			//console.log(doc.properties.description, marked(curly(desc)))
-			var diff = Diff.diffWordsWithSpace((!doc.properties.description ? '' : doc.properties.description), marked(curly((!desc ? '' : desc))));
+			var diff = Diff.diffChars((!doc.properties.description ? '' : doc.properties.description), marked(curly((!desc ? '' : desc))));
 			//console.log('sent this diff')
 			//console.log(diff)
 			var diffss = [];
@@ -2465,6 +2556,11 @@ router.post('/api/editcontent/:id', function(req, res, next){
 
 			var newdiff = {
 				date: newdate,
+				user: {
+					_id: pu._id,
+					username: pu.username,
+					avatar: pu.avatar
+				},
 				dif: diffss,
 				str: marked(curly(desc))
 			};

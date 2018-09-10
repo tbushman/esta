@@ -3,6 +3,11 @@ var mongoose = require('mongoose'),
 var Diffs = new Schema({
 	date: Date,
 	old: String,
+	user: {
+		_id: String,
+		username: String,
+		avatar: String
+	},
 	dif: [{
 		count: Number,
 		added: Boolean,
