@@ -1104,6 +1104,9 @@ function ensureApiTokens(req, res, next){
 		if (err) {
 			return next(err)
 		}
+		if (!pu) {
+			return res.redirect('/logout')
+		}
 		if (!pu.admin) {
 			return res.redirect('/')
 		}
