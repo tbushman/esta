@@ -2,16 +2,18 @@ extends layout
 block page
 	- var menu = 'register'
 block content
-	
-	.container
-		div.module.full
-			div.row(style="display: block; position: fixed; height: 100%;background-color:var(--primary); background-color: #fff;")
-					
-				div.centerallwrap
-					div.centerall
-						div.tb-10-m0.shift-00
-								
-							//
+	div#vue
+
+		include includes/menu.pug
+		.container
+			div.module.full
+				div.row(style="display: block; position: fixed; height: 100%;background-color:var(--primary); background-color: #fff;")
+						
+					div.centerallwrap
+						div.centerall
+							div.tb-10-m0.shift-00
+									
+								//
 								span.tb-font-xl Already Registered? 
 								a(href="/login", role="button", ariaDescription="Log in")
 									span Log in
@@ -30,8 +32,9 @@ block content
 									p
 									button(type="submit", ariaDescription="Register")
 										span Register
-								p.tb-font-xl Or 
-							p.tb-font-xl authenticate with Google:
-							a.tb-03-m0.block.danger(href="/auth/google", title="Authenticate with Google")
-								span Google
-							#info #{info}
+								//
+									p.tb-font-xl Or 
+									p.tb-font-xl authenticate with Google:
+									a.tb-03-m0.block.danger(href="/auth/google", title="Authenticate with Google")
+										span Google
+								#info #{info}

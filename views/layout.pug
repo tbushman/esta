@@ -598,6 +598,30 @@ html
 						$.post('/panzoom/'+self.map.getCenter().lat+'/'+self.map.getCenter().lng+'/'+self.map.getZoom()+'', function(result){
 						})
 					},
+					uploadDocx: function(file) {
+						console.log(file)
+						var reader = new FileReader();
+						var self = this;
+						var f = new Blob([file], {type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'})
+						reader.onloadend = function(e) {
+							var fd = new FormData();
+
+							fd.append("docx", file);
+							var uploadurl = '/api/importdocx/docx';
+							$.ajax({
+								url: uploadurl,
+								type: 'POST',
+								data: fd,
+								processData: false,
+								contentType: false,
+								success: function(response) { 
+									window.location.href = '/'
+								}
+								
+							})
+						}
+						reader.readAsDataURL(f)
+					},
 					uploadTxt: function(file) {
 						console.log(file)
 						var reader = new FileReader();

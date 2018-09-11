@@ -23,6 +23,7 @@ var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Preliminary Sub
 var InDesign = require('async-indesign-script');
 var juice = require('juice');
 var HtmlDocx = require('html-docx-js');
+var mammoth = require('mammoth');
 //var google = require("googleapis"); 
 var {google} = require('googleapis');
 //var {googleAuth} = require('google-auth-library');
@@ -94,6 +95,9 @@ var storage = multer.diskStorage({
 			var os = require('os');
 			p = os.tmpdir() + '/gdoc';
 			q = ''+publishers+'/pu/publishers/ordinancer/tmp';
+		} else if (req.params.type === 'docx') {
+			p = ''+publishers+'/pu/publishers/ordinancer/docx'
+			q = null;//''+publishers+'/pu/publishers/ordinancer/word/thumbs'
 		} else {
 			p = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+''
 			q = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+''
@@ -106,18 +110,22 @@ var storage = multer.diskStorage({
 					if (err) {
 						console.log("err", err);
 					}
-					fs.access(q, function(err){
-						if (err && err.code === 'ENOENT') {
-							mkdirp(q, function(err){
-								if (err) {
-									console.log("err", err);
-								}
+					if (q) {
+						fs.access(q, function(err){
+							if (err && err.code === 'ENOENT') {
+								mkdirp(q, function(err){
+									if (err) {
+										console.log("err", err);
+									}
+									cb(null, p)
+								})
+							} else {
 								cb(null, p)
-							})
-						} else {
-							cb(null, p)
-						}
-					})
+							}
+						})
+					} else {
+						cb(null, p)
+					}
 					
 				})
 			} else {
@@ -133,7 +141,9 @@ var storage = multer.diskStorage({
 			cb(null, 'csv_' + req.params.id + '.csv')
 		} else if (req.params.type === 'txt') {
 			cb(null, 'txt_' + Date.now() + '.txt')
-		}  	
+		} else if (req.params.type === 'docx') {
+			cb(null, 'docx_'+Date.now()+'.docx')
+		}
   }
 });
 var uploadmedia = multer({ storage: storage/*, limits: {files: 1}*/ });
@@ -266,6 +276,8 @@ function textImporter(req, str, gid, cb) {
 		},
 		function(dat, chtitle, gid, pu, next){
 			var newdate = new Date();
+			console.log('dat')
+			console.log(dat)
 			Content.find({}, function(err, data){
 				if (err) {
 					return next(err)
@@ -1141,7 +1153,7 @@ function ensureApiTokens(req, res, next){
 	})
 }
 
-router.all('/api/*', ensureAdmin, ensureApiTokens);
+router.all(/^\/((?!login|register).*)$/, ensureAdmin/*, ensureApiTokens*/);
 
 router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function(req, res, next){
 	//getDat(function(dat, distinct){
@@ -1754,7 +1766,7 @@ router.post('/api/importgdoc/:fileid', function(req, res, next) {
 						fields: 'webContentLink'
 					})
 					.then(function(file){
-						//console.log(file)
+						console.log(file)
 						//console.log(file.downloadUrl)
 						var dlurl = 
 						//file.downloadUrl
@@ -1776,7 +1788,6 @@ router.post('/api/importgdoc/:fileid', function(req, res, next) {
 							result.pipe(dest);
 							async function fsWriteFile(cbk) {
 								await fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx', result.body);
-								var mammoth = require('mammoth');
 								mammoth.extractRawText({path: ''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx'})
 								.then(function(result){
 									var text = result.value;
@@ -2301,6 +2312,49 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 				});
 				//next(null, dat)
 				return res.status(200).send(dat)
+			})
+		})
+	})
+
+})
+
+
+router.post('/api/importdocx/:type'/*, rmDocs*/, uploadmedia.single('docx'), function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+	mammoth.extractRawText({path: req.file.path})
+	.then(function(result){
+		var text = result.value;
+		//console.log(text)
+		var messages = result.messages;
+		//console.log(messages)
+		var str = text.toString();
+	
+		textImporter(req, str, null, function(err, chind){
+			if (err) {
+				return next(err)
+			}
+			var dat = []
+			Content.distinct('chapter.str', function(err, distinct){
+				if (err) {
+					return next(err)
+				}
+				distinct.forEach(function(key, i) {
+					Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+						if (err) {
+							console.log(err)
+						}
+						if (data.length === 0) return;
+						if (data.length > 0) {
+							// I either add the 1 here or in template. A conundrum.
+							//chind = i + 1;
+							dat.splice(0,0,data)
+							//ff.shift();
+						}
+					})
+				});
+				//next(null, dat)
+				return res.status(200).send('ok')
 			})
 		})
 	})

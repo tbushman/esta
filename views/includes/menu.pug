@@ -22,6 +22,14 @@ each mn, k in menus
 				span.tb-font-s(v-text="'Import'")
 			div.slidedown(class= mn)
 				//
+					div(style="padding-left: 10px;pointer-events:all;")
+						if (mn !== "static")
+							.ui(class= mn)
+								include angle.pug
+					
+						span.tb-font-s(v-text="'MS Word: '")
+						input(class= mn, v-on:change="uploadDocx", type="file", value="Import Docx")
+				
 				a.submenu.drop(class= mn, v-bind:href="'/importgdrive'", title="Import Chapter from Google Drive")
 					if (mn !== "static")
 						.ui(class= mn)

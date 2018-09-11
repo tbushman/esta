@@ -2,16 +2,17 @@ extends layout
 block page
 	- var menu = 'login'
 block content
-	
-	.container
-		div.module.full
-			div.row(style="display: block; position: fixed; height: 100%; background-color:var(--primary); background-color: #fff;")
-				
-				div.centerallwrap
-					div.centerall
-						div.tb-10-m0.shift-00(style="padding-bottom: 50px")
-							//
-								span.tb-font-xl Enter username and password
+	div#vue
+		include includes/menu.pug
+		.container
+			div.module.full
+				div.row(style="display: block; position: fixed; height: 100%; background-color:var(--primary); background-color: #fff;")
+					
+					div.centerallwrap
+						div.centerall
+							div.tb-10-m0.shift-00(style="padding: 50px")
+								//
+								span.tb-font-l Enter username and password
 								form.row(enctype="multipart/form-data", method="POST", action="/login" )
 									input(type="hidden", name="_csrf", value= csrfToken)
 
@@ -30,10 +31,12 @@ block content
 											span Register
 								p.tb-font-xl First time authenticating?
 								a.tb-03-m0.block.spacer.success(href="/register", title="Register")
-									span Register
-								p.tb-font-xl Or 
-							p.tb-font-xl Authenticate with Google:
-							a.tb-03-m0.block.spacer.danger(href="/auth/google", title="Authenticate with Google")
-								span Google
+									span(style="color:#fff;") Register
+									
+								//
+									p.tb-font-xl Or 
+									p.tb-font-xl Authenticate with Google:
+									a.tb-03-m0.block.spacer.danger(href="/auth/google", title="Authenticate with Google")
+										span Google
 
-							#info #{info}
+								#info #{info}
