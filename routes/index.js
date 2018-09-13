@@ -276,8 +276,8 @@ function textImporter(req, str, gid, cb) {
 		},
 		function(dat, chtitle, gid, pu, next){
 			var newdate = new Date();
-			console.log('dat')
-			console.log(dat)
+			//console.log('dat')
+			//console.log(dat)
 			Content.find({}, function(err, data){
 				if (err) {
 					return next(err)
