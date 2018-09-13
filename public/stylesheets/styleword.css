@@ -1,3 +1,9 @@
+<!--@page { margin: 0.5in 0.75in 0.5in 0.75in; mso-page-orientation: portrait; mso-header: h1; mso-footer: f1; mso-header-margin:.5in; mso-footer-margin:.5in; mso-title-page: yes;} @page Section1 {  } div.Section1 { page:Section1; }-->
+
+p.MsoFooter { margin:0in; margin-bottom:.0001pt; mso-pagination:widow-orphan; tab-stops:center 3.0in right 6.0in; font-size:8.0pt;}
+#chapterend {
+	page-break-before: always;
+}
 html {
 	font-family: 'Overpass', sans-serif;
 	width: 100%;
@@ -52,6 +58,10 @@ table {
 
 th {
 	display: none;
+}
+
+td { 
+	page-break-inside:avoid;
 }
 
 ul {
@@ -174,6 +184,7 @@ h1, .tb-font-l {
 
 .tb-font-xxl {
 	font-family: "Overpass", sans-serif;
+	color: #000;
 	font-size: 28px;
 	font-weight: 400;
 	line-height: 32px;

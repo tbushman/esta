@@ -11,6 +11,7 @@ var mongoose = require('mongoose');
 var promise = require('bluebird');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var HtmlDocx = require('html-docx-js');
 var fs = require('fs');
 var url = require('url');
 var multer = require('multer');
@@ -43,6 +44,7 @@ marked.setOptions({
 });
 app.locals.$ = require('jquery');
 app.locals.md = marked;
+
 app.use(cors());
 
 app.use(function(req, res, next) {

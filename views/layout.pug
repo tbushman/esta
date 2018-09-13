@@ -30,6 +30,8 @@ html
 		script(type="text/javascript", src="/scripts/Leaflet.Editable.js")
 		//script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.0.2/mocha.min.js")
 		script(type='text/javascript', src='/scripts/leaflet-image_0_4_0.js')
+		script(type="text/javascript", src="/scripts/jszip.min.js")
+		//script(type='text/javascript', src='/scripts/html-docx.js')
 	body
 		block page
 		block header
@@ -598,29 +600,31 @@ html
 						$.post('/panzoom/'+self.map.getCenter().lat+'/'+self.map.getCenter().lng+'/'+self.map.getZoom()+'', function(result){
 						})
 					},
-					uploadDocx: function(file) {
-						console.log(file)
-						var reader = new FileReader();
+					uploadDocx: function(evt) {
 						var self = this;
-						var f = new Blob([file], {type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'})
-						reader.onloadend = function(e) {
-							var fd = new FormData();
 
-							fd.append("docx", file);
-							var uploadurl = '/api/importdocx/docx';
-							$.ajax({
-								url: uploadurl,
-								type: 'POST',
-								data: fd,
-								processData: false,
-								contentType: false,
-								success: function(response) { 
-									window.location.href = '/'
-								}
-								
+						var file = evt.target.files[0]
+						
+						JSZip.loadAsync(file)
+						.then(function(zip) {
+							zip.generateAsync({type: 'Blob'})
+							.then(function(blob){
+								var fd = new FormData();
+								fd.append("docx", blob);
+								var uploadurl = '/api/importdocx/docx';
+								$.ajax({
+									url: uploadurl,
+									type: 'POST',
+									data: fd,
+									processData: false,
+									contentType: false,
+									success: function(response) { 
+										window.location.href = '/'
+									}
+									
+								})
 							})
-						}
-						reader.readAsDataURL(f)
+						})
 					},
 					uploadTxt: function(file) {
 						console.log(file)

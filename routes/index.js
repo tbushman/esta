@@ -1270,7 +1270,7 @@ router.post('/login', passport.authenticate('local', {
 
 	req.session.userId = req.user._id;
 	req.session.loggedin = req.user.username;
-	res.redirect('/api/publish');		
+	res.redirect('/');		
 });
 
 /*router.get('/auth/googledrive', passport.authenticate('google', {scope: 'https://www.googleapis.com/auth/drive'}), function(req, res, next){
@@ -1358,16 +1358,19 @@ function mkdirpIfNeeded(p, cb){
 }
 
 function getDocxBlob(now, dat, toc, cb){
-	var pugpath;
+	var pugpath, hfpath;
 	if (toc) {
 		pugpath = path.join(__dirname, '../views/includes/exportword.pug');
+		hfpath = path.join(__dirname, '../views/includes/exportword/headerfooter.html')
+		pfpath = path.join(__dirname, '../views/includes/exportword/headerfooter.pug')
 	} else {
 		pugpath = path.join(__dirname, '../views/includes/exportwordnotoc.pug');
+		hfpath = null;
 	}
 	var str = pug.renderFile(pugpath, {
 		md: require('marked'),
-		doctype: 'html',
-		hrf: '/publishers/ordinancer/word/'+now+'.docx',
+		doctype: 'strict',
+		hrf: '/publishers/ordinancer/word/'+now+'.doc',
 		dat: dat.sort(function(a,b){
 			//console.log(a[0].chapter.ind)
 			if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
@@ -1377,9 +1380,31 @@ function getDocxBlob(now, dat, toc, cb){
 			}
 		})
 	});
+	var cloc = ''+publishers+'/pu/publishers/ordinancer/word/'+now+'.doc'
 	//console.log(str)
-	var juiced = juice(str);
-	var docx = HtmlDocx.asBlob(juiced);
+	var juicedmain = juice(str);
+	//console.log(juicedmain);
+	var docx = 
+		'MIME-Version: 1.0\nContent-Type: multipart/related; boundary="----=_NextPart."\n\n'+
+		'------=_NextPart.\n'+
+		//'Content-Location: file://'+cloc+'\n'+
+		'Content-Transfer-Encoding: base64\nContent-Type: text/html; charset="utf-8"\n\n'+
+		Buffer.from(juicedmain).toString('base64') + '\n\n' +
+		/*
+		(
+			hfpath ? 
+			'------=_NextPart.\n'+
+			//'Content-Location: file://'+hfpath+'\n'+
+			'Content-Transfer-Encoding: base64\nContent-Type: text/html; charset="utf-8"\n\n'+
+			Buffer.from(pug.renderFile(pfpath, {
+				doctype: 'html'
+			})).toString('base64') + '\n\n------=_NextPart.--'
+			:
+			''
+		)*/
+		'------=_NextPart.--'
+		
+	//var docx = HtmlDocx.asBlob(juiced);
 	cb(docx)
 }
 
@@ -1497,7 +1522,7 @@ router.get('/api/exportgdrivewhole', function(req, res, next){
 							}
 						});
 						
-						var pathh = path.join(p, '/'+now+'.docx');
+						var pathh = path.join(p, '/'+now+'.doc');
 						async function fsWriteFile(cbk){
 							await fs.writeFile(pathh, docx)
 							cbk(null);
@@ -1642,7 +1667,7 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 								}
 							});
 							
-							var pathh = path.join(p, '/'+now+'.docx');
+							var pathh = path.join(p, '/'+now+'.doc');
 							async function fsWriteFile(cbk){
 								await fs.writeFile(pathh, docx)
 								cbk(null);
@@ -2029,7 +2054,7 @@ router.get('/exportword', function(req, res, next){
 				var viewstr = pug.renderFile(pugviewpath, {
 					md: require('marked'),
 					doctype: 'html',
-					hrf: '/publishers/ordinancer/word/'+now+'.docx',
+					hrf: '/publishers/ordinancer/word/'+now+'.doc',
 					dat: dat.sort(function(a,b){
 						//console.log(a[0].chapter.ind)
 						if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
@@ -2051,7 +2076,7 @@ router.get('/exportword', function(req, res, next){
 					}
 				});
 				
-				var pathh = path.join(p, '/'+now+'.docx');
+				var pathh = path.join(p, '/'+now+'.doc');
 				fs.writeFile(pathh, docx, function(err){
 					if (err) {
 						return next(err)
@@ -2321,7 +2346,7 @@ router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.sing
 
 router.post('/api/importdocx/:type'/*, rmDocs*/, uploadmedia.single('docx'), function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
-	console.log(outputPath)
+	console.log(outputPath, req.file)
 	mammoth.extractRawText({path: req.file.path})
 	.then(function(result){
 		var text = result.value;
