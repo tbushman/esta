@@ -1,9 +1,10 @@
 
 //
-celll.tb-07-m0.tb-font-s(v-if="!diff", v-show="(accordions[n].indexOf(doc.index) !== -1)", v-html="doc.properties.description", aid:pstyle="p", aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="desc")
-	input(v-bind:id="'diff'+doc.index")
+celll.tb-07-m0.tb-font-s(v-if="!diff || doc.properties.diffs.length === 0", v-show="(accordions[n].indexOf(doc.index) !== -1)", v-html="doc.properties.description", aid:pstyle="p", aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="desc")
+	//input(v-bind:id="'diff'+doc.index")
+	span(v-html="doc.properties.description")
 celll.tb-07-m0.tb-font-s(
-	v-if="diff",
+	v-if="diff && doc.properties.diffs.length > 0",
 	v-show="(accordions[n].indexOf(doc.index) !== -1)",
 	aid:pstyle="p", aid:table="cell", aid:crows="1",
 	aid:ccols="1",
@@ -13,12 +14,8 @@ celll.tb-07-m0.tb-font-s(
 		ins(v-if="part.added", v-html="part.value", style="color: 'green';")
 		del(v-else-if="part.removed", v-html="part.value", style="color: 'red';")
 		span(v-else-if="part.value", v-html="part.value", style="color: 'grey';")
+	
 	span(v-if="!doc.properties.diffs[diff.ind]", v-show="(accordions[n].indexOf(doc.index) !== -1)", v-html="doc.properties.description")
-	label.tb-11-m0(v-bind:for="'diff'+doc.index", v-text="'Revision timeline'")
-	select(v-bind:id="'diff'+doc.index", style="pointer-events: all;", v-on:change="changeDiff(doc)")
-		option(v-if="!diff", value="null", v-text="'Latest'")
-		option(v-if="diff", v-for="(date, k) in doc.properties.diffs", v-bind:value="k", v-text="date.user.username + ' | ' + moment(date.date).format('YYYY-MM-DD mm:ss')")
-
 
 celll.tb-03-m0(v-show="(accordions[n].indexOf(doc.index) !== -1)", aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="imgs")
 
@@ -27,3 +24,7 @@ celll.tb-03-m0(v-show="(accordions[n].indexOf(doc.index) !== -1)", aid:table="ce
 		img(v-bind:src="img.image+'?version='+doc.__v", v-bind:alt="(img.caption !== 'Sample caption' ? img.caption : '' )")
 
 celll.tb-11-m0(v-if="doc.properties.diffs.length > 0", v-show="(accordions[n].indexOf(doc.index) !== -1)")
+	label.tb-11-m0(v-bind:for="'diff'+doc.index", v-text="'Revision timeline'")
+	select(v-bind:id="'diff'+doc.index", style="pointer-events: all;", v-on:change="changeDiff(doc)")
+		option(value="null", v-text="'Latest'")
+		option(v-if="doc.properties.diffs", v-for="(date, k) in doc.properties.diffs", v-bind:value="k", v-text="date.user.username + ' | ' + moment(date.date).format('YYYY-MM-DD mm:ss')")
