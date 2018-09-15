@@ -1385,7 +1385,7 @@ function getDocxBlob(now, dat, toc, cb){
 	var juicedmain = juice(str);
 	//console.log(juicedmain);
 	var docx = 
-		'MIME-Version: 1.0\nContent-Type: multipart/related; boundary="----=_NextPart."\n\n'+
+		/*'MIME-Version: 1.0\nContent-Type: multipart/related; boundary="----=_NextPart."\n\n'+
 		'------=_NextPart.\n'+
 		//'Content-Location: file://'+cloc+'\n'+
 		'Content-Transfer-Encoding: base64\nContent-Type: text/html; charset="utf-8"\n\n'+
@@ -1402,9 +1402,10 @@ function getDocxBlob(now, dat, toc, cb){
 			:
 			''
 		)*/
-		'------=_NextPart.--'
+		//'------=_NextPart.--'
 		
-	//var docx = HtmlDocx.asBlob(juiced);
+	//var docx = 
+	HtmlDocx.asBlob(juicedmain);
 	cb(docx)
 }
 
@@ -1476,7 +1477,7 @@ router.get('/api/exportgdrivewhole', function(req, res, next){
 					'mimeType': 'application/vnd.google-apps.folder'
 				})
 				.then(function(folder){
-					var mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+					var mimeType = 'application/msword';
 					drive.files.list({
 						q: 'name="export_docx" and "'+folder.data.files[0].id+'" in parents and mimeType="application/vnd.google-apps.folder"'
 					})
@@ -1593,7 +1594,7 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 			} else {
 				return 1;
 			}
-		})
+		});
 		var dat = [data];
 		var now = Date.now();
 		getDocxBlob(now, dat, false, function(docx){
@@ -1697,19 +1698,26 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 										fileId: fl.data.id
 									})
 									.then(function(f){
-										data.forEach(function(doc){
-											doc.properties.fileId = fl.data.id;
-											var rev = f.data.revisions[f.data.revisions.length - 1];
-											doc.properties.revisionId = rev.id;
-											doc.save(function(err){
-												if (err) {
-													return next(err)
-												}
+										Content.find({'chapter.ind': chind}, function(err, data){
+											if (err) {
+												return next(err)
+											}
+											data.forEach(function(doc){
+												//doc = doc.toObject();
+												doc.properties.fileId = fl.data.id;
+												var rev = f.data.revisions[f.data.revisions.length - 1];
+												doc.properties.revisionId = rev.id;
+												doc.save(function(err){
+													if (err) {
+														return next(err)
+													}
+												})
 											})
+											req.session.importgdrive = false
+											
+											return res.redirect('/')
 										})
-										req.session.importgdrive = false
 										
-										return res.redirect('/')
 									})
 									.catch(function(err){
 										if (err) {
@@ -1791,7 +1799,7 @@ router.post('/api/importgdoc/:fileid', function(req, res, next) {
 						fields: 'webContentLink'
 					})
 					.then(function(file){
-						console.log(file)
+						//console.log(file)
 						//console.log(file.downloadUrl)
 						var dlurl = 
 						//file.downloadUrl
@@ -1843,18 +1851,19 @@ router.post('/api/importgdoc/:fileid', function(req, res, next) {
 								if (err) {
 									return next(err)
 								}
+								// save draft to gdrive
 								return res.redirect('/api/exportgdriverev/'+gid.fileId+'/'+chind)
 								//return res.status(200).send('ok')
 							});
 						})
 					})
 					.catch(function(err){
-						console.log(err)
+						return next(err)
 					})
 					
 				})
 				.catch(function(err){
-					console.log(err)
+					return next(err)
 				}) 
 				
 			})

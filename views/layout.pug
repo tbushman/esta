@@ -68,7 +68,10 @@ html
 						dPath: this.dPathAttr(),
 						tinymce: null,
 						str: this.parseObj(!{JSON.stringify(str)}),
-						diff: null,
+						diff: /*{
+							index: (this.parseObj(!{JSON.stringify(doc)}) !== '' ? this.parseObj(!{JSON.stringify(doc)}).index : 0),
+							ind: 0
+						}*/null,
 						web: true,
 						export: this.parseBool(!{JSON.stringify(exports)}),
 						ff: this.parseObj(!{JSON.stringify(ff)}),//['General Provisions.', 'Concept Plan.', 'Sketch Plan.', 'Preliminary Subdivision Applications.', 'Final Subdivision Applications.', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final.', 'Subdivision Ordinance Amendments.', 'Noticing Requirements.', 'Appeals.', 'Special Excepetions.', 'Design and Construction Standards.', 'Guarantees for Subdivision Improvements, Facilities, and Amenities.', 'Definitions.'],
@@ -457,14 +460,16 @@ html
 					changeDiff: function(doc) {
 						var self = this;
 						var input = document.getElementById('diff'+doc.index);
-						if (input.value >= doc.properties.diffs.length) {
-							self.diff = null;
-						} else {
-							self.diff = {
+						var inputval = parseInt(input.value, 10);
+						//inputval = (!doc.properties.diffs[inputval] ? 0 : inputval)
+						self.diff = (
+							!doc.properties.diffs[inputval] ?
+							null :
+							{
 								index: doc.index,
-								ind: input.value
+								ind: inputval
 							}
-						}
+						)
 						
 					},
 					dragEnd: function(event, layer) {
@@ -524,6 +529,9 @@ html
 					accordion: function(n, ind) {
 						var self = this;
 						//console.log(self.accordions[n])
+						//console.log(self.dat[n][ind].index)
+						//self.changeDiff(self.dat[n][ind])
+						
 						if (self.accordions[n].indexOf(ind) === -1) {
 							self.accordions[n].push(ind);
 							self.accordions[n].sort();
