@@ -24,6 +24,10 @@ var InDesign = require('async-indesign-script');
 var juice = require('juice');
 var HtmlDocx = require('html-docx-js');
 var mammoth = require('mammoth');
+var HtmlDiffer = require('html-differ').HtmlDiffer;
+var htmlDiffer = new HtmlDiffer({
+	ignoreAttributes: ['id', 'for']
+});
 //var google = require("googleapis"); 
 var {google} = require('googleapis');
 //var {googleAuth} = require('google-auth-library');
@@ -356,13 +360,13 @@ function textImporter(req, str, gid, cb) {
 												}
 												if (docc.properties.description) {
 													
-													var Diff = require('diff');
-														 
-													var diff = Diff.diffChars(docc.properties.description, marked(curly(item.desc)));
+													//var Diff = require('diff');
+													var isEqual = htmlDiffer.isEqual(docc.properties.description, marked(curly(item.desc)))
+													var diff = htmlDiffer.diffHtml(docc.properties.description, marked(curly(item.desc)));
 													//console.log('sent this diff')
 													//console.log(diff)
 													var diffss = [];
-													if (diff.length) {
+													if (!isEqual) {
 														diff.forEach(function(dif){
 															//console.log(dif)
 															diffss.push({
@@ -372,24 +376,24 @@ function textImporter(req, str, gid, cb) {
 																removed: dif.removed
 															})
 														})
+														var newdiff = {
+															date: newdate,
+															dif: diffss,
+															user: {
+																_id: pu._id,
+																username: pu.username,
+																avatar: pu.avatar
+															},
+															str: marked(curly(item.desc))
+														};
+														Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
+															if (err) {
+																return next(err)
+															}
+															
+														})
 													}
 
-													var newdiff = {
-														date: newdate,
-														dif: diffss,
-														user: {
-															_id: pu._id,
-															username: pu.username,
-															avatar: pu.avatar
-														},
-														str: marked(curly(item.desc))
-													};
-													Content.findOneAndUpdate({_id: doc._id}, {$push:{'properties.diffs': newdiff}}, {safe:true, new:true}, function(err, doc){
-														if (err) {
-															return next(err)
-														}
-														
-													})
 												}
 											})
 										})
@@ -2590,18 +2594,21 @@ router.post('/api/editcontent/:id', function(req, res, next){
 		},
 		function(doc, thumburls, body, keys, pu, next) {
 			var imgs = [];
+			var orientations = [];
 			var count = 0;
 			for (var k = 0; k < keys.length; k++) {
-				var thiskey = 'img'+count+''
+				var thiskey = 'img'+count+'';
+				var thiso = 'orientation'+count+'';
 				if (keys[k] === thiskey) {
 					imgs.push(body[keys[k]])
+					orientations.push(body[thiso]);
 					count++;
 				}
 			}
 			//console.log(imgs)
-			next(null, doc, thumburls, imgs, body, pu)
+			next(null, doc, thumburls, imgs, orientations, body, pu)
 		},
-		function(doc, thumburls, imgs, body, pu, next) {
+		function(doc, thumburls, imgs, orientations, body, pu, next) {
 			//console.log(body)
 			/*var curly = function(str){
 				return str
@@ -2629,13 +2636,14 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				return str.replace(/(\d\s*)&rdquo;/g, '$1\"').replace(/(\d\s*)&rsquo;/g, "$1'")
 			}
 			var desc = removeExtras(body.description);
-			var Diff = require('diff');
+			var isEqual = htmlDiffer.isEqual((!doc.properties.description ? '' : doc.properties.description), marked(curly((!desc ? '' : desc))))
+			//var Diff = require('diff');
 			//console.log(doc.properties.description, marked(curly(desc)))
-			var diff = Diff.diffChars((!doc.properties.description ? '' : doc.properties.description), marked(curly((!desc ? '' : desc))));
+			var diff = htmlDiffer.diffHtml((!doc.properties.description ? '' : doc.properties.description), marked(curly((!desc ? '' : desc))));
 			//console.log('sent this diff')
 			//console.log(diff)
-			var diffss = [];
-			if (diff.length) {
+			var diffss = [], newdiff = null;
+			if (!isEqual) {
 				diff.forEach(function(dif){
 					//console.log(dif)
 					diffss.push({
@@ -2645,19 +2653,20 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						removed: dif.removed
 					})
 				})
+				newdiff = {
+					date: newdate,
+					user: {
+						_id: pu._id,
+						username: pu.username,
+						avatar: pu.avatar
+					},
+					dif: diffss,
+					str: marked(curly(desc))
+				};
 			}
 			var newdate = new Date();
 
-			var newdiff = {
-				date: newdate,
-				user: {
-					_id: pu._id,
-					username: pu.username,
-					avatar: pu.avatar
-				},
-				dif: diffss,
-				str: marked(curly(desc))
-			};
+			
 			//console.log(desc, body.description);
 			var end;
 			var current;
@@ -2715,7 +2724,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						thumb_abs: path.join(publishers, '/pu'+thumbs[i]),
 						caption: (body['img'+i+'_caption'] ? curly(body['img'+i+'_caption']) : ''),
 						postscript: (body['img'+i+'_postscript'] ? curly(body['img'+i+'_postscript']) : ''),
-						featured: body['img'+i+'_featured']
+						featured: body['img'+i+'_featured'],
+						orientation: orientations[i]
 					}
 
 					entrymedia.push(media)
@@ -2751,13 +2761,18 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						if (errr) {
 							next(errr)
 						}
-						Content.findOneAndUpdate({_id: doc._id}, set4, options, function(errr, doc) {
-							if (errr) {
-								next(errr)
-							} else {
-								next(null)
-							}
-						})
+						if (!newdiff) {
+							next(null)
+						} else {
+							Content.findOneAndUpdate({_id: doc._id}, set4, options, function(errr, doc) {
+								if (errr) {
+									next(errr)
+								} else {
+									next(null)
+								}
+							})
+						}
+						
 					})
 				})
 			})

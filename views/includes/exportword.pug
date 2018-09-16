@@ -6,103 +6,176 @@ html(xmlns:o='urn:schemas-microsoft-com:office:office', xmlns:w='urn:schemas-mic
 		link(rel="File-List", href="exportword/filelist.xml")
 		style(type="text/css")
 			include ../../public/stylesheets/styleword.css
-		title= appTitle
+		title #{appTitle}
+		<!--[if gte mso 9]>
 		xml
 			w:WordDocument
 				w:View Print
 				w:Zoom 90
 				w:DoNotOptimizeForBrowser
+		<![endif]-->
 
 		
 	body
 		
-		div.centerallwrap.Section1(style="background-color: #fff; pointer-events:all;")
-			div#h1(style="mso-element:header;")
-				p.tb-font-l(class="MsoHeader") Brigham City
-				each data, n in dat
-					if (n === 0)
+		div.Section1
+			div.centerallwrap(style="background-color: #fff; background-color: var(--primary); pointer-events:all;")
+				
+
+				div.centerall
+					div(id= h1, style="mso-element:header;")
+						p.tb-font-l(class="MsoHeader") Brigham City
+						each data, n in dat
+							if (n === 0)
+								div#chapter
+									table(cellspacing="0px", style="width:100%;table-layout: auto;")
+										tr.tb-font-xxl(style="padding: 0;")
+											td 
+												
+												span Title 
+												span.bd #{data[0].title.ind}
+												span &nbsp
+												span #{data[0].title.str}
+
+					p.tb-font-xl Table of Contents
+					<!--[if supportFields]>
+					span(style='mso-element:field-begin')
+					| TOC \o "1-2" \h \z \t
+					span(style='mso-element:field-separator')
+					span.tb-font-xl(style='mso-no-proof:yes; font-size: 20px; color: red;') Table of contents - Please right-click here and then choose "Update Field" to initialize this field.
+					span(style='mso-element:field-end')
+
+					<![endif]-->
+					p.tb-11-m0.footrule &nbsp
+					each data, n in dat
+						div#chapterend &nbsp
 						div#chapter
-							table(cellspacing="0px", style="width:100%;table-layout: auto;")
-								tr.tb-font-xxl(style="padding: 0;")
-									td 
+							table(cellspacing="0px", style="width:100%;table-layout: fixed;")
+									
+								tr.tb-font-xxs
+									td(colspan="1", style="visibility:hidden;")
+									td(colspan="1", style="visibility:hidden;")
+								tr.tb-font-l
+									td(style="padding: 0;", colspan="2")
 										
 										span Title 
 										span.bd #{data[0].title.ind}
 										span &nbsp
 										span #{data[0].title.str}
 
-			div.centerall
-				p.tb-font-xl Table of Contents
-				<!--[if supportFields]>
-				span(style='mso-element:field-begin')
-				| TOC \o "1-2" \h \z \t
-				span(style='mso-element:field-separator')
-				span.tb-font-xl(style='mso-no-proof:yes; font-size: 20px; color: red;') Table of contents - Please right-click here and then choose "Update Field" to initialize this field.
-				span(style='mso-element:field-end')
+								tr.tb-font-l
+									td(style="padding: 0;", colspan="2")
+										h1
+											span Chapter 
+											span.bd #{data[0].chapter.ind}
+											span &nbsp
+											span #{data[0].chapter.str}
 
-				<![endif]-->
-				p.tb-11-m0.footrule &nbsp
-				each data, n in dat
-					div#chapterend &nbsp
-					div#chapter
-						table(cellspacing="0px", style="width:100%;table-layout: auto;")
-							tr.tb-font-l(style="padding: 0;")
-								td 
-									
-									span Title 
-									span.bd #{data[0].title.ind}
-									span &nbsp
-									span #{data[0].title.str}
+								
 
-							tr.tb-font-l(style="padding: 0;")
-								td
-									h1
-										span Chapter 
-										span.bd #{data[0].chapter.ind}
-										span &nbsp
-										span #{data[0].chapter.str}
-
-
-						each doc, i in data
-							div(style="margin-top: 15px;")
-								table(cellspacing="0px", style="width:100%")
-									tr
-										td.tb-font-l.headrule(colspan=(doc.properties.media.length > 0 ? 1 : 3), style="vertical-align: top;")
-											h2
-												span.bd #{doc.title.ind}
-													span .
-													span #{doc.chapter.ind}
-													span .
-													span #{doc.section.ind}
-												span &nbsp
-													span #{doc.section.str}
-											span.tb-font-xs
-												if (doc.properties.description)
-													!= md(doc.properties.description)
-
-										if (doc.properties.media.length > 0)
-											td.headrule(colspan="2")
+									each doc, i in data
+										- var lcount = 0
+										- var hcount = 0
+										//table(style="table-layout:fixed;width:100%;", width="100%")
+										tr.tb-font-xxs(style="margin-top: 15px;")
 											
-												each img, j in doc.properties.media
-													a.img.tb-11-m0
-														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-													p.tb-font-xxs(style="position: absolute;") #{img.caption}
-					br
-					p.tb-11-m0.footrule &nbsp
-			div#f1(style="mso-element:footer")
-				p.tb-font-xs.MsoFooter
-					table(width="100%", border="0", cellspacing="0", cellpadding="0")
-						tr
-							td(width="80%")
-								
-							td(align="right", width="20%")
-								
-								span(style='mso-field-code: " PAGE "')
-									span(style='mso-no-proof:yes')
-								<!--[if supportFields]>
-								span(style='mso-element:field-begin')
-								span(style='mso-no-proof:yes;font-size: 20px; color: red;') Page no. - Please right-click here and then choose "Update Field" to initialize this field.
-								| PAGE
-								span(style='mso-element:field-separator')
-								<![endif]-->
+											each img, j in doc.properties.media
+												if (img.orientation === 'landscape')
+													- lcount++
+												else
+													- hcount++
+												
+										
+											td(colspan="1", style="visibility:hidden;")
+											td(colspan="1", style="visibility:hidden;")
 
+										
+										if (hcount > 0)
+											tr.tb-font-l
+												td.headrule(colspan="1", style="padding: 0 0 20px 0;")
+												
+													each img, j in doc.properties.media
+														
+														if (img.orientation === 'portrait')
+															a.img.tb-11-m0
+																img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
+															p.tb-font-xxs(style="position: absolute;") #{img.caption}
+												
+												td.headrule(
+													colspan="1",
+													style="vertical-align: top; padding: 20px 0 20px 0;"
+													)
+													h2
+														span.bd #{doc.title.ind}
+															span .
+															span #{doc.chapter.ind}
+															span .
+															span #{doc.section.ind}
+														span &nbsp
+															span #{doc.section.str}
+													
+													each img, j in doc.properties.media
+														if (img.orientation === 'landscape')
+															div.row
+																a.img.tb-11-m0
+																	img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
+																p.tb-font-xxs(style="position: absolute;") #{img.caption}
+													span.tb-font-xs
+														if (doc.properties.description)
+															if (md(doc.properties.description).substring(1,2) === 'p')
+																!= md(doc.properties.description)
+															else
+																p
+																	!= md(doc.properties.description)
+										else
+											tr.tb-font-xxs
+												td(colspan="1", style="visibility:hidden;")
+												td(colspan="1", style="visibility:hidden;")
+											tr.tb-font-l
+												td.headrule(
+													colspan="2",
+													style="vertical-align: top; padding: 20px 0 20px 0;"
+													)
+													h2
+														span.bd #{doc.title.ind}
+															span .
+															span #{doc.chapter.ind}
+															span .
+															span #{doc.section.ind}
+														span &nbsp
+															span #{doc.section.str}
+													
+													each img, j in doc.properties.media
+														if (img.orientation === 'landscape')
+															div.row
+																a.img.tb-11-m0
+																	img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
+																p.tb-font-xxs(style="position: absolute;") #{img.caption}
+													span.tb-font-xs
+														if (doc.properties.description)
+															if (md(doc.properties.description).substring(1,2) === 'p')
+																!= md(doc.properties.description)
+															else
+																p
+																	!= md(doc.properties.description)
+											
+												
+						br
+						p.tb-11-m0.footrule &nbsp
+						br
+				div(id="f1", style="mso-element:footer")
+					p.tb-font-xs.MsoFooter
+						table(width="100%", border="0", cellspacing="0", cellpadding="0")
+							tr
+								td(width="80%")
+									
+								td(align="right", width="20%")
+									
+									span(style='mso-field-code: " PAGE "')
+										span(style='mso-no-proof:yes')
+									<!--[if supportFields]>
+									span(style='mso-element:field-begin')
+									span(style='mso-no-proof:yes;font-size: 20px; color: red;') Page no. - Please right-click here and then choose "Update Field" to initialize this field.
+									| PAGE
+									span(style='mso-element:field-separator')
+									<![endif]-->

@@ -4,7 +4,8 @@ maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:ai
 	div.tb-01-m0 &nbsp
 	a.tb-03-m0.block.danger(role="button", href="/exportpdf", title="Page blank -- reload")
 		span Blank page? Click to reload
-
+	
+	
 	header.row.tb-font-l Table of Contents
 	chapter.row(v-for="(data, n) in dat", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
 		taable.row(aid:table="table", v-bind:aid:trows="data.length" aid:tcols="2", aid5:tablestyle="entry", style="width: 100%;")

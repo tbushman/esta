@@ -12,35 +12,38 @@ each mn, k in menus
 
 		if (mn === 'static')
 			div.dropdown.static(style="float: left; left:6px; right:auto; display: flex;")
-				a.submenu.drop(v-bind:href="'/'", class= mn)
+				a.submenu.drop(href="/", class= mn)
 					span Brigham City
 		div.dropdown(class= mn)
 			
-			a.submenu.drop(class= mn, v-bind:href="'/'")
-				span.tb-font-s(v-text="'Home'")
+			a.submenu.drop(class= mn, href="/")
+				span.tb-font-s Home
 			a.submenu.drop(class= mn, title="Import")
-				span.tb-font-s(v-text="'Import'")
+				span.tb-font-s Import
 			div.slidedown(class= mn)
 				//
 				
-				a.submenu.drop(class= mn, v-bind:href="'/importgdrive'", title="Import Chapter from Google Drive")
+				a.submenu.drop(class= mn, href="/importgdrive", title="Import Chapter from Google Drive")
 					if (mn !== "static")
-						.ui(class= mn)
-							include angle.pug
-					span.tb-font-s(v-text="'Google Drive'")
-				div(style="padding-left: 10px;pointer-events:all;")
-					if (mn !== "static")
-						.ui(class= mn)
-							include angle.pug
-				
-					span.tb-font-s(v-text="'MS Word: '")
-					input(class= mn, v-on:change="uploadDocx", type="file", value="Import Docx")
+						if (menu !== "word")
+							.ui(class= mn)
+								include angle.pug
+					span.tb-font-s Google Drive
+				if (menu !== "word")
+					div(style="padding-left: 10px;pointer-events:all;")
+						if (mn !== "static")
+							.ui(class= mn)
+								include angle.pug
+						
+						span.tb-font-s MS Word
+						input(class= mn, v-on:change="uploadDocx", type="file", value="Import Docx")
 
-				a.submenu.drop(class= mn, v-bind:href="'/api/importtxt'", title="Import Chapter as plain text")
+				a.submenu.drop(class= mn, href="/api/importtxt", title="Import Chapter as plain text")
 					if (mn !== "static")
-						.ui(class= mn)
-							include angle.pug
-					span.tb-font-s(v-text="'Plain .txt'")
+						if (menu !== "word")
+							.ui(class= mn)
+								include angle.pug
+					span.tb-font-s Plain .txt
 			if (menu === "publish")
 				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].chapter.str)", title="Import Chapter as plain text")
 					span.tb-font-s(v-text="'Add Section to Ch. '+dat[0][0].chapter.ind+''")
@@ -53,16 +56,20 @@ each mn, k in menus
 					span.tb-font-s(v-text="'Export PDF file'")
 			
 			a.submenu.drop(class= mn, title="Export")
-				span.tb-font-s(v-text="'Export'")
+				span.tb-font-s Export
 			div.slidedown(class= mn)
-				a.submenu.drop(class= mn, v-bind:href="'/exportword'")
+				a.submenu.drop(class= mn, href="/exportword")
 					if (mn !== "static")
-						.ui(class= mn)
-							include angle.pug
-					span.tb-font-s(v-text="'Download Word file'")
+						if (menu !== "word")
+							.ui(class= mn)
+								include angle.pug
+					span.tb-font-s Download Word file
 				
-				a.submenu.drop(class= mn, v-bind:href="'/api/exportgdrivewhole'")
+				a.submenu.drop(class= mn, href="/api/exportgdrivewhole")
 					if (mn !== "static")
-						.ui(class= mn)
-							include angle.pug
-					span.tb-font-s(v-text="'Save to Google Drive'")
+						if (menu !== "word")
+							.ui(class= mn)
+								include angle.pug
+					span.tb-font-s Save to Google Drive
+		
+

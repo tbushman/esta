@@ -814,6 +814,13 @@ html
 					},
 					uploadBlob: function(img, can, imgindex, cb) {
 						var self = this;
+						var orientation = 'portrait'
+						if (can.width > can.height) { 
+							orientation = 'landscape' 
+						} else { 
+							orientation = 'portrait' 
+						}
+
 						if (!HTMLCanvasElement.prototype.toBlob) {
 						 Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
 							value: function (callback, type, quality) {
@@ -844,6 +851,7 @@ html
 										self.doc.properties.media[imgindex].image = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
 										self.doc.properties.media[imgindex].thumb_abs = response;
 										self.doc.properties.media[imgindex].thumb = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
+										self.doc.properties.media[imgindex].orientation = orientation;
 										cb();
 									}
 								}

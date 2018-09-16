@@ -1,5 +1,5 @@
 <!--@page { margin: 0.5in 0.75in 0.5in 0.75in; mso-page-orientation: portrait; mso-header: h1; mso-footer: f1; mso-header-margin:.5in; mso-footer-margin:.5in; mso-title-page: yes;} @page Section1 {  } div.Section1 { page:Section1; }-->
-
+@page Section1 { mso-header: h1; mso-footer: f1; mso-header-margin:.5in; mso-footer-margin:.5in; } div.Section1 { page:Section1; }
 p.MsoFooter { margin:0in; margin-bottom:.0001pt; mso-pagination:widow-orphan; tab-stops:center 3.0in right 6.0in; font-size:8.0pt;}
 #chapterend {
 	page-break-before: always;
@@ -311,6 +311,7 @@ em {
 	display: none;
 }
 .dropdown.static {
+	display: none;
 	visibility: visible;
 	left: 0;
 	right: 0;
@@ -320,8 +321,6 @@ em {
 	background-color: rgba(255,255,255,0);
 	max-height: 100%;
 	position: fixed;
-	-webkit-clip-path: none;
-	clip-path: none;
 	box-shadow: none;
 	margin: 0 auto;
 	justify-content: center;
@@ -337,6 +336,7 @@ em {
 .submenu.static.active {
 	background: rgba(255,255,255,0);
 	border: 2px solid #fff;
+	border: 2px solid var(--primary);
 	box-sizing: border-box;
 }
 .submenu.static.active span {
@@ -350,34 +350,45 @@ em {
 
 .submenu.static > span {
 	font-size: calc(45px / 2.5);
+	font-size: calc(var(--thumbw) / 2.5);
 	pointer-events: none;
 	width: 100%;
 }
 .submenu.static > span, .submenu.static > .ui > .fas, .qty {
 	color: #652c90;
+	color: var(--quarternary);
 	line-height: 72px;
+	line-height: calc(var(--thumbw) * 1.5);
 }
 .submenu.drop.static > span, .submenu.drop.static > .ui > .fas, .qty {
 	line-height: 45px;
+	line-height: var(--thumbw);
 	color: #000;
+	color: var(--secondary);
+	/*font-size: 15px;*/
 }
 .submenu.drop.static.active > span {
 	
 	color: #652c90;
+	color: var(--quarternary);
 }
 .submenu.drop.static:hover > span {
 	
 	color: #000;
+	color: var(--secondary);
 }
 .submenu.drop.static {
 	line-height: 45px;
+	line-height: var(--thumbw);
 	height: 45px;
+	height: var(--thumbw);
 }
 .dropdown.static > .submenu:last-child > span, .dropdown.static > .submenu:last-child > .ui > .fas {
 	color: tomato;
 }
 .submenu.static:hover > span, .submenu.static:last-child:hover > span, .submenu.static:hover > .ui > .fas, .submenu.static:last-child:hover > .ui > .fas {
 	color: #000!important;
+	color: var(--secondary);
 }
 .slidedown.static {
 	position: absolute;
@@ -391,11 +402,9 @@ em {
 	max-height: calc(100% - 80px);
 	overflow-y: hidden;
 	overflow-x: hidden;
-	-webkit-clip-path: polygon(0% 0%, 40% 0%, 100% 20%, 100% 100%, 0% 100%);
-	clip-path: polygon(0% 0%, 40% 0%, 100% 20%, 100% 100%, 0% 100%);
 	padding: 5px 0 10px 0;
 	border: 2px solid rgba(255,255,255,1);
-	max-width: 180px;
+	box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
 	/*transform: translate(-28%, 0%);*/
 	margin-left: 107px;
 }
@@ -410,6 +419,7 @@ em {
 	max-height: inherit;
 	box-shadow: 0px 0px 0px 0px #fff;
 	background-color: #fff;
+	background-color: var(--primary);
 }
 .slidedown.static .submenu.drop {
 	padding: 0 0 0 10px;
@@ -417,12 +427,14 @@ em {
 }
 .slidedown.static .submenu.drop span {
 	color: #652c90;
+	color: var(--quarternary);
 }
 .ui.static {
 	width: 45px;
 	max-width: 45px;
 	min-width: 45px;
 }
+
 /**/
 breadcrumbs, celll {
 	pointer-events: none;

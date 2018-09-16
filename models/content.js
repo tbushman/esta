@@ -40,7 +40,8 @@ var GeoJSON = new Schema({
 				thumb_abs: String,
 				caption: String,
 				postscript: String,
-				url: String
+				url: String,
+				orientation: String
 			}
 		],
 		diffs: [Diffs]
