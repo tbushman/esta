@@ -25,6 +25,6 @@ celll.tb-03-m0(v-show="(accordions[n].indexOf(doc.index) !== -1)", aid:table="ce
 
 celll.tb-11-m0(v-if="doc.properties.diffs.length > 0", v-show="(accordions[n].indexOf(doc.index) !== -1)")
 	label.tb-11-m0(v-bind:for="'diff'+doc.index", v-text="'Revision timeline'")
-	select(v-bind:id="'diff'+doc.index", style="pointer-events: all;", v-on:change="changeDiff(doc)")
+	select(v-bind:id="'diff'+doc.index", style="pointer-events: all;", v-on:change="changeDiff(doc, false)")
 		option(value="null", v-text="'Latest'")
 		option(v-if="doc.properties.diffs", v-for="(date, k) in doc.properties.diffs", v-bind:value="k", v-text="date.user.username + ' | ' + moment(date.date).format('YYYY-MM-DD mm:ss')")

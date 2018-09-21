@@ -950,6 +950,7 @@ function getDat64(next){
 }
 
 function ensureAdmin(req, res, next) {
+	//console.log(req.isAuthenticated())
 	if (!req.isAuthenticated()) {
 		return res.redirect('/login')
 	}
@@ -1157,7 +1158,7 @@ function ensureApiTokens(req, res, next){
 	})
 }
 
-router.all(/^\/((?!login|register).*)$/, ensureAdmin/*, ensureApiTokens*/);
+router.all(/^\/((?!login|register|logout).*)$/, ensureAdmin/*, ensureApiTokens*/);
 
 router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function(req, res, next){
 	//getDat(function(dat, distinct){
@@ -1389,27 +1390,27 @@ function getDocxBlob(now, dat, toc, cb){
 	var juicedmain = juice(str);
 	//console.log(juicedmain);
 	var docx = 
-		/*'MIME-Version: 1.0\nContent-Type: multipart/related; boundary="----=_NextPart."\n\n'+
+		'MIME-Version: 1.0\nContent-Type: multipart/related; boundary="----=_NextPart."\n\n'+
 		'------=_NextPart.\n'+
 		//'Content-Location: file://'+cloc+'\n'+
 		'Content-Transfer-Encoding: base64\nContent-Type: text/html; charset="utf-8"\n\n'+
-		Buffer.from(juicedmain).toString('base64') + '\n\n' +
-		/*
-		(
+		Buffer.from(str).toString('base64') + '\n\n' +
+		
+		/*(
 			hfpath ? 
 			'------=_NextPart.\n'+
 			//'Content-Location: file://'+hfpath+'\n'+
 			'Content-Transfer-Encoding: base64\nContent-Type: text/html; charset="utf-8"\n\n'+
 			Buffer.from(pug.renderFile(pfpath, {
-				doctype: 'html'
+				doctype: 'strict'
 			})).toString('base64') + '\n\n------=_NextPart.--'
 			:
-			''
+			'\n\n------=_NextPart.--'
 		)*/
-		//'------=_NextPart.--'
+		'------=_NextPart.--'
 		
 	//var docx = 
-	HtmlDocx.asBlob(juicedmain);
+	//HtmlDocx.asBlob(juicedmain);
 	cb(docx)
 }
 
@@ -1926,6 +1927,7 @@ router.get('/logout', function(req, res, next) {
 		function(next){
 			req.session.userId = null;
 			req.session.loggedin = null;
+			req.session.failedAttempt = false;
 			req.logout();
 			next(null)
 		},
@@ -1936,20 +1938,21 @@ router.get('/logout', function(req, res, next) {
 					if (err) {
 						req.session = null;
 						//improve error handling
-						return res.redirect('/');
+						
 					} else {
 						req.session = null;
-						return res.redirect('/');
 					}
+					next(null)
 				});		
 			} else {
-				return res.redirect('/');
+				next(null);
 			}
 		}
 	], function(err){
 		if (err) {
 			return next(err)
 		}
+		return res.redirect('/');
 	})	
 });
 

@@ -478,10 +478,10 @@ a.menu.drop, a.submenu.drop {
 a.submenu.drop {
 	pointer-events: all;
 }
-.submenu:hover span, .submenu:hover i {
+/*.submenu:hover span, .submenu:hover i {
 	color: #000!important;
 	color: var(--secondary);
-}
+}*/
 
 .submenu.drop .ui {
 	width: 15px;
@@ -572,15 +572,15 @@ display: inline-block;
 .submenu.drop.static {
 	line-height: 45px;
 	line-height: var(--thumbw);
-	height: 45px;
-	height: var(--thumbw);
+	height: auto;
+	min-height: 45px;
+	min-height: var(--thumbw);
 }
 .dropdown.static > .submenu:last-child > span, .dropdown.static > .submenu:last-child > .ui > .fas {
 	color: tomato;
 }
-.submenu.static:hover > span, .submenu.static:last-child:hover > span, .submenu.static:hover > .ui > .fas, .submenu.static:last-child:hover > .ui > .fas {
-	color: #000!important;
-	color: var(--secondary);
+.submenu.static:hover > span, .submenu.static:last-child:hover > span, .submenu.static:hover > .ui > .fas, .submenu.static:last-child:hover > .ui > .fas, .slidedown.static .submenu.drop span {
+	color: tomato;
 }
 .slidedown.static {
 	position: absolute;
@@ -618,8 +618,11 @@ display: inline-block;
 	
 }
 .slidedown.static .submenu.drop span {
-	color: #652c90;
-	color: var(--quarternary);
+	color: #000;
+	color: var(--secondary);
+}
+.slidedown.static div:hover span, div.slidedown.static a.submenu.drop.static:hover span {
+	color: tomato;
 }
 .ui.static {
 	width: 45px;

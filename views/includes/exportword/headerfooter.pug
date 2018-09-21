@@ -6,15 +6,25 @@ html(xmlns:o='urn:schemas-microsoft-com:office:office', xmlns:w='urn:schemas-mic
 	body
 		div#h1(style="mso-element:header;")
 			p(class="MsoHeader") Header
-		div#f1(style="mso-element:footer")
-			p.MsoFooter
+		
+		div(id="f1", style="mso-element:footer")
+			p.tb-font-xs.MsoFooter
 				table(width="100%", border="0", cellspacing="0", cellpadding="0")
 					tr
 						td(width="80%")
 							
 						td(align="right", width="20%")
-							
-							span(class="MsoPageNumber", style="mso-tab-count:2")
-								
-								span(style='mso-field-code: "" PAGE "" ')
-									span(style='mso-no-proof:yes')
+							<!--[if supportFields]>
+							span.MsoPageNumber
+								span(style='mso-element:field-begin')
+								span(style='mso-spacerun:yes') 
+								| PAGE
+								span(style='mso-element:field-separator')
+							<![endif]-->
+							span.MsoPageNumber
+								span(style='mso-no-proof:yes')
+							<!--[if supportFields]>
+							span.MsoPageNumber
+								span(style='mso-element:field-end')
+							<![endif]-->
+

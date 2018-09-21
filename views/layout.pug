@@ -457,19 +457,65 @@ html
 						$('.danger').hide();
 						$.post('/api/exportpdf')
 					},
-					changeDiff: function(doc) {
+					changeDiff: function(doc, newclick) {
 						var self = this;
 						var input = document.getElementById('diff'+doc.index);
-						var inputval = parseInt(input.value, 10);
-						//inputval = (!doc.properties.diffs[inputval] ? 0 : inputval)
-						self.diff = (
-							!doc.properties.diffs[inputval] ?
-							null :
-							{
-								index: doc.index,
-								ind: inputval
-							}
-						)
+						if (!input) {
+							self.diff = 
+							(
+								!doc || !doc.properties.diffs || doc.properties.diffs.length === 0 ?
+								{
+									index: doc.index,
+									ind: null
+								}
+								:
+								{
+									index: doc.index,
+									ind: doc.properties.diffs.length - 1
+								}
+							) 
+						} else {
+							var inputval = parseInt(input.value, 10);
+							//inputval = (!doc.properties.diffs[inputval] ? 0 : inputval)
+							
+							self.diff = (
+								newclick ? 
+								(
+									!doc.properties.diffs || doc.properties.diffs.length === 0 ?
+									{
+										index: doc.index,
+										ind: 0
+									}
+									:
+									{
+										index: doc.index,
+										ind: doc.properties.diffs.length - 1
+									}
+								) 
+								:
+								( !doc.properties.diffs[inputval] 
+									? 
+									(
+										doc.properties.diffs && doc.properties.diffs.length > 0 ?
+										{
+											index: doc.index,
+											ind: doc.properties.diffs.length - 1
+										} :
+										{
+											index: doc.index,
+											ind: 0
+										}
+									) 
+									:
+									{
+										index: doc.index,
+										ind: inputval
+									}
+								)
+								
+							)
+						}
+						
 						
 					},
 					dragEnd: function(event, layer) {
@@ -528,15 +574,25 @@ html
 					},
 					accordion: function(n, ind) {
 						var self = this;
+						var input = document.getElementById('diff'+ind);
 						//console.log(self.accordions[n])
 						//console.log(self.dat[n][ind].index)
-						//self.changeDiff(self.dat[n][ind])
+						/*if (self.dat[n][ind] !== undefined) {
+							self.changeDiff(self.dat[n][ind], true)
+						}*/
 						
 						if (self.accordions[n].indexOf(ind) === -1) {
 							self.accordions[n].push(ind);
 							self.accordions[n].sort();
+							self.accordions[n].forEach(function(a){
+								if (a.index !== ind && document.getElementById('diff'+a.index)) {
+									document.getElementById('diff'+a.index).value = null
+								}
+							})
 						} else {
 							self.accordions[n].splice(self.accordions[n].indexOf(ind), 1);
+							input.value = null;
+							//self.changeDiff(self.dat[n][ind], false)
 						}
 					},
 					parseBool: function(item) {

@@ -1,5 +1,5 @@
 doctype strict
-html(xmlns:o='urn:schemas-microsoft-com:office:office', xmlns:w='urn:schemas-microsoft-com:office:word', xmlns='http://www.w3.org/TR/REC-html40')
+html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com:office:office', xmlns:w='urn:schemas-microsoft-com:office:word')
 	head
 		meta(charset="utf-8")
 		meta(http-equiv="Content-Type", content="text/html; charset=utf-8")
@@ -7,13 +7,14 @@ html(xmlns:o='urn:schemas-microsoft-com:office:office', xmlns:w='urn:schemas-mic
 		style(type="text/css")
 			include ../../public/stylesheets/styleword.css
 		title #{appTitle}
-		<!--[if gte mso 9]>
-		xml
-			w:WordDocument
-				w:View Print
-				w:Zoom 90
-				w:DoNotOptimizeForBrowser
-		<![endif]-->
+		//
+			<!--[if gte mso 9]>
+			xml
+				w:WordDocument
+					w:View Print
+					w:Zoom 90
+					w:DoNotOptimizeForBrowser
+			<![endif]-->
 
 		
 	body
@@ -55,13 +56,6 @@ html(xmlns:o='urn:schemas-microsoft-com:office:office', xmlns:w='urn:schemas-mic
 								tr.tb-font-xxs
 									td(colspan="1", style="visibility:hidden;")
 									td(colspan="1", style="visibility:hidden;")
-								tr.tb-font-l
-									td(style="padding: 0;", colspan="2")
-										
-										span Title 
-										span.bd #{data[0].title.ind}
-										span &nbsp
-										span #{data[0].title.str}
 
 								tr.tb-font-l
 									td(style="padding: 0;", colspan="2")
@@ -163,19 +157,15 @@ html(xmlns:o='urn:schemas-microsoft-com:office:office', xmlns:w='urn:schemas-mic
 						br
 						p.tb-11-m0.footrule &nbsp
 						br
-				div(id="f1", style="mso-element:footer")
-					p.tb-font-xs.MsoFooter
-						table(width="100%", border="0", cellspacing="0", cellpadding="0")
-							tr
-								td(width="80%")
+			div#f1(style="mso-element:footer")
+				p.MsoFooter
+					table(width="100%", border="0", cellspacing="0", cellpadding="0")
+						tr
+							td(width="80%")
+								
+							td(align="right", width="20%")
+								
+								span(class="MsoPageNumber")
 									
-								td(align="right", width="20%")
-									
-									span(style='mso-field-code: " PAGE "')
-										span(style='mso-no-proof:yes')
-									<!--[if supportFields]>
-									span(style='mso-element:field-begin')
-									span(style='mso-no-proof:yes;font-size: 20px; color: red;') Page no. - Please right-click here and then choose "Update Field" to initialize this field.
-									| PAGE
-									span(style='mso-element:field-separator')
-									<![endif]-->
+									span(style='mso-field-code: " PAGE " ')
+			
