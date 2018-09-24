@@ -54,7 +54,7 @@ html
 						- var c = 0
 						each data, n in dat.length ? dat : []
 							
-								
+							tr#chapterend &nbsp
 							tr#chapter.tb-font-l
 								
 								td(style="padding: 0;width:100%;", colspan="2")
@@ -85,13 +85,20 @@ html
 										
 										if (doc.properties.description)
 											!= md(doc.properties.description)
+											each img, j in doc.properties.media
+												if (img.orientation !== 'landscape')
+													a.img.tb-05-m0
+														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
+														p.tb-font-xxs(style="position: absolute;") #{img.caption}
 
 								tr.tb-font-xxs(style="margin:0;padding:0;")
 									td(style="padding: 0;margin:0;width:100%;", colspan="1") &nbsp
 									td(style="padding: 0;margin:0;width:100%;", colspan="1") &nbsp
 								- count++
 							- c++
-							p.tb-11-m0.footrule &nbsp
+							tr
+								td.footrule(colspan="2", style="width: 100%;")
+									p.tb-11-m0.footrule &nbsp
 			div#f1(style="mso-element:footer")
 				p.MsoFooter
 					table(width="100%", border="0", cellspacing="0", cellpadding="0")
