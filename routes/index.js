@@ -945,6 +945,14 @@ function getDat64(next){
 			console.log(err)
 		}
 		//console.log(dat)
+		dat = dat.sort(function(a,b){
+			//console.log(a[0].chapter.ind)
+			if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+				return -1
+			} else {
+				return 1
+			}
+		})
 		next(dat)
 	})
 }
@@ -2066,19 +2074,13 @@ router.get('/exportword', function(req, res, next){
 			
 			var pugviewpath = path.join(__dirname, '../views/includes/exportwordview.pug');
 			var now = Date.now();
+			
 			getDocxBlob(now, dat, true, function(docx){
 				var viewstr = pug.renderFile(pugviewpath, {
 					md: require('marked'),
 					doctype: 'html',
 					hrf: '/publishers/ordinancer/word/'+now+'.doc',
-					dat: dat.sort(function(a,b){
-						//console.log(a[0].chapter.ind)
-						if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
-							return -1
-						} else {
-							return 1
-						}
-					})
+					dat: dat
 				});
 				var p = ''+publishers+'/pu/publishers/ordinancer/word';
 						
@@ -2097,6 +2099,7 @@ router.get('/exportword', function(req, res, next){
 					if (err) {
 						return next(err)
 					}
+					
 					res.send(viewstr)
 					//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
 				});

@@ -4,27 +4,22 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 		meta(charset="utf-8")
 		meta(http-equiv="Content-Type", content="text/html; charset=utf-8")
 		link(rel="File-List", href="exportword/filelist.xml")
-		style(type="text/css")
-			include ../../public/stylesheets/styleword.css
 		title #{appTitle}
 		//
-			<!--[if gte mso 9]>
-			xml
-				w:WordDocument
-					w:View Print
-					w:Zoom 90
-					w:DoNotOptimizeForBrowser
-			<![endif]-->
+			&nbsp
+		style(type="text/css")
+			include ../../public/stylesheets/styleword.css
 
 		
 	body
 		
-		div.Section1
-			div.centerallwrap(style="background-color: #fff; background-color: var(--primary); pointer-events:all;")
+		div.Section1.WordSection1(style="visibility:hidden;")
+			
+			div.centerallwrap(style="visibility:visible;background-color: #fff; background-color: var(--primary); pointer-events:all;")
 				
 
 				div.centerall
-					div(id= h1, style="mso-element:header;")
+					div(id="h1", style="mso-element:header;")
 						p.tb-font-l(class="MsoHeader") Brigham City
 						each data, n in dat
 							if (n === 0)
@@ -48,116 +43,53 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 
 					<![endif]-->
 					p.tb-11-m0.footrule &nbsp
-					each data, n in dat
-						div#chapterend &nbsp
-						div#chapter
-							table(cellspacing="0px", style="width:100%;table-layout: fixed;")
-									
-								tr.tb-font-xxs
-									td(colspan="1", style="visibility:hidden;")
-									td(colspan="1", style="visibility:hidden;")
-
-								tr.tb-font-l
-									td(style="padding: 0;", colspan="2")
-										h1
-											span Chapter 
-											span.bd #{data[0].chapter.ind}
-											span &nbsp
-											span #{data[0].chapter.str}
-
+						
+					table(cellspacing="0px", style="width:100%;table-layout: fixed;")
+						tr#chapter
+							td(style="padding: 0;width:100%;", colspan="1") &nbsp
+							td(style="padding: 0;width:100%;", colspan="1") &nbsp
+						- var c = 0
+						each data, n in dat.length ? dat : []
+							
 								
-
-									each doc, i in data
-										- var lcount = 0
-										- var hcount = 0
-										//table(style="table-layout:fixed;width:100%;", width="100%")
-										tr.tb-font-xxs(style="margin-top: 15px;")
-											
-											each img, j in doc.properties.media
-												if (img.orientation === 'landscape')
-													- lcount++
-												else
-													- hcount++
-												
+							tr#chapter.tb-font-l
+								
+								td(style="padding: 0;width:100%;", colspan="2")
+									h1
+										span Chapter 
+										span.bd #{data[0].chapter.ind}
+										span &nbsp
+										span #{data[0].chapter.str}
+							- var count = 0
+							each doc, i in data.length ? data : []
+								tr.tb-font-l
+									td.headrule(colspan="2", style="width: 100%;")
+										h2
+											span.bd #{doc.title.ind}
+												span .
+												span #{doc.chapter.ind}
+												span .
+												span #{doc.section.ind}
+											span &nbsp
+												span #{doc.section.str}
 										
-											td(colspan="1", style="visibility:hidden;")
-											td(colspan="1", style="visibility:hidden;")
-
+										each img, j in doc.properties.media
+											if (img.orientation === 'landscape')
+												div.row
+													a.img.tb-11-m0
+														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
+													p.tb-font-xxs(style="position: absolute;") #{img.caption}
 										
-										if (hcount > 0)
-											tr.tb-font-l
-												td.headrule(colspan="1", style="padding: 0 0 20px 0;")
-												
-													each img, j in doc.properties.media
-														
-														if (img.orientation === 'portrait')
-															a.img.tb-11-m0
-																img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-															p.tb-font-xxs(style="position: absolute;") #{img.caption}
-												
-												td.headrule(
-													colspan="1",
-													style="vertical-align: top; padding: 20px 0 20px 0;"
-													)
-													h2
-														span.bd #{doc.title.ind}
-															span .
-															span #{doc.chapter.ind}
-															span .
-															span #{doc.section.ind}
-														span &nbsp
-															span #{doc.section.str}
-													
-													each img, j in doc.properties.media
-														if (img.orientation === 'landscape')
-															div.row
-																a.img.tb-11-m0
-																	img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-																p.tb-font-xxs(style="position: absolute;") #{img.caption}
-													span.tb-font-xs
-														if (doc.properties.description)
-															if (md(doc.properties.description).substring(1,2) === 'p')
-																!= md(doc.properties.description)
-															else
-																p
-																	!= md(doc.properties.description)
-										else
-											tr.tb-font-xxs
-												td(colspan="1", style="visibility:hidden;")
-												td(colspan="1", style="visibility:hidden;")
-											tr.tb-font-l
-												td.headrule(
-													colspan="2",
-													style="vertical-align: top; padding: 20px 0 20px 0;"
-													)
-													h2
-														span.bd #{doc.title.ind}
-															span .
-															span #{doc.chapter.ind}
-															span .
-															span #{doc.section.ind}
-														span &nbsp
-															span #{doc.section.str}
-													
-													each img, j in doc.properties.media
-														if (img.orientation === 'landscape')
-															div.row
-																a.img.tb-11-m0
-																	img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-																p.tb-font-xxs(style="position: absolute;") #{img.caption}
-													span.tb-font-xs
-														if (doc.properties.description)
-															if (md(doc.properties.description).substring(1,2) === 'p')
-																!= md(doc.properties.description)
-															else
-																p
-																	!= md(doc.properties.description)
-											
-												
-						br
-						p.tb-11-m0.footrule &nbsp
-						br
-			div#f1(style="mso-element:footer")
+										if (doc.properties.description)
+											!= md(doc.properties.description)
+
+								tr.tb-font-xxs(style="margin:0;padding:0;")
+									td(style="padding: 0;margin:0;width:100%;", colspan="1") &nbsp
+									td(style="padding: 0;margin:0;width:100%;", colspan="1") &nbsp
+								- count++
+							- c++
+							p.tb-11-m0.footrule &nbsp
+			div#f1(style="mso-element:footer;visibility:visible;")
 				p.MsoFooter
 					table(width="100%", border="0", cellspacing="0", cellpadding="0")
 						tr
@@ -167,5 +99,5 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 								
 								span(class="MsoPageNumber")
 									
-									span(style='mso-field-code: " PAGE " ')
+									span.tb-font-xs(style='mso-field-code: " PAGE " ')
 			
