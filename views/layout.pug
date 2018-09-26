@@ -88,7 +88,8 @@ html
 						uploadchtitle: null,
 						dragind: null,
 						latlngs: null,
-						gp: (this.parseObj(#{session.importgdrive}) !== '' ? this.parseObj(!{JSON.stringify(gp)}) : null)
+						gp: (this.parseObj(#{session.importgdrive}) !== '' ? this.parseObj(!{JSON.stringify(gp)}) : null),
+						sliderIndex: 1
 					}
 				},
 				updated: function(){
@@ -272,11 +273,30 @@ html
 						self.panZoom();
 						
 					})
+					
+					self.sliderImg()
 				},
 				beforeDestroy: function(){
 					
 				},
 				methods: {
+					sliderImg: function(){
+						var self = this;
+						setInterval(function(){
+							$('#slider').css('opacity',0);
+							setTimeout(function(){
+								if (self.sliderIndex > 3) {
+									self.sliderIndex = 1
+								} else {
+									self.sliderIndex += 1;
+								}
+								setTimeout(function(){
+									$('#slider').css('opacity',1);
+								},2000)
+								
+							},2000)
+						},10000)
+					},
 					clickSlider: function(diff, doc){
 						//`<a v-bind:click="" >${diff.user.username}<img class="avatar" src="${diff.user.avatar}"></img></a>`
 						$('#diff'+doc.index).val(diff.index)
