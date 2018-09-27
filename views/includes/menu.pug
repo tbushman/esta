@@ -11,7 +11,7 @@ each mn, k in menus
 
 
 		if (mn === 'static')
-			div.dropdown.static(style="float: left; left:6px; right:auto; display: flex;")
+			div.dropdown.static(style="float: left; left:6px; right:auto; display: flex;height:45px;")
 				a.submenu.drop(href="/", class= mn, style="max-height:45px;")
 					span Brigham City
 		div.dropdown(class= mn)
@@ -45,7 +45,10 @@ each mn, k in menus
 								include angle.pug
 					span.tb-font-s Plain .txt
 			if (menu === "publish")
-				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].chapter.str)", title="Import Chapter as plain text")
+				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/coverimg/'+encodeURIComponent(dat[0][0].chapter.str)", v-bind:title="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")
+					span.tb-font-s(v-text="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")
+
+				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].chapter.str)", v-bind:title="'Add Section to Ch. '+dat[0][0].chapter.ind+''")
 					span.tb-font-s(v-text="'Add Section to Ch. '+dat[0][0].chapter.ind+''")
 
 			if (menu === "map")

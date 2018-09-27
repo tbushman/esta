@@ -79,7 +79,6 @@ function geoLocate(ip, zoom, cb) {
 	})
 }
 
-
 var storage = multer.diskStorage({
 	
 	destination: function (req, file, cb) {
@@ -150,7 +149,7 @@ var storage = multer.diskStorage({
 		}
   }
 });
-var uploadmedia = multer({ storage: storage/*, limits: {files: 1}*/ });
+var uploadmedia = multer({ storage: storage/*, limits: { fieldSize: 25 * 1024 * 1024 }*/});
 
 var removeExtras = function(str){
 	var desc = null;
@@ -993,6 +992,124 @@ function tokenHandler(authClient, next) {
 	
 }
 
+function ensureApiTokens(req, res, next){
+	var OAuth2 = google.auth.OAuth2;
+
+	var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
+	/*if (!req.user) {
+		return res.redirect('/login')
+	}*/
+	Publisher.findOne({_id: req.session.userId}, function(err, pu){
+		if (err) {
+			return next(err)
+		}
+		if (!pu) {
+			return res.redirect('/logout')
+		}
+		if (!pu.admin) {
+			return res.redirect('/')
+		}
+		authClient.setCredentials({
+			refresh_token: pu.garefresh,
+			access_token: pu.gaaccess
+		});
+		google.options({auth:authClient})
+		authClient.refreshAccessToken()
+		.then(function(response){
+			if (!response.tokens && !response.credentials) {
+				return res.redirect('/login');
+  		}
+			var tokens = response.tokens || response.credentials;
+			Publisher.findOneAndUpdate({_id: req.user._id}, {$set:{garefresh:tokens.refresh_token, gaaccess:tokens.access_token}}, {safe:true,new:true}, function(err, pub){
+				if (err) {
+					return next(err)
+				}
+				if (req.session.importdrive) {
+					req.session.gp = {
+						google_key: process.env.GOOGLE_KEY,
+						scope: ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.file'],
+						//google_clientid: process.env.GOOGLE_OAUTH_CLIENTID,
+						access_token: pub.gaaccess,
+						picker_key: process.env.GOOGLE_PICKER_KEY
+					}
+					req.session.authClient = true;
+				}
+				return next()
+			})
+		})
+	})
+}
+
+function mkdirpIfNeeded(p, cb){
+	fs.access(p, function(err) {
+		if (err && err.code === 'ENOENT') {
+			mkdirp(p, function(err){
+				if (err) {
+					console.log("err", err);
+				} else {
+					cb()
+				}
+			})
+		} else {
+			cb()
+		}
+	})
+	
+}
+
+function getDocxBlob(now, dat, toc, cb){
+	var pugpath, hfpath;
+	if (toc) {
+		pugpath = path.join(__dirname, '../views/includes/exportword.pug');
+		hfpath = path.join(__dirname, '../views/includes/exportword/headerfooter.html')
+		pfpath = path.join(__dirname, '../views/includes/exportword/headerfooter.pug')
+	} else {
+		pugpath = path.join(__dirname, '../views/includes/exportwordnotoc.pug');
+		hfpath = null;
+	}
+	var str = pug.renderFile(pugpath, {
+		md: require('marked'),
+		doctype: 'strict',
+		hrf: '/publishers/ordinancer/word/'+now+'.doc',
+		dat: dat.sort(function(a,b){
+			//console.log(a[0].chapter.ind)
+			if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+				return -1
+			} else {
+				return 1
+			}
+		})
+	});
+	var cloc = ''+publishers+'/pu/publishers/ordinancer/word/'+now+'.doc'
+	//console.log(str)
+	var juicedmain = juice(str);
+	//console.log(juicedmain);
+	var docx = 
+		'MIME-Version: 1.0\nContent-Type: multipart/related; boundary="----=_NextPart."\n\n'+
+		'------=_NextPart.\n'+
+		//'Content-Location: file://'+cloc+'\n'+
+		'Content-Transfer-Encoding: base64\nContent-Type: text/html; charset="utf-8"\n\n'+
+		Buffer.from(str).toString('base64') + '\n\n' +
+		
+		/*(
+			hfpath ? 
+			'------=_NextPart.\n'+
+			//'Content-Location: file://'+hfpath+'\n'+
+			'Content-Transfer-Encoding: base64\nContent-Type: text/html; charset="utf-8"\n\n'+
+			Buffer.from(pug.renderFile(pfpath, {
+				doctype: 'strict'
+			})).toString('base64') + '\n\n------=_NextPart.--'
+			:
+			'\n\n------=_NextPart.--'
+		)*/
+		'------=_NextPart.--'
+		
+	//var docx = 
+	//HtmlDocx.asBlob(juicedmain);
+	cb(docx)
+}
+
+
 router.get('/runtests', function(req, res, next){
 	req.session.importgdrive = false;
 	let chromedriver = require('chromedriver');
@@ -1117,54 +1234,6 @@ router.get('/runtests', function(req, res, next){
 	return next()
 })*/
 
-
-function ensureApiTokens(req, res, next){
-	var OAuth2 = google.auth.OAuth2;
-
-	var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
-	/*if (!req.user) {
-		return res.redirect('/login')
-	}*/
-	Publisher.findOne({_id: req.session.userId}, function(err, pu){
-		if (err) {
-			return next(err)
-		}
-		if (!pu) {
-			return res.redirect('/logout')
-		}
-		if (!pu.admin) {
-			return res.redirect('/')
-		}
-		authClient.setCredentials({
-			refresh_token: pu.garefresh,
-			access_token: pu.gaaccess
-		});
-		google.options({auth:authClient})
-		authClient.refreshAccessToken()
-		.then(function(response){
-			if (!response.tokens && !response.credentials) {
-				return res.redirect('/login');
-  		}
-			var tokens = response.tokens || response.credentials;
-			Publisher.findOneAndUpdate({_id: req.user._id}, {$set:{garefresh:tokens.refresh_token, gaaccess:tokens.access_token}}, {safe:true,new:true}, function(err, pub){
-				if (err) {
-					return next(err)
-				}
-				if (req.session.importdrive) {
-					req.session.gp = {
-						google_key: process.env.GOOGLE_KEY,
-						scope: ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.file'],
-						//google_clientid: process.env.GOOGLE_OAUTH_CLIENTID,
-						access_token: pub.gaaccess,
-						picker_key: process.env.GOOGLE_PICKER_KEY
-					}
-					req.session.authClient = true;
-				}
-				return next()
-			})
-		})
-	})
-}
 
 router.all(/^\/((?!login|register|logout).*)$/, ensureAdmin/*, ensureApiTokens*/);
 
@@ -1321,6 +1390,43 @@ router.get('/auth/google/callback', passport.authenticate('google', {
 	
 });
 
+router.get('/logout', function(req, res, next) {
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+	asynk.waterfall([
+		function(next){
+			req.session.userId = null;
+			req.session.loggedin = null;
+			req.session.failedAttempt = false;
+			req.logout();
+			next(null)
+		},
+		function(next) {
+			if (req.user || req.session) {
+				req.user = null;
+				req.session.destroy(function(err){
+					if (err) {
+						req.session = null;
+						//improve error handling
+						
+					} else {
+						req.session = null;
+					}
+					next(null)
+				});		
+			} else {
+				next(null);
+			}
+		}
+	], function(err){
+		if (err) {
+			return next(err)
+		}
+		return res.redirect('/');
+	})	
+});
+
+
 /*router.post('/api/importdoc/:type/:fileid', uploadmedia.single('doc'), function(req, res, next){
 	fs.readFile(req.file.path, 'utf8', function (err, content) {
 		if (err) {
@@ -1352,75 +1458,6 @@ router.get('/auth/google/callback', passport.authenticate('google', {
 		})
 	})
 })*/
-
-function mkdirpIfNeeded(p, cb){
-	fs.access(p, function(err) {
-		if (err && err.code === 'ENOENT') {
-			mkdirp(p, function(err){
-				if (err) {
-					console.log("err", err);
-				} else {
-					cb()
-				}
-			})
-		} else {
-			cb()
-		}
-	})
-	
-}
-
-function getDocxBlob(now, dat, toc, cb){
-	var pugpath, hfpath;
-	if (toc) {
-		pugpath = path.join(__dirname, '../views/includes/exportword.pug');
-		hfpath = path.join(__dirname, '../views/includes/exportword/headerfooter.html')
-		pfpath = path.join(__dirname, '../views/includes/exportword/headerfooter.pug')
-	} else {
-		pugpath = path.join(__dirname, '../views/includes/exportwordnotoc.pug');
-		hfpath = null;
-	}
-	var str = pug.renderFile(pugpath, {
-		md: require('marked'),
-		doctype: 'strict',
-		hrf: '/publishers/ordinancer/word/'+now+'.doc',
-		dat: dat.sort(function(a,b){
-			//console.log(a[0].chapter.ind)
-			if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
-				return -1
-			} else {
-				return 1
-			}
-		})
-	});
-	var cloc = ''+publishers+'/pu/publishers/ordinancer/word/'+now+'.doc'
-	//console.log(str)
-	var juicedmain = juice(str);
-	//console.log(juicedmain);
-	var docx = 
-		'MIME-Version: 1.0\nContent-Type: multipart/related; boundary="----=_NextPart."\n\n'+
-		'------=_NextPart.\n'+
-		//'Content-Location: file://'+cloc+'\n'+
-		'Content-Transfer-Encoding: base64\nContent-Type: text/html; charset="utf-8"\n\n'+
-		Buffer.from(str).toString('base64') + '\n\n' +
-		
-		/*(
-			hfpath ? 
-			'------=_NextPart.\n'+
-			//'Content-Location: file://'+hfpath+'\n'+
-			'Content-Transfer-Encoding: base64\nContent-Type: text/html; charset="utf-8"\n\n'+
-			Buffer.from(pug.renderFile(pfpath, {
-				doctype: 'strict'
-			})).toString('base64') + '\n\n------=_NextPart.--'
-			:
-			'\n\n------=_NextPart.--'
-		)*/
-		'------=_NextPart.--'
-		
-	//var docx = 
-	//HtmlDocx.asBlob(juicedmain);
-	cb(docx)
-}
 
 
 /*router.post('/api/importgdriverev/:fileid', function(req, res, next){
@@ -1928,42 +1965,6 @@ router.get('/importgdrive', function(req, res, next){
 
 })
 
-router.get('/logout', function(req, res, next) {
-	var outputPath = url.parse(req.url).pathname;
-	console.log(outputPath)
-	asynk.waterfall([
-		function(next){
-			req.session.userId = null;
-			req.session.loggedin = null;
-			req.session.failedAttempt = false;
-			req.logout();
-			next(null)
-		},
-		function(next) {
-			if (req.user || req.session) {
-				req.user = null;
-				req.session.destroy(function(err){
-					if (err) {
-						req.session = null;
-						//improve error handling
-						
-					} else {
-						req.session = null;
-					}
-					next(null)
-				});		
-			} else {
-				next(null);
-			}
-		}
-	], function(err){
-		if (err) {
-			return next(err)
-		}
-		return res.redirect('/');
-	})	
-});
-
 router.get('/exportpdf', getDat, function(req, res, next){
 	//getDat(function(dat, distinct){
 	req.session.importgdrive = false;
@@ -2448,6 +2449,92 @@ router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req,
 	})
 })
 
+router.get('/api/coverimg/:chtitle', function(req, res, next){
+	req.session.importgdrive = false;
+	var outputPath = url.parse(req.url).pathname;
+	//console.log(outputPath)
+	var csrf = req.csrfToken();
+	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+		if (err) {
+			return next(err)
+		}
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png')
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png')
+		var chind = 1;
+		var secind = '10';
+		Content.find({'chapter.str': {$regex:decodeURIComponent(req.params.chtitle)}}, function(err, chunk){
+			if (err) {
+				return next(err)
+			}
+			var content = new Content({
+				type: 'Feature',
+				index: data.length,
+				// db
+				title: {
+					ind: 25,
+					str: 'Subdivisions' 
+				},
+				chapter: {
+					ind: (chunk.length === 0 ? '01' : chunk[0].chapter.ind),
+					str: (chunk.length === 0 ? 'General Provisions.' : chunk[0].chapter.str )
+				},
+				section: {
+					ind: '000',
+					str: 'Cover' 
+				},
+				properties: {
+					section: '25.'+(chunk.length === 0 ? '01' : chunk[0].chapter.ind)+'.000',
+					published: true,
+					label: 'Edit Subtitle',
+					title: (chunk.length === 0 ? 'General Provisions.' : chunk[0].chapter.str ),
+					place: 'Edit Place',
+					description: '',
+					current: false,
+					time: {
+						begin: moment().utc().format(),
+						end: moment().add(1, 'hours').utc().format()
+					},
+					media: [
+						{
+							index: 0,
+							name: 'Sample image',
+							image_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png',
+							image: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
+							thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
+							thumb: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
+							caption: 'Sample caption',
+							postscript: 'Sample postscript',
+							url: 'https://pu.bli.sh'
+						}
+					]		
+				},
+				geometry: {
+					type: 'Polygon',
+					coordinates:
+					[
+						[
+							[-112.014822, 41.510547],
+							[-112.014822, 41.510838],
+							[-112.014442, 41.510838],
+							[-112.014442, 41.510547],
+							[-112.014822, 41.510547]
+						]
+					]
+				}
+			});
+			content.save(function(err){
+				if (err) {
+					console.log(err)
+				}
+				return res.redirect('/list/'+content._id+'/'+content.index+'')
+			});
+			
+
+		})
+		
+	});
+})
+
 router.get('/api/new/:chtitle', function(req, res, next){
 	req.session.importgdrive = false;
 	var outputPath = url.parse(req.url).pathname;
@@ -2615,29 +2702,6 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			next(null, doc, thumburls, imgs, orientations, body, pu)
 		},
 		function(doc, thumburls, imgs, orientations, body, pu, next) {
-			//console.log(body)
-			/*var curly = function(str){
-				return str
-				
-				.replace(/'\b/g, "&lsquo;")     // Opening singles
-				.replace(/\b'/g, "&rsquo;")     // Closing singles
-				.replace(/"\b/g, "&ldquo;")     // Opening doubles
-				.replace(/\b"/g, "&rdquo;")     // Closing doubles
-				.replace(/(\.)"/g, "$1&rdquo;")     // Closing doubles
-				.replace(/u2018/g, "&lsquo;")
-				.replace(/u2019/g, "&rsquo;")
-				.replace(/u201c/g, "&ldquo;")
-				.replace(/u201d/g, "&rdquo;")
-				.replace(/[“]/g, "&ldquo;")
-				.replace(/[”]/g, "&rdquo;")
-				.replace(/[’]/g, "&rsquo;")
-				.replace(/[‘]/g, "&lsquo;")
-				//
-				//.replace(/(\d\s*)&rdquo;/g, '$1 inches')
-				//.replace(/(\d\s*)&rsquo;/g, '$1 feet')
-				.replace(/([a-z])&lsquo;([a-z])/ig, '$1&rsquo;$2')
-			}
-			*/
 			var straight = function(str) {
 				return str.replace(/(\d\s*)&rdquo;/g, '$1\"').replace(/(\d\s*)&rsquo;/g, "$1'")
 			}

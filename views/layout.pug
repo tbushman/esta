@@ -860,7 +860,7 @@ html
 					},
 					checkImage: function(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype) {
 						var self = this;
-						if (h > maxHeight) {
+						if (h > maxHeight || w > maxWidth) {
 							self.reSize(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype)
 						} else {
 							if (maxHeight === 400) {
@@ -961,7 +961,7 @@ html
 						ctx.drawImage(img, 0, 0, w, h);
 						var dataurl = can.toDataURL("image/png", 0.8);
 						setTimeout(function(){
-							self.doc.properties.media[imgindex].thumb = dataurl;
+							self.doc.properties.media[imgindex].thumb = dataurl.replace(/data:image\/png;base64,/, '');
 							//$('#inputthumb'+imgindex+'').val(dataurl.replace(/data:image\/png;base64,/, ''));
 							
 						}, 100);

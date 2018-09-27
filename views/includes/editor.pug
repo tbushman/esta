@@ -3,7 +3,7 @@ a.row.tb-font-l(v-bind:href="'/list/'+doc._id+'/'+null+''")
 	span(v-text="' '")
 	sectionname(v-text="doc.section.str")
 
-p
+p(style="margin-top:20px;")
 	label.tb-10-m0(v-if="edit === doc.index", for="description") Description
 	description.tb-10-m0#description(v-html="doc.properties.description", style="border-bottom: 1px solid #e1e1e1;")
 p
@@ -20,12 +20,14 @@ div(style="visibility: hidden;")
 //input#lat(v-bind:value="doc.geometry.coordinates[1]", name="lat", type="hidden")
 //input#lng(v-bind:value="doc.geometry.coordinates[0]", name="lng", type="hidden")
 input.block#latlng(v-bind:value="JSON.stringify(doc.geometry.coordinates)", name="latlng", style="width: 100%", type="hidden")
-a.block.spacer.tb-01-m0(v-bind:href="'/'", role="button", style="float:right; border:2px solid #000; margin-left: 20px;")
-	span Cancel
-button.block.success.spacer.tb-03-m0(v-if="edit === doc.index", role="submit", v-bind:id="'submit_'+dindex", style="float:right;")
-	span Finished editing
-a.danger.block.spacer.tb-03-m0(v-on:click="deleteEntry(doc)", role="button")
-	span Delete entry
+div.row
+	a.danger.block.spacer.tb-10-m0.tb-03-m2(v-on:click="deleteEntry(doc)", role="button", style="float:left;box-sizing:border-box;")
+		span Delete entry
+	a.block.spacer.tb-10-m0.tb-01-m2(v-bind:href="'/'", role="button", style="float:right; border:2px solid #000; margin-left: 20px;")
+		span Cancel
+	button.block.success.spacer.tb-10-m0.tb-03-m2(v-if="edit === doc.index", role="submit", v-bind:id="'submit_'+dindex", style="float:right;")
+		span Finished editing
+
 p
 	label(for="importcsv") Import Geographic Data (experimental)
 input#importcsv(v-on:change="importCsv", type="file", value="Import CSV")

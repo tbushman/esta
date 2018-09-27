@@ -1041,7 +1041,7 @@ button, a[role="button"], input[type="submit"] {
 	cursor: pointer;
 	background-color: #000;
 	background-color: var(--secondary);
-	padding: 10px;
+	padding: 10px 0;
 	color: #fff;
 	color: var(--primary);
 }
@@ -1197,6 +1197,7 @@ section:hover {
 	padding: 10px;
 }
 
+/*
 *[class^='tb-1'] > input, 
 *[class^='tb-0'] > input, 
 *[class^='tb-1'] > label, 
@@ -1208,7 +1209,7 @@ section:hover {
 *[class^='tb-1'] > p, 
 *[class^='tb-0'] > p {
 	margin: 10px auto;
-}
+}*/
 
 .ffa1 {
   font-family: 'Cormorant', serif;
