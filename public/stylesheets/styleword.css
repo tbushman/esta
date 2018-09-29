@@ -40,6 +40,142 @@ p.MsoFooter {
 }
 
 
+.menu {
+	position: fixed;
+	pointer-events: none;
+	padding: 8px 3px 0 3px;
+	bottom: auto;
+	background-color: rgba(255,255,255,0);
+	z-index: 6;
+	max-height: calc(100% - calc(45px * 2));
+	max-height: calc(100% - calc(var(--thumbw) * 2));
+	/*min-height: 230px;*/
+	height: auto;
+	right: 15px;
+	left: auto;
+	top: 20px;
+	margin-top: 2px;
+}
+
+.menu .icon {
+	position: absolute;
+	right: 35px;
+	top: 5px;
+	color: #9e1f63;
+	color: var(--highlight);
+}
+
+.menu .icon .fas, .cartalert .fas {
+	font-size: 15px;
+}
+
+.menu .icon .fas, .menu .icon span {
+	color: #9e1f63;
+	color: var(--highlight);
+
+}
+
+.menu img {
+}
+
+.mainmenu {
+	pointer-events: all;
+	cursor: pointer;
+	min-width: 45px;
+	min-width: var(--thumbw);
+	min-height: 34px;
+	min-height: calc(var(--thumbw) - 11px);
+	display: inline-block;
+	z-index: 4;
+}
+
+.mainmenu svg, .mainmenu path {
+	z-index: 0;
+	pointer-events: none;
+}
+.mainmenu:hover {
+	cursor: pointer;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+}
+
+.mainmenu:hover ~ .menutitle, .mainmenu:hover ~ .icon {
+	display: none;
+}
+
+.dropdown {
+	width: auto;
+	left: auto;
+	right: 0;
+	margin-top: 0;
+	background-color: #fff;
+	box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
+	height: calc(100% - 90px);
+	overflow-y: hidden;
+	overflow-x: hidden;
+	position: fixed;
+	visibility: hidden;
+	pointer-events: none;
+	padding: 0 20px;
+	
+	background-repeat: no-repeat;
+	background-size: auto 100%;
+	background-position: bottom 0% left 0%;
+}
+
+.dropdown.active {
+	visibility: visible;
+	pointer-events: auto;
+	overflow-y: scroll;
+}
+
+.drop {
+	height: 72px;
+	height: calc(var(--thumbw) * 1.5);
+	background-color: rgba(255,255,255,0);
+	display: inline-block;
+	width: 100%;
+	pointer-events: all;
+	cursor: pointer;
+}
+
+.drop span {
+	display: inline-block;
+	width: calc(100% - 72px);
+	width: calc(100% - calc(var(--thumbw) * 2));
+	padding: 0 0 0 0;
+	line-height: calc(var(--thumbw) * 2);
+	pointer-events: none;
+	color: #9e1e62;
+	color: var(--highlight);
+}
+
+.qty {
+	position: absolute;
+	font-size: 10px;
+	z-index: 3;
+}
+
+
+a.menu.drop, a.submenu.drop {
+	color: #000;
+	color: var(--secondary);
+}
+a.submenu.drop {
+	pointer-events: all;
+}
+/*.submenu:hover span, .submenu:hover i {
+	color: #000!important;
+	color: var(--secondary);
+}*/
+
+.submenu.drop .ui {
+	width: 15px;
+height: 15px;
+display: inline-block;
+
+}
+/*Static menu*/
 .menu.static {
 	min-height: auto;
 	padding: 0;
@@ -107,6 +243,7 @@ p.MsoFooter {
 	line-height: var(--thumbw);
 	color: #000;
 	color: var(--secondary);
+	/*font-size: 15px;*/
 }
 .submenu.drop.static.active > span {
 	
@@ -121,15 +258,15 @@ p.MsoFooter {
 .submenu.drop.static {
 	line-height: 45px;
 	line-height: var(--thumbw);
-	height: 45px;
-	height: var(--thumbw);
+	height: auto;
+	min-height: 45px;
+	min-height: var(--thumbw);
 }
 .dropdown.static > .submenu:last-child > span, .dropdown.static > .submenu:last-child > .ui > .fas {
 	color: tomato;
 }
-.submenu.static:hover > span, .submenu.static:last-child:hover > span, .submenu.static:hover > .ui > .fas, .submenu.static:last-child:hover > .ui > .fas {
-	color: #000!important;
-	color: var(--secondary);
+.submenu.static:hover > span, .submenu.static:last-child:hover > span, .submenu.static:hover > .ui > .fas, .submenu.static:last-child:hover > .ui > .fas, .slidedown.static .submenu.drop span {
+	color: tomato;
 }
 .slidedown.static {
 	position: absolute;
@@ -146,6 +283,7 @@ p.MsoFooter {
 	padding: 5px 0 10px 0;
 	border: 2px solid rgba(255,255,255,1);
 	box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
+	/*transform: translate(-28%, 0%);*/
 	margin-left: 107px;
 }
 .slidedown.static span {
@@ -166,8 +304,11 @@ p.MsoFooter {
 	
 }
 .slidedown.static .submenu.drop span {
-	color: #652c90;
-	color: var(--quarternary);
+	color: #000;
+	color: var(--secondary);
+}
+.slidedown.static div:hover span, div.slidedown.static a.submenu.drop.static:hover span {
+	color: tomato;
 }
 .ui.static {
 	width: 45px;
@@ -748,7 +889,6 @@ a.img img {
 span.img, a.img
 	{mso-style-name:img;
 	display: inline-block;
-	margin: 4px;
 	position: relative;
 	overflow: hidden;}
 span.bd1
@@ -800,6 +940,8 @@ ul {
 		border-top: 1px solid #c8c8c8;
 		padding: 5px 0 8px 0;
 		vertical-align: top;
+		max-width: 500px;
+		word-wrap: break-word;
 	}
 
 	li {

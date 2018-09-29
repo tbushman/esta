@@ -18,7 +18,7 @@ html
 				div.centerall
 					- var menu = "word"
 					include menu.pug
-					a.tb-06-m0.block.success(role="button", href= hrf, title="Download Word File") Click here to download Word File
+					a.tb-06-m0.block.success(role="button", href= hrf, title="Download Word File", style="color:#fff;") Click here to download Word File
 					div.tb-01-m0 &nbsp
 					a.tb-03-m0.block.danger(role="button", href="/exportword", title="Page blank -- reload")
 						span Blank page? Click to reload
@@ -67,29 +67,32 @@ html
 							each doc, i in data.length ? data : []
 								tr.tb-font-l
 									td.headrule(colspan="2", style="width: 100%;")
-										h2
-											span.bd #{doc.title.ind}
-												span .
-												span #{doc.chapter.ind}
-												span .
-												span #{doc.section.ind}
-											span &nbsp
-												span #{doc.section.str}
+										if (doc.section.ind !== "000")
+											h2
+												span.bd #{doc.title.ind}
+													span .
+													span #{doc.chapter.ind}
+													span .
+													span #{doc.section.ind}
+												span &nbsp
+													span #{doc.section.str}
 										
 										each img, j in doc.properties.media
 											if (img.orientation === 'landscape')
 												div.row
 													a.img.tb-11-m0
-														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-													p.tb-font-xxs(style="position: absolute;") #{img.caption}
+														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
+														if (doc.section.ind !== "000")
+															span.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 										
 										if (doc.properties.description)
 											!= md(doc.properties.description)
 											each img, j in doc.properties.media
 												if (img.orientation !== 'landscape')
 													a.img.tb-05-m0
-														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-														p.tb-font-xxs(style="position: absolute;") #{img.caption}
+														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
+														if (doc.section.ind !== "000")
+															span.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 
 								tr.tb-font-xxs(style="margin:0;padding:0;")
 									td(style="padding: 0;margin:0;width:100%;", colspan="1") &nbsp
@@ -102,9 +105,9 @@ html
 			div#f1(style="mso-element:footer")
 				p.MsoFooter
 					table(width="100%", border="0", cellspacing="0", cellpadding="0")
-						tr
+						tr.tb-font-xxs
 							td(width="80%")
-								
+								span.tb-font-xxs(style="color:#999;") Subdivisions
 							td(align="right", width="20%")
 								
 								span(class="MsoPageNumber")

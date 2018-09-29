@@ -214,7 +214,7 @@ a span, a img {
 	font-weight: 400;
 	line-height: 1.5rem;
 	padding: 18px 0 0 0;
-	padding: calc(var(--thumbw) / 3) 0 0 0;
+	padding: calc(var(--thumbw) / 2.3) 0 0 0;
 }
 
 .tb-font-xl {
@@ -362,7 +362,7 @@ em {
 	z-index: 6;
 	max-height: calc(100% - calc(45px * 2));
 	max-height: calc(100% - calc(var(--thumbw) * 2));
-	min-height: 230px;
+	/*min-height: 230px;*/
 	height: auto;
 	right: 15px;
 	left: auto;
@@ -457,7 +457,6 @@ em {
 	width: calc(100% - 72px);
 	width: calc(100% - calc(var(--thumbw) * 2));
 	padding: 0 0 0 0;
-	height: calc(var(--thumbw) * 2);
 	line-height: calc(var(--thumbw) * 2);
 	pointer-events: none;
 	color: #9e1e62;
@@ -967,9 +966,10 @@ a.accordion:hover .ui path {
 }
 
 .hang {
-	padding: 0 25% 0 12px;
+	padding: 0 0 0 12px;
 	position: absolute;
 	margin-top: -5px;
+	width: 50%;
 }
 
 /*

@@ -51,44 +51,47 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 						- var c = 0
 						each data, n in dat.length ? dat : []
 							
-							tr#chapterend(style="display:block;")
-								td(style="width:7.5in")
-									p(style="page-break-before: always;") &nbsp
+							
 							tr#chapter.tb-font-l
 								
 								td(style="padding: 0;width:100%;", colspan="2")
-									h1
+									div(style="clear:both!important;")
+									h1(style="page-break-before:always;display:block;")
 										span Chapter 
 										span.bd #{data[0].chapter.ind}
 										span &nbsp
 										span #{data[0].chapter.str}
+									div(style="clear:both!important;")
 							- var count = 0
 							each doc, i in data.length ? data : []
 								tr.tb-font-l
 									td.headrule(colspan="2", style="width: 100%;")
-										h2
-											span.bd #{doc.title.ind}
-												span .
-												span #{doc.chapter.ind}
-												span .
-												span #{doc.section.ind}
-											span &nbsp
-												span #{doc.section.str}
+										if (doc.section.ind !== "000")
+											h2
+												span.bd #{doc.title.ind}
+													span .
+													span #{doc.chapter.ind}
+													span .
+													span #{doc.section.ind}
+												span &nbsp
+													span #{doc.section.str}
 										
 										each img, j in doc.properties.media
 											if (img.orientation === 'landscape')
-												div.row
-													a.img.tb-11-m0
-														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-													p.tb-font-xxs(style="position: absolute;") #{img.caption}
+												//div.row
+												p.img(style="width:500px; height:auto;position:relative;display:inline-block;")
+													img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), width="500", style="display:block;")
+													if (doc.section.ind !== "000")
+														span.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 										
 										if (doc.properties.description)
 											!= md(doc.properties.description)
 											each img, j in doc.properties.media
 												if (img.orientation !== 'landscape')
-													a.img.tb-05-m0
-														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-														p.tb-font-xxs(style="position: absolute;") #{img.caption}
+													p.img.tb-05-m0
+														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), width="200", height="auto", style="width:200px;height:auto; display:block;")
+														if (doc.section.ind !== "000")
+															span.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 
 								tr.tb-font-xxs(style="margin:0;padding:0;")
 									td(style="padding: 0;margin:0;width:100%;", colspan="1") &nbsp
@@ -97,13 +100,13 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 							- c++
 							tr
 								td.footrule(colspan="2", style="width: 100%;")
-									p.tb-11-m0 &nbsp
+									p.tb-11-m0.footrule &nbsp
 			div#f1(style="mso-element:footer;visibility:visible;")
 				p.MsoFooter
 					table(width="100%", border="0", cellspacing="0", cellpadding="0")
-						tr
+						tr.tb-font-xxs
 							td(width="80%")
-								
+								span.tb-font-xxs(style="color:#999;") Subdivisions
 							td(align="right", width="20%")
 								
 								span(class="MsoPageNumber")

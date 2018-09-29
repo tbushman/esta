@@ -843,8 +843,8 @@ html
 								img.onload = function() {
 									$('#media').val('');
 									var can = $('#canvas'+imgindex+'')[0];
-									var maxWidth = 1700 ;
-									var maxHeight = 1700 ;
+									var maxWidth = 1500 ;
+									var maxHeight = 1500 ;
 									var w = img.width;
 									var h = img.height;
 									can.width = w;
@@ -921,7 +921,6 @@ html
 								processData: false,
 								contentType: false,
 									success: function(response) { 
-									img.src = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
 									img.onload = function () {
 										self.doc.properties.media[imgindex].image_abs = response;
 										self.doc.properties.media[imgindex].image = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
@@ -930,6 +929,7 @@ html
 										self.doc.properties.media[imgindex].orientation = orientation;
 										cb();
 									}
+									img.src = response.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
 								}
 							})
 						}, 'image/png');
