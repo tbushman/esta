@@ -46,8 +46,8 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 						
 					table(cellspacing="0px", style="width: 100%;table-layout: fixed;overflow:hidden;")
 						tr#chapter
-							td(style="padding: 0;width:100%;", colspan="1") &nbsp
-							td(style="padding: 0;width:100%;", colspan="1") &nbsp
+							td(style="padding: 0;width:100%;", colspan="1")
+							td(style="padding: 0;width:100%;", colspan="1")
 						- var c = 0
 						each data, n in dat.length ? dat : []
 							
@@ -96,8 +96,10 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 														p.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 								
 								tr
-									td(style="padding: 0;margin:0;width:100%;", colspan="1") &nbsp
-									td(style="padding: 0;margin:0;width:100%;", colspan="1") &nbsp
+									td(style="padding: 0 0 0 0;margin:0 0 0 0;width:100%;", colspan="1")
+										p(style="padding: 0 0 0 0;margin:0 0 0 0;") &nbsp
+									td(style="padding: 0 0 0 0;margin:0 0 0 0;width:100%;", colspan="1")
+										p(style="padding: 0 0 0 0;margin:0 0 0 0;") &nbsp
 								- count++
 							- c++
 							tr
