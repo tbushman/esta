@@ -26,7 +26,7 @@ var HtmlDocx = require('html-docx-js');
 var mammoth = require('mammoth');
 var HtmlDiffer = require('html-differ').HtmlDiffer;
 var htmlDiffer = new HtmlDiffer({
-	ignoreAttributes: ['id', 'for']
+	ignoreAttributes: ['id', 'for', 'class', 'href']
 });
 //var google = require("googleapis"); 
 var {google} = require('googleapis');

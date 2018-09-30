@@ -515,17 +515,7 @@ html
 								:
 								( !doc.properties.diffs[inputval] 
 									? 
-									(
-										doc.properties.diffs && doc.properties.diffs.length > 0 ?
-										{
-											index: doc.index,
-											ind: doc.properties.diffs.length - 1
-										} :
-										{
-											index: doc.index,
-											ind: 0
-										}
-									) 
+									null 
 									:
 									{
 										index: doc.index,
@@ -604,14 +594,16 @@ html
 						if (self.accordions[n].indexOf(ind) === -1) {
 							self.accordions[n].push(ind);
 							self.accordions[n].sort();
-							self.accordions[n].forEach(function(a){
-								if (a.index !== ind && document.getElementById('diff'+a.index)) {
+							/*self.accordions[n].forEach(function(a){
+								if (a.index === ind && document.getElementById('diff'+a.index)) {
+									
+								} else {
 									document.getElementById('diff'+a.index).value = null
 								}
-							})
+							})*/
 						} else {
 							self.accordions[n].splice(self.accordions[n].indexOf(ind), 1);
-							input.value = null;
+							//input.value = null;
 							//self.changeDiff(self.dat[n][ind], false)
 						}
 					},

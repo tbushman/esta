@@ -658,6 +658,7 @@ breadcrumbs a {
 .centerall section {
 	width: 100%;
 	cursor: pointer;
+	background-color: var(--primary);
 }
 .centerall p {
 	cursor: text;
