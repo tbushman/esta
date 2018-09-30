@@ -787,11 +787,13 @@ html
 								if (err) {
 									return console.log(err)
 								}
-								console.log(canvas)
+								$('a[id*=deletemedia]').hide();
 								setTimeout(function(){
 									var img = document.querySelector('img#return'+ind+'');
 									self.uploadBlob(img, canvas, ind, function(){
-
+										console.log(canvas)
+										var dataurl = canvas.toDataURL("image/png", 0.8);
+										self.doc.properties.media[ind].thumb = dataurl.replace(/data:image\/png;base64,/, '');
 									})
 								},2000)
 							})

@@ -1,5 +1,9 @@
+
+
 maintitle.centerall(style="clip-path: url(#myPath);pointer-events:visiblePoint;")
-		
+	div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;z-index:2; position:absolute;")
+		a.submenu.drop.static(v-on:click="document.getElementById('viewer').scrollIntoView();$('div.centerallwrap').css('pointer-events', 'unset');")
+			span Edit Map
 	chapter
 		section.row
 			a(v-bind:href="'/'")
@@ -23,10 +27,6 @@ maintitle.centerall(style="clip-path: url(#myPath);pointer-events:visiblePoint;"
 					input(type="hidden", name="_csrf", value= csrfToken)
 					include editor.pug
 
-div.menu.static
-	div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;")
-		a.submenu.drop.static(v-on:click="document.getElementById('viewer').scrollIntoView();$('div.centerallwrap').css('pointer-events', 'unset');")
-			span Map
 div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: none;")
 	
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
