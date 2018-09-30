@@ -843,8 +843,8 @@ html
 								img.onload = function() {
 									$('#media').val('');
 									var can = $('#canvas'+imgindex+'')[0];
-									var maxWidth = 1500 ;
-									var maxHeight = 1500 ;
+									var maxWidth = 1025 ;
+									var maxHeight = 1025 ;
 									var w = img.width;
 									var h = img.height;
 									can.width = w;
@@ -872,18 +872,18 @@ html
 						
 					},
 					reSize: function(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype){
-						can.height = h*0.75;
-						can.width = w*0.75;
+						can.height = h*0.99;
+						can.width = w*0.99;
 
 						var can2 = document.createElement('canvas');
-						can2.width = w*0.75;
-						can2.height = h*0.75;
+						can2.width = w*0.99;
+						can2.height = h*0.99;
 						var ctx2 = can2.getContext('2d');
 						var ctx = can.getContext('2d');
-						ctx2.drawImage(img, 0, 0, w*0.75, h*0.75);
-						ctx.drawImage(can2, 0, 0, w*0.75, h*0.75, 0, 0, w*0.75, h*0.75);
-						w = w*0.75;
-						h = h*0.75;
+						ctx2.drawImage(img, 0, 0, w*0.99, h*0.99);
+						ctx.drawImage(can2, 0, 0, w*0.99, h*0.99, 0, 0, w*0.99, h*0.99);
+						w = w*0.99;
+						h = h*0.99;
 						img.width = w;
 						img.height = h;
 						this.checkImage(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype)

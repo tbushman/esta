@@ -523,13 +523,6 @@ display: inline-block;
 	display: inline-block!important;
 	margin: 0;
 }
-
-.submenu.static.active {
-	background: rgba(255,255,255,0);
-	border: 2px solid #fff;
-	border: 2px solid var(--primary);
-	box-sizing: border-box;
-}
 .submenu.static.active span {
 	font-weight: 600;
 }
@@ -571,7 +564,6 @@ display: inline-block;
 .submenu.drop.static {
 	line-height: 45px;
 	line-height: var(--thumbw);
-	height: auto;
 	min-height: 45px;
 	min-height: var(--thumbw);
 }

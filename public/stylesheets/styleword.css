@@ -6,12 +6,9 @@
 	mso-footer-margin:.5in; 
 	mso-title-page: yes;
 } 
-@page Section1 {  } 
-div.Section1 { 
-	page:Section1; 
-}
 @page Section1 {
 	mso-footer:f1;
+	mso-header:h1;
 }
 div.Section1{
 	page:Section1;
@@ -25,9 +22,6 @@ p.MsoFooter, li.MsoFooter, div.MsoFooter{
 	mso-header-margin:.5in; 
 	mso-footer-margin:.5in; 
 } 
-div.Section1 { 
-	page:Section1; 
-}
 p.MsoFooter { 
 	margin:0in; 
 	margin-bottom:.0001pt; 
@@ -38,7 +32,6 @@ p.MsoFooter {
 #chapterend {
 	page-break-before: always;
 }
-
 
 .menu {
 	position: fixed;
@@ -209,13 +202,6 @@ display: inline-block;
 .submenu.static {
 	display: inline-block!important;
 	margin: 0;
-}
-
-.submenu.static.active {
-	background: rgba(255,255,255,0);
-	border: 2px solid #fff;
-	border: 2px solid var(--primary);
-	box-sizing: border-box;
 }
 .submenu.static.active span {
 	font-weight: 600;

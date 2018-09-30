@@ -23,19 +23,18 @@ html
 					a.tb-03-m0.block.danger(role="button", href="/exportword", title="Page blank -- reload")
 						span Blank page? Click to reload
 
-					div(id= h1, style="mso-element:header;")
-						p.tb-font-l(class="MsoHeader") Brigham City
-						each data, n in dat
-							if (n === 0)
-								div#chapter
-									table(cellspacing="0px", style="width:100%;table-layout: auto;")
-										tr.tb-font-xxl(style="padding: 0;")
-											td 
-												
-												span Title 
-												span.bd #{data[0].title.ind}
-												span &nbsp
-												span #{data[0].title.str}
+					p.tb-font-l(class="MsoHeader") Brigham City
+					each data, n in dat
+						if (n === 0)
+							div#chapter
+								table(cellspacing="0px", style="width:100%;table-layout: auto;")
+									tr.tb-font-xxl(style="padding: 0;")
+										td 
+											
+											span Title 
+											span.bd #{data[0].title.ind}
+											span &nbsp
+											span #{data[0].title.str}
 
 					p.tb-font-xl Table of Contents
 					<!--[if supportFields]>
@@ -47,26 +46,28 @@ html
 
 					<![endif]-->
 					p.tb-11-m0.footrule &nbsp
-					table(cellspacing="0px", style="width:100%;table-layout: fixed;")
+					table(cellspacing="0px", style="width: 100%;table-layout: fixed;overflow:hidden;")
 						tr#chapter
 							td(style="padding: 0;width:100%;", colspan="1") &nbsp
 							td(style="padding: 0;width:100%;", colspan="1") &nbsp
 						- var c = 0
 						each data, n in dat.length ? dat : []
 							
-							tr#chapterend &nbsp
+							
 							tr#chapter.tb-font-l
 								
-								td(style="padding: 0;width:100%;", colspan="2")
-									h1
+								td(style="padding: 0;", colspan="2")
+									div(style="clear:both!important;")
+									h1(style="page-break-before:always;display:block;")
 										span Chapter 
 										span.bd #{data[0].chapter.ind}
 										span &nbsp
 										span #{data[0].chapter.str}
+									div(style="clear:both!important;")
 							- var count = 0
 							each doc, i in data.length ? data : []
 								tr.tb-font-l
-									td.headrule(colspan="2", style="width: 100%;")
+									td.headrule(colspan="2", style="overflow:hidden;")
 										if (doc.section.ind !== "000")
 											h2
 												span.bd #{doc.title.ind}
@@ -79,20 +80,21 @@ html
 										
 										each img, j in doc.properties.media
 											if (img.orientation === 'landscape')
-												div.row
-													a.img.tb-11-m0
-														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
-														if (doc.section.ind !== "000")
-															span.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
+												//div.row
+												span.img.tb-10-m0
+													img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
+												if (doc.section.ind !== "000")
+													p.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 										
 										if (doc.properties.description)
-											!= md(doc.properties.description)
+											p.tb-font-xs
+												!= md(doc.properties.description)
 											each img, j in doc.properties.media
 												if (img.orientation !== 'landscape')
-													a.img.tb-05-m0
-														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
-														if (doc.section.ind !== "000")
-															span.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
+													p.img.tb-05-m0
+														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
+													if (doc.section.ind !== "000")
+														p.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 
 								tr.tb-font-xxs(style="margin:0;padding:0;")
 									td(style="padding: 0;margin:0;width:100%;", colspan="1") &nbsp
