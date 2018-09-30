@@ -86,7 +86,8 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 										
 										if (doc.properties.description)
 											p.tb-font-xs
-												!= md(doc.properties.description)
+												
+												!= md(doc.properties.description.replace(/href="\/menu\/(\d{1,4})\/(\d{2,4})#(\d{2,5})(&rdquo;|"| )/g, 'href="#$1.$2.$3"').replace(/href="\/menu\/(\d{1,4})\/(\d{2,4})(&rdquo;|"| )/g, 'href="#Chapter_$2"'))
 											each img, j in doc.properties.media
 												if (img.orientation !== 'landscape')
 													p.img.tb-05-m0(style="margin-top:10px;")

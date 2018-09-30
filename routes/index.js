@@ -187,10 +187,10 @@ var curly = function(str){
 		.replace(/"\b/g, "&ldquo;")     // Opening doubles
 		.replace(/\b"/g, "&rdquo;")     // Closing doubles
 		.replace(/(\.)"/g, "$1&rdquo;")     // Closing doubles
-		.replace(/u2018/g, "&lsquo;")
-		.replace(/u2019/g, "&rsquo;")
-		.replace(/u201c/g, "&ldquo;")
-		.replace(/u201d/g, "&rdquo;")
+		.replace(/\u2018/g, "&lsquo;")
+		.replace(/\u2019/g, "&rsquo;")
+		.replace(/\u201c/g, "&ldquo;")
+		.replace(/\u201d/g, "&rdquo;")
 		.replace(/[“]/g, "&ldquo;")
 		.replace(/[”]/g, "&rdquo;")
 		.replace(/[’]/g, "&rsquo;")
