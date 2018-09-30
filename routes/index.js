@@ -1082,7 +1082,7 @@ function getDocxBlob(now, dat, toc, cb){
 	});
 	var cloc = ''+publishers+'/pu/publishers/ordinancer/word/'+now+'.doc'
 	//console.log(str)
-	var juicedmain = juice(str);
+	//var juicedmain = juice(str);
 	//console.log(juicedmain);
 	var doc = 
 		'MIME-Version: 1.0\nContent-Type: multipart/related; boundary="----=_NextPart."\n\n'+
@@ -1104,8 +1104,8 @@ function getDocxBlob(now, dat, toc, cb){
 		)*/
 		'------=_NextPart.--'
 		
-	var docx = 
-	HtmlDocx.asBlob(juicedmain);
+	//var docx = 
+	//HtmlDocx.asBlob(juicedmain);
 	cb(doc)
 }
 
