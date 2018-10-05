@@ -15,24 +15,60 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 		
 		div.Section1.WordSection1(style="visibility:hidden;")
 			
-			div.centerallwrap(style="visibility:visible;background-color: #fff; background-color: var(--primary); pointer-events:all;")
+			table(cellspacing="0px", width="100%", style="width: 100%;table-layout: fixed;overflow:hidden;")
+				tr
+					td
+						
+						each data, n in dat.length ? dat : []
+							
+							each doc, i in data.length ? data : []
+								
+								if (i === 0)
+									each img, j in doc.properties.media
+										if (doc.section.ind !== "000")
+											span.img.tb-10-m0(style="position:relative;display:inline-block;")
+												img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
+							if (n === dat.length - 1)
+								div(style="padding:100px;background-color:rgba(255,255,255,0.9);position:absolute;display:block;margin:0 auto;page-break-after:always;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index:2;")
+									p.tb-font-xxxl(style="text-transform:uppercase;letter-spacing:5px;text-align:center;") Brigham City
+									p.tb-font-l(style="text-transform:uppercase;letter-spacing:2px;text-align:center;") Title 
+										span.bd #{data[data.length-1].title.ind} 
+										span #{data[data.length-1].title.str}
+									
+									- var ct = 0
+									each doc, i in data
+										
+										if (doc.properties.diffs.length > 0)
+											- ct++
+											if (ct === 1)
+												p.tb-font-xxs(style="text-align:center;margin-bottom:20px;") Revised 
+													span #{moment(doc.properties.diffs[doc.properties.diffs.length-1].date).format('YYYY-MM-DD')}
+							each doc, i in data.length ? data : []
+								
+								if (i > 0 && i < 4)
+									each img, j in doc.properties.media
+										if (doc.section.ind !== "000")
+											span.img.tb-10-m0(style="position:relative;display:inline-block;")
+												img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
 				
 
+						
+			div.centerallwrap(style="visibility:visible;background-color: #fff; background-color: var(--primary); pointer-events:all;")
+				
 				div.centerall
-					p.tb-font-l(class="MsoHeader") Brigham City
-					span.tb-11-m0.headrule &nbsp
+					
 					each data, n in dat
 						if (n === 0)
 							div#chapter
 								table(cellspacing="0px", style="width:100%;table-layout: auto;")
 									tr.tb-font-xxl(style="padding: 0;")
 										td 
-											
-											span Title 
-											span.bd #{data[0].title.ind}
-											span &nbsp
-											span #{data[0].title.str}
-
+											div(style="clear:both!important;")
+											p.tb-font-xxl(style="page-break-before:always;display:block;") Title 
+												span.bd #{data[0].title.ind}
+												span &nbsp
+												span #{data[0].title.str}
+											div(style="clear:both!important;")
 					p.tb-font-xl Table of Contents
 					<!--[if supportFields]>
 					span(style='mso-element:field-begin')

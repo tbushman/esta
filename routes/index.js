@@ -1069,6 +1069,7 @@ function getDocxBlob(now, dat, toc, cb){
 	}
 	var str = pug.renderFile(pugpath, {
 		md: require('marked'),
+		moment: require('moment'),
 		doctype: 'strict',
 		hrf: '/publishers/ordinancer/word/'+now+'.doc',
 		dat: dat.sort(function(a,b){
@@ -2079,6 +2080,7 @@ router.get('/exportword', function(req, res, next){
 			getDocxBlob(now, dat, true, function(docx){
 				var viewstr = pug.renderFile(pugviewpath, {
 					md: require('marked'),
+					moment: require('moment'),
 					doctype: 'html',
 					hrf: '/publishers/ordinancer/word/'+now+'.doc',
 					dat: dat
