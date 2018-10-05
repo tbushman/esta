@@ -45,7 +45,7 @@ each mn, k in menus
 								include angle.pug
 					span.tb-font-s Plain .txt
 			if (menu === "publish")
-				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/coverimg/'+encodeURIComponent(dat[0][0].chapter.str)", v-bind:title="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")
+				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/coverimg/'+encodeURIComponent(dat[0][0].chapter.ind)", v-bind:title="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")
 					span.tb-font-s(v-text="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")
 
 				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].chapter.str)", v-bind:title="'Add Section to Ch. '+dat[0][0].chapter.ind+''")

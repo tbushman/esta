@@ -2451,7 +2451,7 @@ router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req,
 	})
 })
 
-router.get('/api/coverimg/:chtitle', function(req, res, next){
+router.get('/api/coverimg/:chind', function(req, res, next){
 	req.session.importgdrive = false;
 	var outputPath = url.parse(req.url).pathname;
 	//console.log(outputPath)
@@ -2464,7 +2464,7 @@ router.get('/api/coverimg/:chtitle', function(req, res, next){
 		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png')
 		var chind = 1;
 		var secind = '10';
-		Content.find({'chapter.str': {$regex:decodeURIComponent(req.params.chtitle)}}, function(err, chunk){
+		Content.find({'chapter.ind': req.params.chind}, function(err, chunk){
 			if (err) {
 				return next(err)
 			}

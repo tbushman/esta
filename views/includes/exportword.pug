@@ -20,14 +20,18 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 					td
 						
 						each data, n in dat.length ? dat : []
-							
+							- var cnt = 0
 							each doc, i in data.length ? data : []
 								
-								if (i === 0)
-									each img, j in doc.properties.media
-										if (doc.section.ind !== "000")
-											span.img.tb-10-m0(style="position:relative;display:inline-block;")
-												img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
+								if (doc.section.ind === "000")
+									- cnt++
+									if (cnt === 1)
+										if (i < 3)
+											each img, j in doc.properties.media
+											
+												if (j === 0)
+													span.img.tb-10-m0(style="position:relative;display:inline-block;")
+														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
 							if (n === dat.length - 1)
 								div(style="padding:100px;background-color:rgba(255,255,255,0.9);position:absolute;display:block;margin:0 auto;page-break-after:always;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index:2;")
 									p.tb-font-xxxl(style="text-transform:uppercase;letter-spacing:5px;text-align:center;") Brigham City
@@ -43,13 +47,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 											if (ct === 1)
 												p.tb-font-xxs(style="text-align:center;margin-bottom:20px;") Revised 
 													span #{moment(doc.properties.diffs[doc.properties.diffs.length-1].date).format('YYYY-MM-DD')}
-							each doc, i in data.length ? data : []
-								
-								if (i > 0 && i < 4)
-									each img, j in doc.properties.media
-										if (doc.section.ind !== "000")
-											span.img.tb-10-m0(style="position:relative;display:inline-block;")
-												img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
+		
 				
 
 						
