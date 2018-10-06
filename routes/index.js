@@ -221,18 +221,18 @@ function textImporter(req, str, gid, cb) {
 			var entry = [];
 
 			// non-capturing marker at title.chapter.section index with global and multiple modifier
-			// Used to split the text into an array
-			var drx = /(\d{1,3}\.\d{1,3}\.\d{0,4}\.[\s\S]*?)(?=\d{1,3}\.\d{1,3}\.\d{1,4}\.\s*?)/gm
+			// Used to split the text into an array by section
+			var drx = /(^(?:Section ){0,1}\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1}[\s\S]*?)(?=^(?:Section ){0,1}\d{1,3}\.\d{1,3}\.\d{1,4}\.{0,1}\s*?)/gm;
 			// title.chapter.section index
-			var numrx = /^(\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1}[\s\S]*?)/si
+			var numrx = /^(?:Section ){0,1}(\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1}[\s\S]*?)/si
 			//var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
 			// title rx
-			var trx = /(?:^\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1})(.*?)(?=[\n\.])/si
+			var trx = /(?:^(?:Section ){0,1}\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1})(.*?)(?=[\n\.])/si
 			// isolate description
 			var descrx = /(?:[\n])(.*)/si
 			//remove stray spaces
 			var dat = newcontentstr.split(drx).filter(function(item){
-				return item !== ''
+				return item !== '' && item !== 'Section ' && item !== undefined
 			}).map(function(it){
 				var num;
 				if (numrx.exec(it)) {
@@ -260,6 +260,7 @@ function textImporter(req, str, gid, cb) {
 					var end = num.pop();
 				}
 				num = num.join('.');
+				num = num.replace('Section ', '')
 				//console.log(num)
 				return {
 					num: num,
