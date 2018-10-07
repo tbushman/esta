@@ -16,7 +16,7 @@ block content
 						//v-for="doc in data", v-if="(!data[dindexes.indexOf(doc.index) - 1] ? (true === true) : (data[dindexes.indexOf(doc.index)].chapter.ind !== data[dindexes.indexOf(doc.index) - 1].chapter.ind))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry", v-once)
 						//v-show="(!data[dindexes.indexOf(doc.index) - 1] ? (true === true) : (data[dindexes.indexOf(doc.index)].chapter.ind !== data[dindexes.indexOf(doc.index) - 1].chapter.ind))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 						celll(v-if="n === 0", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
-							a(v-bind:href="'/menu/'+ch[0].title.ind+'/'+null+''")
+							a(v-bind:href="'/'")
 								header.row.tb-font-l Title 
 									bd.bd(v-text="ch[0].title.ind")
 									span(v-text="' '") 
