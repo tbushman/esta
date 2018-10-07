@@ -26,41 +26,46 @@ html
 							- var ct = 0
 							each data, n in dat.length ? dat : []
 								- var cnt = 0
+								- var cntt = 0
 								each doc, i in data.length ? data : []
 									if (n === 0)
 										if (doc.section.ind === "000")
 											- cnt++
 											if (cnt === 1)
-												if (i < 3)
+												if (i === 0)
 													each img, j in doc.properties.media
 													
 														if (j === 0)
 															span.img.tb-10-m0(style="position:relative;display:inline-block;")
 																img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
-									else
-										if (n === dat.length - 1)
-											if (i === data.length - 1)
-												div(style="padding:100px;background-color:rgba(250,251,237,0.9);position:absolute;display:block;margin:0 0 20px 0;page-break-after:always;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index:2;")
-													p.tb-font-xxxl(style="text-transform:uppercase;letter-spacing:5px;text-align:center;") Brigham City
-													p.tb-font-l(style="text-transform:uppercase;letter-spacing:2px;text-align:center;") Title 
-														span.bd #{data[data.length-1].title.ind} 
-														span #{data[data.length-1].title.str}
+										
+										if (i === data.length - 1)
 											
-													if (doc.properties.diffs.length > 0)
-														- ct++
-														if (ct === 1)
+											div(style="padding:100px;background-color:rgba(250,251,237,0.9);position:absolute;display:block;margin:0 0 20px 0;page-break-after:always;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index:2;")
+												p.tb-font-xxxl(style="text-transform:uppercase;letter-spacing:5px;text-align:center;") Brigham City
+												p.tb-font-l(style="text-transform:uppercase;letter-spacing:2px;text-align:center;") Title 
+													span.bd #{data[data.length-1].title.ind} 
+													span #{data[data.length-1].title.str}
+										
+										if (doc.properties.diffs.length > 0)
+											- ct++
+											if (ct === 1)
+											
+												p.tb-font-xxs(style="text-align:center;margin-bottom:20px;padding-bottom:20px;") Revised 
+													span #{moment(doc.properties.diffs[doc.properties.diffs.length-1].date).format('YYYY-MM-DD')}
+									else
+										
+										if (n < 4)
+											if (doc.section.ind === "000")
+												- cntt++
+												if (cntt === 1)
+													if (i === 0)
 														
-															p.tb-font-xxs(style="text-align:center;margin-bottom:20px;") Revised 
-																span #{moment(doc.properties.diffs[doc.properties.diffs.length-1].date).format('YYYY-MM-DD')}
-										if (doc.section.ind === "000")
-											- cnt++
-											if (cnt === 1)
-												if (i < 3)
-													each img, j in doc.properties.media
-													
-														if (j === 0)
-															span.img.tb-10-m0(style="position:relative;display:inline-block;")
-																img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
+														each img, j in doc.properties.media
+														
+															if (j === 0)
+																span.img.tb-10-m0(style="position:relative;display:inline-block;")
+																	img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
 
 				
 				
