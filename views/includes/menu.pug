@@ -21,7 +21,6 @@ each mn, k in menus
 			a.submenu.drop(class= mn, title="Import")
 				span.tb-font-s Import
 			div.slidedown(class= mn)
-				//
 				
 				a.submenu.drop(class= mn, href="/importgdrive", title="Import Chapter from Google Drive")
 					if (mn !== "static")
@@ -36,7 +35,7 @@ each mn, k in menus
 								include angle.pug
 						
 						label.tb-font-s(for="importword") MS Word
-						input#importword(class= mn, v-on:change="uploadDocx", type="file", value="Import Docx")
+						input.block#importword(class= mn, v-on:change="uploadDocx", type="file", value="Import Docx")
 
 				div.submenu.drop(class= mn, style="padding-left: "+(mn === 'static' ? '10px' : '0')+";pointer-events:all;")
 					if (mn !== "static")
@@ -44,9 +43,9 @@ each mn, k in menus
 							.ui(class= mn)
 								include angle.pug
 					label.tb-font-s(for="importtxt") Plain .txt
-					input.block#importtxt(v-on:change="importTxt", type="file", value="Import TXT")
+					input.block#importtxt(class= mn, v-on:change="importTxt", type="file", value="Import TXT")
 			if (menu === "publish")
-				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/coverimg/'+encodeURIComponent(dat[0][0].chapter.ind)", v-bind:title="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")
+				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined && dat[0][0].section.ind !== '000'", v-bind:href="'/api/coverimg/'+encodeURIComponent(dat[0][0].chapter.ind)", v-bind:title="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")
 					span.tb-font-s(v-text="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")
 
 				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].chapter.str)", v-bind:title="'Add Section to Ch. '+dat[0][0].chapter.ind+''")
