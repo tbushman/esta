@@ -21,7 +21,7 @@ maintitle.centerall(style="clip-path: url(#myPath);pointer-events:visiblePoint;"
 			div.row(v-if="edit === null")
 				include header.pug
 				include body.pug
-			div.row(v-else-if="edit === doc.index")
+			div.row(v-else-if="edit === doc.index", style="padding-top:20px;")
 				form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					//form.row.form(v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)

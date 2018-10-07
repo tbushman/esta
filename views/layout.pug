@@ -164,58 +164,7 @@ html
 						}
 						document.head.appendChild(script)
 					}
-					if (self.export && self.export !== '') {
-						setTimeout(function(){
-							var fd = new FormData();
-							var innerhtmldiv = $('div.centerallwrap')[0];
-							if (!innerhtmldiv) return;
-							//https://stackoverflow.com/a/12523515/3530394
-							var getDocTypeAsString = function () { 
-							var node = document.doctype;
-							return node ? "<!DOCTYPE "
-							+ node.name
-							+ (node.publicId ? ' PUBLIC "' + node.publicId + '"' : '')
-							+ (!node.publicId && node.systemId ? ' SYSTEM' : '') 
-							+ (node.systemId ? ' "' + node.systemId + '"' : '')
-							+ '>\n' : '';
-							};
 
-							
-							var innerhtml = 
-							getDocTypeAsString() + 
-							'<html><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge; charset=utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>' + 
-							'<style>'+
-							$('#style').html() +
-							/*'<!--[if supportFields]>'+
-							"<span style='mso-element:field-begin'></span>"+
-							"<span style='mso-spacerun:yes'> </span>"+
-							'TOC \o "1-1" \h \z \\u \t "Title 7;1"'+
-							"<span style='mso-element:field-separator'></span>"+
-							"<span style='mso-no-proof:yes'>"+
-							"Table of content - Please select all using CTRL+T and press F9 to update all fields."+
-							"</span><span style='mso-element:field-end'></span><![endif]-->"+*/
-							'</style></head><body>'+
-							//'<link rel="stylesheet" href="/stylesheets/style.css"/></head><body>' + 
-							//'<link rel="stylesheet" type="text/css" href="'+ ( '#{appURL}' === 'ta.bli.sh' ? 'https://' : 'http://' ) +''+ '#{appURL}' +'/stylesheets/styleword.css"/>'+
-							innerhtmldiv.outerHTML + '</body></html>';//$('html')[0].outerHtml.toString();
-							console.log(innerhtml)
-							fd.append("pdf", innerhtml);
-							
-							var uploadurl = '/api/exportpdf';
-							$.ajax({
-								url: uploadurl,
-								type: 'POST',
-								data: fd,
-								processData: false,
-								contentType: false,
-								success: function(res) { 
-									console.log(res)
-								}
-								
-							})
-						}, 5000)
-						
-					}
 					if (self.dat) {
 						self.dat.sort(function(a,b){
 							return a[0].chapter.ind > b[0].chapter.ind
@@ -250,7 +199,7 @@ html
 							statusbar: false,
 							theme: 'inlite',
 							inline: true,
-							selector: "#description",
+							selector: "#description,#title",
 							plugins: 'table',
 							plugins: 'lists',
 							selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | link unlink | table ',
@@ -282,20 +231,22 @@ html
 				methods: {
 					sliderImg: function(){
 						var self = this;
-						setInterval(function(){
-							$('#slider').css('opacity',0);
-							setTimeout(function(){
-								if (self.sliderIndex > 3) {
-									self.sliderIndex = 1
-								} else {
-									self.sliderIndex += 1;
-								}
+						if ($('#slider')[0]) {
+							setInterval(function(){
+								$('#slider').css('opacity',0);
 								setTimeout(function(){
-									$('#slider').css('opacity',1);
+									if (self.sliderIndex > 3) {
+										self.sliderIndex = 1
+									} else {
+										self.sliderIndex += 1;
+									}
+									setTimeout(function(){
+										$('#slider').css('opacity',1);
+									},2000)
+									
 								},2000)
-								
-							},2000)
-						},10000)
+							},10000)
+						}
 					},
 					clickSlider: function(diff, doc){
 						//`<a v-bind:click="" >${diff.user.username}<img class="avatar" src="${diff.user.avatar}"></img></a>`

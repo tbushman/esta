@@ -101,7 +101,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 								tr.tb-font-l
 									td.headrule(colspan="2", style="overflow:hidden;")
 										if (doc.section.ind !== "000")
-											h2
+											h2(style="page-break-after:avoid;")
 												span.bd #{doc.title.ind}
 													span .
 													span #{doc.chapter.ind}
@@ -119,7 +119,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 													p.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 										
 										if (doc.properties.description)
-											p.tb-font-xs
+											p.tb-font-xs(style="page-break-before:avoid;")
 												
 												!= md(doc.properties.description.replace(/href="\/menu\/(\d{1,4})\/(\d{2,4})#(\d{2,5})(&rdquo;|"| )/g, 'href="#$1.$2.$3"').replace(/href="\/menu\/(\d{1,4})\/(\d{2,4})(&rdquo;|"| )/g, 'href="#Chapter_$2"'))
 											each img, j in doc.properties.media

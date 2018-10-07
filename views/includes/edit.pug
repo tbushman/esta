@@ -14,7 +14,7 @@ maintitle(style="display: block; background-color: #fff; background-color: var(-
 
 			div.tb-10-m0(v-if="edit === null", v-for="doc in data")
 				include entry.pug
-				description.tb-10-m0#description(v-html="marked(doc.properties.description)")
+				description.tb-10-m0.tb-font-s#description(v-html="marked(doc.properties.description)")
 
 			div.tb-10-m0(v-if="doc && doc !== '' && edit === doc.index")
 				

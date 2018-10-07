@@ -79,6 +79,10 @@ ul {
 	list-style-type: none;
 }
 
+ol {
+	list-style-type: decimal;
+}
+
 blockquote, .blockquote {
 	margin: 60px;
 	padding-right: 2rem;
@@ -364,7 +368,7 @@ em {
 	max-height: calc(100% - calc(var(--thumbw) * 2));
 	/*min-height: 230px;*/
 	height: auto;
-	right: 15px;
+	right: auto;
 	left: auto;
 	top: 20px;
 	margin-top: 2px;
@@ -491,11 +495,17 @@ display: inline-block;
 /*Static menu*/
 .menu.static {
 	min-height: auto;
-	padding: 0;
+	padding: 10px 0 0 0;
 	width: 100%;
-	top: 20px;
+	top: 0;
 	position: absolute;
 	z-index: 9;
+	background-color: var(--primary);
+	display: block;
+	min-height: 45px;
+	min-height: var(--thumbw);
+	margin: 0;
+	box-shadow: 3px 3px 2px 1px rgba(0, 0, 0, .2);
 }
 
 .mainmenu.static {
@@ -640,7 +650,7 @@ breadcrumbs a {
 	margin: 0;
 	overflow-x: hidden;
 	overflow-y: scroll;
-	
+	z-index:1;
 }
 
 .centerall {

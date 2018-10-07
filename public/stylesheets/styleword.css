@@ -44,7 +44,7 @@ p.MsoFooter {
 	max-height: calc(100% - calc(var(--thumbw) * 2));
 	/*min-height: 230px;*/
 	height: auto;
-	right: 15px;
+	right: auto;
 	left: auto;
 	top: 20px;
 	margin-top: 2px;
@@ -169,6 +169,11 @@ display: inline-block;
 	top: 20px;
 	position: absolute;
 	z-index: 9;
+	background-color: var(--primary);
+	display: block;
+	min-height: 45px;
+	min-height: var(--thumbw);
+	margin: 0;
 }
 
 .mainmenu.static {
@@ -919,12 +924,18 @@ ul {
 	}
 
 	td.headrule, td.footrule { 
-		page-break-inside:avoid;
+		/*page-break-inside:avoid;*/
+		widows: 5;
+		orphans: 5;
 		border-top: 1px solid #c8c8c8;
 		padding: 5px 0 8px 0;
 		vertical-align: top;
 		max-width: 500px;
 		word-wrap: break-word;
+	}
+	
+	ol {
+		list-style-type: decimal;
 	}
 
 	li {
@@ -933,7 +944,6 @@ ul {
 		font-weight: 400;
 		line-height: 19px;
 		margin: 6px 0 0 0;
-		display: block;	
 	}
 
 	

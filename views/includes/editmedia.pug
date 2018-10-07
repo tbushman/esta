@@ -16,7 +16,7 @@ div.tb-10-m0(v-if="edit === doc.index")
 		div.tb-06-m0.tb-08-m3
 			div.row
 				label(v-bind:for="'img'+img.index+'_name'") Image Title
-				input(type="text", v-bind:name="'img'+img.index+'_name'", v-bind:id="'img'+img.index+'_name'", v-bind:value="img.name")
+				input.tb-font-s(type="text", v-bind:name="'img'+img.index+'_name'", v-bind:id="'img'+img.index+'_name'", v-bind:value="img.name")
 	div.row
 		div.tb-10-m0.tb-02-m3
 			//
@@ -35,7 +35,7 @@ div.tb-10-m0(v-if="edit === doc.index")
 		div.tb-10-m0.tb-08-m3.shift-00
 			div.row
 				label(v-bind:for="'img'+img.index+'_caption'") Image Caption
-				textarea(type="text", v-bind:name="'img'+img.index+'_caption'", v-bind:id="'img'+img.index+'_caption'", v-text="img.caption")
+				textarea.tb-font-s(type="text", v-bind:name="'img'+img.index+'_caption'", v-bind:id="'img'+img.index+'_caption'", v-text="img.caption")
 				//label(v-bind:for="'img'+img.index+'_postscript'") Caption postscript
 				//input(type="text", v-bind:name="'img'+img.index+'_postscript'", v-bind:id="'img'+img.index+'_postscript'", value="img.postscript")
 

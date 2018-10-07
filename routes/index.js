@@ -680,7 +680,7 @@ function ensureHyperlink(req, res, next) {
 		}
 		data.forEach(function(doc){
 			//console.log(doc.properties.description)
-			var numrx = /(\s\d{1,3}\.\d{1,3}\.{0,1}\d{0,4}\s)/;
+			var numrx = /(\s\d{1,3}\.\d{1,3}\.{0,1}\d{0,4}\.{0,1}\s)/;
 	  	var desc = removeExtras(doc.properties.description);
 			var hls = numrx.test(desc);
 			if (desc) {
@@ -2738,7 +2738,6 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				};
 			}
 			var newdate = new Date();
-
 			
 			//console.log(desc, body.description);
 			var end;
@@ -2757,12 +2756,12 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				},
 				section: {
 					ind: doc.section.ind,
-					str: (body.title ? curly(body.title) : doc.section.str)
+					str: (!body.title ? doc.properties.title : marked(curly(body.title)).replace(/(<p>|<\/p>)/g,''))
 				},
 				properties: {
 					published: (!body.published ? false : true),
 					_id: id,
-					title: body.title ? curly(body.title) : doc.properties.title,
+					title: (!body.title ? doc.properties.title : marked(curly(body.title)).replace(/(<p>|<\/p>)/g,'')),
 					label: body.label ? curly(body.label) : doc.properties.label,
 					place: body.place ? curly(body.place) : doc.properties.place,
 					description: desc ? marked(curly(desc)) : doc.properties.description,
@@ -2806,20 +2805,23 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				}
 			}
 			entry = JSON.parse(JSON.stringify(entry))
-
 			var set1 = {$set: {}};
 			set1.$set['properties'] = entry.properties;
-			
+
 			var key2 = 'properties.media';
 			var set2 = {$set: {}};
 			set2.$set[key2] = entrymedia;
-			
+
 			var set3 = {$set: {}};
 			set3.$set['geometry'] = entry.geometry;
-			
+
 			var set4 = {$push: {}};
 			var key4 = 'properties.diffs'
 			set4.$push[key4] = newdiff;
+			
+			var set5 = {$set:{}}
+			var key5 = 'section.str'
+			set5.$set[key5] = entry.section.str;
 
 			var options = {safe: true, new: true, upsert: false};
 			Content.findOneAndUpdate({_id: doc._id}, set1, options, function(err, docc) {
@@ -2834,17 +2836,23 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						if (errr) {
 							next(errr)
 						}
-						if (!newdiff) {
-							next(null)
-						} else {
-							Content.findOneAndUpdate({_id: doc._id}, set4, options, function(errr, doc) {
-								if (errr) {
-									next(errr)
-								} else {
-									next(null)
-								}
-							})
-						}
+						Content.findOneAndUpdate({_id: doc._id}, set5, options, function(errr, doc) {
+							if (err) {
+								return next(err)
+							}
+							if (!newdiff) {
+								next(null)
+							} else {
+								Content.findOneAndUpdate({_id: doc._id}, set4, options, function(errr, doc) {
+									if (errr) {
+										next(errr)
+									} else {
+										next(null)
+									}
+								})
+							}
+						})
+						
 						
 					})
 				})

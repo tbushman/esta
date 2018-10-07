@@ -1,11 +1,11 @@
-a.row.tb-font-l(v-bind:href="'/list/'+doc._id+'/'+null+''")
+div.row.tb-font-m
 	sectionnum.bd(v-text="(doc.title.ind)+'.'+(doc.chapter.ind)+'.'+(doc.section.ind)+''")
 	span(v-text="' '")
-	sectionname(v-text="doc.section.str")
+	div#title(v-text="doc.section.str")
 
 p(style="margin-top:20px;")
-	label.tb-10-m0(v-if="edit === doc.index", for="description") Description
-	description.tb-10-m0#description(v-html="doc.properties.description", style="border-bottom: 1px solid #e1e1e1;")
+	label.tb-10-m0(v-if="edit === doc.index", for="description") Edit Section:
+	description.tb-10-m0.tb-font-s#description(v-html="doc.properties.description", style="border-bottom: 1px solid #e1e1e1;")
 p
 	div.row.spacer(
 
