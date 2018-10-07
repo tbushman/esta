@@ -11,7 +11,7 @@ each mn, k in menus
 
 
 		if (mn === 'static')
-			div.dropdown.static(style="float: left; left:6px; right:auto; display: flex;height:45px;")
+			div.dropdown.static(style="float: left; left:6px; right:auto; display: flex;height:45px;overflow-y:hidden!important;")
 				a.submenu.drop(href="/", class= mn, style="max-height:45px;")
 					span Brigham City
 		div.dropdown(class= mn)
@@ -30,20 +30,21 @@ each mn, k in menus
 								include angle.pug
 					span.tb-font-s Google Drive
 				if (menu !== "word")
-					div(style="padding-left: 10px;pointer-events:all;")
+					div.submenu.drop.spacer(class= mn, style="padding-left: "+(mn === 'static' ? '10px' : '0')+"; padding-bottom:10px;pointer-events:all;")
 						if (mn !== "static")
 							.ui(class= mn)
 								include angle.pug
 						
-						span.tb-font-s MS Word
-						input(class= mn, v-on:change="uploadDocx", type="file", value="Import Docx")
+						label.tb-font-s(for="importword") MS Word
+						input#importword(class= mn, v-on:change="uploadDocx", type="file", value="Import Docx")
 
-				a.submenu.drop(class= mn, href="/api/importtxt", title="Import Chapter as plain text")
+				div.submenu.drop(class= mn, style="padding-left: "+(mn === 'static' ? '10px' : '0')+";pointer-events:all;")
 					if (mn !== "static")
 						if (menu !== "word")
 							.ui(class= mn)
 								include angle.pug
-					span.tb-font-s Plain .txt
+					label.tb-font-s(for="importtxt") Plain .txt
+					input.block#importtxt(v-on:change="importTxt", type="file", value="Import TXT")
 			if (menu === "publish")
 				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined", v-bind:href="'/api/coverimg/'+encodeURIComponent(dat[0][0].chapter.ind)", v-bind:title="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")
 					span.tb-font-s(v-text="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")

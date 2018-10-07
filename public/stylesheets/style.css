@@ -13,7 +13,7 @@
     --quarternary: #124059;
     --quinary: #1f5575;
     --highlight: #36616c;
-    --thumbw: 36px;
+    --thumbw: 45px;
     --panelwper: 100%;
     --panelhper: 100%;
 }
@@ -368,10 +368,11 @@ em {
 	max-height: calc(100% - calc(var(--thumbw) * 2));
 	/*min-height: 230px;*/
 	height: auto;
-	right: auto;
+	right: 13px;
 	left: auto;
-	top: 20px;
+	top: 10px;
 	margin-top: 2px;
+	z-index: 5;
 }
 
 .menu .icon {
@@ -447,8 +448,8 @@ em {
 }
 
 .drop {
-	height: 72px;
-	height: calc(var(--thumbw) * 1.5);
+	height: 45px;
+	height: var(--thumbw);
 	background-color: rgba(255,255,255,0);
 	display: inline-block;
 	width: 100%;
@@ -461,7 +462,8 @@ em {
 	width: calc(100% - 72px);
 	width: calc(100% - calc(var(--thumbw) * 2));
 	padding: 0 0 0 0;
-	line-height: calc(var(--thumbw) * 2);
+	line-height: 45px;
+	line-height: var(--thumbw);
 	pointer-events: none;
 	color: #9e1e62;
 	color: var(--highlight);
@@ -487,10 +489,19 @@ a.submenu.drop {
 }*/
 
 .submenu.drop .ui {
-	width: 15px;
-height: 15px;
+	width: 12px;
+height: 12px;
 display: inline-block;
-
+padding: 0 10px 0 0;
+color: #652c90;
+color: var(--quarternary);
+fill: #652c90;
+fill: var(--quarternary);
+font-size: 10px;
+}
+.submenu.drop .ui path {
+	fill: #652c90;
+	fill: var(--quarternary);
 }
 /*Static menu*/
 .menu.static {
@@ -499,13 +510,14 @@ display: inline-block;
 	width: 100%;
 	top: 0;
 	position: absolute;
-	z-index: 9;
+	z-index: 4;
 	background-color: var(--primary);
 	display: block;
 	min-height: 45px;
 	min-height: var(--thumbw);
 	margin: 0;
 	box-shadow: 3px 3px 2px 1px rgba(0, 0, 0, .2);
+	right: auto;
 }
 
 .mainmenu.static {
@@ -543,8 +555,8 @@ display: inline-block;
 }
 
 .submenu.static > span {
-	font-size: calc(45px / 2.5);
-	font-size: calc(var(--thumbw) / 2.5);
+	font-size: 18px;
+	font-size: calc(var(--thumbw) / 3);
 	pointer-events: none;
 	width: 100%;
 }
@@ -598,8 +610,7 @@ display: inline-block;
 	padding: 5px 0 10px 0;
 	border: 2px solid rgba(255,255,255,1);
 	box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
-	/*transform: translate(-28%, 0%);*/
-	margin-left: 107px;
+	
 }
 .slidedown.static span {
 	width: auto;

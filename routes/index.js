@@ -2320,14 +2320,14 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 	
 })
 
-router.get('/api/importtxt', function(req, res, next){
+/*router.get('/api/importtxt', function(req, res, next){
 	req.session.importgdrive = false;
 	return res.render('import', {
 		info: 'Please enter Chapter name exactly as it appears in the document'
 	})
-})
+})*/
 
-router.post('/api/importtxt/:type/:chtitle/:rmdoc'/*, rmDocs*/, uploadmedia.single('txt'), function(req, res, next){
+router.post('/api/importtxt/:type'/*, rmDocs*/, uploadmedia.single('txt'), function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	fs.readFile(req.file.path, 'utf8', function (err, content) {

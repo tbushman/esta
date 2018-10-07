@@ -662,7 +662,7 @@ html
 
 							fd.append("txt", file);
 							var chtitle = encodeURIComponent($('#chaptername').val());
-							var uploadurl = '/api/importtxt/txt/'+(self.uploadchtitle ? self.uploadchtitle : chtitle )+'/'+self.uploadisreplace+'';
+							var uploadurl = '/api/importtxt/txt';
 							$.ajax({
 								url: uploadurl,
 								type: 'POST',

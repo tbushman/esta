@@ -41,21 +41,20 @@ p.MsoFooter {
 	background-color: rgba(255,255,255,0);
 	z-index: 6;
 	max-height: calc(100% - calc(45px * 2));
-	max-height: calc(100% - calc(var(--thumbw) * 2));
 	/*min-height: 230px;*/
 	height: auto;
-	right: auto;
+	right: 13px;
 	left: auto;
-	top: 20px;
+	top: 10px;
 	margin-top: 2px;
+	z-index: 5;
 }
 
 .menu .icon {
 	position: absolute;
 	right: 35px;
 	top: 5px;
-	color: #9e1f63;
-	color: var(--highlight);
+	color: #36616c;
 }
 
 .menu .icon .fas, .cartalert .fas {
@@ -63,8 +62,7 @@ p.MsoFooter {
 }
 
 .menu .icon .fas, .menu .icon span {
-	color: #9e1f63;
-	color: var(--highlight);
+	color: #36616c;
 
 }
 
@@ -75,9 +73,7 @@ p.MsoFooter {
 	pointer-events: all;
 	cursor: pointer;
 	min-width: 45px;
-	min-width: var(--thumbw);
 	min-height: 34px;
-	min-height: calc(var(--thumbw) - 11px);
 	display: inline-block;
 	z-index: 4;
 }
@@ -123,8 +119,7 @@ p.MsoFooter {
 }
 
 .drop {
-	height: 72px;
-	height: calc(var(--thumbw) * 1.5);
+	height: 45px;
 	background-color: rgba(255,255,255,0);
 	display: inline-block;
 	width: 100%;
@@ -135,17 +130,21 @@ p.MsoFooter {
 .drop span {
 	display: inline-block;
 	width: calc(100% - 72px);
-	width: calc(100% - calc(var(--thumbw) * 2));
 	padding: 0 0 0 0;
-	line-height: calc(var(--thumbw) * 2);
+	line-height: 45px;
 	pointer-events: none;
-	color: #9e1e62;
-	color: var(--highlight);
+	color: #36616c;
 }
+
+.qty {
+	position: absolute;
+	font-size: 10px;
+	z-index: 3;
+}
+
 
 a.menu.drop, a.submenu.drop {
 	color: #000;
-	color: var(--secondary);
 }
 a.submenu.drop {
 	pointer-events: all;
@@ -156,24 +155,31 @@ a.submenu.drop {
 }*/
 
 .submenu.drop .ui {
-	width: 15px;
-height: 15px;
+	width: 12px;
+height: 12px;
 display: inline-block;
-
+padding: 0 10px 0 0;
+color: #652c90;
+fill: #652c90;
+font-size: 10px;
+}
+.submenu.drop .ui path {
+	fill: #652c90;
 }
 /*Static menu*/
 .menu.static {
 	min-height: auto;
-	padding: 0;
+	padding: 10px 0 0 0;
 	width: 100%;
-	top: 20px;
+	top: 0;
 	position: absolute;
-	z-index: 9;
-	background-color: var(--primary);
+	z-index: 4;
 	display: block;
 	min-height: 45px;
-	min-height: var(--thumbw);
 	margin: 0;
+	box-shadow: 3px 3px 2px 1px rgba(0, 0, 0, .2);
+	right: auto;
+	background-color: #fbfdf0;
 }
 
 .mainmenu.static {
@@ -211,40 +217,30 @@ display: inline-block;
 }
 
 .submenu.static > span {
-	font-size: calc(45px / 2.5);
-	font-size: calc(var(--thumbw) / 2.5);
+	font-size: 18px;
 	pointer-events: none;
 	width: 100%;
 }
 .submenu.static > span, .submenu.static > .ui > .fas, .qty {
 	color: #652c90;
-	color: var(--quarternary);
 	line-height: 72px;
-	line-height: calc(var(--thumbw) * 1.5);
 }
 .submenu.drop.static > span, .submenu.drop.static > .ui > .fas, .qty {
 	line-height: 45px;
-	line-height: var(--thumbw);
 	color: #000;
-	color: var(--secondary);
 	/*font-size: 15px;*/
 }
 .submenu.drop.static.active > span {
 	
 	color: #652c90;
-	color: var(--quarternary);
 }
 .submenu.drop.static:hover > span {
 	
 	color: #000;
-	color: var(--secondary);
 }
 .submenu.drop.static {
 	line-height: 45px;
-	line-height: var(--thumbw);
-	height: auto;
 	min-height: 45px;
-	min-height: var(--thumbw);
 }
 .dropdown.static > .submenu:last-child > span, .dropdown.static > .submenu:last-child > .ui > .fas {
 	color: tomato;
@@ -267,8 +263,7 @@ display: inline-block;
 	padding: 5px 0 10px 0;
 	border: 2px solid rgba(255,255,255,1);
 	box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
-	/*transform: translate(-28%, 0%);*/
-	margin-left: 107px;
+	
 }
 .slidedown.static span {
 	width: auto;
@@ -281,7 +276,6 @@ display: inline-block;
 	max-height: inherit;
 	box-shadow: 0px 0px 0px 0px #fff;
 	background-color: #fff;
-	background-color: var(--primary);
 }
 .slidedown.static .submenu.drop {
 	padding: 0 0 0 10px;
@@ -289,7 +283,6 @@ display: inline-block;
 }
 .slidedown.static .submenu.drop span {
 	color: #000;
-	color: var(--secondary);
 }
 .slidedown.static div:hover span, div.slidedown.static a.submenu.drop.static:hover span {
 	color: tomato;
@@ -394,7 +387,7 @@ h1, .tb-font-l {
 	font-weight: 400;
 	line-height: 42px;
 	padding: 45px 0 0 0;
-	color: #9e1f63;
+	color: #36616c;
 }
 h3
 	{mso-style-link:"Heading 3 Char";
@@ -480,7 +473,7 @@ input[type="file"]::-webkit-file-upload-button {
 	text-transform: inherit;
 	background: none;
 	cursor: pointer;
-	background-color: #9e1f63;
+	background-color: #36616c;
 	padding: 10px;
 	color: #fff;
 }
@@ -680,7 +673,7 @@ p.tb-font-xxxl, li.tb-font-xxxl, div.tb-font-xxxl
 	line-height:31.5pt;
 	font-size:27.0pt;
 	font-family:"Arial",sans-serif;
-	color:#9E1F63;}
+	color:#36616c;}
 p.flavor, li.flavor, div.flavor
 	{mso-style-name:flavor;
 	margin-top:0in;
