@@ -18,7 +18,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 			table(cellspacing="0px", width="100%", style="width: 100%;table-layout: fixed;overflow:hidden;")
 				tr
 					td
-						
+						- var ct = 0
 						each data, n in dat.length ? dat : []
 							- var cnt = 0
 							each doc, i in data.length ? data : []
@@ -39,7 +39,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 										span.bd #{data[data.length-1].title.ind} 
 										span #{data[data.length-1].title.str}
 									
-							- var ct = 0
+							
 							each doc, i in data
 								
 								if (doc.properties.diffs.length > 0)
