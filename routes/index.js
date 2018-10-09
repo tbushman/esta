@@ -1110,9 +1110,9 @@ function getDocxBlob(now, dat, toc, cb){
 		)*/
 		'------=_NextPart.--'
 		
-	//var docx = 
-	//HtmlDocx.asBlob(juicedmain);
-	cb(doc)
+	var docx = 
+	HtmlDocx.asBlob(str);
+	cb(docx)
 }
 
 

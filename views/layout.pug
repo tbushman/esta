@@ -210,7 +210,7 @@ html
 										self.doc.properties.footnotes.push(
 											''
 										);
-										editor.insertContent('<a v-if="doc.properties.footnotes && doc.properties.footnotes['+(self.doc.properties.footnotes.length - 1)+']" href="ftnref'+(self.doc.properties.footnotes.length-1)+'"><span class="super">'+(self.doc.properties.footnotes.length)+'</span></a>')
+										editor.insertContent('<a v-if="doc.properties.footnotes && doc.properties.footnotes['+(self.doc.properties.footnotes.length - 1)+']" href="ftnref'+(self.doc.properties.footnotes.length)+'"><span class="super">'+(self.doc.properties.footnotes.length)+'</span></a>')
 										//editor.insertContent('<span v-if="doc.properties.footnotes && doc.properties.footnotes['+(self.doc.properties.footnotes.length - 1)+']" class="super">'+(self.doc.properties.footnotes.length)+'</span>')
 										$('#footnote'+self.doc.properties.footnotes.length - 1).focus()
 									}

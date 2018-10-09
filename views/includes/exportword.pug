@@ -156,24 +156,26 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 								td.footrule(colspan="2", style="width: 100%;")
 									p.tb-11-m0.footrule &nbsp
 
+			
+			
+			div(style='mso-element:footnote-list')
+				
+				each data, n in dat
+					each doc, i in data
+						each foot, k in doc.properties.footnotes
+							
+							div(style='mso-element:footnote', id='ftn'+(k+1)+'')
+								p.MsoFootnoteText
+									a.tb-font-xxs.super(style='mso-footnote-id:ftn'+(k+1)+'', href='#_ftn'+(k+1)+'', name='_ftnref'+(k+1)+'', title='', id='_ftnref'+(k+1)+'')
+										span(class='MsoFootnoteReference')
+											
+											span(style='mso-char-type:symbol;')
+											span.tb-font-xxs(style='mso-special-character:footnote')
+												span &nbsp
+												span #{foot}
 			div#f1(style="mso-element:footer;")
 				p.MsoFooter
 					table(width="100%", border="0", cellspacing="0", cellpadding="0")
-						tr.tb-font-xxs
-							td(width="100%")
-								
-								div(style='mso-element:footnote-list')
-									
-									each data, n in dat
-										each doc, i in data
-											each foot, k in doc.properties.footnotes
-												
-												div(style='mso-element:footnote', id='ftn'+k+'')
-													a(style='mso-footnote-id:ftn'+k+'', href='#_ftn'+k+'', name='_ftnref'+k+'', title='', id='_ftnref'+k+'')
-														span(class='MsoFootnoteReference')
-												span &nbsp
-												span.tb-font-xxs(style='mso-special-character:footnote') #{foot}
-
 						tr.tb-font-xxs
 							td(width="80%")
 								span.tb-font-xxs(style="color:#999;") Brigham City 
