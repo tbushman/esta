@@ -44,7 +44,8 @@ var GeoJSON = new Schema({
 				orientation: String
 			}
 		],
-		diffs: [Diffs]
+		diffs: [Diffs],
+		footnotes: [ ]
 	},
 	geometry: Schema.Types.Polygon
 }, 

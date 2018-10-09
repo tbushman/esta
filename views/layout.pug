@@ -200,13 +200,30 @@ html
 							theme: 'inlite',
 							inline: true,
 							selector: "#description,#title",
-							plugins: 'table',
 							plugins: 'lists',
-							selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | link unlink | table ',
+							valid_elements: '*[*]',
+							setup: function (editor) {
+								editor.addButton('footnote', {
+									text: 'Add footnote',
+									icon: 'link',
+									onclick: function(){
+										self.doc.properties.footnotes.push(
+											''
+										);
+										editor.insertContent('<a v-if="doc.properties.footnotes && doc.properties.footnotes['+(self.doc.properties.footnotes.length - 1)+']" href="ftnref'+(self.doc.properties.footnotes.length-1)+'"><span class="super">'+(self.doc.properties.footnotes.length)+'</span></a>')
+										//editor.insertContent('<span v-if="doc.properties.footnotes && doc.properties.footnotes['+(self.doc.properties.footnotes.length - 1)+']" class="super">'+(self.doc.properties.footnotes.length)+'</span>')
+										$('#footnote'+self.doc.properties.footnotes.length - 1).focus()
+									}
+								})
+							},
+							//custom_ui_selector: '.footnote_button',
+							selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | footnote'
 							//selectiion_toolbar: 'undo redo | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify alignnone | outdent indent blockquote | subscript superscript | bullist numlist | link unlink | table',
-							table_toolbar: "tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol"
+							//table_toolbar: "tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol"
+							
 
 						});
+						
 
 					}
 					

@@ -26,7 +26,7 @@ var HtmlDocx = require('html-docx-js');
 var mammoth = require('mammoth');
 var HtmlDiffer = require('html-differ').HtmlDiffer;
 var htmlDiffer = new HtmlDiffer({
-	ignoreAttributes: ['id', 'for', 'class', 'href']
+	ignoreAttributes: ['id', 'for', 'class', 'href', 'style']
 });
 //var google = require("googleapis"); 
 var {google} = require('googleapis');
@@ -181,12 +181,15 @@ var curly = function(str){
 		return ''
 	} else {
 		return str
-		
-		.replace(/'\b/g, "&lsquo;")     // Opening singles
-		.replace(/\b'/g, "&rsquo;")     // Closing singles
-		.replace(/"\b/g, "&ldquo;")     // Opening doubles
-		.replace(/\b"/g, "&rdquo;")     // Closing doubles
-		.replace(/(\.)"/g, "$1&rdquo;")     // Closing doubles
+		.replace(/(\s)'(\w)/g,'$1&lsquo;$2')
+		.replace(/(\w)'(\s)/g,'$1&rsquo;$2')
+		.replace(/(\s)"(\w)/g,'$1&ldquo;$2')
+		.replace(/(\w)"(\s)/g,'$1&rdquo;$2')
+		//.replace(/'\b/g, "&lsquo;")     // Opening singles
+		//.replace(/\b'/g, "&rsquo;")     // Closing singles
+		//.replace(/"\b/g, "&ldquo;")     // Opening doubles
+		//.replace(/\b"/g, "&rdquo;")     // Closing doubles
+		.replace(/(\w\.)"/g, "$1&rdquo;")     // Closing doubles
 		.replace(/\u2018/g, "&lsquo;")
 		.replace(/\u2019/g, "&rsquo;")
 		.replace(/\u201c/g, "&ldquo;")
@@ -320,7 +323,8 @@ function textImporter(req, str, gid, cb) {
 										description: marked(curly(item.desc)),
 										current: false,
 										media: [],
-										diffs: []
+										diffs: [],
+										footnotes: []
 									},
 									geometry: {
 										type: 'Polygon',
@@ -2702,9 +2706,27 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				}
 			}
 			//console.log(imgs)
-			next(null, doc, thumburls, imgs, orientations, body, pu)
+			next(null, doc, thumburls, imgs, orientations, body, keys, pu)
 		},
-		function(doc, thumburls, imgs, orientations, body, pu, next) {
+		function(doc, thumburls, imgs, orientations, body, keys, pu, next) {
+			var footnotes = [];
+			var count = 0;
+			for (var k = 0; k < keys.length; k++) {
+				
+				var thatkey = 'footnote'+count+''
+				if (keys[k] === thatkey) {
+					console.log(body[thatkey])
+					if (body[thatkey]) {
+						footnotes.push(body[thatkey])
+						count++;
+					}
+				}
+
+			}
+			next(null, doc, thumburls, imgs, orientations, footnotes, body, pu)
+		},
+		function(doc, thumburls, imgs, orientations, footnotes, body, pu, next) {
+			console.log(footnotes)
 			var straight = function(str) {
 				return str.replace(/(\d\s*)&rdquo;/g, '$1\"').replace(/(\d\s*)&rsquo;/g, "$1'")
 			}
@@ -2737,6 +2759,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					str: marked(curly(desc))
 				};
 			}
+
 			var newdate = new Date();
 			
 			//console.log(desc, body.description);
@@ -2770,13 +2793,15 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						end: moment().utc().format()
 					},
 					media: [],
-					diffs: doc.properties.diffs
+					diffs: doc.properties.diffs,
+					footnotes: footnotes
 				},
 				geometry: {
 					type: "Polygon",
 					coordinates: JSON.parse(body.latlng)
 				}
 			}
+			
 			//console.log(body.latlng)
 			//console.log(entry)
 			var entrymedia = []

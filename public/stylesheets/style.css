@@ -142,6 +142,10 @@ blockquote
 	position: sticky!important;
 }
 
+.super {
+	vertical-align:super;font-size:8px;line-height:none;
+}
+
 a {
 	pointer-events: all;
 	cursor: pointer;
