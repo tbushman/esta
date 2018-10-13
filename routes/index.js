@@ -1076,7 +1076,7 @@ function getDocxBlob(now, dat, toc, cb){
 		md: require('marked'),
 		moment: require('moment'),
 		doctype: 'strict',
-		hrf: '/publishers/ordinancer/word/'+now+'.doc',
+		hrf: '/publishers/ordinancer/word/'+now+'.docx',
 		dat: dat.sort(function(a,b){
 			//console.log(a[0].chapter.ind)
 			if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
@@ -1086,9 +1086,20 @@ function getDocxBlob(now, dat, toc, cb){
 			}
 		})
 	});
-	var cloc = ''+publishers+'/pu/publishers/ordinancer/word/'+now+'.doc'
+	var cloc = ''+publishers+'/pu/publishers/ordinancer/word/'+now+'.docx'
 	//console.log(str)
-	//var juicedmain = juice(str);
+	//juice.excludedProperties = ['margin']
+	//str = str.replace(/<p>/g, `<p style="font-family:'Calibri', sans-serif!important;">`)
+	var juicedmain = juice(str, 
+		{
+			preserveFontFaces: true,
+			//removeStyleTags: false,
+			preserveMediaQueries: true,
+			preserveImportant: true,
+			insertPreservedExtraCss: true,
+			extraCss: '@page {size:8.5in 11.0in;margin: 0.5in 0.75in 0.5in 0.75in;mso-footer:f1;mso-header:h1;font-family:"Calibri",sans-serif;}@page Section1{size:8.5in 11.0in;margin: 0.5in 0.75in 0.5in 0.75in;mso-footer:f1;mso-header:h1;font-family:"Calibri",sans-serif;}@page WordSection1{size:8.5in 11.0in;margin: 0.5in 0.75in 0.5in 0.75in;mso-footer:f1;mso-header:h1;font-family:"Calibri",sans-serif;}'
+		}
+	);
 	//console.log(juicedmain);
 	var doc = 
 		'MIME-Version: 1.0\nContent-Type: multipart/related; boundary="----=_NextPart."\n\n'+
@@ -1109,9 +1120,13 @@ function getDocxBlob(now, dat, toc, cb){
 			'\n\n------=_NextPart.--'
 		)*/
 		'------=_NextPart.--'
-		
+	var p = `<p></p>`
 	var docx = 
-	HtmlDocx.asBlob(str);
+	HtmlDocx.asBlob(
+		str.replace(/(\/ol>)/g, '$1<p style="font-family:\'Calibri\',sans-serif;font-size:10.5pt;line-height:13.5pt;"><\/p>')
+		.replace(/(\/p>\s*)<ol>/g, '$1<ol style="font-family:\'Calibri\',sans-serif;font-size:10.5pt;line-height:13.5pt;">')
+		.replace(/(\/ol>\s*)<li>/g, '$1<li style="font-family:\'Calibri\',sans-serif;font-size:10.5pt;line-height:13.5pt;">')
+	);
 	cb(docx)
 }
 
@@ -1533,7 +1548,8 @@ router.get('/api/exportgdrivewhole', function(req, res, next){
 					'mimeType': 'application/vnd.google-apps.folder'
 				})
 				.then(function(folder){
-					var mimeType = 'application/msword';
+					//var mimeType = 'application/msword';
+					var mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 					drive.files.list({
 						q: 'name="export_docx" and "'+folder.data.files[0].id+'" in parents and mimeType="application/vnd.google-apps.folder"'
 					})
@@ -1579,7 +1595,7 @@ router.get('/api/exportgdrivewhole', function(req, res, next){
 							}
 						});
 						
-						var pathh = path.join(p, '/'+now+'.doc');
+						var pathh = path.join(p, '/'+now+'.docx');
 						async function fsWriteFile(cbk){
 							await fs.writeFile(pathh, docx)
 							cbk(null);
@@ -1724,7 +1740,7 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 								}
 							});
 							
-							var pathh = path.join(p, '/'+now+'.doc');
+							var pathh = path.join(p, '/'+now+'.docx');
 							async function fsWriteFile(cbk){
 								await fs.writeFile(pathh, docx)
 								cbk(null);
@@ -2087,7 +2103,7 @@ router.get('/exportword', function(req, res, next){
 					md: require('marked'),
 					moment: require('moment'),
 					doctype: 'html',
-					hrf: '/publishers/ordinancer/word/'+now+'.doc',
+					hrf: '/publishers/ordinancer/word/'+now+'.docx',
 					dat: dat
 				});
 				var p = ''+publishers+'/pu/publishers/ordinancer/word';
@@ -2102,7 +2118,7 @@ router.get('/exportword', function(req, res, next){
 					}
 				});
 				
-				var pathh = path.join(p, '/'+now+'.doc');
+				var pathh = path.join(p, '/'+now+'.docx');
 				fs.writeFile(pathh, docx, function(err){
 					if (err) {
 						return next(err)

@@ -671,7 +671,6 @@ html
 						})
 					},
 					uploadTxt: function(file) {
-						console.log(file)
 						var reader = new FileReader();
 						var self = this;
 						reader.onloadend = function(e) {
@@ -697,7 +696,7 @@ html
 					},
 					importTxt: function(e){
 						var self = this;
-						var file = document.getElementById('importtxt').files[0];//e.target.files[0];
+						var file = e.target.files[0]//document.getElementById('importtxt').files[0];//e.target.files[0];
 						self.uploadTxt(file);
 					},
 					importCsv: function(e){

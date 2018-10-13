@@ -43,7 +43,7 @@ each mn, k in menus
 							.ui(class= mn)
 								include angle.pug
 					label.tb-font-s(for="importtxt") Plain .txt
-					input.block#importtxt(class= mn, v-on:change="importTxt", type="file", value="Import TXT")
+					input.block#importtxt(v-on:change="importTxt", class= mn, type="file", value="Import TXT", ref="myImportTxt")
 			if (menu === "publish")
 				a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined && dat[0][0].section.ind !== '000'", v-bind:href="'/api/coverimg/'+encodeURIComponent(dat[0][0].chapter.ind)", v-bind:title="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")
 					span.tb-font-s(v-text="'Add Cover to Ch. '+dat[0][0].chapter.ind+''")
