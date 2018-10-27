@@ -1,57 +1,33 @@
-
-	@page { 
+@page { 
 	margin: 0.5in 0.75in 0.5in 0.75in; 
 	mso-page-orientation: portrait; 
 	mso-header: h1; mso-footer: f1; 
 	mso-header-margin:.5in; 
 	mso-footer-margin:.5in; 
 	mso-title-page: yes;
-	font-family:"Calibri",sans-serif;
-	font-size:10.5pt;
-	line-height:13.5pt;
 } 
 @page Section1 {
-	margin: 0.5in 0.75in 0.5in 0.75in; 
 	mso-footer:f1;
 	mso-header:h1;
-	font-family:"Calibri",sans-serif;
-	font-size:10.5pt;
-	line-height:13.5pt;
-}
-body {
-	font-family:"Calibri",sans-serif;margin:0in;
-	font-size:10.5pt;
-	line-height:13.5pt;
-	overflow: hidden;
-	left: 0;
-	right: 0;
-	top: 0;
-	bottom: 0;
-	width: 100%;
-	height: 100%;
-	position: absolute;
-}
-ol li {
-	font-family:"Calibri",sans-serif;
 }
 div.Section1{
 	page:Section1;
-	font-family:"Calibri",sans-serif;
 }
 p.MsoFooter, li.MsoFooter, div.MsoFooter{
 	mso-pagination:widow-orphan;
 }
-@font-face
-	{font-family:Calibri;
-	panose-1:1 11 5 3 2 2 4 3 2 4;
-	}
+@page Section1 { 
+	mso-header: h1; 
+	mso-footer: f1; 
+	mso-header-margin:.5in; 
+	mso-footer-margin:.5in; 
+} 
 p.MsoFooter { 
 	margin:0in; 
 	margin-bottom:.0001pt; 
 	mso-pagination:widow-orphan; 
 	tab-stops:center 3.0in right 6.0in; 
 	font-size:8.0pt;
-	font-family:"Calibri",sans-serif;
 }
 #chapterend {
 	page-break-before: always;
@@ -341,32 +317,31 @@ p.MsoFootnoteText {
 	padding: 8px 0 0 0;
 	letter-spacing: 0.04rem;
 }
-
 .tb-font-xxs {
 	font-family: "Calibri", sans-serif;
 	color: #000;
-	font-size: 9pt;
+	font-size: 12px;
 	font-weight: 200;
-	line-height: 11.25pt;
+	line-height: 15px;
 	padding: 8px 0 0 0;
 	letter-spacing: 0.04rem;
 }
 
-p, li, .tb-font-xs {
+.tb-font-xs {
 	font-family: "Calibri", sans-serif;
 	color: #000;
-	font-size: 10.5pt;
+	font-size: 14px;
 	font-weight: 400;
-	line-height: 13.5pt;
+	line-height: 18px;
 	padding: 10px 0 0 0;
 	display: block;
 }
 .tb-font-s {
 	font-family: "Calibri", sans-serif;
 	color: #000;
-	font-size: 12pt;
+	font-size: 16px;
 	font-weight: 200;
-	line-height: 15pt;
+	line-height: 20px;
 	padding: 12px 0 0 0;
 	text-transform: none;
 }
@@ -378,8 +353,8 @@ h2, .tb-font-m {
 	font-family:"Calibri",sans-serif;
 	color:black;
 	font-weight:lighter;
-	font-size: 13.5pt;
-	line-height: 15pt;
+	font-size: 18px;
+	line-height: 20px;
 	padding: 18px 0 0 0;
 	color: #000;
 }
@@ -392,34 +367,34 @@ h1, .tb-font-l {
 	color:black;
 	font-weight:normal;
 	color: #000;
-	font-size: 15pt;
-	line-height: 16.5pt;
+	font-size: 20px;
+	line-height: 22px;
 	padding: 18px 0 0 0;
 }
 
 .tb-font-xl {
 	font-family: "Calibri", sans-serif;
 	color: #000;
-	font-size: 18pt;
+	font-size: 24px;
 	font-weight: 400;
-	line-height: 20.25pt;
+	line-height: 27px;
 	padding: 24px 0 0 0;
 }
 
 .tb-font-xxl {
 	font-family: "Calibri", sans-serif;
 	color: #000;
-	font-size: 21pt;
+	font-size: 28px;
 	font-weight: 400;
-	line-height: 24pt;
+	line-height: 32px;
 	padding: 45px 0 0 0;
 }
 
 .tb-font-xxxl {
 	font-family: "Calibri", sans-serif;
-	font-size: 27pt;
+	font-size: 36px;
 	font-weight: 400;
-	line-height: 31.5pt;
+	line-height: 42px;
 	padding: 45px 0 0 0;
 	color: #36616c;
 }
@@ -469,7 +444,7 @@ h5
 	color: tomato;
 }
 .super {
-	vertical-align:super;font-size:7pt;line-height:none;
+	vertical-align:super;font-size:10px;line-height:none;
 }
 
 
@@ -561,6 +536,7 @@ a.success:hover, a.success:hover, button.success:hover {
 a:hover header {
 	color: #555!important;
 }
+
 p.MsoNormal, li.MsoNormal, div.MsoNormal
 	{margin:0in;
 	margin-top:6.75pt;
@@ -568,7 +544,7 @@ p.MsoNormal, li.MsoNormal, div.MsoNormal
 	margin-bottom:0in;
 	margin-bottom:.0001pt;
 	font-size:10.5pt;
-	font-family:"Calibri",sans-serif!important;}
+	font-family:"Calibri",sans-serif;}
 p.MsoHeader, li.MsoHeader, div.MsoHeader
 	{mso-style-link:"Header Char";
 	margin:0in;
@@ -623,6 +599,15 @@ span.Heading5Char
 	mso-style-link:"Heading 5";
 	font-family:"Calibri",sans-serif;
 	color:#2F5496;}
+p.msonormal0, li.msonormal0, div.msonormal0
+	{mso-style-name:msonormal;
+	margin-top:6.75pt;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:0in;
+	margin-bottom:.0001pt;
+	font-size:10.5pt;
+	font-family:"Calibri",sans-serif;}
 span.FooterChar
 	{mso-style-name:"Footer Char";
 	mso-style-link:Footer;
@@ -758,7 +743,7 @@ div.centerallwrap {
 	margin: 0;
 	overflow-x: hidden;
 	overflow-y: scroll;
-	font-family:"Calibri",sans-serif;
+	
 }
 
 div.centerall {
@@ -766,7 +751,7 @@ div.centerall {
 	overflow-y: hidden;
 	overflow-x: hidden;
 	z-index: 1;
-	font-family:"Calibri",sans-serif;
+	
 	pointer-events: all;
 	padding: 45px;
 	min-height: 100%;
@@ -894,23 +879,16 @@ a.img img {
 	top: 0;
 	transform: none;
 	left: 0;
-	font-family:"Calibri",sans-serif;
 }
-p {
-	font-size:10.5pt;
-	line-height:13.5pt;
-	font-family:"Calibri",sans-serif;
-}
+
 span.img, a.img
 	{mso-style-name:img;
 	display: inline-block;
 	position: relative;
-	overflow: hidden;
-font-family:"Calibri",sans-serif;}
+	overflow: hidden;}
 span.bd1
 	{mso-style-name:bd1;
-	font-weight:bold;
-font-family:"Calibri",sans-serif;}
+	font-weight:bold;}
 span.HeaderChar
 	{mso-style-name:"Header Char";
 	mso-style-link:Header;
@@ -926,28 +904,23 @@ span.tb-font-xs1
 	color:black;
 	font-weight:normal;}
 .MsoChpDefault
-	{font-size:10.5pt;
-	font-family:Calibri,sans-serif;}
+	{font-size:10.0pt;}
  /* Page Definitions */
  @page WordSection1
 	{size:8.5in 11.0in;
-	margin:.5in .75in .5in .75in;
-	font-family:"Calibri",sans-serif;
-}
+	margin:.5in .75in .5in .75in;}
 div.WordSection1
-	{page:WordSection1;
-	font-family:"Calibri",sans-serif;}
+	{page:WordSection1;}
  /* List Definitions */
- 
+ ol
+	{margin-bottom:0in;}
 ul {
 		margin-bottom:.125in;
 		list-style-type: none;
-		font-family:"Calibri",sans-serif;
 	}
 
 	table, .MsoNormalTable {
 		margin-bottom: 20px;
-		font-family:"Calibri",sans-serif;
 	}
 
 	th {
@@ -966,26 +939,18 @@ ul {
 		vertical-align: top;
 		max-width: 500px;
 		word-wrap: break-word;
-		font-family:"Calibri",sans-serif;
 	}
 	
 	ol {
-		margin-bottom:0in;
 		list-style-type: decimal;
-		font-family:"Calibri",sans-serif;
-		line-height:13.5pt;
-		font-size:10.5pt;
-		font-family:"Calibri",sans-serif;
-		color:black;
 	}
 
 	li {
 		color: #000;
-		line-height:13.5pt;
-		font-size:10.5pt;
+		font-size: 14px;
 		font-weight: 400;
+		line-height: 19px;
 		margin: 6px 0 0 0;
-		font-family:"Calibri",sans-serif;
 	}
 
 	
@@ -1054,19 +1019,8 @@ ul {
 	.tb-01-m0 {
 		width: 10%;
 	}
-	p.msonormal0, li.msonormal0, div.msonormal0
-		{mso-style-name:msonormal;
-		margin-top:6.75pt;
-		margin-right:0in;
-		margin-bottom:0in;
-		margin-left:0in;
-		margin-bottom:.0001pt;
-		font-size:10.5pt;
-		font-family:"Calibri",sans-serif;}
 
-
-ol li {
-	font-family:"Calibri",sans-serif;
-	line-height:13.5pt;
-	font-size:10.5pt;
+body > p[class=MsoNormal] {
+	display: none;
 }
+

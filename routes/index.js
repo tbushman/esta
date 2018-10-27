@@ -1123,11 +1123,15 @@ function getDocxBlob(now, dat, toc, cb){
 	var p = `<p></p>`
 	var docx = 
 	HtmlDocx.asBlob(
-		str.replace(/(\/ol>)/g, '$1<p style="font-family:\'Calibri\',sans-serif;font-size:10.5pt;line-height:13.5pt;"><\/p>')
-		.replace(/(\/p>\s*)<ol>/g, '$1<ol style="font-family:\'Calibri\',sans-serif;font-size:10.5pt;line-height:13.5pt;">')
-		.replace(/(\/ol>\s*)<li>/g, '$1<li style="font-family:\'Calibri\',sans-serif;font-size:10.5pt;line-height:13.5pt;">')
+		
+		//juice(str)
+		str
+    //.replace(/(\/ol>)/g, '$1<p style="font-family:\'Calibri\',sans-serif;font-size:10.5pt;line-height:13.5pt;"><\/p>')
+		//.replace(/(\/p>\s*)<ol>/g, '$1<ol style="font-family:\'Calibri\',sans-serif;font-size:10.5pt;line-height:13.5pt;">')
+		//.replace(/(\/ol>\s*)<li>/g, '$1<li style="font-family:\'Calibri\',sans-serif;font-size:10.5pt;line-height:13.5pt;">')
 	);
-	cb(docx)
+	//cb(docx)
+  cb(docx)
 }
 
 
@@ -1548,8 +1552,8 @@ router.get('/api/exportgdrivewhole', function(req, res, next){
 					'mimeType': 'application/vnd.google-apps.folder'
 				})
 				.then(function(folder){
-					//var mimeType = 'application/msword';
-					var mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+					var mimeType = 'application/msword';
+					//var mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 					drive.files.list({
 						q: 'name="export_docx" and "'+folder.data.files[0].id+'" in parents and mimeType="application/vnd.google-apps.folder"'
 					})

@@ -13,7 +13,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 		
 	body
 		
-		div.Section1.WordSection1(style="font-family:'Calibri',sans-serif;")
+		div.Section1.WordSection1
 			
 			table(cellspacing="0px", width="100%", style="width: 100%;table-layout: fixed;overflow:hidden;")
 				tr
@@ -32,7 +32,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 												
 													if (j === 0)
 														span.img.tb-10-m0(style="position:relative;display:inline-block;")
-															img(width= 680, height= 177,src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
+															img(width= 680,src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
 									
 									if (i === data.length - 1)
 										
@@ -60,7 +60,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 													
 														if (j === 0)
 															span.img.tb-10-m0(style="position:relative;display:inline-block;")
-																img(width= 680, height= 177,src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
+																img(width= 680,src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
 						
 
 		
@@ -130,7 +130,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 											if (img.orientation === 'landscape')
 												//div.row
 												span.img.tb-10-m0
-													img(width= 680, height= 177,src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
+													img(width= 680,src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
 												if (doc.section.ind !== "000")
 													p.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 										
@@ -160,21 +160,11 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 
 			
 			
-			div(style='mso-element:footnote-list')
-				
-				each data, n in dat
-					each doc, i in data
-						each foot, k in doc.properties.footnotes
-							
-							div(style='mso-element:footnote', id='ftn'+(k+1)+'')
-								p.MsoFootnoteText
-									a.tb-font-xxs.super(style='mso-footnote-id:ftn'+(k+1)+'', href='#_ftn'+(k+1)+'', name='_ftnref'+(k+1)+'', title='', id='_ftnref'+(k+1)+'')
-										span(class='MsoFootnoteReference')
-											
-											span(style='mso-char-type:symbol;')
-											span.tb-font-xxs(style='mso-special-character:footnote')
-												span &nbsp
-												span #{foot}
+			
+			
+			
+			
+			
 			div#f1(style="mso-element:footer;")
 				p.MsoFooter
 					table(width="100%", border="0", cellspacing="0", cellpadding="0")
