@@ -128,8 +128,8 @@ passport.use(new GoogleStrategy({
 var store = new MongoDBStore(
 	{
 		mongooseConnection: mongoose.connection,
-		uri: 'mongodb://localhost/session_ordinancer',
-		collection: 'mySessions'
+		uri: process.env.DEVDB,
+		collection: 'ordinancerSession'
 	}
 );
 store.on('error', function(error, next){
