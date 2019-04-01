@@ -46,7 +46,7 @@ var Uploads = new Schema({
 	}
 }, 
 //{pluralize: false}
-{collection: 'ordinancer'}
+{collection: 'esta'}
 );
 
 Content.index({ geometry: '2dsphere' });

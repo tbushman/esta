@@ -25,7 +25,7 @@ html
 				div.centerall
 					
 
-					p.tb-font-l(class="MsoHeader") Brigham City
+					p.tb-font-l(class="MsoHeader") City
 					each data, n in dat
 						if (n === 0)
 							div#chapter
@@ -34,9 +34,9 @@ html
 										td 
 											
 											span Title 
-											span.bd #{data[0].title.ind}
+											span.bd #{(parseInt(data[0].properties.title.ind,10)+1)}
 											span &nbsp
-											span #{data[0].title.str}
+											span #{data[0].properties.title.str}
 
 					p.tb-11-m0.footrule &nbsp
 					table(cellspacing="0px", style="width: 100%;table-layout: fixed;overflow:hidden;")
@@ -53,30 +53,30 @@ html
 									div(style="clear:both!important;")
 									h1(style="page-break-before:always;display:block;")
 										span Chapter 
-										span.bd #{data[0].chapter.ind}
+										span.bd #{(parseInt(data[0].properties.chapter.ind,10)+1)}
 										span &nbsp
-										span #{data[0].chapter.str}
+										span #{data[0].properties.chapter.str}
 									div(style="clear:both!important;")
 							- var count = 0
 							each doc, i in data.length ? data : []
 								tr.tb-font-l
 									td.headrule(colspan="2", style="overflow:hidden;")
-										if (doc.section.ind !== "000")
+										if (doc.properties.section.ind !== "000")
 											h2
-												span.bd #{doc.title.ind}
+												span.bd #{(parseInt(doc.properties.title.ind,10)+1)}
 													span .
-													span #{doc.chapter.ind}
+													span #{(parseInt(doc.properties.chapter.ind,10)+1)}
 													span .
-													span #{doc.section.ind}
+													span #{(parseInt(doc.properties.section.ind,10)+1)}
 												span &nbsp
-													span #{doc.section.str}
+													span #{doc.properties.section.str}
 										
 										each img, j in doc.properties.media
 											if (img.orientation === 'landscape')
 												//div.row
 												span.img.tb-10-m0
 													img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-												if (doc.section.ind !== "000")
+												if (doc.properties.section.ind !== "000")
 													p.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 										
 										if (doc.properties.description)
@@ -87,7 +87,7 @@ html
 												if (img.orientation !== 'landscape')
 													p.img.tb-05-m0
 														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-													if (doc.section.ind !== "000")
+													if (doc.properties.section.ind !== "000")
 														p.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 
 								tr.tb-font-xxs(style="margin:0;padding:0;")

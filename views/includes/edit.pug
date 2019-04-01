@@ -3,13 +3,13 @@ maintitle(style="display: block; background-color: #fff; background-color: var(-
 	chapter
 		section.row
 			p.row.tb-font-xl Title 
-				titlenum.bd(v-text="data[0].title.ind")
+				titlenum.bd(v-text="(parseInt(data[0].properties.title.ind,10)+1)")
 				span(v-text="' '") 
-				titlename.bd(v-text="data[0].title.str")
+				titlename.bd(v-text="data[0].properties.title.str")
 			p.row.tb-font-xl Chapter 
-				chapternum.bd(v-text="data[0].chapter.ind")
+				chapternum.bd(v-text="(parseInt(data[0].properties.chapter.ind,10)+1)")
 				span(v-text="' '")
-				chaptername.bd(v-text="data[0].chapter.str")
+				chaptername.bd(v-text="data[0].properties.chapter.str")
 			hr
 
 			div.tb-10-m0(v-if="edit === null", v-for="doc in data")

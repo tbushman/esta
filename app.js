@@ -4,7 +4,7 @@ var cors = require('cors');
 var marked = require('marked');
 var favicon = require('serve-favicon');
 var session = require('express-session');
-var MongoDBStore = require('connect-mongo')(session);
+var MongoDBStore = require('connect-mongodb-session')(session);
 var path = require('path');
 var dotenv = require('dotenv');
 var mongoose = require('mongoose');
@@ -34,8 +34,8 @@ var upload = multer();
 var csrfProtection = csrf({ cookie: true });
 
 var app = express();
-app.locals.appTitle = 'Ordinancer';
-app.locals.appURL = (process.env.NODE_ENV === 'production' ? 'ta.bli.sh' : 'localhost:'+process.env.PORT+'')
+app.locals.appTitle = 'esta.bli.sh';
+app.locals.appURL = (process.env.NODE_ENV === 'production' ? 'esta.bli.sh' : 'localhost:'+process.env.PORT+'')
 app.locals.moment = require('moment');
 app.locals.pug = require('pug');
 marked.setOptions({
@@ -129,7 +129,7 @@ var store = new MongoDBStore(
 	{
 		mongooseConnection: mongoose.connection,
 		uri: process.env.DEVDB,
-		collection: 'ordinancerSession'
+		collection: 'estaSession'
 	}
 );
 store.on('error', function(error, next){

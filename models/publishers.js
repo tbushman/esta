@@ -17,7 +17,7 @@ var Publisher = new Schema({
 	email: String,
 	avatar: String
 	
-}, { collection: 'ordinancerlogin' });
+}, { collection: 'estalogin' });
 
 Publisher.plugin(passportLocalMongoose);
 

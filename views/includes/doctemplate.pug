@@ -10,14 +10,14 @@ maintitle.centerall(style="clip-path: url(#myPath);pointer-events:visiblePoint;"
 				taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 					celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 						header.row.tb-font-l Title 
-							bd.bd(v-text="doc.title.ind")
+							bd.bd(v-text="(parseInt(doc.properties.title.ind,10)+1)")
 							span(v-text="' '") 
-							span(v-text="doc.title.str")
+							span(v-text="doc.properties.title.str")
 					celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 						header.row.tb-font-l Chapter 
-							bd.bd(v-text="doc.chapter.ind")
+							bd.bd(v-text="(parseInt(doc.properties.chapter.ind,10)+1)")
 							span(v-text="' '")
-							span(v-text="doc.chapter.str")
+							span(v-text="doc.properties.chapter.str")
 			div.row(v-if="edit === null")
 				include header.pug
 				include body.pug

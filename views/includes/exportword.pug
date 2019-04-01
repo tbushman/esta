@@ -24,7 +24,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 							- var cntt = 0
 							each doc, i in data.length ? data : []
 								if (n === 0)
-									if (doc.section.ind === "000")
+									if (doc.properties.section.ind === "000")
 										- cnt++
 										if (cnt === 1)
 											if (i === 0)
@@ -37,10 +37,10 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 									if (i === data.length - 1)
 										
 										div(style="padding:100px;background-color:rgba(250,251,237,0.9);position:absolute;display:block;margin:0 0 20px 0;page-break-after:always;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index:2;")
-											p.tb-font-xxxl(style="text-transform:uppercase;letter-spacing:5px;text-align:center;") Brigham City
+											p.tb-font-xxxl(style="text-transform:uppercase;letter-spacing:5px;text-align:center;") City
 											p.tb-font-l(style="text-transform:uppercase;letter-spacing:2px;text-align:center;") Title 
-												span.bd #{data[data.length-1].title.ind} 
-												span #{data[data.length-1].title.str}
+												span.bd #{(parseInt(data[data.length-1].properties.title.ind,10)+1)} 
+												span #{data[data.length-1].properties.title.str}
 									
 									if (doc.properties.diffs.length > 0)
 										- ct++
@@ -51,7 +51,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 								else
 									
 									if (n < 3)
-										if (doc.section.ind === "000")
+										if (doc.properties.section.ind === "000")
 											- cntt++
 											if (cntt === 1)
 												if (i === 0)
@@ -79,9 +79,9 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 										td 
 											div(style="clear:both!important;")
 											p.tb-font-xxl(style="page-break-before:always;display:block;") Title 
-												span.bd #{data[0].title.ind}
+												span.bd #{(parseInt(data[0].properties.title.ind,10)+1)}
 												span &nbsp
-												span #{data[0].title.str}
+												span #{data[0].properties.title.str}
 											div(style="clear:both!important;")
 					p.tb-font-xl Table of Contents
 					<!--[if supportFields]>
@@ -108,30 +108,30 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 									div(style="clear:both!important;")
 									h1(style="page-break-before:always;display:block;")
 										span Chapter 
-										span.bd #{data[0].chapter.ind}
+										span.bd #{(parseInt(data[0].properties.chapter.ind,10)+1)}
 										span &nbsp
-										span #{data[0].chapter.str}
+										span #{data[0].properties.chapter.str}
 									div(style="clear:both!important;")
 							- var count = 0
 							each doc, i in data.length ? data : []
 								tr.tb-font-l
 									td.headrule(colspan="2", style="overflow:hidden;")
-										if (doc.section.ind !== "000")
+										if (doc.properties.section.ind !== "000")
 											h2
-												span.bd #{doc.title.ind}
+												span.bd #{(parseInt(doc.properties.title.ind,10)+1)}
 													span .
-													span #{doc.chapter.ind}
+													span #{(parseInt(doc.properties.chapter.ind,10)+1)}
 													span .
-													span #{doc.section.ind}
+													span #{(parseInt(doc.properties.section.ind,10)+1)}
 												span &nbsp
-													span #{doc.section.str}
+													span #{doc.properties.section.str}
 										
 										each img, j in doc.properties.media
 											if (img.orientation === 'landscape')
 												//div.row
 												span.img.tb-10-m0
 													img(width= 680,src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-												if (doc.section.ind !== "000")
+												if (doc.properties.section.ind !== "000")
 													p.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 										
 										if (doc.properties.description)
@@ -144,7 +144,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 												if (img.orientation !== 'landscape')
 													p.img.tb-05-m0(style="margin-top:10px;")
 														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-													if (doc.section.ind !== "000")
+													if (doc.properties.section.ind !== "000")
 														p.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
 								
 								tr
@@ -170,7 +170,7 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 					table(width="100%", border="0", cellspacing="0", cellpadding="0")
 						tr.tb-font-xxs
 							td(width="80%")
-								span.tb-font-xxs(style="color:#999;") Brigham City 
+								span.tb-font-xxs(style="color:#999;") City 
 								span.tb-font-xxs(style="color:#999;") | 
 								span.tb-font-xxs(style="color:#555;") Subdivisions
 							td(align="right", width="20%")

@@ -8,13 +8,13 @@ var Diffs = new Schema({
 		username: String,
 		avatar: String
 	},
-	dif: [{
-		count: Number,
-		added: Boolean,
-		removed: Boolean,
-		value: String,
-		
-	}],
+	// dif: [{
+	// 	count: Number,
+	// 	added: Boolean,
+	// 	removed: Boolean,
+	// 	value: String,
+	// 
+	// }],
 	str: String
 });
 module.exports = Diffs;//mongoose.model('Diffs', Diffs)

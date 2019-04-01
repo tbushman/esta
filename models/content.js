@@ -3,22 +3,22 @@ var mongoose = require('mongoose'),
 		Content = require('mongoose-geojson-schema'),
 		Diffs = require('./diffs.js');
 
-var GeoJSON = new Schema({
+var schema = new Schema({
 	type: String,
 	index: Number,
-	title: {
-		ind: String,
-		str: String 
-	},
-	chapter: {
-		ind: String,
-		str: String 
-	},
-	section: {
-		ind: String,
-		str: String 
-	},
 	properties: {
+		title: {
+			ind: Number,
+			str: String 
+		},
+		chapter: {
+			ind: Number,
+			str: String 
+		},
+		section: {
+			ind: Number,
+			str: String 
+		},
 		label: String,
 		section: String,
 		published: Boolean,
@@ -26,10 +26,10 @@ var GeoJSON = new Schema({
 			fileId: String,
 			revisionId: String
 		},
-		title: String,
 		place: String,
 		description: String,
 		current: Boolean,
+		xmlurl: String,
 		media: [
 			{
 				index: Number,
@@ -41,20 +41,21 @@ var GeoJSON = new Schema({
 				caption: String,
 				postscript: String,
 				url: String,
-				orientation: String
+				orientation: String,
+				layers: [String]
 			}
 		],
 		diffs: [Diffs],
 		footnotes: [ ]
 	},
-	geometry: Schema.Types.Polygon
+	geometry: Schema.Types.GeoJSON
 }, 
 //{pluralize: false}
-{collection: 'ordinancer'}
+{collection: 'esta'}
 );
 
-GeoJSON.index({ geometry: '2dsphere' });
-module.exports = mongoose.model('Content', GeoJSON);
+schema.index({ geometry: '2dsphere' });
+module.exports = mongoose.model('Content', schema);
 /*function(dbc){ 
 	
 	return mongoose.model(dbc.collection, Content, dbc.collection);

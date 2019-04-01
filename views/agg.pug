@@ -11,25 +11,25 @@ block content
 					img(style="width:100%;height:auto;margin-top:20px;position:relative;z-index:0;", v-bind:src="'/images/slide_2.jpg'")
 				chapter(v-for="(ch,n) in dat", v-bind:id="n", v-bind:key="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
 					taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-						//(v-if="(ch[n-1] && parseInt(doc.chapter.ind, 10) > parseInt(ch[i - 1]].chapter.ind, 10))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
+						//(v-if="(ch[n-1] && parseInt(doc.properties.chapter.ind, 10) > parseInt(ch[i - 1]].properties.chapter.ind, 10))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 						
-						//v-for="doc in data", v-if="(!data[dindexes.indexOf(doc.index) - 1] ? (true === true) : (data[dindexes.indexOf(doc.index)].chapter.ind !== data[dindexes.indexOf(doc.index) - 1].chapter.ind))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry", v-once)
-						//v-show="(!data[dindexes.indexOf(doc.index) - 1] ? (true === true) : (data[dindexes.indexOf(doc.index)].chapter.ind !== data[dindexes.indexOf(doc.index) - 1].chapter.ind))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
+						//v-for="doc in data", v-if="(!data[dindexes.indexOf(doc.index) - 1] ? (true === true) : (data[dindexes.indexOf(doc.index)].properties.chapter.ind !== data[dindexes.indexOf(doc.index) - 1].properties.chapter.ind))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry", v-once)
+						//v-show="(!data[dindexes.indexOf(doc.index) - 1] ? (true === true) : (data[dindexes.indexOf(doc.index)].properties.chapter.ind !== data[dindexes.indexOf(doc.index) - 1].properties.chapter.ind))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 						celll(v-if="n === 0", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 							a(v-bind:href="'/'")
 								header.row.tb-font-l Title 
-									bd.bd(v-text="ch[0].title.ind")
+									bd.bd(v-text="ch[0].properties.title.ind")
 									span(v-text="' '") 
-									span(v-text="ch[0].title.str")
+									span(v-text="ch[0].properties.title.str")
 								p.tb-font-xxl Table of Contents
 				chapter(v-for="(ch,n) in dat", v-bind:id="n", v-bind:key="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
 					taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 
 					
 						celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
-							a(v-bind:href="'/menu/'+ch[0].title.ind+'/'+ch[0].chapter.ind+''")
+							a(v-bind:href="'/menu/'+ch[0].properties.title.ind+'/'+ch[0].properties.chapter.ind+''")
 								header.row.tb-font-l Chapter 
-									bd.bd(v-text="ch[0].chapter.ind")
+									bd.bd(v-text="ch[0].properties.chapter.ind")
 									span(v-text="' '")
-									span(v-text="ch[0].chapter.str")
+									span(v-text="ch[0].properties.chapter.str")
 					//!= str

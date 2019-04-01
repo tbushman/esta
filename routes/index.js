@@ -19,7 +19,69 @@ var Publisher = require('../models/publishers.js');
 var Content = require('../models/content.js');
 var Diffs = require('../models/diffs.js');
 var publishers = path.join(__dirname, '/../../..');
-var ff = ['General Provisions', 'Concept Plan',  'Sketch Plan', 'Preliminary Subdivision Applications', 'Final Subdivision Applications', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final', 'Subdivision Ordinance Amendments', 'Noticing Requirements', 'Appeals', 'Special Excepetions', 'Design and Construction Standards', 'Guarantees for Subdivision Improvements, Facilities, and Amenities', 'Definitions']
+var tis = //{
+	/*bill: [
+		'House Simple Resolution (H. Res.)',
+		'House Concurrent Resolution (H. Con. Res.)',
+		'House Joint Resolution (H.J. Res.)',
+		'House Bill (H.R.)',
+		'Senate Bill (S.)',
+		'Senate Concurrent Resolution (S. Con. Res.)',
+		'Senate Joint Resolution (S.J. Res.)',
+		'Senate Simple Resolution (S. Res.)'
+	],*/
+	// title: 
+	[
+		{
+			index: 0,
+			name: 'In support of legislation',
+			code: 'BILLS-',
+			chapter: [
+				{
+					index: 115,
+					name: 'United States Congress',
+					code: 'hres',
+					section: [
+						{
+							index: 108,
+							name: 'House Simple Resolution (H. Res.)',
+							code: 'ih'
+						}
+					]
+				}
+			]
+		},
+		{
+			index: 1,
+			name: 'Candidate for Public Office',
+			chapter: [
+				{
+					name: 'Jurisdiction'
+				}
+			]
+		},
+		{
+			index: 2,
+			name: 'Environmental Impact Statement',
+			chapter: [
+				{
+					name: 'Jurisdiction'
+				}
+			]
+		},
+		{
+			index: 3,
+			name: 'Geography',
+			chapter: [
+				{
+					name: 'Jurisdiction'
+				}
+			]
+		}
+	]
+// }
+// var tis = ['Bills', 'Petitions', 'Environmental Impact Statements', 'Appendix'];
+var chis = ['']
 var InDesign = require('async-indesign-script');
 var juice = require('juice');
 var HtmlDocx = require('html-docx-js');
@@ -28,6 +90,7 @@ var HtmlDiffer = require('html-differ').HtmlDiffer;
 var htmlDiffer = new HtmlDiffer({
 	ignoreAttributes: ['id', 'for', 'class', 'href', 'style']
 });
+var publishersDir = (process.env.NODE_ENV === 'production' ? process.env.PD : process.env.DEVPD);
 //var google = require("googleapis"); 
 var {google} = require('googleapis');
 //var {googleAuth} = require('google-auth-library');
@@ -70,7 +133,7 @@ function geoLocate(ip, zoom, cb) {
 	geolocation(params, function(err, data) {
 		if (err) {
 			console.log(err)
-			position = {lat: 41.509859, lng: -112.015802, zoom: zoom };
+			position = {lat: 40.7608, lng: -111.8910, zoom: zoom };
 		} else {
 			position = { lng: data.location.lng, lat: data.location.lat, zoom: zoom };	
 		}
@@ -84,26 +147,26 @@ var storage = multer.diskStorage({
 	destination: function (req, file, cb) {
 		var p, q;
 		if (req.params.type === 'png') {
-			p = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+''
-			q = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+''
+			p = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+''
+			q = ''+publishers+'/pu/publishers/esta/images/thumbs/'+req.params.index+''
 
 		} else if (req.params.type === 'csv') {
-			p = ''+publishers+'/pu/publishers/ordinancer/csv/'+req.params.id+''
-			q = ''+publishers+'/pu/publishers/ordinancer/csv/thumbs/'+req.params.id+''
+			p = ''+publishers+'/pu/publishers/esta/csv/'+req.params.id+''
+			q = ''+publishers+'/pu/publishers/esta/csv/thumbs/'+req.params.id+''
 			
 		} else if (req.params.type === 'txt') {
-			p = ''+publishers+'/pu/publishers/ordinancer/txt'
-			q = ''+publishers+'/pu/publishers/ordinancer/txt/thumbs'
+			p = ''+publishers+'/pu/publishers/esta/txt'
+			q = ''+publishers+'/pu/publishers/esta/txt/thumbs'
 		} else if (req.params.type === 'doc') {
 			var os = require('os');
 			p = os.tmpdir() + '/gdoc';
-			q = ''+publishers+'/pu/publishers/ordinancer/tmp';
+			q = ''+publishers+'/pu/publishers/esta/tmp';
 		} else if (req.params.type === 'docx') {
-			p = ''+publishers+'/pu/publishers/ordinancer/docx'
-			q = null;//''+publishers+'/pu/publishers/ordinancer/word/thumbs'
+			p = ''+publishers+'/pu/publishers/esta/docx'
+			q = null;//''+publishers+'/pu/publishers/esta/word/thumbs'
 		} else {
-			p = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+''
-			q = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+''
+			p = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+''
+			q = ''+publishers+'/pu/publishers/esta/images/thumbs/'+req.params.index+''
 
 		}
 				
@@ -223,10 +286,10 @@ function textImporter(req, str, gid, cb) {
 			}
 			var entry = [];
 
-			// non-capturing marker at title.chapter.section index with global and multiple modifier
+			// non-capturing marker at title.properties.chapter.section index with global and multiple modifier
 			// Used to split the text into an array by section
 			var drx = /(^(?:Section ){0,1}\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1}[\s\S]*?)(?=^(?:Section ){0,1}\d{1,3}\.\d{1,3}\.\d{1,4}\.{0,1}\s*?)/gm;
-			// title.chapter.section index
+			// title.properties.chapter.section index
 			var numrx = /^(?:Section ){0,1}(\d{1,3}\.\d{1,3}\.\d{0,4}\.{0,1}[\s\S]*?)/si
 			//var nrx = /^\d{1,3}\.\d{1,3}\.\d{0,4}\.\s/
 			// title rx
@@ -298,63 +361,17 @@ function textImporter(req, str, gid, cb) {
 							}
 							
 							if (!doc) {
-								var entry = new Content({
-									index: i,
-									type: 'Feature',
-									title: {
-										ind: item.num.split('.')[0],
-										str: 'Subdivisions'
-									},
-									chapter: {
-										ind: item.num.split('.')[1],
-										str: chtitle
-									},
-									section: {
-										ind: item.num.split('.')[2],
-										str: item.title
-									},
-									properties: {
-										section: item.num,
-										published: true,
-										label: 'Edit Subtitle',
-										title: curly(item.title),
-										place: 'Edit Place',
-										//gid: (!gid ? null : gid),
-										description: marked(curly(item.desc)),
-										current: false,
-										media: [],
-										diffs: [],
-										footnotes: []
-									},
-									geometry: {
-										type: 'Polygon',
-										coordinates:
-										[
-											[
-												[-112.014822, 41.510547],
-												[-112.014822, 41.510838],
-												[-112.014442, 41.510838],
-												[-112.014442, 41.510547],
-												[-112.014822, 41.510547]
-											]
-										]
-									}
-								});
-								entry.save(function(err){
-									if (err) {
-										console.log(err)
-									}
-								})
+								return res.redirect('/api/new/')
 							} else {
 								/*Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.gid': gid}}, {safe:true,new:true}, function(err, doc){
 									if (err) {
 										return next(err)
 									}*/
-									Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.title':curly(item.title)}}, {safe:true,new:true}, function(err, doc){
+									Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.title.str':curly(item.title)}}, {safe:true,new:true}, function(err, doc){
 										if (err) {
 											return next(err)
 										}
-										Content.findOneAndUpdate({_id: doc._id}, {$set:{'chapter.str': curly(chtitle)}}, {safe:true, new:true}, function(err, docc){
+										Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.chapter.str': curly(chtitle)}}, {safe:true, new:true}, function(err, docc){
 											if (err) {
 												return next(err)
 											}
@@ -426,17 +443,17 @@ function rmDocs(req, res, next) {
 	if (req.params.rmdoc) {
 		asynk.waterfall([
 			function(next){
-				Content.find({'chapter.str': {$regex: RegExp(''+decodeURIComponent(req.params.chtitle)+'\.?$')}}, function(err, data){
+				Content.find({'properties.chapter.str': {$regex: RegExp(''+decodeURIComponent(req.params.chtitle)+'\.?$')}}, function(err, data){
 					if (err) {
 						return next(err)
 					}
-					Content.remove({'chapter.str': {$regex: RegExp(''+decodeURIComponent(req.params.chtitle)+'\.?$')}}, function(err, dat){
+					Content.remove({'properties.chapter.str': {$regex: RegExp(''+decodeURIComponent(req.params.chtitle)+'\.?$')}}, function(err, dat){
 						if (err) {
 							return next(err)
 						}
 						data.forEach(function(doc){
-							var imgp = ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'';
-							var thumbp = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'';
+							var imgp = ''+publishers+'/pu/publishers/esta/images/full/'+doc.index+'';
+							var thumbp = ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'';
 							var options = {nonull:true,nodir:true}
 							var p = glob.sync(imgp, options)[0];
 							var q = glob.sync(thumbp, options)[0];
@@ -508,8 +525,8 @@ function rmDocs(req, res, next) {
 }
 
 function rmFile(req, res, next) {
-	var imgp = ''+publishers+'/pu/publishers/ordinancer/images/full/'+req.params.index+'/'+'img_' + req.params.counter + '.png';
-	var thumbp = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+req.params.index+'/'+'thumb_' + req.params.counter + '.png';
+	var imgp = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+'/'+'img_' + req.params.counter + '.png';
+	var thumbp = ''+publishers+'/pu/publishers/esta/images/thumbs/'+req.params.index+'/'+'thumb_' + req.params.counter + '.png';
 	//console.log(imgp, thumbp)
 	var options = {nonull:true,nodir:true}
 	var p = glob.sync(imgp, options)[0];
@@ -577,7 +594,7 @@ function renameEachImgDir(data, direction, indexes, oldInd, next) {
 						index: i,
 						ind: j,
 						//key: 'properties.media.$.image',
-						image: '/publishers/ordinancer/images/full/'+i+'/img_'+j+'.png'
+						image: '/publishers/esta/images/full/'+i+'/img_'+j+'.png'
 					}
 					qs.push(q1);
 					var q2 = {
@@ -586,7 +603,7 @@ function renameEachImgDir(data, direction, indexes, oldInd, next) {
 						index: i,
 						ind: j,
 						//key: 'properties.media.$.thumb',
-						image: '/publishers/ordinancer/images/thumbs/'+i+'/thumb_'+j+'.png'
+						image: '/publishers/esta/images/thumbs/'+i+'/thumb_'+j+'.png'
 					}
 					qs.push(q2);
 					var q3 = {
@@ -595,7 +612,7 @@ function renameEachImgDir(data, direction, indexes, oldInd, next) {
 						index: i,
 						ind: j,
 						//key: 'properties.media.$.thumb',
-						image: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'/thumb_'+j+'.png'
+						image: ''+publishers+'/pu/publishers/esta/images/thumbs/'+i+'/thumb_'+j+'.png'
 					}
 					qs.push(q3);
 					var q4 = {
@@ -604,15 +621,15 @@ function renameEachImgDir(data, direction, indexes, oldInd, next) {
 						index: i,
 						ind: j,
 						//key: 'properties.media.$.thumb',
-						image: ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'/img_'+j+'.png'
+						image: ''+publishers+'/pu/publishers/esta/images/full/'+i+'/img_'+j+'.png'
 					}
 					qs.push(q4);
 					
 				}
-				var oldImgDir = ''+publishers+'/pu/publishers/ordinancer/images/full/'+(oldInd ? oldInd : doc.index)+'';
-				var oldThumbDir = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(oldInd ? oldInd : doc.index)+'';
-				var newImgDir = ''+publishers+'/pu/publishers/ordinancer/images/full/'+i+'';
-				var newThumbDir = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+i+'';
+				var oldImgDir = ''+publishers+'/pu/publishers/esta/images/full/'+(oldInd ? oldInd : doc.index)+'';
+				var oldThumbDir = ''+publishers+'/pu/publishers/esta/images/thumbs/'+(oldInd ? oldInd : doc.index)+'';
+				var newImgDir = ''+publishers+'/pu/publishers/esta/images/full/'+i+'';
+				var newThumbDir = ''+publishers+'/pu/publishers/esta/images/thumbs/'+i+'';
 				if (fs.existsSync(oldImgDir)) {
 					fs.moveSync(oldImgDir, newImgDir, { overwrite: true });
 					fs.moveSync(oldThumbDir, newThumbDir, { overwrite: true });
@@ -659,8 +676,8 @@ function renameEachImgDir(data, direction, indexes, oldInd, next) {
 
 // https://gist.github.com/liangzan/807712/8fb16263cb39e8472d17aea760b6b1492c465af2
 function emptyDirs(index, next) {
-	var p = ''+publishers+'/pu/publishers/ordinancer/images/full/'+index+'';
-	var q = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+index+'';
+	var p = ''+publishers+'/pu/publishers/esta/images/full/'+index+'';
+	var q = ''+publishers+'/pu/publishers/esta/images/thumbs/'+index+'';
 	fs.emptyDir(p, function(err){
 		if (err) {
 			return next(err)
@@ -680,7 +697,7 @@ function ensureHyperlink(req, res, next) {
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'')
+			return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'')
 		}
 		data.forEach(function(doc){
 			//console.log(doc.properties.description)
@@ -730,7 +747,7 @@ function ensureCurly(req, res, next) {
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'')
+			return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'')
 		}
 		data.forEach(function(doc){
 			//console.log(doc.index)
@@ -755,7 +772,7 @@ function ensureContent(req, res, next) {
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'')
+			return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'')
 		} else {
 			return next()
 		}
@@ -810,17 +827,17 @@ function getDat(req, res, next){
 	asynk.waterfall([
 		function(cb){
 			var dat = []
-			Content.distinct('chapter.ind', function(err, distinct){
+			Content.distinct('properties.chapter.ind', function(err, distinct){
 				if (err) {
 					cb(err)
 				}
 				if (distinct.length === 0) {
-					Content.find({}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
+					Content.find({}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
 						if (err) {
 							cb(err)
 						}
 						data = data.sort(function(a,b){
-							if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+							if (parseInt(a.properties.section.ind,10) < parseInt(b.properties.section.ind, 10)) {
 								return -1;
 							} else {
 								return 1;
@@ -831,7 +848,7 @@ function getDat(req, res, next){
 					})
 				} else {
 					distinct.forEach(function(key, i) {
-						Content.find({'chapter.ind':key}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
+						Content.find({'properties.chapter.ind':key}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
 							if (err) {
 								cb(err)
 							}
@@ -839,7 +856,7 @@ function getDat(req, res, next){
 							if (data.length === 0) return;
 							if (data.length > 0) {
 								data = data.sort(function(a,b){
-									if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+									if (parseInt(a.properties.section.ind,10) < parseInt(b.properties.section.ind, 10)) {
 										return -1;
 									} else {
 										return 1;
@@ -869,17 +886,17 @@ function getDat64(next){
 	asynk.waterfall([
 		function(cb){
 			var dat = []
-			Content.distinct('chapter.ind', function(err, distinct){
+			Content.distinct('properties.chapter.ind', function(err, distinct){
 				if (err) {
 					return next(err)
 				}
 				if (distinct.length === 0) {
-					Content.find({}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
+					Content.find({}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
 						if (err) {
 							return next(err)
 						}
 						data = data.sort(function(a,b){
-							if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+							if (parseInt(a.properties.section.ind,10) < parseInt(b.properties.section.ind, 10)) {
 								return -1;
 							} else {
 								return 1;
@@ -904,7 +921,7 @@ function getDat64(next){
 					asynk.forEach(
 						distinct,
 						function(key, callback){
-							Content.find({'chapter.ind':key}).sort({index: 1, 'section.ind':1}).lean().exec(function(err, data){
+							Content.find({'properties.chapter.ind':key}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
 								if (err) {
 									console.log(err)
 								}
@@ -912,7 +929,7 @@ function getDat64(next){
 								//if (data.length === 0) return;
 								if (data.length > 0) {
 									data = data.sort(function(a,b){
-										if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+										if (parseInt(a.properties.section.ind,10) < parseInt(b.properties.section.ind, 10)) {
 											return -1;
 										} else {
 											return 1;
@@ -950,8 +967,8 @@ function getDat64(next){
 		}
 		//console.log(dat)
 		dat = dat.sort(function(a,b){
-			//console.log(a[0].chapter.ind)
-			if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+			//console.log(a[0].properties.chapter.ind)
+			if (parseInt(a[0].properties.chapter.ind, 10) < parseInt(b[0].properties.chapter.ind, 10)) {
 				return -1
 			} else {
 				return 1
@@ -1076,17 +1093,17 @@ function getDocxBlob(now, dat, toc, cb){
 		md: require('marked'),
 		moment: require('moment'),
 		doctype: 'strict',
-		hrf: '/publishers/ordinancer/word/'+now+'.docx',
+		hrf: '/publishers/esta/word/'+now+'.docx',
 		dat: dat.sort(function(a,b){
-			//console.log(a[0].chapter.ind)
-			if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+			//console.log(a[0].properties.chapter.ind)
+			if (parseInt(a[0].properties.chapter.ind, 10) < parseInt(b[0].properties.chapter.ind, 10)) {
 				return -1
 			} else {
 				return 1
 			}
 		})
 	});
-	var cloc = ''+publishers+'/pu/publishers/ordinancer/word/'+now+'.docx'
+	var cloc = ''+publishers+'/pu/publishers/esta/word/'+now+'.docx'
 	//console.log(str)
 	//juice.excludedProperties = ['margin']
 	//str = str.replace(/<p>/g, `<p style="font-family:'Calibri', sans-serif!important;">`)
@@ -1260,9 +1277,13 @@ router.get('/runtests', function(req, res, next){
 })*/
 
 
-router.all(/^\/((?!login|register|logout).*)$/, ensureAdmin/*, ensureApiTokens*/);
+router.all(/^\/((api|import|export|check).*)/, ensureAdmin/*, ensureApiTokens*/);
 
-router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function(req, res, next){
+router.get('/', function(req, res, next){
+	return res.redirect('/home')
+});
+
+router.get('/home', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function(req, res, next){
 	//getDat(function(dat, distinct){
 	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 	req.session.refer = newrefer;
@@ -1273,7 +1294,7 @@ router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function
 				return next(err)
 			}
 			if (data.length === 0) {
-				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
+				return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'');
 			}
 			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 				doctype: 'xml',
@@ -1303,7 +1324,7 @@ router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function
 					return next(err)
 				}
 				if (data.length === 0) {
-					return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
+					return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'');
 				}
 				var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 					doctype: 'xml',
@@ -1326,7 +1347,7 @@ router.get('/', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function
 
 		})
 	}
-});
+})
 
 router.get('/register', function(req, res, next){
 	return res.render('register', { csrfToken: req.csrfToken(), menu: 'register' } );
@@ -1459,7 +1480,7 @@ router.get('/logout', function(req, res, next) {
 		}
 		var fileId = req.params.fileid;
 		var now = Date.now();
-		var dest = ''+publishers+'/pu/publishers/ordinancer/txt/'+now+'.txt'
+		var dest = ''+publishers+'/pu/publishers/esta/txt/'+now+'.txt'
 		
 		var OAuth2 = google.auth.OAuth2;
 		Publisher.findOne({_id: req.session.userId}, function(err, pu){
@@ -1491,8 +1512,8 @@ router.get('/logout', function(req, res, next) {
 	var fileId = req.params.fileid;
 	var now = Date.now();
 	var os = require('os');
-		//(publishers + '/ordinancer/tmp/'+now+'.txt').toString()//);
-	var p = ''+publishers+'/pu/publishers/ordinancer/tmp';
+		//(publishers + '/esta/tmp/'+now+'.txt').toString()//);
+	var p = ''+publishers+'/pu/publishers/esta/tmp';
 	var OAuth2 = google.auth.OAuth2;
 	Publisher.findOne({_id: req.session.userId}, function(err, pu){
 		if (err) {
@@ -1547,8 +1568,8 @@ router.get('/api/exportgdrivewhole', function(req, res, next){
 				req.session.authClient = true;
 				var drive = google.drive({version: 'v3'});
 				drive.files.list({
-					q: 'name="Brigham City Land Use Code Project" and mimeType="application/vnd.google-apps.folder"',
-					'name': 'Brigham City Land Use Code Project',
+					q: 'name="establish" and mimeType="application/vnd.google-apps.folder"',
+					'name': 'establish',
 					'mimeType': 'application/vnd.google-apps.folder'
 				})
 				.then(function(folder){
@@ -1583,11 +1604,11 @@ router.get('/api/exportgdrivewhole', function(req, res, next){
 						}
 						
 						var fileMetadata = {
-							name: dat[0][0].title.str + now,
+							name: dat[0][0].properties.title.str + now,
 							mimeType: mimeType,
 							parents: [flId]
 						}
-						var p = ''+publishers+'/pu/publishers/ordinancer/word';
+						var p = ''+publishers+'/pu/publishers/esta/word';
 								
 						fs.access(p, function(err) {
 							if (err && err.code === 'ENOENT') {
@@ -1660,12 +1681,12 @@ router.get('/api/exportgdrivewhole', function(req, res, next){
 router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 	var fileId = req.params.fileid;
 	var chind = req.params.chind;
-	Content.find({'chapter.ind': chind}).lean().exec(function(err, data){
+	Content.find({'properties.chapter.ind': chind}).lean().exec(function(err, data){
 		if (err) {
 			return next(err)
 		}
 		data = data.sort(function(a,b){
-			if (parseInt(a.chapter.ind, 10) < parseInt(b.chapter.ind, 10)) {
+			if (parseInt(a.properties.chapter.ind, 10) < parseInt(b.properties.chapter.ind, 10)) {
 				return -1;
 			} else {
 				return 1;
@@ -1693,8 +1714,8 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 				.then(function(file){
 					//console.log(file)
 					drive.files.list({
-						q: 'name="Brigham City Land Use Code Project" and mimeType="application/vnd.google-apps.folder"',
-						'name': 'Brigham City Land Use Code Project',
+						q: 'name="establish" and mimeType="application/vnd.google-apps.folder"',
+						'name': 'establish',
 						'mimeType': 'application/vnd.google-apps.folder'
 					})
 					.then(function(folder){
@@ -1732,7 +1753,7 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 								mimeType: mimeType,
 								parents: [flId]
 							}
-							var p = ''+publishers+'/pu/publishers/ordinancer/word';
+							var p = ''+publishers+'/pu/publishers/esta/word';
 									
 							fs.access(p, function(err) {
 								if (err && err.code === 'ENOENT') {
@@ -1774,7 +1795,7 @@ router.get('/api/exportgdriverev/:fileid/:chind', function(req, res, next){
 										fileId: fl.data.id
 									})
 									.then(function(f){
-										Content.find({'chapter.ind': chind}, function(err, data){
+										Content.find({'properties.chapter.ind': chind}, function(err, data){
 											if (err) {
 												return next(err)
 											}
@@ -1835,11 +1856,11 @@ router.post('/api/importgdoc/:fileid', function(req, res, next) {
 	var fileId = req.params.fileid;
 	var now = Date.now();
 	var os = require('os');
-		//(publishers + '/ordinancer/tmp/'+now+'.txt').toString()//);
-	var p = ''+publishers+'/pu/publishers/ordinancer/tmp';
+		//(publishers + '/esta/tmp/'+now+'.txt').toString()//);
+	var p = ''+publishers+'/pu/publishers/esta/tmp';
 	mkdirpIfNeeded(p, function(){
 
-		var dest = fs.createWriteStream(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx');
+		var dest = fs.createWriteStream(''+publishers+'/pu/publishers/esta/tmp/'+now+'.docx');
 		dest.on('open', function(){
 			var OAuth2 = google.auth.OAuth2;
 			Publisher.findOne({_id: req.session.userId}, function(err, pu){
@@ -1896,8 +1917,8 @@ router.post('/api/importgdoc/:fileid', function(req, res, next) {
 							}
 							result.pipe(dest);
 							async function fsWriteFile(cbk) {
-								await fs.writeFile(''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx', result.body);
-								mammoth.extractRawText({path: ''+publishers+'/pu/publishers/ordinancer/tmp/'+now+'.docx'})
+								await fs.writeFile(''+publishers+'/pu/publishers/esta/tmp/'+now+'.docx', result.body);
+								mammoth.extractRawText({path: ''+publishers+'/pu/publishers/esta/tmp/'+now+'.docx'})
 								.then(function(result){
 									var text = result.value;
 									//console.log(text)
@@ -2001,7 +2022,7 @@ router.get('/exportpdf', getDat, function(req, res, next){
 				return next(err)
 			}
 			if (data.length === 0) {
-				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
+				return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'');
 			}
 			var str = pug.renderFile(path.join(__dirname, '../views/includes/exporttemplate.pug'), {
 				doctype: 'xml',
@@ -2030,7 +2051,7 @@ router.post('/api/exportpdf', getDat, function(req, res, next){
 	//console.log(req.body.xml)
 	var htmlbuf = new Buffer(body.pdf, 'utf8'); // decode
 	var now = Date.now();
-	var p = ''+publishers+'/pu/publishers/ordinancer/pdf';
+	var p = ''+publishers+'/pu/publishers/esta/pdf';
 		
 	fs.access(p, function(err) {
 		if (err && err.code === 'ENOENT') {
@@ -2064,15 +2085,15 @@ router.post('/api/exportpdf', getDat, function(req, res, next){
 		pdf.create(html, options).toFile(pdfurl, function(err, result) {
 			if (err) return console.log(err);
 			console.log(result)
-			//return res.redirect('/publishers/ordinancer/pdf/'+now+'.pdf');
+			//return res.redirect('/publishers/esta/pdf/'+now+'.pdf');
 			var pugviewpath = path.join(__dirname, '../views/includes/exporttemplate.pug');
 			var viewstr = pug.renderFile(pugviewpath, {
 				md: require('marked'),
 				doctype: 'html',
-				hrf: '/publishers/ordinancer/pdf/'+now+'.docx',
+				hrf: '/publishers/esta/pdf/'+now+'.docx',
 				dat: req.dat.sort(function(a,b){
-					//console.log(a[0].chapter.ind)
-					if (parseInt(a[0].chapter.ind, 10) < parseInt(b[0].chapter.ind, 10)) {
+					//console.log(a[0].properties.chapter.ind)
+					if (parseInt(a[0].properties.chapter.ind, 10) < parseInt(b[0].properties.chapter.ind, 10)) {
 						return -1
 					} else {
 						return 1
@@ -2096,7 +2117,7 @@ router.get('/exportword', function(req, res, next){
 				return next(err)
 			}
 			if (data.length === 0) {
-				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
+				return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'');
 			}
 			
 			var pugviewpath = path.join(__dirname, '../views/includes/exportwordview.pug');
@@ -2107,10 +2128,10 @@ router.get('/exportword', function(req, res, next){
 					md: require('marked'),
 					moment: require('moment'),
 					doctype: 'html',
-					hrf: '/publishers/ordinancer/word/'+now+'.docx',
+					hrf: '/publishers/esta/word/'+now+'.docx',
 					dat: dat
 				});
-				var p = ''+publishers+'/pu/publishers/ordinancer/word';
+				var p = ''+publishers+'/pu/publishers/esta/word';
 						
 				fs.access(p, function(err) {
 					if (err && err.code === 'ENOENT') {
@@ -2129,7 +2150,7 @@ router.get('/exportword', function(req, res, next){
 					}
 					
 					res.send(viewstr)
-					//return res.redirect('/publishers/ordinancer/word/'+now+'.docx');
+					//return res.redirect('/publishers/esta/word/'+now+'.docx');
 				});
 
 			})
@@ -2144,7 +2165,7 @@ router.get('/exportword', function(req, res, next){
 router.get('/exportindd'/*, ensureCurly*/, function(req, res, next){
 	req.session.importgdrive = false;
 	var dat = []
-	Content.distinct('chapter.str', function(err, distinct){
+	Content.distinct('properties.chapter.str', function(err, distinct){
 		if (err) {
 			return next(err)
 		}
@@ -2158,7 +2179,7 @@ router.get('/exportindd'/*, ensureCurly*/, function(req, res, next){
 		} else {
 			//console.log(distinct)
 			distinct.forEach(function(key, i) {
-				Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+				Content.find({'properties.chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
 					if (err) {
 						console.log(err)
 					}
@@ -2179,7 +2200,7 @@ router.get('/exportindd'/*, ensureCurly*/, function(req, res, next){
 				return next(err)
 			}
 			if (data.length === 0) {
-				return res.redirect('/api/new/'+encodeURIComponent('General Provisions')+'');
+				return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'');
 			}
 			var str = pug.renderFile(path.join(__dirname, '../views/includes/exportindd.pug'), {
 				doctype: 'xml',
@@ -2251,14 +2272,14 @@ router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
 });
 
 router.post('/checkchaptername/:name', function(req, res, next){
-	Content.findOne({'chapter.str': {$regex:RegExp(''+req.params.name +'\.?$'), $options: 'im'}}, function(err, doc){
+	Content.findOne({'properties.chapter.str': {$regex:RegExp(''+req.params.name +'\.?$'), $options: 'im'}}, function(err, doc){
 		if (err) {
 			return next(err)
 		}
 		if (!doc) {
 			return res.status(200).send(null)
 		} else {
-			return res.status(200).send(doc.chapter.str)
+			return res.status(200).send(doc.properties.chapter.str)
 		}
 	})
 })
@@ -2290,25 +2311,25 @@ router.get('/list/:id/:index', function(req, res, next){
 	})
 })
 
-router.get('/menu/:title/:chapter', function(req, res, next){
+router.get('/menu/:tiind/:chiind', function(req, res, next){
 	req.session.importgdrive = false;
 	var key, val;
 	var key2 = null, val2;
 	var find = {}
 
-	if (!req.params.chapter || req.params.chapter === 'null') {
-		if (!req.params.title) {
+	if (!req.params.chiind || req.params.chiind === 'null') {
+		if (!req.params.tiind) {
 			return res.redirect('/')
 		}
-		key = 'title.ind';
-		val = ''+req.params.title;
+		key = 'properties.title.ind';
+		val = ''+req.params.tiind;
 		
 			
 	} else {
-		key = 'chapter.ind';
-		val = ''+req.params.chapter;
-		key2 = 'title.ind';
-		val2 = req.params.title;
+		key = 'properties.chapter.ind';
+		val = ''+req.params.chiind;
+		key2 = 'properties.title.ind';
+		val2 = req.params.tiind;
 		
 	}
 	find[key] = val;
@@ -2320,7 +2341,7 @@ router.get('/menu/:title/:chapter', function(req, res, next){
 			return next(err)
 		}
 		data = data.sort(function(a,b){
-			if (parseInt(a.section.ind,10) < parseInt(b.section.ind, 10)) {
+			if (parseInt(a.properties.section.ind,10) < parseInt(b.properties.section.ind, 10)) {
 				return -1;
 			} else {
 				return 1;
@@ -2364,12 +2385,12 @@ router.post('/api/importtxt/:type'/*, rmDocs*/, uploadmedia.single('txt'), funct
 				return next(err)
 			}
 			var dat = []
-			Content.distinct('chapter.str', function(err, distinct){
+			Content.distinct('properties.chapter.str', function(err, distinct){
 				if (err) {
 					return next(err)
 				}
 				distinct.forEach(function(key, i) {
-					Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+					Content.find({'properties.chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
 						if (err) {
 							console.log(err)
 						}
@@ -2407,12 +2428,12 @@ router.post('/api/importdocx/:type'/*, rmDocs*/, uploadmedia.single('docx'), fun
 				return next(err)
 			}
 			var dat = []
-			Content.distinct('chapter.str', function(err, distinct){
+			Content.distinct('properties.chapter.str', function(err, distinct){
 				if (err) {
 					return next(err)
 				}
 				distinct.forEach(function(key, i) {
-					Content.find({'chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
+					Content.find({'properties.chapter.str':{$regex:key}}).sort({index:1}).lean().exec(function(err, data){
 						if (err) {
 							console.log(err)
 						}
@@ -2476,7 +2497,7 @@ router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req,
 	})
 })
 
-router.get('/api/coverimg/:chind', function(req, res, next){
+router.get('/api/coverimg/:tiind/:chind', function(req, res, next){
 	req.session.importgdrive = false;
 	var outputPath = url.parse(req.url).pathname;
 	//console.log(outputPath)
@@ -2485,11 +2506,11 @@ router.get('/api/coverimg/:chind', function(req, res, next){
 		if (err) {
 			return next(err)
 		}
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png')
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png')
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/esta/images/thumbs/'+(data.length)+'/thumb_0.png')
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/esta/images/full/'+(data.length)+'/img_0.png')
 		var chind = 1;
 		var secind = '10';
-		Content.find({'chapter.ind': req.params.chind}, function(err, chunk){
+		Content.find({'properties.chapter.ind': req.params.chind}, function(err, chunk){
 			if (err) {
 				return next(err)
 			}
@@ -2502,18 +2523,18 @@ router.get('/api/coverimg/:chind', function(req, res, next){
 					str: 'Subdivisions' 
 				},
 				chapter: {
-					ind: (chunk.length === 0 ? '01' : chunk[0].chapter.ind),
-					str: (chunk.length === 0 ? 'General Provisions.' : chunk[0].chapter.str )
+					ind: (chunk.length === 0 ? '01' : chunk[0].properties.chapter.ind),
+					str: (chunk.length === 0 ? 'General Provisions.' : chunk[0].properties.chapter.str )
 				},
 				section: {
 					ind: '000',
 					str: 'Cover' 
 				},
 				properties: {
-					section: '25.'+(chunk.length === 0 ? '01' : chunk[0].chapter.ind)+'.000',
+					section: '25.'+(chunk.length === 0 ? '01' : chunk[0].properties.chapter.ind)+'.000',
 					published: true,
 					label: 'Edit Subtitle',
-					title: (chunk.length === 0 ? 'General Provisions.' : chunk[0].chapter.str ),
+					title: (chunk.length === 0 ? 'General Provisions.' : chunk[0].properties.chapter.str ),
 					place: 'Edit Place',
 					description: '',
 					current: false,
@@ -2525,10 +2546,10 @@ router.get('/api/coverimg/:chind', function(req, res, next){
 						{
 							index: 0,
 							name: 'Sample image',
-							image_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png',
-							image: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
-							thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
-							thumb: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
+							image_abs: ''+publishers+'/pu/publishers/esta/images/full/'+(data.length)+'/img_0.png',
+							image: '/publishers/esta/images/thumbs/'+(data.length)+'/thumb_0.png',
+							thumb_abs: ''+publishers+'/pu/publishers/esta/images/thumbs/'+(data.length)+'/thumb_0.png',
+							thumb: '/publishers/esta/images/thumbs/'+(data.length)+'/thumb_0.png',
 							caption: 'Sample caption',
 							postscript: 'Sample postscript',
 							url: 'https://pu.bli.sh'
@@ -2562,46 +2583,69 @@ router.get('/api/coverimg/:chind', function(req, res, next){
 	});
 })
 
-router.get('/api/new/:chtitle', function(req, res, next){
+router.get('/api/new/:placetype/:place/:tiind/:chind/:secind', function(req, res, next){
 	req.session.importgdrive = false;
 	var outputPath = url.parse(req.url).pathname;
 	//console.log(outputPath)
-	var csrf = req.csrfToken();
+	// var csrf = req.csrfToken();
+	var arr = tis;
+	var usstates = //await //JSON.stringify(
+		require(''+path.join(__dirname, '/..')+'/public/json/usstates.json').features;
+	// var uscounties = 
+	// 	require(''+path.join(__dirname, '/..')+'/public/json/uscounties.json').features;
+	// var us = 
+	// 	require(''+path.join(__dirname, '/..')+'/public/json/us.json').features;
+	var places;
+	switch(req.params.placetype) {
+		case 'Nation':
+			places = usstates;
+			break;
+		case 'State':
+			places = usstates;
+			break;
+		default:
+			places = usstates;
+	}
+	var placeind = parseInt(req.params.place, 10)
+	var multipolygon = places[placeind].geometry.coordinates;
+	console.log(places[placeind])
 	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
 		if (err) {
 			return next(err)
 		}
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png')
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png')
-		var chind = 1;
-		var secind = '10';
-		Content.find({'chapter.str': {$regex:decodeURIComponent(req.params.chtitle)}}, function(err, chunk){
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/esta/images/thumbs/'+(data.length)+'/thumb_0.png')
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/esta/images/full/'+(data.length)+'/img_0.png')
+		var tiind = parseInt(req.params.tiind,10);
+		var chind = parseInt(req.params.chind,10);
+		var secind = parseInt(req.params.secind,10);
+		Content.find({'properties.title.ind': tiind, 'properties.chapter.ind': chind}, function(err, chunk){
 			if (err) {
 				return next(err)
 			}
+			
 			var content = new Content({
 				type: 'Feature',
 				index: data.length,
-				// db
-				title: {
-					ind: 25,
-					str: 'Subdivisions' 
-				},
-				chapter: {
-					ind: (chunk.length === 0 ? '01' : chunk[0].chapter.ind),
-					str: (chunk.length === 0 ? 'General Provisions.' : chunk[0].chapter.str )
-				},
-				section: {
-					ind: (chunk.length === 0 ? '010' : ((chunk.length + 1 >= 10 ? '' : '0') + (chunk.length + 1) + '0')),
-					str: 'Short Title.' 
-				},
 				properties: {
-					section: '25.'+(chunk.length === 0 ? '01' : chunk[0].chapter.ind)+'.'+(chunk.length === 0 ? '010' : ((chunk.length + 1 >= 10 ? '' : '0') + (chunk.length + 1) + '0')),
+					// db
+					
+					title: {
+						ind: arr[tiind].index,
+						str: arr[tiind].name
+					},
+					chapter: {
+						ind: arr[tiind].chapter[chind].index,
+						str: arr[tiind].chapter[chind].name
+					},
+					section: {
+						ind: arr[tiind].chapter[chind].section[secind].index,
+						str: arr[tiind].chapter[chind].section[secind].name 
+					},
 					published: true,
-					label: 'Edit Subtitle',
-					title: 'Short Title.',
+					label: 'Edit Title',
 					place: 'Edit Place',
-					description: marked(curly('This Ordinance shall be known and may be cited as the “Brigham City Subdivision Ordinance” and may be identified within this document and other documents as “the Ordinance,” “this Ordinance,” “Subdivision Ordinance,” or “Land Use Ordinance.” This Ordinance shall be considered and may be identified as a Brigham City Land Use Ordinance, as defined by Utah Code.')),
+					description: marked(curly('Edit document text.')),
+					xmlurl: (tiind === 0 ? 'https://api.govinfo.gov/packages/'+arr[tiind].code+''+(arr[tiind].chapter[chind].index+1)+''+arr[tiind].chapter[chind].code+''+(arr[tiind].chapter[chind].section[secind].index+1)+''+arr[tiind].chapter[chind].section[secind].code+'/xml' : null ),
 					current: false,
 					time: {
 						begin: moment().utc().format(),
@@ -2611,10 +2655,10 @@ router.get('/api/new/:chtitle', function(req, res, next){
 						{
 							index: 0,
 							name: 'Sample image',
-							image_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+(data.length)+'/img_0.png',
-							image: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
-							thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
-							thumb: '/publishers/ordinancer/images/thumbs/'+(data.length)+'/thumb_0.png',
+							image_abs: ''+publishers+'/pu/publishers/esta/images/full/'+(data.length)+'/img_0.png',
+							image: '/publishers/esta/images/thumbs/'+(data.length)+'/thumb_0.png',
+							thumb_abs: ''+publishers+'/pu/publishers/esta/images/thumbs/'+(data.length)+'/thumb_0.png',
+							thumb: '/publishers/esta/images/thumbs/'+(data.length)+'/thumb_0.png',
 							caption: 'Sample caption',
 							postscript: 'Sample postscript',
 							url: 'https://pu.bli.sh'
@@ -2622,17 +2666,8 @@ router.get('/api/new/:chtitle', function(req, res, next){
 					]		
 				},
 				geometry: {
-					type: 'Polygon',
-					coordinates:
-					[
-						[
-							[-112.014822, 41.510547],
-							[-112.014822, 41.510838],
-							[-112.014442, 41.510838],
-							[-112.014442, 41.510547],
-							[-112.014822, 41.510547]
-						]
-					]
+					type: 'MultiPolygon',
+					coordinates: multipolygon
 				}
 			});
 			content.save(function(err){
@@ -2691,8 +2726,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						var thisbody = body[thiskey];
 						if (thisbody && thisbody.split('').length > 100) {
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
-							var thumburl = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
-							thumburls.push(thumburl.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', ''))
+							var thumburl = ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
+							thumburls.push(thumburl.replace(publishersDir, ''))
 							count++;
 							fs.writeFile(thumburl, thumbbuf, function(err) {
 								if(err) {
@@ -2790,21 +2825,21 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				type: "Feature",
 				index: doc.index,
 				title: {
-					ind: doc.title.ind,
-					str: doc.title.str 
+					ind: doc.properties.title.ind,
+					str: doc.properties.title.str 
 				},
 				chapter: {
-					ind: doc.chapter.ind,
-					str: doc.chapter.str 
+					ind: doc.properties.chapter.ind,
+					str: doc.properties.chapter.str 
 				},
 				section: {
-					ind: doc.section.ind,
-					str: (!body.title ? doc.properties.title : marked(curly(body.title)).replace(/(<p>|<\/p>)/g,''))
+					ind: doc.properties.section.ind,
+					str: (!body.title ? doc.properties.title.str : marked(curly(body.title)).replace(/(<p>|<\/p>)/g,''))
 				},
 				properties: {
 					published: (!body.published ? false : true),
 					_id: id,
-					title: (!body.title ? doc.properties.title : marked(curly(body.title)).replace(/(<p>|<\/p>)/g,'')),
+					title: (!body.title ? doc.properties.title.str : marked(curly(body.title)).replace(/(<p>|<\/p>)/g,'')),
 					label: body.label ? curly(body.label) : doc.properties.label,
 					place: body.place ? curly(body.place) : doc.properties.place,
 					description: desc ? marked(curly(desc)) : doc.properties.description,
@@ -2865,8 +2900,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			set4.$push[key4] = newdiff;
 			
 			var set5 = {$set:{}}
-			var key5 = 'section.str'
-			set5.$set[key5] = entry.section.str;
+			var key5 = 'properties.section.str'
+			set5.$set[key5] = entry.properties.section.str;
 
 			var options = {safe: true, new: true, upsert: false};
 			Content.findOneAndUpdate({_id: doc._id}, set1, options, function(err, docc) {
@@ -2913,9 +2948,9 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	
 });
 
-router.post('/api/new', function(req, res, next) {
-	
-})
+// router.post('/api/new', function(req, res, next) {
+// 
+// })
 
 router.post('/api/newmap/:id/:index', uploadmedia.single('img'), function(req, res, next) {
 	Content.findOne({_id: req.params.id}, function(err, doc){
@@ -2926,11 +2961,11 @@ router.post('/api/newmap/:id/:index', uploadmedia.single('img'), function(req, r
 		var media = {
 			index: index,
 			name: 'Image '+(index + 1)+'',
-			image: '/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
-			image_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
+			image: '/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
+			image_abs: ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
 			iframe: null,
-			thumb: '/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png',
-			thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png',
+			thumb: '/publishers/esta/images/full/'+doc.index+'/img_'+index+'.png',
+			thumb_abs: ''+publishers+'/pu/publishers/esta/images/full/'+doc.index+'/img_'+index+'.png',
 			caption: '',
 			postscript: '',
 			featured: false
@@ -2950,16 +2985,16 @@ router.post('/api/newmedia/:id/:index', function(req, res, next) {
 			return next(err) 
 		}
 		var index = parseInt(req.params.index, 10);
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png')
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png')
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+index+'.png')
+		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/esta/images/full/'+doc.index+'/img_'+index+'.png')
 		var media = {
 			index: index,
 			name: 'Image '+(index + 1)+'',
-			image: '/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
-			image_abs: ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
+			image: '/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
+			image_abs: ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+index+'.png',
 			iframe: null,
-			thumb: '/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png',
-			thumb_abs: ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/img_'+index+'.png',
+			thumb: '/publishers/esta/images/full/'+doc.index+'/img_'+index+'.png',
+			thumb_abs: ''+publishers+'/pu/publishers/esta/images/full/'+doc.index+'/img_'+index+'.png',
 			caption: '',
 			postscript: '',
 			featured: false
@@ -3028,10 +3063,10 @@ router.post('/api/deletemedia/:id/:index', function(req, res, next) {
 				media = []
 			} else {
 				for (var i = index; i < media.length; i++) {
-					var oip = ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/'+'img_' + (i+1) + '.png';
-					var otp = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/'+'thumb_' + (i+1) + '.png';
-					var nip = ''+publishers+'/pu/publishers/ordinancer/images/full/'+doc.index+'/'+'img_' + i + '.png';
-					var ntp = ''+publishers+'/pu/publishers/ordinancer/images/thumbs/'+doc.index+'/'+'thumb_' + i + '.png';
+					var oip = ''+publishers+'/pu/publishers/esta/images/full/'+doc.index+'/'+'img_' + (i+1) + '.png';
+					var otp = ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/'+'thumb_' + (i+1) + '.png';
+					var nip = ''+publishers+'/pu/publishers/esta/images/full/'+doc.index+'/'+'img_' + i + '.png';
+					var ntp = ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/'+'thumb_' + i + '.png';
 					var options = {nonull:true,nodir:true}
 					var oldImgPath = glob.sync(oip, options)[0];
 					var oldThumbPath = glob.sync(otp, options)[0];
@@ -3043,8 +3078,8 @@ router.post('/api/deletemedia/:id/:index', function(req, res, next) {
 					}
 					media[i].image_abs = newImgPath;
 					media[i].thumb_abs = newThumbPath;
-					media[i].image = newImgPath.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '');
-					media[i].thumb = newThumbPath.replace('/var/www/pu', '').replace('/Users/traceybushman/Documents/pu.bli.sh/pu', '')
+					media[i].image = newImgPath.replace(publishersDir, '');
+					media[i].thumb = newThumbPath.replace(publishersDir, '')
 					media[i].index -= 1;
 				}
 			}

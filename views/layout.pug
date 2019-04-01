@@ -167,14 +167,14 @@ html
 
 					if (self.dat) {
 						self.dat.sort(function(a,b){
-							return a[0].chapter.ind > b[0].chapter.ind
+							return a[0].properties.chapter.ind > b[0].properties.chapter.ind
 						})
 						//self.dat = self.dat.reverse()
 					}
 					console.log(self.dat)
 					if (!self.data || self.data === '') {
 						//self.dat.forEach(function(data))
-						if (self.dat[0] && self.dat[0][0].chapter.ind === self.dat[self.dat.length - 1][0].chapter.ind) {
+						if (self.dat[0] && self.dat[0][0].properties.chapter.ind === self.dat[self.dat.length - 1][0].properties.chapter.ind) {
 							self.data = self.dat[0]
 						} else {
 							if (self.dat[0]) {
@@ -540,8 +540,8 @@ html
 						window.location.href = url;
 					},
 					deleteEntry: function(doc) {
-						$.post('/api/deleteentry/'+doc._id+'/'+doc.index+'', function(res){
-							window.location.href = '/menu/'+doc.title.ind+'/'+doc.chapter.ind+'';
+						$.post('/api/deleteentry/'+doc._id+'', function(res){
+							window.location.href = '/menu/'+doc.properties.title.ind+'/'+doc.properties.chapter.ind+'';
 						})
 					},
 					deleteMedia: function(ind) {
@@ -954,8 +954,8 @@ html
 						var dataCoords;
 						var map = new L.map('map', { 
 							center: [
-								(!self.position ? 41.509859 : self.position.lat),
-								(!self.position ? -112.015802 : self.position.lng)
+								(!self.position ? 40.7608 : self.position.lat),
+								(!self.position ? -111.8910 : self.position.lng)
 							], 
 							zoom: (!self.position ? 6 : self.position.zoom),
 							zoomControl: false,
