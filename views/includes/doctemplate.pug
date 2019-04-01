@@ -1,12 +1,12 @@
 
 
-maintitle.centerall(style="clip-path: url(#myPath);pointer-events:visiblePoint;")
-	div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;z-index:2; position:absolute;")
+maintitle.centerall(style="pointer-events:all;")
+	div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;z-index:2; position:absolute;pointer-events:all;")
 		a.submenu.drop.static(v-on:click="document.getElementById('viewer').scrollIntoView();$('div.centerallwrap').css('pointer-events', 'unset');")
 			span Edit Map
 	chapter
 		section.row
-			a(v-bind:href="'/'")
+			a(v-bind:href="'/'", style="pointer-events:all;")
 				taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 					celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 						header.row.tb-font-l Title 

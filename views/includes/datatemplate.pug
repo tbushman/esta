@@ -3,16 +3,12 @@ maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:ai
 		taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 			celll(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 				a(v-bind:href="'/'")
-					header.row.tb-font-l Title 
-						bd.bd(v-text="(parseInt(data[0].properties.title.ind,10)+1)")
-						span(v-text="' '") 
+					header.row.tb-font-l
 						span(v-text="data[0].properties.title.str")
 			celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 			celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 				a(v-bind:href="'/menu/'+data[0].properties.title.ind+'/'+data[0].properties.chapter.ind+''")
-					header.row.tb-font-l Chapter 
-						bd.bd(v-text="(parseInt(data[0].properties.chapter.ind,10)+1)")
-						span(v-text="' '")
+					header.row.tb-font-l
 						span(v-text="data[0].properties.chapter.str")
 			celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 				a.slidercontainer(v-if="data[0].properties.section.ind === '000'", v-bind:href="'/list/'+data[0]._id+'/null'", style="position:relative;height:auto;width:100%;")

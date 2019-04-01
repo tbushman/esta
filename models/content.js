@@ -20,7 +20,6 @@ var schema = new Schema({
 			str: String 
 		},
 		label: String,
-		section: String,
 		published: Boolean,
 		gid: {
 			fileId: String,
