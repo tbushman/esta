@@ -10,16 +10,16 @@ var schema = new Schema({
 		trim: true
 	},
 	password: String,
-	avatar: String,
 	language: String,
 	email: String,
 	sig: [],
 	geometry: Schema.Types.GeoJSON,
-	admin: Boolean,
 	slack: {
 		oauthID: String
 	},
 	properties: {
+		avatar: String,
+		admin: Boolean,
 		address1: String,
 		address2: String,
 		city: String,
@@ -35,7 +35,7 @@ var schema = new Schema({
 		}
 	}
 	
-}, { collection: 'gnd' });
+}, { collection: 'estalogin' });
 schema.index({ geometry: '2dsphere' });
 schema.plugin(passportLocalMongoose);
 // geometry: {

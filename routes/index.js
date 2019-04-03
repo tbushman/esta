@@ -15,9 +15,11 @@ var spawn = require("child_process").exec;
 var dotenv = require('dotenv');
 var marked = require('marked');
 var pug = require('pug');
+var csrf = require('csurf');
 var Publisher = require('../models/publishers.js');
 var Content = require('../models/content.js');
 var Diffs = require('../models/diffs.js');
+var csrfProtection = csrf({ cookie: true });
 var publishers = path.join(__dirname, '/../../..');
 var tis = //{
 	/*bill: [
@@ -978,6 +980,16 @@ function getDat64(next){
 	})
 }
 
+function ensureAuthenticated(req, res, next) {
+	// console.log(req.isAuthenticated())
+	if (req.isAuthenticated()) {
+		req.session.userId = req.user._id;
+		req.session.loggedin = req.user.username;
+		return next();
+	}
+	return res.redirect('/login');
+}
+
 function ensureAdmin(req, res, next) {
 	//console.log(req.isAuthenticated())
 	if (!req.isAuthenticated()) {
@@ -989,13 +1001,13 @@ function ensureAdmin(req, res, next) {
 			return next(err)
 		}
 		
-		if (pu.admin) {
+		if (pu && pu.properties.admin) {
 			req.publisher = Publisher;
 			req.user = pu;
 			req.session.loggedin = req.user.username;
 			return next();
 		} else {
-			req.publisher = User;
+			// req.publisher = Publisher;
 			req.session.loggedin = null;
 			return res.redirect('/')
 		}
@@ -1388,7 +1400,20 @@ router.post('/register', function(req, res, next) {
 			} else {
 				admin = false;
 			}
-			Publisher.register(new Publisher({ username : req.body.username, avatar: '/images/publish_logo_sq.svg', /*language: req.body.languages,*/ admin: admin, email: req.body.email, properties: { givenName: req.body.givenName, /*title: req.body.title,*/ zip: req.body.zip, /*place: req.body.place, placetype: req.body.placetype, time: { begin: req.body.datebegin, end: req.body.dateend }*/ } }), req.body.password, function(err, user) {
+			Publisher.register(new Publisher(
+				{ username : req.body.username, 
+					avatar: '/images/publish_logo_sq.svg', 
+					/*language: req.body.languages,*/ 
+					email: req.body.email, 
+					properties: { 
+						admin: admin, 
+						givenName: req.body.givenName, 
+						/*title: req.body.title,*/ 
+						zip: req.body.zip, 
+						/*place: req.body.place, placetype: req.body.placetype, time: { begin: req.body.datebegin, end: req.body.dateend }*/ 
+					} 
+				}
+			), req.body.password, function(err, user) {
 				if (err) {
 					return res.render('register', {info: "Sorry. That Name already exists. Try again.", languages: langs});
 				}
@@ -1608,6 +1633,359 @@ router.get('/logout', function(req, res, next) {
 		
 	})
 })*/
+
+router.get('/profile/:username', function(req, res, next) {
+	Content.find({}).sort({'properties.time.end': 1}).lean().exec(function(err, data){
+		if (err) {return next(err)}
+		Publisher.findOne({_id: req.session.userId}, function(err, pu){
+			if (err) {
+				return next(err)
+			}
+			return res.render('publish', {
+				// dat: [data],
+				data: data,
+				// doc: doc,
+				pu: pu,
+				type: 'blog', //'blog' //'map'
+				// drawtype: 'filling', //'substrates',
+				menu: 'data' //home, login, register, data, doc, pu?
+			})
+		})
+	})
+})
+// //every edit-access api checks auth
+router.all('/api/*', ensureAuthenticated, ensureAdmin)
+
+router.all('/sig/*', ensureAuthenticated)
+
+router.get('/sig/admin', function(req, res, next) {
+	if (process.env.ADMIN.split(',').indexOf(req.session.loggedin) !== -1) {
+		Publisher.findOneAndUpdate({_id: req.session.userId}, {$set:{admin: true}}, function(err, pu){
+			if (err) {
+				return next(err)
+			}
+			return res.redirect('/api/publish')
+		})
+	}
+});
+
+router.get('/sig/geo/:did/:puid/:ts', function(req, res, next){
+	console.log('huzzah')
+	Publisher.findOne({_id: req.params.puid}, function(err, pu){
+		if (err){
+			return next(err)
+		}
+		if (!new RegExp(req.params.puid).test(req.session.userId)) return res.redirect('/login');
+		Content.findOne({_id: req.params.did}, function(err, doc){
+			if (err) {
+				return next(err)
+			}
+			return res.render('publish', {
+				doc: doc,
+				pu: pu,
+				ts: [req.params.ts],
+				type: 'blog', //'blog' //'map'
+				menu: 'doc' //home, login, register, data, doc, pu?
+			})
+		})
+	})
+})
+
+router.post('/sig/geo/:did/:puid/:lat/:lng/:ts/:zip', async function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+	var lat = req.params.lat;
+	var lng = req.params.lng;
+	var puid = ''+req.params.puid+'';
+	var did = req.params.did;
+	if (!lat || lat === 'null') {
+		var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
+		var zipcode = JSON.parse(zipcodes).features.filter(function(zip){
+			return (parseInt(zip.properties['ZCTA5CE10'], 10) === parseInt(req.params.zip, 10))
+		});
+		if (zipcode.length === 0) return res.redirect('/sig/geo/'+did+'/'+puid+'/'+req.params.ts+'');
+		lat = parseFloat(zipcode[0].properties["INTPTLAT10"]);
+		lng = parseFloat(zipcode[0].properties["INTPTLON10"]);
+	}
+	console.log(puid)
+	Publisher.findOne({_id: puid}).lean().exec(function(err, pu){
+		if (err) {
+			return next(err)
+		}
+		// console.log(pu)
+		var signature = new Signature({
+			ts: ''+lat+','+lng+'G/'+pu.properties.givenName+'/'+req.params.ts+'',//new Date(),
+			puid: puid,
+			username: pu.username,
+			givenName: pu.properties.givenName,
+			documentId: did,	
+			image: '/publishers/gnd/signatures/'+did+'/'+puid+'/img_'+did+'_'+puid+'.png',
+			image_abs: ''+publishers+'/pu/publishers/gnd/signatures/'+did+'/'+puid+'/img_'+did+'_'+puid+'.png'
+		});
+		var push = {$push:{}};
+		var key = 'sig';
+		push.$push[key] = JSON.parse(JSON.stringify(signature))
+		signature.save(function(err){
+			if (err) {
+				if (err.code === 11000) req.session.info = 'Unable to save signature.'
+				else return next(err)
+			} 
+			Publisher.findOneAndUpdate({_id: pu._id}, push, {safe: true, new:true}, function(err, pu){
+				if (err){
+					return next(err)
+				}
+				return res.status(200).send('/list/'+did+'/'+null+'')
+			})
+			
+		})
+	})
+	
+})
+
+router.post('/sig/uploadsignature/:did/:puid'/*, rmFile*/, uploadmedia.single('img'), csrfProtection, function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath, req.file)
+	Content.findOne({_id: req.params.did}, function(err, doc){
+		if (err) {
+			return next(err)
+		}
+		Publisher.findOne({_id: req.params.puid}, function(err, pu){
+			if (err){
+				return next(err)
+			}
+			if (!new RegExp(req.params.puid).test(pu._id)) return res.redirect('/login');
+			// console.log(req.ip)
+			var reqIp;
+			/*if (cf.check(req)) //CF
+			{
+				reqIp = cf.get(req);
+			}
+				else //not CF
+			{	*/
+				reqIp = req.headers['x-forwarded-for'];//req.ip;
+			// }
+console.log(req.ip, req.ips, req.connection.remoteAddress, req.headers['cf-connecting-ip'], reqIp);
+			// if (!reqIp) {
+			// 	console.log(req.ip)
+			// 	return res.redirect('/sig/geo/'+doc._id+'/'+pu._id+'/'+req.body.ts+'');
+			// }
+			geoLocate(reqIp, 6, function(position){
+				console.log(position)
+				if (position.lat === 37.09024 || !reqIp) {
+					return res.status(200).send('/sig/geo/'+doc._id+'/'+pu._id+'/'+req.body.ts.split('/')[req.body.ts.split('/').length-1]+'')
+				}
+				var signature = new Signature({
+					ts: ''+position.lat+','+position.lng+'G'+req.body.ts+'',//new Date(),
+					puid: pu._id,
+					username: pu.username,
+					givenName: pu.properties.givenName,
+					documentId: doc._id,	
+					image: '/publishers/gnd/signatures/'+req.params.did+'/'+req.params.puid+'/img_'+req.params.did+'_'+req.params.puid+'.png',
+					image_abs: req.url
+				});
+				var push = {$push:{}};
+				var key = 'sig';
+				push.$push[key] = JSON.parse(JSON.stringify(signature))
+				signature.save(function(err){
+					if (err) {
+						if (err.code === 11000) req.session.info = 'You have already signed this document.'
+						else return next(err)
+					} 
+					Publisher.findOneAndUpdate({_id: pu._id}, push, {safe: true, new:true}, function(err, pu){
+						if (err){
+							return next(err)
+						}
+						return res.status(200).send('/list/'+doc._id+'/'+null+'')
+					})
+					
+				})
+			})
+		})
+	})
+});
+
+// router.get('/sig/publish/:id', function(req, res, next){
+// 	Content.find({}).sort({'properties.time.end': 1}).lean().exec(function(err, data){
+// 		if (err) {return next(err)}
+// 		Content.findOne({_id: req.params.id}, function(err, doc){
+// 			if (err) {return next(err)}
+// 			Publisher.findOne({_id: req.session.userId}, function(err, pu){
+// 				if (err) {
+// 					return next(err)
+// 				}
+// 				return res.render('publish', {
+// 					// data: data,
+// 					doc: doc,
+// 					pu: pu,
+// 					type: 'draw', //'blog' //'map'
+// 					drawtype: 'filling', //'substrates',
+// 					menu: 'sign'
+// 				})
+// 			})
+// 		})
+// 	})
+// })
+
+router.get('/sig/editprofile', function(req, res, next){
+	Content.find({}).lean().sort({'properties.time.end': 1}).exec(function(err, data){
+		if (err) {return next(err)}
+		Publisher.findOne({_id: req.session.userId}, async function(err, pu){
+			if (err) {
+				return next(err)
+			}
+			if (pu.sig.length > 0) {
+				var sigs = await pu.sig.map(function(s){
+					return s.documentId;
+				});
+				data = await data.filter(function(doc){
+					var s = sigs.join('.')
+					return (new RegExp(doc._id).test(s))
+				})
+			} else {
+				data = null
+			}
+			return res.render('publish', {
+				data: data,
+				loggedin: req.session.loggedin,
+				pu: pu,
+				type: 'blog', //'blog' //'map'
+				menu: 'pu', //home, login, register, data, doc, pu?
+				csrfToken: req.csrfToken()
+				// ,
+				// avail: true
+			})
+		})
+	})
+})
+
+// save edits
+router.post('/sig/editprofile', function(req, res, next){
+	var body = req.body;
+	var username = req.user.username;
+	console.log(body)
+	asynk.waterfall([
+		function(next) {
+			console.log(req.user._id)
+			Publisher.findOne({_id: req.user._id}).lean().exec(function(err, pu){
+				if (err) {
+					return next(err)
+				}
+				var imgurl = ''+publishers+'/publishers/gnd/images/avatar/'+ pu.username + '.png';
+				var pd = (process.env.NODE_ENV === 'production' ? process.env.PD.toString() :  process.env.DEVPD.toString())
+				if (body.avatar) {
+					if (body.avatar.substring(0,1) !== "/") {
+						var imgbuf = new Buffer(body.avatar, 'base64'); // decode
+
+						fs.writeFile(imgurl, imgbuf, function(err) {
+							if (err) {
+								console.log("err", err);
+							}
+							
+							imgurl = imgurl.replace(pd, '')
+							next(null, imgurl, body, pu)
+						})
+					} else {
+						imgurl = imgurl.replace(pd, '')
+						next(null, imgurl, body, pu)
+					}
+				} else {
+					imgurl = imgurl.replace(pd, '')
+					next(null, imgurl, body, pu)
+				}
+			})
+			
+			
+			
+		},
+		function(imgurl, body, reqUser, next) {
+			
+			Publisher.findOne({_id: reqUser._id}).lean().exec(async function(err, pu){
+				if (err) {
+					return next(err)
+				}
+				// var pub = pu._doc
+				var keys = Object.keys(body);
+				keys.splice(Object.keys(body).indexOf('avatar'), 1);
+				//console.log(keys)
+				var puKeys = Object.keys(Publisher.schema.paths);
+				console.log(keys, puKeys)
+				for (var j in puKeys) {
+					var set = {$set:{}};
+					var key;
+					for (var i in keys) {
+						body[keys[i]] = (!isNaN(parseInt(body[keys[i]], 10)) ? ''+body[keys[i]] +'' : body[keys[i]] );
+						if (puKeys[j].split('.')[0] === 'properties') {
+							// var propKeys = await Object.keys(pu.properties);
+							if (puKeys[j].split('.')[1] === keys[i]) {
+								// pu.properties[keys[i]] = body[keys[i]]
+								key = 'properties.'+ keys[i];
+								set.$set[key] = body[keys[i]];
+							}
+						} else {
+							if (puKeys[j] === keys[i]) {
+								// pu[keys[i]] = body[keys[i]]
+								key = keys[i]
+								set.$set[key] = body[keys[i]];
+							} else {
+								
+							}
+						}
+					}
+					if (key) {
+						await Publisher.findOneAndUpdate({_id: pu._id}, set, {safe: true, upsert:false, new:true}).then((pu)=>{}).catch((err)=>{
+							console.log('mongoerr')
+							console.log(err)
+							// next(err)
+						});
+					}
+
+				}
+				next(null, pu)
+			})
+		}
+			
+	], function(err, pu){
+		if (err) {
+			return next(err)
+		}
+		return res.redirect('/profile/'+pu.username)
+	})
+})
+
+// data
+router.get('/api/publish', getDat, function(req, res, next) {
+
+	var outputPath = url.parse(req.url).pathname;
+	var dat = req.dat;
+	asynk.waterfall([
+		function(cb) {
+			Publisher.findOne({_id: req.session.userId}, function(err, pu){
+				if (err) {
+					cb(err);
+				}
+				Content.find({signatures: {$elemMatch:{pu:pu._id}}}, function(err, pages){
+					if (err) {
+						cb(err)
+					}
+					cb(null, pu, pages, dat)
+				})
+			})
+		}
+	], function(err, pu, pages, dat){
+		if (err) {
+			return next(err)
+		}
+		return res.render('publish', {
+			loggedin: pu.username,
+			menu: 'dat',
+			data: (pages.length ? pages : null),
+			dat: dat,
+			pu: pu,
+			type: 'blog'
+		})
+	})
+})
+
 
 router.get('/api/exportgdrivewhole', function(req, res, next){
 	var now = Date.now();
@@ -2667,7 +3045,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind', function(req, res
 	}
 	var placeind = parseInt(req.params.place, 10)
 	var multipolygon = places[placeind].geometry.coordinates;
-	console.log(places[placeind])
+	//console.log(places[placeind])
 	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
 		if (err) {
 			return next(err)

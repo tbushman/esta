@@ -96,17 +96,16 @@ function(accessToken, refreshToken, profile, done) {
 						
 					} else {
 						user = new Publisher({
-							admin: (profile.team.domain === 'saltlakedsa'),
 							sig: [],
 							username: profile.displayName.replace(/\s/g, '_'),
 							email: profile.user.email,
-							admin: true,
-							avatar: profile.user.image_32,
 							slack: {
 								oauthID: profile.user.id,
 								created: Date.now()
 							},
 							properties: {
+								avatar: profile.user.image_32,
+								admin: (profile.team.domain === 'saltlakedsa'),
 								givenName: profile.user.name,
 								time: {
 									begin: new Date(),

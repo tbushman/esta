@@ -29,13 +29,13 @@ div#inputs.maintitle.centerall(:style="{'pointer-events':(mapActive? 'none' : 'a
 							span.bd(v-text="(parseInt(doc.properties.chapter.ind,10)+1)")
 							span(v-text="' '")
 							span(v-text="doc.properties.chapter.str")
-			div.row(v-if="edit === null")
+			div.row(v-if="!edit || edit === null || !loggedin || loggedin === ''")
 				include header.pug
-				include body.pug
-			div.row(v-else-if="edit === doc.index", style="padding-top:20px;")
-				form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
-					input(type="hidden", name="_csrf", value= csrfToken)
-					include editor.pug
+				include bodysingle.pug
+			//- div.row(v-if="edit === doc.index && loggedin", style="padding-top:20px;")
+			//- 	form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+			//- 		input(type="hidden", name="_csrf", value= csrfToken)
+			//- 		include editor.pug
 	
 div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: none;")
 	

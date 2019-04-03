@@ -90,7 +90,8 @@ html
 						dragind: null,
 						latlngs: null,
 						gp: (this.parseObj(#{session.importgdrive}) !== '' ? this.parseObj(!{JSON.stringify(gp)}) : null),
-						sliderIndex: 1
+						sliderIndex: 1,
+						loggedin: (!this.parseObj(!{JSON.stringify(session)}) || !this.parseObj(!{JSON.stringify(session.username)}) ? null : this.parseObj(!{JSON.stringify(session.username)}))
 					}
 				},
 				updated: function(){
