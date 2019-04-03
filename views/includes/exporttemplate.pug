@@ -1,5 +1,5 @@
 
-maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+div.maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
 	//
 		a.tb-06-m0.block.success(v-on:click="exportPDF", role="button", title="Download Word File") Click here to download PDF File
 		div.tb-01-m0 &nbsp
@@ -7,22 +7,22 @@ maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:ai
 			span Blank page? Click to reload
 
 	header.row.tb-font-l Table of Contents
-	chapter.row(v-for="(data, n) in dat", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
-		taable.row(aid:table="table", v-bind:aid:trows="data.length" aid:tcols="2", aid5:tablestyle="entry", style="width: 100%;")
-			celll(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+	div.chapter.row(v-for="(data, n) in dat", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+		div.table.row(aid:table="table", v-bind:aid:trows="data.length" aid:tcols="2", aid5:tablestyle="entry", style="width: 100%;")
+			div.cell(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 				a(v-bind:href="'#'+n+''")
 					header.row.tb-font-s
-						bd.bd(v-text="(parseInt(data[0].properties.title.ind,10)+1)")
+						span.bd(v-text="(parseInt(data[0].properties.title.ind,10)+1)")
 						span.bd(v-text="'.'")
 						span.bd(v-text="(parseInt(data[0].properties.chapter.ind,10)+1)")
 						span(v-text="' '")
 						span(v-text="data[0].properties.chapter.str")
 	
-		taable.row(v-for="(doc, i) in data", aid:table="table", v-bind:aid:trows="data.length" aid:tcols="2", aid5:tablestyle="entry", style="width:100%;")
-			celll(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+		div.table.row(v-for="(doc, i) in data", aid:table="table", v-bind:aid:trows="data.length" aid:tcols="2", aid5:tablestyle="entry", style="width:100%;")
+			div.cell(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 				a(v-bind:href="'#'+n+''")
 					header.row.tb-font-s
-						bd.bd(v-text="(parseInt(doc.properties.title.ind,10)+1)")
+						span.bd(v-text="(parseInt(doc.properties.title.ind,10)+1)")
 						span.bd(v-text="'.'")
 						span.bd(v-text="(parseInt(doc.properties.chapter.ind,10)+1)")
 						span.bd(v-text="'.'")
@@ -31,24 +31,24 @@ maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:ai
 						span(v-text="doc.properties.section.str")
 
 	hr
-	chapter(v-for="(data, n) in dat", v-bind:id="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
-		taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-			celll(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+	div.chapter(v-for="(data, n) in dat", v-bind:id="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+		div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
+			div.cell(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 				a(v-bind:href="'/'")
 					header.row.tb-font-l Title 
-						bd.bd(v-text="(parseInt(data[0].properties.title.ind,10)")
+						span.bd(v-text="(parseInt(data[0].properties.title.ind,10)")
 						span(v-text="' '") 
 						span(v-text="data[0].properties.title.str")
-			celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
-			celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+			div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+			div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 				a(v-bind:href="'/menu/'+data[0].properties.title.ind+'/'+data[0].properties.chapter.ind+''")
 					header.row.tb-font-l Chapter 
-						bd.bd(v-text="(parseInt(data[0].properties.chapter.ind,10)+1)")
+						span.bd(v-text="(parseInt(data[0].properties.chapter.ind,10)+1)")
 						span(v-text="' '")
 						span(v-text="data[0].properties.chapter.str")
-			celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+			div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 		section.headline.headrule(v-for="(doc, i) in data", v-on:click="accordion(n, doc.index)", v-bind:id="doc.properties.section.ind", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/", style="margin-top: 15px;")
-			taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
+			div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 				include header.pug
 				include bodyexport.pug
 

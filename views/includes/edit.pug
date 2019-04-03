@@ -1,20 +1,20 @@
-maintitle(style="display: block; background-color: #fff; background-color: var(--primary);padding: 45px; pointer-events: auto;")
+div.maintitle(style="display: block; background-color: #fff; background-color: var(--primary);padding: 45px; pointer-events: auto;")
 		
-	chapter
+	div.chapter
 		section.row
 			p.row.tb-font-xl Title 
 				titlenum.bd(v-text="(parseInt(data[0].properties.title.ind,10)+1)")
 				span(v-text="' '") 
 				titlename.bd(v-text="data[0].properties.title.str")
 			p.row.tb-font-xl Chapter 
-				chapternum.bd(v-text="(parseInt(data[0].properties.chapter.ind,10)+1)")
+				div.chapternum.bd(v-text="(parseInt(data[0].properties.chapter.ind,10)+1)")
 				span(v-text="' '")
-				chaptername.bd(v-text="data[0].properties.chapter.str")
+				div.chaptername.bd(v-text="data[0].properties.chapter.str")
 			hr
 
 			div.tb-10-m0(v-if="edit === null", v-for="doc in data")
 				include entry.pug
-				description.tb-10-m0.tb-font-s#description(v-html="marked(doc.properties.description)")
+				div.description.tb-10-m0.tb-font-s#description(v-html="marked(doc.properties.description)")
 
 			div.tb-10-m0(v-if="doc && doc !== '' && edit === doc.index")
 				

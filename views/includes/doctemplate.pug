@@ -1,21 +1,32 @@
 
 
-maintitle.centerall(style="pointer-events:all;")
-	div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;z-index:2; position:absolute;pointer-events:all;")
-		a.submenu.drop.static(v-on:click="document.getElementById('viewer').scrollIntoView();$('div.centerallwrap').css('pointer-events', 'unset');")
-			span Edit Map
-	chapter
-		section.row
+div#inputs.maintitle.centerall(:style="{'pointer-events':(mapActive? 'none' : 'auto')}")
+	//- div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;z-index:2; position:absolute;pointer-events:all;")
+	button.mapActive(v-if="!mapActive", v-on:click="activateMap()",
+		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: (wWidth - 50)+'px', 'text-align':'center'}"
+		)
+		span Edit Map
+	
+	button.success.mapActive(v-else-if="mapActive", class= mn, v-on:click="addMapBlob()",
+		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: ((wWidth/2) - 50)+'px', 'text-align':'center'}")
+		span(v-text="'Save Map'")
+	
+	button.danger.mapActive(v-if="mapActive", class= mn, v-on:click="activateMap()",
+		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'25px', left: 'auto', width: ((wWidth/2) - 50)+'px', 'text-align':'center'}")
+		span(v-text="'Cancel'")
+
+	div.chapter
+		section.row(v-if="doc")
 			a(v-bind:href="'/'", style="pointer-events:all;")
-				taable(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-					celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+				div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
+					div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 						header.row.tb-font-l Title 
-							bd.bd(v-text="(parseInt(doc.properties.title.ind,10)+1)")
+							span.bd(v-text="(parseInt(doc.properties.title.ind,10)+1)")
 							span(v-text="' '") 
 							span(v-text="doc.properties.title.str")
-					celll(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+					div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 						header.row.tb-font-l Chapter 
-							bd.bd(v-text="(parseInt(doc.properties.chapter.ind,10)+1)")
+							span.bd(v-text="(parseInt(doc.properties.chapter.ind,10)+1)")
 							span(v-text="' '")
 							span(v-text="doc.properties.chapter.str")
 			div.row(v-if="edit === null")
@@ -23,10 +34,9 @@ maintitle.centerall(style="pointer-events:all;")
 				include body.pug
 			div.row(v-else-if="edit === doc.index", style="padding-top:20px;")
 				form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
-					//form.row.form(v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)
 					include editor.pug
-
+	
 div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: none;")
 	
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"

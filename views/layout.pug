@@ -37,7 +37,7 @@ html
 		block header
 		block content
 		div#gpresult
-
+		
 		#map
 
 		script(type="text/javascript").
@@ -50,7 +50,7 @@ html
 						dat: this.parseObj(!{JSON.stringify(dat)}),
 						data: '',//this.parseObj(!{JSON.stringify(data)}),
 						doc: this.parseObj(!{JSON.stringify(doc)}),
-						position: this.parseObj(!{JSON.stringify(session.position)}),
+						position: (!this.parseObj(!{JSON.stringify(session.position)}) ? {lat: 40, lng: -111.89, zoom: 6}/*null*/ : this.parseObj(!{JSON.stringify(session.position)})),
 						edit: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)}).index),
 						chindexes: [],
 						chindex: 0,
@@ -60,6 +60,7 @@ html
 						input: '',
 						fixedPug: '',
 						map: '',
+						mapActive: false,
 						dataLayer: '',
 						lMarker: '',
 						thickness: 45,
@@ -226,21 +227,25 @@ html
 						
 
 					}
-					
-					self.loadMap(function(dataCoords){
-						/*if (!map) return;
-						self.map = map;
-						self.dataLayer = dataLayer;*/
-						if (!dataCoords) return;
-						var point = self.map.latLngToLayerPoint(new L.LatLng(dataCoords[1], dataCoords[0]))
-						var bounds = self.dataLayer.getBounds();
-						self.map.fitBounds(bounds);
+					//- \console.log(dataCoords)
+					if (self.position) {
+						self.loadMap(function(dataCoords){
+							/*if (!map) return;
+							self.map = map;
+							self.dataLayer = dataLayer;*/
+							//console.log(dataCoords)
+							if (!dataCoords) return;
+							var point = self.map.latLngToLayerPoint(new L.LatLng(dataCoords[1], dataCoords[0]))
+							var bounds = self.dataLayer.getBounds();
+							self.map.fitBounds(bounds);
 
-						self.panZoom();
-						
-					})
+							self.panZoom();
+							
+						})
+					}
+					//self.sliderImg()
 					
-					self.sliderImg()
+					
 				},
 				beforeDestroy: function(){
 					
@@ -499,6 +504,7 @@ html
 					dragEnd: function(event, layer) {
 						var marker = event.target;
 						var position = event.target.getLatLng();
+						//console.log(position)
 						var lat = position.lat;
 						var lng = position.lng;
 						self.lMarker.setLatLng(new L.LatLng(position.lat, position.lng),{draggable:'true'});
@@ -508,7 +514,7 @@ html
 						//self.doc.geometry.coordinates = [lng, lat];
 						//console.log(self.doc.geometry.coordinates)
 						if (self.dragind) {
-							console.log(self.doc.geometry.coordinates[0][self.dragind])
+							//console.log(self.doc.geometry.coordinates[0][self.dragind])
 							//console.log(self.dataLayer.getLatLngs())
 							self.doc.geometry.coordinates[0][self.dragind] = [lng,lat];
 							/*self.dataLayer.onEachFeature = function(feature, layer) {
@@ -520,7 +526,7 @@ html
 					featureImg: function(ind){
 						var self = this;
 						var index = parseInt(ind, 10);
-						console.log(self.doc.properties.media[index].featured)
+						//console.log(self.doc.properties.media[index].featured)
 						self.doc.properties.media[index].featured = !self.doc.properties.media[index].featured;
 					},
 					checkChapterName: function() {
@@ -641,6 +647,7 @@ html
 					},
 					panZoom: function(){
 						var self = this;
+						//console.log(self.map)
 						$.post('/panzoom/'+self.map.getCenter().lat+'/'+self.map.getCenter().lng+'/'+self.map.getZoom()+'', function(result){
 						})
 					},
@@ -743,10 +750,25 @@ html
 						
 						
 					},
-					addMapBlob: function() {
+					activateMap(){
+						var self = this;
+						var mapActive = self.mapActive;
+						if (!mapActive) {
+							document.getElementById('viewer').scrollIntoView();
+						} else {
+							document.getElementById('inputs').scrollIntoView();
+						}
+						self.mapActive = !mapActive;
+					},
+					
+					addMapBlob() {
 						var self = this;
 						var ind = self.doc.properties.media.length;
-						$('div.centerallwrap').css('pointer-events', 'auto')
+						//- $('div.centerallwrap').css('pointer-events', 'auto');
+						var mapActive = self.mapActive;
+						self.mapActive = !mapActive;
+						document.getElementById('inputs').scrollIntoView();
+
 						self.dataLayer.disableEdit();
 						self.addNewMedia(self.doc._id, ind, function(){
 							//var canvas = document.querySelector('canvas.leaflet-zoom-animated');
@@ -948,10 +970,60 @@ html
 							
 						}, 100);
 					},
-					loadMap: function(cb) {
+					rxOrNo(arr) { 
+						// TODO -- better conditional for whole planet
+						return ( arr[0] < arr[1] ? arr.reverse() : arr ) 
+					},
+					rxArr(arr) {
+						var self = this;
+						//console.log(arr)
+						if (!Array.isArray(arr[0])) return self.rxOrNo(arr);
+						var rxa = arr.map(function(ar){ 
+							if (!Array.isArray(ar[0])) { 
+								return self.rxOrNo(ar) 
+							} else if (Array.isArray(ar)) {
+								return ar.map(function(a){ 
+									if (!Array.isArray(a[0])) { 
+										return self.rxOrNo(a) 
+									} else if (Array.isArray(a)) {
+										return a.map(function(b){ 
+											if (!Array.isArray(b[0])) { 
+												return self.rxOrNo(b) 
+											} else if (Array.isArray(b)) {
+												return b.map(function(c){ 
+													if (!Array.isArray(c[0])) {
+														return self.rxOrNo(c) 
+													} else {
+														return c.map(function(d){
+															if (!Array.isArray(d[0])) {
+																return self.rxOrNo(d)
+															} else {
+																console.log(d)
+																return
+															}
+														})
+													} 
+												})
+											} else {
+												return
+											} 
+										})
+									} else {
+										return
+									} 
+								})
+							} else {
+								return
+							}
+						});
+						//console.log(rxa)
+						return rxa; 
+					} /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
+					loadMap(cb) {
 						var self = this;
 						var dataLayer;
 						var dataCoords;
+						// console.log(!self.position)
 						var map = new L.map('map', { 
 							center: [
 								(!self.position ? 40.7608 : self.position.lat),
@@ -1251,12 +1323,30 @@ html
 								if (!Array.isArray(self.doc.geometry.coordinates[0])) {
 									dataCoords = self.doc.geometry.coordinates;
 								} else {
-									dataCoords = self.doc.geometry.coordinates[0][0];
-
+									//- console.log(self.rxArr(self.doc.geometry.coordinates))
+									dataCoords = self.rxArr(self.doc.geometry.coordinates)[0][0];
+									if (Array.isArray(dataCoords[0])) {
+										if (Array.isArray(dataCoords[0][0])) {
+											if (Array.isArray(dataCoords[0][0][0])) {
+												console.log(dataCoords[0][0][0])
+												if (Array.isArray(dataCoords[0][0][0][0])) {
+													
+												} else {
+													dataCoords = dataCoords[0][0][0]
+												}
+											} else {
+												dataCoords = dataCoords[0][0]
+											}
+										} else {
+											dataCoords = dataCoords[0]
+										}
+									} else {
+										dataCoords = dataCoords
+									}
 								}
 								self.dataLayer.enableEdit();
 
-								self.lMarker = L.marker([dataCoords[1], dataCoords[0]], {draggable: true}).addTo(map);
+								//- self.lMarker = L.marker([dataCoords[1], dataCoords[0]], {draggable: true}).addTo(map);
 
 							}
 							/*L.Canvas.include({

@@ -17,6 +17,7 @@ var url = require('url');
 var multer = require('multer');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
+var SlackStrategy = require('passport-slack').Strategy;
 var GoogleStrategy = require('passport-google-oauth2').Strategy;
 var Publisher = require('./models/publishers');
 var Content = require('./models/content');
@@ -60,6 +61,78 @@ app.use(function(req, res, next) {
 		next();
 });
 passport.use(new LocalStrategy(Publisher.authenticate()));
+passport.use(new SlackStrategy({
+	clientID: process.env.SLACK_CLIENT_ID,
+	clientSecret: process.env.SLACK_CLIENT_SECRET
+	//,
+	// callbackURL: (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV)
+	// passReqToCallback: true
+},
+function(accessToken, refreshToken, profile, done) {
+	// console.log(accessToken, refreshToken, profile)
+	Publisher.find({}, function(err, data){
+		if (err) {
+			return done(err)
+		}
+		Publisher.findOne({ 'slack.oauthID': profile.user.id }, function(err, user) {
+			if(err) {
+				console.log(err);  // handle errors!
+			}
+			//console.log(profile, user)
+			if (!err && user !== null) {
+				done(null, user);
+			} else {
+				Publisher.findOne({'properties.givenName': profile.user.name, email: profile.user.email}, function(err, user) {
+					if (err) {
+						console.log(err);
+					}
+					if (!err && user !== null) {
+						Publisher.findOneAndUpdate({_id: user._id}, {$set:{'slack.oauthID': profile.user.id}}, {new:true,safe:true}, function(err, pu){
+							if (err) {
+								console.log(err)
+							}
+							done(null, pu);
+						})
+						
+					} else {
+						user = new Publisher({
+							admin: (profile.team.domain === 'saltlakedsa'),
+							sig: [],
+							username: profile.displayName.replace(/\s/g, '_'),
+							email: profile.user.email,
+							admin: true,
+							avatar: profile.user.image_32,
+							slack: {
+								oauthID: profile.user.id,
+								created: Date.now()
+							},
+							properties: {
+								givenName: profile.user.name,
+								time: {
+									begin: new Date(),
+									end: new Date()
+								}
+							}
+						});
+						user.save(function(err) {
+							if(err) {
+								console.log(err);  // handle errors!
+							} else {
+								console.log("saving user ...");
+								done(null, user);
+							}
+						});
+					}
+					
+					
+				})
+				
+			}
+		});
+	})
+	
+}));
+
 passport.use(new GoogleStrategy({
 	clientID: process.env.GOOGLE_OAUTH_CLIENTID,
 	clientSecret: process.env.GOOGLE_OAUTH_SECRET,

@@ -1348,40 +1348,99 @@ router.get('/home', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, func
 		})
 	}
 })
+router.get('/auth/slack', passport.authenticate('slack'));
+ 
+router.get('/auth/slack/callback',
+  passport.authenticate('slack', { failureRedirect: '/login' }),
+  (req, res) => {
+		req.session.userId = req.user._id;
+		req.session.loggedin = req.user.username;
+		res.redirect('/');
+});
 
 router.get('/register', function(req, res, next){
 	return res.render('register', { csrfToken: req.csrfToken(), menu: 'register' } );
 })
 
-router.post('/register', function(req, res, next){
-	var admin;
-	Publisher.find({}, function(err, pubs){
-		if (err) {
-			return next(err)
+router.post('/register', function(req, res, next) {
+	var langs = [];
+	// googleTranslate.getSupportedLanguages(function(err, languageCodes) {
+	// 
+	// 	for (var i = 0; i < languageCodes.length; i++) {
+	// 		if (languages[languageCodes[i]] !== undefined) {
+	// 			var obj = languages[languageCodes[i]];
+	// 			obj.code = languageCodes[i];
+	// 			langs.push(obj)
+	// 		}
+	// 
+	// 	}
+		if (!req.body.givenName) {
+			//upload.array() has not yet been fs-ed.
+			return res.render('register', {info: 'You must provide your full name for the digital signature. No punctuation allowed. Example: "Firstname Lastname"', languages: langs})
 		}
-		/*if (pubs.length === 0 || req.body.username === 'tbushman' || req.body.username === 'rcain' || req.body.username === 'tb') {
-			admin = true;
-		} else {
-			admin = false;
-		}*/
-		admin = true;
-		Publisher.register(new Publisher({ userindex: pubs.length, username : req.body.username, email: req.body.email, admin: admin}), req.body.password, function(err, user) {
+		Publisher.find({}, function(err, data){
 			if (err) {
-				return res.render('register', {info: "Sorry. That username already exists. Try again."});
+				return next(err)
 			}
-			passport.authenticate('local')(req, res, function () {
-				Publisher.findOne({username: req.body.username}, function(error, pu){
-					if (error) {
-						return next(error)
-					}
-					req.session.userId = pu._id;
-					req.session.loggedin = pu.username;
-					return res.redirect('/');
-				})
+			var admin;
+			if (req.body.username === 'tbushman') {
+				admin = true;
+			} else {
+				admin = false;
+			}
+			Publisher.register(new Publisher({ username : req.body.username, avatar: '/images/publish_logo_sq.svg', /*language: req.body.languages,*/ admin: admin, email: req.body.email, properties: { givenName: req.body.givenName, /*title: req.body.title,*/ zip: req.body.zip, /*place: req.body.place, placetype: req.body.placetype, time: { begin: req.body.datebegin, end: req.body.dateend }*/ } }), req.body.password, function(err, user) {
+				if (err) {
+					return res.render('register', {info: "Sorry. That Name already exists. Try again.", languages: langs});
+				}
+				req.session.username = req.body.username;
+				passport.authenticate('local')(req, res, function () {
+					Publisher.findOne({username: req.body.username}, function(error, doc){
+						if (error) {
+							return next(error)
+						}
+						req.session.userId = doc._id;
+						req.session.loggedin = doc.username;
+						if (!user.admin) {
+							return res.redirect('/sig/editprofile')
+						}
+						return res.redirect('/api/publish')
+					})
+				});
 			});
-		});
-	})
-})
+		})
+	// })
+
+});
+
+// router.post('/register', function(req, res, next){
+// 	var admin;
+// 	Publisher.find({}, function(err, pubs){
+// 		if (err) {
+// 			return next(err)
+// 		}
+// 		/*if (pubs.length === 0 || req.body.username === 'tbushman' || req.body.username === 'rcain' || req.body.username === 'tb') {
+// 			admin = true;
+// 		} else {
+// 			admin = false;
+// 		}*/
+// 		admin = true;
+// 		Publisher.register(new Publisher({ userindex: pubs.length, username : req.body.username, email: req.body.email, admin: admin}), req.body.password, function(err, user) {
+// 			if (err) {
+// 				return res.render('register', {info: "Sorry. That username already exists. Try again."});
+// 			}
+// 			passport.authenticate('local')(req, res, function () {
+// 				Publisher.findOne({username: req.body.username}, function(error, pu){
+// 					if (error) {
+// 						return next(error)
+// 					}
+// 					req.session.userId = pu._id;
+// 					req.session.loggedin = pu.username;
+// 					return res.redirect('/');
+// 				})
+// 			});
+// 		});
+// 	})
+// })
 
 router.get('/login', function(req, res, next){
 
