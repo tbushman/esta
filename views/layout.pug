@@ -46,6 +46,12 @@ html
 				el: '#vue',
 				data: function data(){
 					return {
+						signable: this.parseBool(!{JSON.stringify(signable)}),
+						unsigned: this.parseBool(!{JSON.stringify(unsigned)}),
+						avail: this.parseBool(!{JSON.stringify(avail)}),
+						type: this.parseObj(!{JSON.stringify(type)}),
+						pu: this.parseObj(!{JSON.stringify(pu)}),
+						loggedin: (this.parseObj(!{JSON.stringify(session)}) !== '' && this.parseObj(!{JSON.stringify(session.loggedin)}) !== '' ? this.parseObj(!{JSON.stringify(session.loggedin)}) : null ),
 						menu: this.parseObj(!{JSON.stringify(menu)}),
 						dat: this.parseObj(!{JSON.stringify(dat)}),
 						data: '',//this.parseObj(!{JSON.stringify(data)}),
@@ -68,7 +74,6 @@ html
 						wHeight: window.innerHeight,
 						dPath: this.dPathAttr(),
 						tinymce: null,
-						str: this.parseObj(!{JSON.stringify(str)}),
 						diff: /*{
 							index: (this.parseObj(!{JSON.stringify(doc)}) !== '' ? this.parseObj(!{JSON.stringify(doc)}).index : 0),
 							ind: 0
@@ -85,13 +90,94 @@ html
 								[[]]
 							)
 						),
+						newDoc: {},
+						placemenu: false,
+						placetypes: [{
+							name: 'Nation',
+							url: '/json/us.json'
+						},
+						{
+							name: 'State',
+							url: '/json/usstates.json'
+						}/*,
+						{
+							name: 'County',
+							url: '/json/uscounties.json'
+						}*/],
+						modal: {msg:null},
+
 						uploadisreplace: false,
 						uploadchtitle: null,
 						dragind: null,
 						latlngs: null,
 						gp: (this.parseObj(#{session.importgdrive}) !== '' ? this.parseObj(!{JSON.stringify(gp)}) : null),
 						sliderIndex: 1,
-						loggedin: (!this.parseObj(!{JSON.stringify(session)}) || !this.parseObj(!{JSON.stringify(session.username)}) ? null : this.parseObj(!{JSON.stringify(session.username)}))
+						str: this.parseObj(!{JSON.stringify(str)}),
+						ts: this.ifNullThenArr(!{JSON.stringify(ts)})
+					}
+				},
+				components: {
+					canvasc: {
+						//- props: ['pu'],
+						//- inject: ['pu'],
+						data: function() {
+							return {
+								signaturePad: null,
+								ctx: null,
+								dataUrl: null,
+								pts: null,
+								cW: window.innerWidth,
+								cH: window.innerHeight,
+								pu: this.$parent.pu
+							}
+						},
+						mounted: function(){
+							var self = this;
+							self.signaturePad = new SignaturePad(self.$refs.canv, {
+								onEnd: async function() {
+									self.$refs.canv.style['letter-spacing'] = '0px'
+									var ctx = self.$refs.canv.getContext('2d');
+									ctx.font = '12px serif';
+									
+									var ts = '/'+self.pu.properties.givenName+'/'+moment().utc().format();
+									//- ctx.fillStyle = 'rgba(0,0,0,0)';
+									ctx.beginPath();
+									//- ctx.fillRect(23, 132, 300, 32);
+									//- ctx.fillStyle = '#000';
+									ctx.fillText(ts, 23, 132);
+									ctx.closePath();
+									self.dataUrl = self.signaturePad.toDataURL()
+									self.pts = self.signaturePad.toData();
+									self.$emit('update', self.dataUrl, ts, self.$refs.canv);
+									
+								},
+								onBegin: function() {
+									// clear timestamp only
+									var ctx = self.$refs.canv.getContext('2d');
+									ctx.clearRect(23, 123, 277, 32);
+
+								}
+							});
+						},
+						methods: {
+							clearCanv(){
+								var self = this;
+								var ctx = self.$refs.canv.getContext('2d');
+								ctx.clearRect(0, 0, 300, 150);
+								
+							}
+						},
+						template: 
+						//- '#signaturepad'
+						`
+						<div class="row" style="text-align: center;">
+						<canvas
+							id="maincanvas"
+							ref="canv"
+						></canvas>
+						<a role="button" @click="clearCanv" title="Clear signature" v-text="'Clear signature'"></a>
+						</div>
+						`
 					}
 				},
 				updated: function(){
@@ -235,10 +321,10 @@ html
 							self.map = map;
 							self.dataLayer = dataLayer;*/
 							//console.log(dataCoords)
-							if (!dataCoords) return;
-							var point = self.map.latLngToLayerPoint(new L.LatLng(dataCoords[1], dataCoords[0]))
-							var bounds = self.dataLayer.getBounds();
-							self.map.fitBounds(bounds);
+							//- if (!dataCoords) return;
+							//- var point = self.map.latLngToLayerPoint(dataCoords)
+							//- var bounds = self.dataLayer.getBounds();
+							//- self.map.fitBounds(bounds);
 
 							self.panZoom();
 							
@@ -252,6 +338,10 @@ html
 					
 				},
 				methods: {
+					ifNullThenArr(obj) {
+						if (!obj) return [];
+						return obj;
+					},
 					sliderImg: function(){
 						var self = this;
 						if ($('#slider')[0]) {
@@ -750,6 +840,80 @@ html
 						
 						
 						
+					},
+					initSig() {
+						var self = this;
+						self.type = 'draw';
+						self.drawtype = 'filling';
+						
+
+					},
+					setSigData(i, val, ts, can) {
+						var self = this;
+						Vue.set(self.can, i, can)
+						Vue.set(self.ts, 0, ts)
+						//- self.can = val;
+						//- console.log(self.ts, self.can)
+					},
+					updateSignature(index, url) {
+						Vue.set(this.signatureDataUris, 0, url);
+						//- console.log(this.signatureDataUris);
+					},
+					signatureToBlob(cb) {
+						var self = this;
+						//- if (!self.signatureDataUris[0]) return;
+						//- var binStr = atob( self.signatureDataUris[0].split(',')[1].split(';')[0] ),
+						//- len = binStr.length,
+						//- arr = new Uint8Array(len);
+						//- for (var i = 0; i < len; i++ ) {
+						//- 	arr[i] = binStr.charCodeAt(i);
+						//- }
+						//- cb( new Blob( [arr], {type: 'image/png'} ) );
+						console.log(self.can)
+						if (!HTMLCanvasElement.prototype.toBlob) {
+						 Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+							value: function (callback, type, quality) {
+								var binStr = atob( this.toDataURL(type, quality).split(',')[1] ),
+								len = binStr.length,
+								arr = new Uint8Array(len);
+								for (var i = 0; i < len; i++ ) {
+									arr[i] = binStr.charCodeAt(i);
+								}
+								callback( new Blob( [arr], {type: type || 'image/png'} ) );
+							}
+						 });
+						}
+						self.can[0].toBlob(function(blob){
+							console.log(blob)
+							cb(blob);
+						}, 'image/png')
+					},
+					saveSignature(){
+						var self = this;
+						var fd = new FormData();
+						self.signatureToBlob(function(blob){
+							
+							fd.append('img', blob);
+							fd.append('_csrf', '#{csrfToken}');
+							fd.append('ts', self.ts);
+							//- console.log(self.ts, self.can)
+
+							var uploadurl = '/sig/uploadsignature/'+self.doc._id+'/'+self.pu._id+'';
+							console.log(blob)
+							$.ajax({
+								url: uploadurl,
+								type: 'POST',
+								data: fd,
+								processData: false,
+								contentType: false,
+								success: function(response) {
+									//- $('#inputimg').val(response);
+									self.mode = 'blog';
+									console.log(response)
+									window.location.href = response
+								}
+							})
+						})
 					},
 					activateMap(){
 						var self = this;
@@ -1309,23 +1473,31 @@ html
 									self.doc.geometry.coordinates = [latlngs]
 								})*/
 								self.dataLayer.on('dragend', function(e){
-									var latlngs = []
+									var latlngs = [];
+									console.log(e.target.getLatLngs)
 									e.target.getLatLngs().forEach(function(latlng){
-										
-										latlng.forEach(function(ll){
-											console.log(ll)
-											latlngs.push([ll.lng,ll.lat])
-										})
-										latlngs.push([latlng[0].lng, latlng[0].lat])
+										console.log(latlng)
+										if (latlng) {
+											latlng.forEach(function(ll){
+												console.log(ll)
+												latlngs.push([ll.lng,ll.lat])
+											})
+											latlngs.push([latlng[0].lng, latlng[0].lat])
+										}
 									})
-									self.doc.geometry.coordinates = [latlngs]
+									self.doc.geometry.coordinates = latlngs
 								})
 								//dataLayer.on('dblclick', L.DomEvent.stop).on('dblclick', dataLayer.toggleEdit);
+								var latlng;
 								if (!Array.isArray(self.doc.geometry.coordinates[0])) {
 									dataCoords = self.doc.geometry.coordinates;
-								} else {
+									latlng = new L.LatLng(dataCoords[0], dataCoords[1]);
+								} else if (self.mapActive && self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '') {
 									//- console.log(self.rxArr(self.doc.geometry.coordinates))
-									dataCoords = self.rxArr(self.doc.geometry.coordinates)[0][0];
+									dataCoords = //self.rxArr(
+										self.doc.geometry.coordinates
+									//- )
+									[0][0];
 									if (Array.isArray(dataCoords[0])) {
 										if (Array.isArray(dataCoords[0][0])) {
 											if (Array.isArray(dataCoords[0][0][0])) {
@@ -1341,11 +1513,30 @@ html
 										} else {
 											dataCoords = dataCoords[0]
 										}
-									} else {
-										dataCoords = dataCoords
 									}
+									latlng = new L.LatLng(dataCoords[0], dataCoords[1]);
+								} else {
+									var coords = //L.latLng(
+										self.rxArr(
+											self.doc.geometry.coordinates[0]
+										
+										)
+									//- );
+									console.log(coords)
+									var cd;
+									if (coords) {
+										cd = L.latLngBounds(coords).getCenter();
+									}
+									if (!cd) {
+										latlng = L.latLng([40, -111.8]);
+									} else {
+										console.log(cd)
+										latlng = cd;//- dataCoords = [cd.lng, cd.lat]
+									}
+									dataCoords = [latlng.lat,latlng.lng]
 								}
-								self.dataLayer.enableEdit();
+								// && self.pu && self.pu.properties.admin
+								if (self.loggedin && self.loggedin !== '') self.dataLayer.enableEdit();
 
 								//- self.lMarker = L.marker([dataCoords[1], dataCoords[0]], {draggable: true}).addTo(map);
 
@@ -1359,9 +1550,9 @@ html
 											this._redrawBounds.extend(layer._pxBounds.max.add([padding, padding]));
 									}
 							});*/
-							self.map.panTo(new L.LatLng(dataCoords[1], dataCoords[0]));
+							self.map.panTo(latlng);
 							
-							cb(dataCoords)
+							cb(latlng)
 
 						} else {
 							cb(null)

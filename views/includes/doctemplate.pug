@@ -2,19 +2,28 @@
 
 div#inputs.maintitle.centerall(:style="{'pointer-events':(mapActive? 'none' : 'auto')}")
 	//- div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;z-index:2; position:absolute;pointer-events:all;")
-	button.mapActive(v-if="!mapActive", v-on:click="activateMap()",
+	//- && pu && pu !== '' && pu.properties.admin
+	button.mapActive(v-if="!mapActive && loggedin && loggedin !== ''", v-on:click="activateMap()",
 		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: (wWidth - 50)+'px', 'text-align':'center'}"
 		)
 		span Edit Map
 	
-	button.success.mapActive(v-else-if="mapActive", class= mn, v-on:click="addMapBlob()",
+	button.success.mapActive(v-else-if="mapActive && loggedin && loggedin !== ''", class= mn, v-on:click="addMapBlob()",
 		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: ((wWidth/2) - 50)+'px', 'text-align':'center'}")
 		span(v-text="'Save Map'")
 	
-	button.danger.mapActive(v-if="mapActive", class= mn, v-on:click="activateMap()",
+	button.danger.mapActive(v-if="mapActive && loggedin && loggedin !== ''", class= mn, v-on:click="activateMap()",
 		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'25px', left: 'auto', width: ((wWidth/2) - 50)+'px', 'text-align':'center'}")
 		span(v-text="'Cancel'")
 
+	button.mapActive(v-if="!mapActive && (!loggedin || loggedin === '') && (!pu || pu === '')", v-on:click="activateMap()",
+		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: (wWidth - 50)+'px', 'text-align':'center'}"
+		)
+		span Make Map clickable
+	
+	button.danger.mapActive(v-if="mapActive && (!loggedin || loggedin === '') && (!pu || pu === '')", class= mn, v-on:click="activateMap()",
+		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'25px', left: 'auto', width: ((wWidth/2) - 50)+'px', 'text-align':'center'}")
+		span(v-text="'Cancel'")
 	div.chapter
 		section.row(v-if="doc")
 			a(v-bind:href="'/'", style="pointer-events:all;")
@@ -29,14 +38,29 @@ div#inputs.maintitle.centerall(:style="{'pointer-events':(mapActive? 'none' : 'a
 							span.bd(v-text="(parseInt(doc.properties.chapter.ind,10)+1)")
 							span(v-text="' '")
 							span(v-text="doc.properties.chapter.str")
-			div.row(v-if="!edit || edit === null || !loggedin || loggedin === ''")
+			div.row(v-if="(!loggedin || loggedin === '') && (!edit || edit === null)")
 				include header.pug
 				include bodysingle.pug
-			//- div.row(v-if="edit === doc.index && loggedin", style="padding-top:20px;")
-			//- 	form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
-			//- 		input(type="hidden", name="_csrf", value= csrfToken)
-			//- 		include editor.pug
+			div.row(v-if="edit === doc.index && loggedin && loggedin !==''", style="padding-top:20px;")
+				form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+					input(type="hidden", name="_csrf", value= csrfToken)
+					include editor.pug
 	
+	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
+		,
+		v-bind:viewBox="'0 0 ' + wWidth +' '+ (wHeight)", v-bind:style="{'enable-background':'new 0 0 ' + wWidth + ' ' + (wHeight) +'', 'display': 'block', 'margin': '0 auto'}", xml:space="preserve"
+		, 
+		v-bind:width="wWidth +'px'",
+		v-bind:height="(wHeight)+'px'",
+		style="position:absolute;top:0;pointer-events:fill;display:inline-block;left:0;z-index:-1;"
+		)
+		//
+			defs
+				clipPath#myPath(fill="none", clipPathUnits="objectBoundingBox")
+					path#path(v-bind:d="dPath", fill="none")
+				use(clip-path="url(#myPath)", xlink:href="#path")
+		path(style="pointer-events: all; overflow-y: scroll;", v-bind:d="'M0,0v'+(wHeight)+'h'+wWidth+'V0H0L0,0z'", fill="var(--primary)")
+
 div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: none;")
 	
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
@@ -53,4 +77,18 @@ div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: n
 					path#path(v-bind:d="dPath", fill="none")
 				use(clip-path="url(#myPath)", xlink:href="#path")
 		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")
-
+	
+	a.img(@click="initSig", title="Sign", v-if="signable && doc && pu && pu !== '' && pu.username === loggedin && unsigned", style="position:absolute;")
+		.ui
+			img(src="/images/icons/edit.svg")
+		p.tb-font-xxxs.hideoverlap(v-text="'Sign to indicate support'")
+	table(width="100%", height="100%", v-if="doc && pu && pu.username === loggedin && type === 'draw'")
+		tr
+			td
+				div.row(style="text-align:center;")
+					p.tb-10-m0 Sign Here 
+					
+				canvasc(
+					@update="(val, ts, can) => setSigData(0, val, ts, can)"
+					
+				)

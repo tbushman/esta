@@ -18,9 +18,13 @@ each mn, k in menus
 			
 			a.submenu.drop(class= mn, href="/")
 				span.tb-font-s Home
-			a.submenu.drop(class= mn, title="Import")
+			a.submenu.drop(v-if="!loggedin", class= mn, href="/login")
+				span.tb-font-s(v-text="'Login'")
+			a.submenu.drop(v-if="loggedin", class= mn, href="/logout")
+				span.tb-font-s Logout
+			a.submenu.drop(v-if="loggedin", class= mn, title="Import")
 				span.tb-font-s Import
-			div.slidedown(class= mn)
+			div.slidedown(v-if="loggedin", class= mn)
 				
 				a.submenu.drop(class= mn, href="/importgdrive", title="Import Chapter from Google Drive")
 					if (mn !== "static")
@@ -52,15 +56,15 @@ each mn, k in menus
 					span.tb-font-s(v-text="'Add Section to Ch. '+(parseInt(dat[0][0].properties.chapter.ind,10)+1)+''")
 
 			if (menu === "map")
-				a.submenu.drop(class= mn, v-on:click="addMapBlob")
+				a.submenu.drop(v-if="loggedin", class= mn, v-on:click="addMapBlob")
 					span.tb-font-s(v-text="'Save Map'")
 			//
 				a.submenu.drop(class= mn, v-bind:href="'/exportpdf'")
 					span.tb-font-s(v-text="'Export PDF file'")
 			
-			a.submenu.drop(class= mn, title="Export")
+			a.submenu.drop(v-if="loggedin", class= mn, title="Export")
 				span.tb-font-s Export
-			div.slidedown(class= mn)
+			div.slidedown(v-if="loggedin", class= mn)
 				a.submenu.drop(class= mn, href="/exportword")
 					if (mn !== "static")
 						if (menu !== "word")

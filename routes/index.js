@@ -3166,6 +3166,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 							var thumburl = ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
 							thumburls.push(thumburl.replace(publishersDir, ''))
 							count++;
+							console.log(thumburl, thumbbuf)
 							fs.writeFile(thumburl, thumbbuf, function(err) {
 								if(err) {
 									console.log("err", err);
@@ -3253,7 +3254,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			}
 
 			var newdate = new Date();
-			
+			console.log(body.latlng)
 			//console.log(desc, body.description);
 			var end;
 			var current;
@@ -3261,22 +3262,21 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				_id: doc._id,
 				type: "Feature",
 				index: doc.index,
-				title: {
-					ind: doc.properties.title.ind,
-					str: doc.properties.title.str 
-				},
-				chapter: {
-					ind: doc.properties.chapter.ind,
-					str: doc.properties.chapter.str 
-				},
-				section: {
-					ind: doc.properties.section.ind,
-					str: (!body.title ? doc.properties.title.str : marked(curly(body.title)).replace(/(<p>|<\/p>)/g,''))
-				},
 				properties: {
+					title: {
+						ind: doc.properties.title.ind,
+						str: doc.properties.title.str 
+					},
+					chapter: {
+						ind: doc.properties.chapter.ind,
+						str: doc.properties.chapter.str 
+					},
+					section: {
+						ind: doc.properties.section.ind,
+						str: doc.properties.section.str
+					},
 					published: (!body.published ? false : true),
 					_id: id,
-					title: (!body.title ? doc.properties.title.str : marked(curly(body.title)).replace(/(<p>|<\/p>)/g,'')),
 					label: body.label ? curly(body.label) : doc.properties.label,
 					place: body.place ? curly(body.place) : doc.properties.place,
 					description: desc ? marked(curly(desc)) : doc.properties.description,
@@ -3285,11 +3285,12 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						end: moment().utc().format()
 					},
 					media: [],
+					// (!doc.properties.media || doc.properties.media.length === 0 ? [] : doc.properties.media),
 					diffs: doc.properties.diffs,
 					footnotes: footnotes
 				},
 				geometry: {
-					type: "Polygon",
+					type: "MultiPolygon",
 					coordinates: JSON.parse(body.latlng)
 				}
 			}
@@ -3299,10 +3300,24 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			var entrymedia = []
 			var thumbs = thumburls;
 			var count = 0;
+			// var ix = entry.properties.media.length;
+			// media = {
+			// 	index: count,
+			// 	name: (body['img'+ix+'_name'] ? curly(body['img'+ix+'_name']) : ''),
+			// 	image: imgs[i],
+			// 	image_abs: path.join(publishers, '/pu'+imgs[i]),
+			// 	iframe: (!body['iframe'+ix+''] ? null : body['iframe'+ix+'']),
+			// 	thumb: thumbs[i],
+			// 	thumb_abs: path.join(publishers, '/pu'+thumbs[i]),
+			// 	caption: (body['img'+ix+'_caption'] ? curly(body['img'+ix+'_caption']) : ''),
+			// 	postscript: (body['img'+ix+'_postscript'] ? curly(body['img'+ix+'_postscript']) : ''),
+			// 	featured: body['img'+ix+'_featured'],
+			// 	orientation: orientations[i]
+			// }
 			if (thumbs.length > 0) {
 				for (var i = 0; i < thumbs.length; i++) {
 					var media;
-					
+			
 					media = {
 						index: count,
 						name: (body['img'+i+'_name'] ? curly(body['img'+i+'_name']) : ''),
@@ -3316,7 +3331,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						featured: body['img'+i+'_featured'],
 						orientation: orientations[i]
 					}
-
+			
 					entrymedia.push(media)
 					count++
 				}
@@ -3491,7 +3506,7 @@ router.post('/api/deletemedia/:id/:index', function(req, res, next) {
 		if (err) {
 			return next(err)
 		}
-		Content.findOneAndUpdate({_id: id}, {$pull: {'properties.media': {index: index}}}, {multi: false, new: true}, function(err, doc) {
+		Content.findOneAndUpdate({_id: id}, {$pull: {'properties.media': {index: index}}}, {multi: false, new: true}, async function(err, doc) {
 			if (err) {
 				return next(err) 
 			}
@@ -3509,7 +3524,7 @@ router.post('/api/deletemedia/:id/:index', function(req, res, next) {
 					var oldThumbPath = glob.sync(otp, options)[0];
 					var newImgPath = glob.sync(nip, options)[0];
 					var newThumbPath = glob.sync(ntp, options)[0];
-					if (fs.existsSync(oldImgPath)) {
+					if (await fs.existsSync(oldImgPath)) {
 						fs.moveSync(oldImgPath, newImgPath, { overwrite: true });
 						fs.moveSync(oldThumbPath, newThumbPath, { overwrite: true });
 					}
