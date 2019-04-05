@@ -46,6 +46,11 @@ html
 				el: '#vue',
 				data: function data(){
 					return {
+						lvl: 'h',
+						h: 0,
+						i: 0,
+						j: 0,
+						m: 0,
 						signable: this.parseBool(!{JSON.stringify(signable)}),
 						unsigned: this.parseBool(!{JSON.stringify(unsigned)}),
 						avail: this.parseBool(!{JSON.stringify(avail)}),
@@ -1472,27 +1477,131 @@ html
 									})
 									self.doc.geometry.coordinates = [latlngs]
 								})*/
-								self.dataLayer.on('dragend', function(e){
+								//- self.dataLayer.on('dragend', function(e){
+								//- 	var latlngs = [];
+								//- 	console.log(e.target.getLatLngs)
+								//- 	e.target.getLatLngs().forEach(function(latlng){
+								//- 		console.log(latlng)
+								//- 		if (latlng) {
+								//- 			latlng.forEach(function(ll){
+								//- 				console.log(ll)
+								//- 				latlngs.push([ll.lng,ll.lat])
+								//- 			})
+								//- 			latlngs.push([latlng[0].lng, latlng[0].lat])
+								//- 		}
+								//- 	})
+								//- 	self.doc.geometry.coordinates = latlngs
+								//- })
+								map.on('editable:editing', function (e) {
+									e.layer.setStyle({color: 'DarkRed'});
+								});
+								self.map.on('editable:vertex:dragstart', function(e){
 									var latlngs = [];
-									console.log(e.target.getLatLngs)
-									e.target.getLatLngs().forEach(function(latlng){
-										console.log(latlng)
-										if (latlng) {
-											latlng.forEach(function(ll){
-												console.log(ll)
-												latlngs.push([ll.lng,ll.lat])
+									//- console.log(self.dataLayer.getLatLngs(), e)
+									var cll = e.vertex.latlng.__vertex.latlng;
+									console.log(cll);
+									var dll = self.dataLayer.getLatLngs();
+									//- console.log(dll)
+									var lvl = 0;
+									var p = 0;
+									var dl;
+									
+									self.dataLayer.getLatLngs().forEach(function(latlng, h){
+										if (!Array.isArray(latlng)) {
+											console.log('latlng')
+											console.log(latlng)
+											
+										} else {
+											lvl++;
+											self.h = h;
+											latlng.forEach(function(ll, i){
+												if (!Array.isArray(ll)) {
+													if (ll.lat === cll.lat && ll.lng === cli.lng) {
+														console.log('ll')
+														console.log(ll)
+														self.i = i;
+														self.lvl = 'hi'
+														//- self.doc.geometry.coordinates[h][i] = [ll.lng,ll.lat]
+													}
+												} else {
+													lvl++;
+													ll.forEach(function(l, j) {
+														if (!Array.isArray(l)) {
+															if (l.lat === cll.lat && l.lng === cll.lng) {
+																console.log('l')
+																console.log(l);
+																console.log(self.doc.geometry.coordinates[h][i][j], cll)
+																self.j = j;
+																self.lvl = 'hij'
+
+																//- self.doc.geometry.coordinates[h][i][j] = [l.lng,l.lat]
+
+															}
+														} else {
+															lvl++;
+															l.forEach(function(k, m){
+																if (k.lat === cll.lat && k.lng === cll.lng) {
+																	console.log('k')
+																	console.log(k);
+																	self.m = m;
+																	self.lvl = 'hijm';
+																	//- self.doc.geometry.coordinates[h][i][j][m] = [k.lng,k.lat]
+																} else {
+																	console.log('giant array')
+																}
+															})
+														}
+													})
+												}
 											})
-											latlngs.push([latlng[0].lng, latlng[0].lat])
 										}
+										
 									})
-									self.doc.geometry.coordinates = latlngs
+								})
+								self.map.on('editable:vertex:dragend', function(e){
+									var latlngs = [];
+									//- console.log(self.dataLayer.getLatLngs(), e)
+									var cll = e.vertex.latlng.__vertex.latlng;
+									console.log(cll);
+									var dll = self.dataLayer.getLatLngs();
+									//- console.log(dll)
+									var lvl = 0;
+									var p = 0;
+									var dl;
+									if (cll.lng) {
+										//- self.dataLayer.getLatLngs().forEach(function(latlng, h){
+											switch(self.lvl){
+												case 'hi':
+													console.log(self.doc.geometry.coordinates[self.h][self.i], [cll.lng, cll.lat])
+													self.doc.geometry.coordinates[self.i] = [cll.lng, cll.lat]
+													break;
+												case 'hij':
+													if (self.doc.geometry.coordinates[self.h][self.i][self.j]) {
+														console.log(self.doc.geometry.coordinates[self.h][self.i][self.j], [cll.lng, cll.lat])
+														self.doc.geometry.coordinates[self.h][self.i][self.j] = [cll.lng, cll.lat]
+													}
+													break;
+												case 'hijm':
+													self.doc.geometry.coordinates[self.h][self.i][self.j][self.m] = [cll.lng, cll.lat]
+													break;
+												default:
+													self.doc.geometry.coordinates[self.h] = [cll.lng, cll.lat]
+											}
+											
+										//- })
+									}
+									
+									
+									//- self.doc.geometry.coordinates = latlngs
 								})
 								//dataLayer.on('dblclick', L.DomEvent.stop).on('dblclick', dataLayer.toggleEdit);
 								var latlng;
 								if (!Array.isArray(self.doc.geometry.coordinates[0])) {
 									dataCoords = self.doc.geometry.coordinates;
 									latlng = new L.LatLng(dataCoords[0], dataCoords[1]);
-								} else if (self.mapActive && self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '') {
+									
+									 //- && self.pu && self.pu !== ''
+								} else if (self.mapActive && self.loggedin && self.loggedin !== '') {
 									//- console.log(self.rxArr(self.doc.geometry.coordinates))
 									dataCoords = //self.rxArr(
 										self.doc.geometry.coordinates
@@ -1515,10 +1624,11 @@ html
 										}
 									}
 									latlng = new L.LatLng(dataCoords[0], dataCoords[1]);
+									console.log(latlng)
 								} else {
 									var coords = //L.latLng(
 										self.rxArr(
-											self.doc.geometry.coordinates[0]
+											self.doc.geometry.coordinates[1]
 										
 										)
 									//- );
@@ -1538,7 +1648,7 @@ html
 								// && self.pu && self.pu.properties.admin
 								if (self.loggedin && self.loggedin !== '') self.dataLayer.enableEdit();
 
-								//- self.lMarker = L.marker([dataCoords[1], dataCoords[0]], {draggable: true}).addTo(map);
+								self.lMarker = L.marker(dataCoords, {draggable: true}).addTo(map);
 
 							}
 							/*L.Canvas.include({
