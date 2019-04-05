@@ -192,6 +192,7 @@ html
 							return doc.index;
 						}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
 						self.dindexes.sort();
+						
 					}
 				},
 				mounted: function(){
@@ -321,16 +322,10 @@ html
 					}
 					//- \console.log(dataCoords)
 					if (self.position) {
+						//- var cll = new L.LatLng(self.position.lat, self.position.lng)
+						
 						self.loadMap(function(dataCoords){
-							/*if (!map) return;
-							self.map = map;
-							self.dataLayer = dataLayer;*/
-							//console.log(dataCoords)
-							//- if (!dataCoords) return;
-							//- var point = self.map.latLngToLayerPoint(dataCoords)
-							//- var bounds = self.dataLayer.getBounds();
-							//- self.map.fitBounds(bounds);
-
+							self.latlng = dataCoords
 							self.panZoom();
 							
 						})
@@ -744,8 +739,11 @@ html
 					panZoom: function(){
 						var self = this;
 						//console.log(self.map)
-						$.post('/panzoom/'+self.map.getCenter().lat+'/'+self.map.getCenter().lng+'/'+self.map.getZoom()+'', function(result){
-						})
+						if (self.map) {
+							$.post('/panzoom/'+self.map.getCenter().lat+'/'+self.map.getCenter().lng+'/'+self.map.getZoom()+'', function(result){
+							})
+						}
+						
 					},
 					uploadDocx: function(evt) {
 						var self = this;
@@ -1140,9 +1138,101 @@ html
 							
 						}, 100);
 					},
+					getCoordInds(latlngs, latlng) {
+						
+					},
+					latlngsToArr(latlngs, cll){
+						console.log(latlngs)
+						if (!Array.isArray(latlngs)) {
+							return;
+						}
+						return latlngs.map(function(latlng, h){
+							if (!Array.isArray(latlng)) {
+								console.log('latlng')
+								console.log(latlng)
+								self.h = null;
+								return [latlng.lng,latlng.lat];
+							} else {
+								self.h = h;
+								return latlng.map(function(ll, i){
+									if (!Array.isArray(ll)) {
+										if (ll.lat === cll.lat && ll.lng === cli.lng) {
+											console.log('ll')
+											console.log(ll)
+											self.i = i;
+											self.lvl = 'hi'
+											//- self.doc.geometry.coordinates[h][i] = [ll.lng,ll.lat]
+										}
+										return [ll.lng,ll.lat]
+
+									} else {
+										return ll.map(function(l, j) {
+											if (!Array.isArray(l)) {
+												if (l.lat === cll.lat && l.lng === cll.lng) {
+													console.log('l')
+													console.log(l);
+													//- console.log(self.doc.geometry.coordinates[h][i][j], cll)
+													self.j = j;
+													self.lvl = 'hij'
+
+													//- self.doc.geometry.coordinates[h][i][j] = [l.lng,l.lat]
+
+												}
+												return [l.lng,l.lat]
+
+											} else {
+												return l.map(function(k, m){
+													if (!Array.isArray(k)) {
+														if (k.lat === cll.lat && k.lng === cll.lng) {
+															console.log('k')
+															console.log(k);
+															self.m = m;
+															self.lvl = 'hijm';
+															//- self.doc.geometry.coordinates[h][i][j][m] = [k.lng,k.lat]
+															
+														}
+														return [k.lng,k.lat]
+													} else {
+														console.log('giant array')
+													}
+													
+
+												})
+											}
+										})
+									}
+								})
+							}
+							
+						});
+						console.log(latlngs)
+						//- cb(latlngs)
+					},
+					xrOrNo(arr) { 
+						// TODO -- better conditional for whole planet
+						return arr.reverse()//true
+						//( arr[0] < arr[1] ? arr.reverse() : arr ) 
+					},
 					rxOrNo(arr) { 
 						// TODO -- better conditional for whole planet
-						return ( arr[0] < arr[1] ? arr.reverse() : arr ) 
+						return arr.reverse()//true
+						//( arr[0] < arr[1] ? arr.reverse() : arr ) 
+					},
+					xrArr(arr) {
+						var self = this;
+						if (!Array.isArray(arr[0])) return self.xrOrNo(arr);
+						var rxa = arr.map(async function(ar){ if (!Array.isArray(ar[0])) { 
+							return self.xrOrNo(ar) } else if (Array.isArray(ar)) {
+								return await ar.map(function(a){ if (!Array.isArray(a[0])) { 
+									return self.xrOrNo(a) } else if (Array.isArray(a)) {
+										return a.map(function(b){ if (!Array.isArray(b[0])) { 
+											return self.xrOrNo(b) } else if (Array.isArray(b)) {
+												return b.map(function(c){ 
+							if (!Array.isArray(c[0])) {return self.xrOrNo(c) }
+							else {return} })} else {return} })} else {return} })} else {return}
+						});
+						console.log(arr)
+						return arr; 
 					},
 					rxArr(arr) {
 						var self = this;
@@ -1243,12 +1333,13 @@ html
 									// MongoDB stores coordinates as [lng, lat]
 									// Leaflet uses [lat, lng]
 									
-									onEachFeature: function (feature, layer) {
+									onEachFeature: async function (feature, layer) {
 										if (feature.geometry.type === 'Point') {
 										}
 										if (feature.geometry.type === 'Polygon') {
 											//layer.setLatLngs(self.doc.geometry.coordinates[0])
-											//self.latlngs = layer.getLatLngs()
+											self.latlngs = layer.getLatLngs()
+											//- await self.rxArr(feature.geometry.coordinates)
 										}
 										
 									},
@@ -1291,192 +1382,7 @@ html
 								
 								//cb(map, dataLayer)
 								self.map.addLayer(self.dataLayer);
-								/*L.NewPolygonControl = L.Control.extend({
 
-									options: {
-											position: 'topleft'
-									},
-
-									onAdd: function (map) {
-										var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
-												link = L.DomUtil.create('a', '', container);
-
-										link.href = '#';
-										link.title = 'Create a new polygon';
-										link.innerHTML = '▱';
-										L.DomEvent.on(link, 'click', L.DomEvent.stop)
-														  .on(link, 'click', function () {
-																map.editTools.startPolygon();
-														  });
-
-										return container;
-									}
-								});*/
-								/** 
-									* https://github.com/w8r 
-								**/
-								/*L.EditControl = L.Control.extend({
-									options: {
-										position: 'topleft',
-										callback: null,
-										kind: '',
-										html: ''
-									},
-
-									onAdd: function (map) {
-										var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
-											link = L.DomUtil.create('a', '', container);
-										link.href = '#';
-										link.title = 'Create a new ' + this.options.kind;
-										link.innerHTML = this.options.html;
-										L.DomEvent.on(link, 'click', L.DomEvent.stop)
-										  .on(link, 'click', function () {
-												window.LAYER = this.options.callback.call(map.editTools);
-										}, this);
-										return container;
-									}
-
-								});*/
-								/*
-								L.NewLineControl = L.EditControl.extend({
-									options: {
-										position: 'topleft',
-										callback: map.editTools.startPolyline,
-										kind: 'line',
-										html: '\\/\\'
-									}
-								});
-								*/
-								/*L.NewPolygonControl = L.EditControl.extend({
-									options: {
-										position: 'topleft',
-										callback: map.editTools.startPolygon,
-										kind: 'polygon',
-										html: '▰'
-									}
-								})*/
-									/*
-									onAdd: function(map) {
-										var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
-										link = L.DomUtil.create('a', '', container);
-
-										link.href = '#';
-										link.title = 'Create a new polygon';
-										link.innerHTML = '▱';
-										L.DomEvent.on(link, 'click', L.DomEvent.stop)
-										.on(link, 'click', function () {
-												map.editTools.startPolygon();
-										});
-										
-										return container;
-									}
-								})
-								;
-								/*
-								L.NewMarkerControl = L.EditControl.extend({
-									options: {
-										position: 'topleft',
-										callback: map.editTools.startMarker,
-										kind: 'marker',
-										html: '🖈'
-									}
-								});
-
-								L.NewRectangleControl = L.EditControl.extend({
-									options: {
-										position: 'topleft',
-										callback: map.editTools.startRectangle,
-										kind: 'rectangle',
-										html: '⬛'
-									}
-								});
-								L.NewCircleControl = L.EditControl.extend({
-									options: {
-										position: 'topleft',
-										callback: map.editTools.startCircle,
-										kind: 'circle',
-										html: '⬤'
-									}
-								});
-
-								map.addControl(new L.NewMarkerControl());
-								map.addControl(new L.NewLineControl());
-								*/
-								//self.map.addControl(new L.NewPolygonControl());
-								/*map.addControl(new L.NewRectangleControl());
-								map.addControl(new L.NewCircleControl());*/
-								// wip ctrl-z undo
-								/*var Z = 90, latlng, redoBuffer = [],
-										onKeyDown = function (e) {
-										if (e.keyCode == Z) {
-												if (!dataLayer.editTools._drawingEditor) return;
-												if (e.shiftKey) {
-														if (redoBuffer.length) dataLayer.editTools._drawingEditor.push(redoBuffer.pop());
-												} else {
-														latlng = dataLayer.editTools._drawingEditor.pop();
-														if (latlng) redoBuffer.push(latlng);
-												}
-										}
-								}
-								L.DomEvent.addListener(document, 'keydown', onKeyDown, map);
-								map.on('editable:drawing:end', function () {
-										redoBuffer = [];
-								});*/
-								//console.log(dataLayer.getLatLngs());
-								/*var vectors = [...documentQuerySelectorAll('.leaflet-marker-icon')]
-								vectors.forEach(function(v){
-									v.onclick = function(e){
-										
-									}
-								})*/
-								
-								/*$(document).on('click', '.leaflet-marker-icon', function(e){
-									var latlngs = []
-									/*e.target.getLatLngs().forEach(function(latlng){
-										
-										
-									})*/
-								/*var deleteShape = function (e) {
-									console.log(e.latlng, self.dataLayer.editor)
-								  if ((e.originalEvent.ctrlKey || e.originalEvent.metaKey) && self.dataLayer.editEnabled()) {
-										self.dataLayer.editor.deleteShapeAt(e.latlng)
-										self.dataLayer.toggleEdit
-										//map.addLayer(dl)
-										self.dataLayer.editor.refresh()
-										//dataLayer.setLatLngs([e.latlng,e.latlng,e.latlng,e.latlng]); 
-										//dataLayer.redraw(); dataLayer.toggleEdit; /*dataLayer.editor.deleteShapeAt(e.latlng);
-									}
-								};
-								self.dataLayer.on('click', L.DomEvent.stop).on('click', deleteShape, dataLayer);
-								self.dataLayer.on('dblclick', L.DomEvent.stop).on('dblclick', self.dataLayer.toggleEdit);*/
-								/*map.on('layeradd', function (e) {
-									console.log(e.layer instanceof L.GeoJSON)
-										if (e.layer instanceof L.polygon) e.layer.on('click', L.DomEvent.stop).on('click', deleteShape, e.layer);
-										if (e.layer instanceof L.polygon) e.layer.on('dblclick', L.DomEvent.stop).on('dblclick', e.layer.toggleEdit);
-								});*/
-								/*map.on('click', function(){
-									var latlngs = []
-									dataLayer.getLatLngs().forEach(function(latlng){
-										latlng.forEach(function(ll){
-											console.log(ll.lng)
-											latlngs.push([ll.lng,ll.lat])
-										})
-										latlngs.push([latlng[0].lng, latlng[0].lat])
-									})
-									self.doc.geometry.coordinates = [latlngs]
-								})
-								dataLayer.on('click', function(e){
-									var latlngs = []
-									e.target.getLatLngs().forEach(function(latlng){
-										
-										latlng.forEach(function(ll){
-											console.log(ll.lng)
-											latlngs.push([ll.lng,ll.lat])
-										})
-										latlngs.push([latlng[0].lng, latlng[0].lat])
-									})
-									self.doc.geometry.coordinates = [latlngs]
-								})*/
 								//- self.dataLayer.on('dragend', function(e){
 								//- 	var latlngs = [];
 								//- 	console.log(e.target.getLatLngs)
@@ -1495,7 +1401,7 @@ html
 								map.on('editable:editing', function (e) {
 									e.layer.setStyle({color: 'DarkRed'});
 								});
-								self.map.on('editable:vertex:dragstart', function(e){
+								self.map.on('editable:vertex:dragstart', async function(e){
 									var latlngs = [];
 									//- console.log(self.dataLayer.getLatLngs(), e)
 									var cll = e.vertex.latlng.__vertex.latlng;
@@ -1505,61 +1411,16 @@ html
 									var lvl = 0;
 									var p = 0;
 									var dl;
+									var lll = self.dataLayer.getLatLngs();
+									self.latlngs = lll;
+									//- if (lll) await self.latlngsToArr(lll, cll, function(arr){
+									//- 	console.log(arr)
+									//- 	self.doc.geometry.coordinates = arr;
+									//- });
 									
-									self.dataLayer.getLatLngs().forEach(function(latlng, h){
-										if (!Array.isArray(latlng)) {
-											console.log('latlng')
-											console.log(latlng)
-											
-										} else {
-											lvl++;
-											self.h = h;
-											latlng.forEach(function(ll, i){
-												if (!Array.isArray(ll)) {
-													if (ll.lat === cll.lat && ll.lng === cli.lng) {
-														console.log('ll')
-														console.log(ll)
-														self.i = i;
-														self.lvl = 'hi'
-														//- self.doc.geometry.coordinates[h][i] = [ll.lng,ll.lat]
-													}
-												} else {
-													lvl++;
-													ll.forEach(function(l, j) {
-														if (!Array.isArray(l)) {
-															if (l.lat === cll.lat && l.lng === cll.lng) {
-																console.log('l')
-																console.log(l);
-																console.log(self.doc.geometry.coordinates[h][i][j], cll)
-																self.j = j;
-																self.lvl = 'hij'
-
-																//- self.doc.geometry.coordinates[h][i][j] = [l.lng,l.lat]
-
-															}
-														} else {
-															lvl++;
-															l.forEach(function(k, m){
-																if (k.lat === cll.lat && k.lng === cll.lng) {
-																	console.log('k')
-																	console.log(k);
-																	self.m = m;
-																	self.lvl = 'hijm';
-																	//- self.doc.geometry.coordinates[h][i][j][m] = [k.lng,k.lat]
-																} else {
-																	console.log('giant array')
-																}
-															})
-														}
-													})
-												}
-											})
-										}
-										
-									})
 								})
 								self.map.on('editable:vertex:dragend', function(e){
-									var latlngs = [];
+									//- var latlngs = [];
 									//- console.log(self.dataLayer.getLatLngs(), e)
 									var cll = e.vertex.latlng.__vertex.latlng;
 									console.log(cll);
@@ -1568,28 +1429,32 @@ html
 									var lvl = 0;
 									var p = 0;
 									var dl;
-									if (cll.lng) {
-										//- self.dataLayer.getLatLngs().forEach(function(latlng, h){
-											switch(self.lvl){
-												case 'hi':
-													console.log(self.doc.geometry.coordinates[self.h][self.i], [cll.lng, cll.lat])
-													self.doc.geometry.coordinates[self.i] = [cll.lng, cll.lat]
-													break;
-												case 'hij':
-													if (self.doc.geometry.coordinates[self.h][self.i][self.j]) {
-														console.log(self.doc.geometry.coordinates[self.h][self.i][self.j], [cll.lng, cll.lat])
-														self.doc.geometry.coordinates[self.h][self.i][self.j] = [cll.lng, cll.lat]
-													}
-													break;
-												case 'hijm':
-													self.doc.geometry.coordinates[self.h][self.i][self.j][self.m] = [cll.lng, cll.lat]
-													break;
-												default:
-													self.doc.geometry.coordinates[self.h] = [cll.lng, cll.lat]
-											}
-											
-										//- })
-									}
+									self.latlngs = dll;
+									self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
+									console.log(self.doc.geometry.coordinates)
+									
+									//- if (cll.lng) {
+									//- 	//- self.dataLayer.getLatLngs().forEach(function(latlng, h){
+									//- 		switch(self.lvl){
+									//- 			case 'hi':
+									//- 				console.log(self.doc.geometry.coordinates[self.h][self.i], [cll.lat, cll.lng])
+									//- 				self.doc.geometry.coordinates[self.i] = [cll.lng, cll.lat]
+									//- 				break;
+									//- 			case 'hij':
+									//- 				if (self.doc.geometry.coordinates[self.h][self.i][self.j]) {
+									//- 					console.log(self.doc.geometry.coordinates[self.h][self.i][self.j], [cll.lat, cll.lng])
+									//- 					self.doc.geometry.coordinates[self.h][self.i][self.j] = [cll.lng, cll.lat]
+									//- 				}
+									//- 				break;
+									//- 			case 'hijm':
+									//- 				self.doc.geometry.coordinates[self.h][self.i][self.j][self.m] = [cll.lng, cll.lat]
+									//- 				break;
+									//- 			default:
+									//- 				self.doc.geometry.coordinates[self.h] = [cll.lng, cll.lat]
+									//- 		}
+									//- 
+									//- 	//- })
+									//- }
 									
 									
 									//- self.doc.geometry.coordinates = latlngs
@@ -1604,7 +1469,8 @@ html
 								} else if (self.mapActive && self.loggedin && self.loggedin !== '') {
 									//- console.log(self.rxArr(self.doc.geometry.coordinates))
 									dataCoords = //self.rxArr(
-										self.doc.geometry.coordinates
+										self.latlngsToArr(latlngs, latlng)
+										//- self.doc.geometry.coordinates
 									//- )
 									[0][0];
 									if (Array.isArray(dataCoords[0])) {
@@ -1623,14 +1489,14 @@ html
 											dataCoords = dataCoords[0]
 										}
 									}
-									latlng = new L.LatLng(dataCoords[0], dataCoords[1]);
+									latlng = new L.LatLng(dataCoords[1], dataCoords[0]);
 									console.log(latlng)
 								} else {
 									var coords = //L.latLng(
-										self.rxArr(
-											self.doc.geometry.coordinates[1]
-										
-										)
+										//- self.rxArr(
+											//- self.doc.geometry.coordinates[0]
+										self.latlngs;
+									
 									//- );
 									console.log(coords)
 									var cd;
@@ -1649,7 +1515,7 @@ html
 								if (self.loggedin && self.loggedin !== '') self.dataLayer.enableEdit();
 
 								self.lMarker = L.marker(dataCoords, {draggable: true}).addTo(map);
-
+								
 							}
 							/*L.Canvas.include({
 									_extendRedrawBounds: function (layer) {

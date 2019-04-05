@@ -3161,11 +3161,12 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					if (keys[i] === thiskey) {
 						//console.log(body[thiskey])
 						var thisbody = body[thiskey];
-						if (thisbody && thisbody.split('').length > 100) {
+						if (thisbody && typeof thisbody.split('') === 'function' && thisbody.split('').length > 100) {
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
 							var thumburl = ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
 							thumburls.push(thumburl.replace(publishersDir, ''))
 							count++;
+							console.log('thumburl, thumbbuf')
 							console.log(thumburl, thumbbuf)
 							fs.writeFile(thumburl, thumbbuf, function(err) {
 								if(err) {
@@ -3181,11 +3182,11 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						count = count;
 					}
 				}
-				next(null, doc, thumburls, body, keys, pu)
+				next(null, doc, thumburls, body, keys, pu, id)
 				
 			})
 		},
-		function(doc, thumburls, body, keys, pu, next) {
+		function(doc, thumburls, body, keys, pu, id, next) {
 			var imgs = [];
 			var orientations = [];
 			var count = 0;
@@ -3199,15 +3200,16 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				}
 			}
 			//console.log(imgs)
-			next(null, doc, thumburls, imgs, orientations, body, keys, pu)
+			next(null, doc, thumburls, imgs, orientations, body, keys, pu, id)
 		},
-		function(doc, thumburls, imgs, orientations, body, keys, pu, next) {
+		function(doc, thumburls, imgs, orientations, body, keys, pu, id, next) {
 			var footnotes = [];
 			var count = 0;
 			for (var k = 0; k < keys.length; k++) {
 				
 				var thatkey = 'footnote'+count+''
 				if (keys[k] === thatkey) {
+					console.log('footnote')
 					console.log(body[thatkey])
 					if (body[thatkey]) {
 						footnotes.push(body[thatkey])
@@ -3216,9 +3218,10 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				}
 
 			}
-			next(null, doc, thumburls, imgs, orientations, footnotes, body, pu)
+			next(null, doc, thumburls, imgs, orientations, footnotes, body, pu, id)
 		},
-		function(doc, thumburls, imgs, orientations, footnotes, body, pu, next) {
+		function(doc, thumburls, imgs, orientations, footnotes, body, pu, id, next) {
+			console.log('footnotes')
 			console.log(footnotes)
 			var straight = function(str) {
 				return str.replace(/(\d\s*)&rdquo;/g, '$1\"').replace(/(\d\s*)&rsquo;/g, "$1'")
@@ -3259,7 +3262,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			var end;
 			var current;
 			var entry = {
-				_id: doc._id,
+				_id: id,
 				type: "Feature",
 				index: doc.index,
 				properties: {
@@ -3336,6 +3339,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					count++
 				}
 			}
+			console.log(id)// doc._id = ''+doc._id
 			entry = JSON.parse(JSON.stringify(entry))
 			var set1 = {$set: {}};
 			set1.$set['properties'] = entry.properties;
@@ -3356,26 +3360,26 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			set5.$set[key5] = entry.properties.section.str;
 
 			var options = {safe: true, new: true, upsert: false};
-			Content.findOneAndUpdate({_id: doc._id}, set1, options, function(err, docc) {
+			Content.findOneAndUpdate({_id: id}, set1, options, function(err, docc) {
 				if (err) {
-					next(err) 
+					return next(err) 
 				}
-				Content.findOneAndUpdate({_id: doc._id}, set2, options, function(errr, doc) {
+				Content.findOneAndUpdate({_id: id}, set2, options, function(errr, doc) {
 					if (errr) {
-						next(errr)
+						return next(errr)
 					}
-					Content.findOneAndUpdate({_id: doc._id}, set3, options, function(errr, doc) {
+					Content.findOneAndUpdate({_id: id}, set3, options, function(errr, doc) {
 						if (errr) {
-							next(errr)
+							return next(errr)
 						}
-						Content.findOneAndUpdate({_id: doc._id}, set5, options, function(errr, doc) {
+						Content.findOneAndUpdate({_id: id}, set5, options, function(errr, doc) {
 							if (err) {
 								return next(err)
 							}
 							if (!newdiff) {
 								next(null)
 							} else {
-								Content.findOneAndUpdate({_id: doc._id}, set4, options, function(errr, doc) {
+								Content.findOneAndUpdate({_id: id}, set4, options, function(errr, doc) {
 									if (errr) {
 										next(errr)
 									} else {
