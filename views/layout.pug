@@ -1153,12 +1153,15 @@ html
 								self.h = null;
 								return [latlng.lng,latlng.lat];
 							} else {
-								self.h = h;
+								if (latlng[0].lat && latlng[0].lat !== latlng[latlng.length-1].lat && latlng[0].lng !== latlng[latlng.length-1].lng) {
+									latlng.push(latlng[0])
+								}
 								return latlng.map(function(ll, i){
 									if (!Array.isArray(ll)) {
 										if (ll.lat === cll.lat && ll.lng === cli.lng) {
 											console.log('ll')
 											console.log(ll)
+											self.h = h;
 											self.i = i;
 											self.lvl = 'hi'
 											//- self.doc.geometry.coordinates[h][i] = [ll.lng,ll.lat]
@@ -1166,12 +1169,18 @@ html
 										return [ll.lng,ll.lat]
 
 									} else {
+										console.log(ll[0])
+										if (ll[0].lat && ll[0].lat !== ll[ll.length-1].lat && ll[0].lng !== ll[ll.length-1].lng) {
+											ll.push(ll[0])
+										}
 										return ll.map(function(l, j) {
 											if (!Array.isArray(l)) {
 												if (l.lat === cll.lat && l.lng === cll.lng) {
 													console.log('l')
 													console.log(l);
 													//- console.log(self.doc.geometry.coordinates[h][i][j], cll)
+													self.h = h;
+													self.i = i;
 													self.j = j;
 													self.lvl = 'hij'
 
@@ -1181,11 +1190,17 @@ html
 												return [l.lng,l.lat]
 
 											} else {
+												if (l[0].lat && l[0].lat !== l[l.length-1].lat && l[0].lng !== l[l.length-1].lng) {
+													l.push(l[0])
+												}
 												return l.map(function(k, m){
 													if (!Array.isArray(k)) {
 														if (k.lat === cll.lat && k.lng === cll.lng) {
 															console.log('k')
 															console.log(k);
+															self.h = h;
+															self.i = i;
+															self.j = j;
 															self.m = m;
 															self.lvl = 'hijm';
 															//- self.doc.geometry.coordinates[h][i][j][m] = [k.lng,k.lat]

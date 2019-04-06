@@ -3161,7 +3161,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					if (keys[i] === thiskey) {
 						//console.log(body[thiskey])
 						var thisbody = body[thiskey];
-						if (thisbody && typeof thisbody.split('') === 'function' && thisbody.split('').length > 100) {
+						if (thisbody && typeof thisbody.split === 'function' && thisbody.split('').length > 100) {
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
 							var thumburl = ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
 							thumburls.push(thumburl.replace(publishersDir, ''))
