@@ -83,6 +83,25 @@ ol {
 	list-style-type: decimal;
 }
 
+#modal {
+	position: absolute;
+	width: 50%;
+	height: auto;
+	margin: 0 auto;
+	left: 0;
+	right: 0;
+	bottom: calc(50% - 70px);
+	bottom: calc(50% - var(--thumbwidth));
+	top: auto;
+	/* display: inline-block; */
+	z-index: 2;
+	background: #fff;
+	padding: calc(70px/2);
+	padding: calc(var(--thumbwidth)/2);
+	-webkit-box-shadow: 0 0 2px #000;
+	box-shadow: 0 0 2px #000;
+}
+
 blockquote, .blockquote {
 	margin: 60px;
 	padding-right: 2rem;
@@ -323,8 +342,9 @@ breadcrumbs {
 	position: absolute;
 	z-index: 2;
 	top: 4px;
-	left: calc(26px * 1.5);
-	left: calc(var(--thumbw) * 1.5);
+	left: auto;
+	right: calc(26px * 1.5);
+	right: calc(var(--thumbw) * 1.5);
 	font-size: 10px;
 	letter-spacing: -0.03em;
 	max-width: 180px;

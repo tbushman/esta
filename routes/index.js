@@ -19,8 +19,116 @@ var csrf = require('csurf');
 var Publisher = require('../models/publishers.js');
 var Content = require('../models/content.js');
 var Diffs = require('../models/diffs.js');
+var Signature = require('../models/signatures.js');
 var csrfProtection = csrf({ cookie: true });
 var publishers = path.join(__dirname, '/../../..');
+
+var isJurisdiction = async function isJurisdiction(doc, pu, cb) {
+	// var inside = require('point-in-polygon');
+	var lat, lng;
+	
+	Publisher.findOne({_id: pu._id}).lean().exec(async function(err, pu){
+		if (err) {
+			return next(err)
+		}
+		// console.log(pu)
+		//.then((pu)=>pu).catch((err)=>console.log(err));
+		// const sig = (!pu.sig[pu.sig.length-1] ? null : pu.sig[pu.sig.length-1])
+		var gtype, gcoords;
+		if (!pu.geometry || !pu.geometry.type || pu.geometry.coordinates.length === 0) {
+			gtype = 'MultiPolygon'
+			if (!pu.sig[pu.sig.length-1]) {
+				console.log(pu)
+				
+				var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
+				var zipcoden; 
+				if (pu.properties.zip) {
+					zipcoden = pu.properties.zip;
+				}
+				else if (pu.properties.place && !isNaN(parseInt(pu.properties.place, 10))) {
+					zipcoden = pu.properties.place;
+					//prompt geolocate
+					// if (zipcode.length === 0) return res.redirect('/sig/geo/'+doc._id+'/'+pu._id+'/'+null+'');
+					
+				
+				}
+				var zipcode = await JSON.parse(zipcodes).features.filter(function(zip){
+					return (
+						// parseInt(
+						zip.properties['ZCTA5CE10']
+						// , 10) 
+						=== 
+						// parseInt(
+							zipcoden
+							// , 10)
+						)
+				});
+				console.log('zipcode')
+				console.log(zipcode)
+				//  else {
+				// 	// return res.redirect('/sig/geo/'+doc._id+'/'+pu._id+'/'+null+'');
+				// }
+				
+				if (zipcode.length === 0) return cb(null);
+				lat = parseFloat(zipcode[0].properties["INTPTLAT10"]);
+				lng = parseFloat(zipcode[0].properties["INTPTLON10"]);
+				gcoords = 
+					[[[[lng,lat],[(lng+.00001),lat],[(lng+.00001),(lat+.00001)],[lng,(lat+.00001)],[lng,lat]]]]
+				
+			} else {
+				var ts = pu.sig[pu.sig.length-1].ts;
+				// console.log(ts)
+				var pos = ts.split('G/')[0];
+				pos = pos.split(',');
+				pos.forEach(function(l){
+					return parseFloat(l)
+				})
+				
+				gcoords = 
+					[[[[pos[1], pos[0]],[(pos[1]+.00001),pos[0]],[(pos[1]+.00001),(pos[0]+.00001)],[pos[1],(pos[0]+.00001)],[pos[1],pos[0]]]]]
+			}
+		} else {
+			gtype = 'MultiPolygon';
+			gcoords = pu.geometry.coordinates;
+		}
+		
+		// console.log(lat, lng)
+		// console.log(inside([lng,lat], doc.geometry.coordinates))
+		// console.log(lat,lng, doc.geometry.coordinates)
+		// var match = false;
+		// var fC = await doc.geometry.coordinates.filter(function(coord){
+		// 	console.log(inside([lng,lat], coord), inside([lat,lng], coord))
+		// 	return inside([lng,lat], coord)
+		// })
+		// console.log(fC)
+		// if (fC.length > 0 ) {
+		// 	match = true;
+		// }
+		// console.log(match)
+		// cb(match);
+		if (!gcoords || gcoords.length === 0) {
+			console.log(gcoords)
+			cb(null)
+		} else {
+			console.log(gcoords)
+			Content.findOne({_id: doc._id, geometry: {$geoIntersects: {$geometry: {type: gtype, coordinates: gcoords}}}}).lean().exec(function(err, doc){
+				if (err) {
+					console.log(err)
+					cb(null)
+				} else {
+					if (!err && !doc) {
+						cb(false);
+					} else {
+						cb(true);
+					}
+				}
+				
+			})
+		}
+		
+	})
+	
+}
 var tis = //{
 	/*bill: [
 		'House Simple Resolution (H. Res.)',
@@ -1365,6 +1473,7 @@ router.get('/auth/slack', passport.authenticate('slack'));
 router.get('/auth/slack/callback',
   passport.authenticate('slack', { failureRedirect: '/login' }),
   (req, res) => {
+		console.log(req.user)
 		req.session.userId = req.user._id;
 		req.session.loggedin = req.user.username;
 		res.redirect('/');
@@ -1529,9 +1638,9 @@ router.get('/logout', function(req, res, next) {
 			req.session.loggedin = null;
 			req.session.failedAttempt = false;
 			req.logout();
-			next(null)
+			next(null, req)
 		},
-		function(next) {
+		function(req, next) {
 			if (req.user || req.session) {
 				req.user = null;
 				req.session.destroy(function(err){
@@ -1669,6 +1778,81 @@ router.get('/sig/admin', function(req, res, next) {
 	}
 });
 
+router.get('/sig/getgeo/:did/:puid', function(req, res, next){
+	Publisher.findOne({_id: req.params.puid}, function(err, pu){
+		if (err){
+			return next(err)
+		}
+		if (!new RegExp(req.params.puid).test(req.session.userId)) return res.redirect('/login');
+		Content.findOne({_id: req.params.did}, function(err, doc){
+			if (err) {
+				return next(err)
+			}
+			console.log('blrgh');
+			var l = '/publishers/gnd/signatures/'+doc._id+'/'+pu._id+'/img_'+doc._id+'_'+pu._id+'.png';
+			Signature.findOne({image: l}, function(err, pud){
+				if (err) {
+					return next(err)
+				}
+				console.log(pud)
+				var str = pug.renderFile(path.join(__dirname, '../views/includes/modal.pug'), {
+					unsigned: (!pud ? true : false),
+					signable: true,
+					pu: pu,
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					//data: data,
+					doc: doc,
+					info: req.session.info
+					
+				});
+				return res.render('single', {
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					unsigned: (!pud ? true : false),
+					signable: true,
+					pu: pu,
+					doc: doc,
+					str: str
+				})
+			})
+		})
+	})
+})
+
+router.post('/sig/getgeo/:did/:lat/:lng/:ts/:zip', async function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+	var lat = parseFloat(req.params.lat);
+	var lng = parseFloat(req.params.lng);
+	var puid = ''+req.params.puid+'';
+	var did = req.params.did;
+	if (!lat || lat === 'null') {
+		var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
+		var zipcode = JSON.parse(zipcodes).features.filter(function(zip){
+			return (parseInt(zip.properties['ZCTA5CE10'], 10) === parseInt(req.params.zip, 10))
+		});
+		if (zipcode.length === 0) return res.redirect('/sig/geo/'+did+'/'+puid+'/'+req.params.ts+'');
+		lat = parseFloat(zipcode[0].properties["INTPTLAT10"]);
+		lng = parseFloat(zipcode[0].properties["INTPTLON10"]);
+	}
+	var geometry = {
+		type: 'MultiPolygon',
+		coordinates: [[[[lng,lat],[(lng+.00001),lat],[(lng+.00001),(lat+.00001)],[lng,(lat+.00001)],[lng,lat]]]]
+	}
+	console.log(geometry)
+	Publisher.findOneAndUpdate({_id: req.user._id}, {$set:{geometry:geometry}}, {new:true, safe:true}, function(err, pu){
+		if (err) {
+			return next(err)
+		} else {
+			if (pu) {
+				return res.status(200).send('/list/'+did+'/'+null+'')
+			} else {
+				return res.redirect('/')
+			}
+		}
+		
+	})
+})
+
 router.get('/sig/geo/:did/:puid/:ts', function(req, res, next){
 	console.log('huzzah')
 	Publisher.findOne({_id: req.params.puid}, function(err, pu){
@@ -1691,12 +1875,12 @@ router.get('/sig/geo/:did/:puid/:ts', function(req, res, next){
 	})
 })
 
-router.post('/sig/geo/:did/:puid/:lat/:lng/:ts/:zip', async function(req, res, next){
+router.post('/sig/geo/:did/:lat/:lng/:ts/:zip', async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	var lat = req.params.lat;
 	var lng = req.params.lng;
-	var puid = ''+req.params.puid+'';
+	var puid = ''+req.user._id+'';
 	var did = req.params.did;
 	if (!lat || lat === 'null') {
 		var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
@@ -1827,6 +2011,7 @@ console.log(req.ip, req.ips, req.connection.remoteAddress, req.headers['cf-conne
 // })
 
 router.get('/sig/editprofile', function(req, res, next){
+	console.log('bleh')
 	Content.find({}).lean().sort({'properties.time.end': 1}).exec(function(err, data){
 		if (err) {return next(err)}
 		Publisher.findOne({_id: req.session.userId}, async function(err, pu){
@@ -2731,19 +2916,78 @@ router.get('/list/:id/:index', function(req, res, next){
 			if (err) {
 				return next(err)
 			}
-			var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
-				csrfToken: req.csrfToken(),
-				menu: !req.session.menu ? 'view' : req.session.menu,
-				//data: data,
-				doc: doc,
-				appURL: req.app.locals.appURL
-				
-			});
-			return res.render('single', {
-				doc: doc,
-				mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
-				str: str
-			})
+			
+			
+			
+			if (req.isAuthenticated()) {
+				var l = '/publishers/gnd/signatures/'+doc._id+'/'+req.user._id+'/img_'+doc._id+'_'+req.user._id+'.png';
+				var m = '/sig/getgeo/'+doc._id+'/'+req.user._id+'';
+				console.log('m')
+				console.log(m)
+				Signature.findOne({image: l}, function(err, pud){
+					if (err) {
+						return next(err)
+					}
+					var pu = req.user.properties;
+					console.log(pu)
+					isJurisdiction(doc, req.user, function(signable){
+						console.log('signable?')
+						console.log(signable)
+						if (signable === null) {
+							return res.redirect(m)
+						} else {
+							var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
+								unsigned: (!pud ? true : false),
+								csrfToken: req.csrfToken(),
+								pu: pu,
+								menu: !req.session.menu ? 'view' : req.session.menu,
+								//data: data,
+								loggedin: req.session.loggedin,
+								doc: doc,
+								signable: signable,
+								appURL: req.app.locals.appURL,
+								mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
+								info: req.session.info
+								
+							});
+							return res.render('single', {
+								doc: doc,
+								pu: pu,
+								mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
+								str: str
+							})
+						}
+						
+					})
+					
+				})
+			} else {
+				var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					//data: data,
+					doc: doc,
+					appURL: req.app.locals.appURL,
+					mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
+					info: req.session.info
+					
+				});
+				return res.render('single', {
+					doc: doc,
+					mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
+					str: str
+				})
+
+				// return res.render('publish', {
+				// 	menu: 'doc',
+				// 	type: 'blog',
+				// 	doc: doc,
+				// 	mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null)
+				// })
+			}
+			
+			
+			
+			
 		})
 	})
 })

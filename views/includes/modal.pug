@@ -1,0 +1,4 @@
+div.centarall#modal(:style="{display: (!modal.msg ? 'none' : 'block')}")
+	p.tb-font-s(v-text="modal.msg")
+	input(:id="modal.id", v-model="modal.zip")
+	button(@click="submitZip($event)", v-text="'submit'")

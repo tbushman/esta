@@ -1,25 +1,32 @@
 
 
-div#inputs.maintitle.centerall(:style="{'pointer-events':(mapActive? 'none' : 'auto')}")
+div.maintitle.centerall(:style="{'pointer-events':(mapActive? 'none' : 'auto')}")
 	//- div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;z-index:2; position:absolute;pointer-events:all;")
-	//- && pu && pu !== '' && pu.properties.admin
-	button.mapActive(v-if="!mapActive && loggedin && loggedin !== ''", v-on:click="activateMap()",
-		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: (wWidth - 50)+'px', 'text-align':'center'}"
+	//- && pu && pu !== '' && pu.admin
+	div#inputs(v-if="pu && pu !== '' && pu.admin")
+		button.mapActive(v-if="!mapActive && loggedin && loggedin !== ''", v-on:click="activateMap()",
+			:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: (wWidth - 50)+'px', 'text-align':'center'}"
+			)
+			span Edit Map
+		
+		button.success.mapActive(v-else-if="mapActive && loggedin && loggedin !== ''", class= mn, v-on:click="addMapBlob()",
+			:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: ((wWidth/2) - 50)+'px', 'text-align':'center'}")
+			span(v-text="'Save Map'")
+	
+	div#inputs(v-else)
+		button.mapActive(v-if="!mapActive", v-on:click="activateMap()",
+			:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: (wWidth - 50)+'px', 'text-align':'center'}"
+			)
+			span Make Map clickable
+	button.mapActive(@click="initSig", title="Sign", v-if="signable && doc && pu && pu.username === loggedin && unsigned",
+		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: ((wWidth/2) - 50)+'px', 'text-align':'center'}"
 		)
-		span Edit Map
-	
-	button.success.mapActive(v-else-if="mapActive && loggedin && loggedin !== ''", class= mn, v-on:click="addMapBlob()",
-		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: ((wWidth/2) - 50)+'px', 'text-align':'center'}")
-		span(v-text="'Save Map'")
-	
-	button.danger.mapActive(v-if="mapActive && loggedin && loggedin !== ''", class= mn, v-on:click="activateMap()",
+		span(v-text="'Sign to indicate support'")
+	button.danger.mapActive(v-if="mapActive", class= mn, v-on:click="activateMap()",
 		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'25px', left: 'auto', width: ((wWidth/2) - 50)+'px', 'text-align':'center'}")
 		span(v-text="'Cancel'")
+		
 
-	button.mapActive(v-if="!mapActive && (!loggedin || loggedin === '') && (!pu || pu === '')", v-on:click="activateMap()",
-		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: (wWidth - 50)+'px', 'text-align':'center'}"
-		)
-		span Make Map clickable
 	
 	button.danger.mapActive(v-if="mapActive && (!loggedin || loggedin === '') && (!pu || pu === '')", class= mn, v-on:click="activateMap()",
 		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'25px', left: 'auto', width: ((wWidth/2) - 50)+'px', 'text-align':'center'}")

@@ -282,6 +282,25 @@ html
 							self.edit = self.doc.index;
 							self.dindexes = [self.edit];
 							self.dindex = 0;
+							if (((self.pu && !self.pu.geometry) || self.ts.length > 0 ) && self.signable) {
+								var pos = null;
+								if (navigator.geolocation) {
+									navigator.geolocation.getCurrentPosition(function(position) {
+										pos = {
+											lat: position.coords.latitude,
+											lng: position.coords.longitude
+										};
+										console.log(pos)
+										self.handleLocationOutcome(true, pos);
+									}, function() {
+										self.handleLocationOutcome(false, pos);
+									});
+								} else {
+									// Browser doesn't support Geolocation
+									self.handleLocationOutcome(false, pos);
+								}
+							
+							}
 						}
 					}
 
@@ -338,6 +357,26 @@ html
 					
 				},
 				methods: {
+					submitZip(e) {
+						var self = this;
+						$.post('/sig/'+(self.unsigned ? 'getgeo' : 'geo')+'/'+self.doc._id+'/'+null+'/'+null+'/'+(self.ts.length ? self.ts[0] : null)+'/'+self.modal.zip+'')
+						.then(function(href){
+							window.location.href = href
+						})
+					},
+					handleLocationOutcome(geolocation, pos) {
+						var self = this;
+						if (!geolocation) {
+							self.modal.msg = 'geolocator didn\'t work. Please provide the zip code you vote from. ';
+							self.modal.id = 'zip'
+						} else {
+							//http://localhost:8686/sig/getgeo/5ca8cd51aa87b56585bedbb4/40.666473599999996/-111.8096681/null/null
+							$.post('/sig/'+(self.unsigned ? 'getgeo' : 'geo')+'/'+self.doc._id+'/'+pos.lat+'/'+pos.lng+'/'+(self.ts.length ? self.ts[0] : null)+'/'+null+'')
+							.then(function(href){
+								window.location.href = href
+							})
+						}
+					},
 					ifNullThenArr(obj) {
 						if (!obj) return [];
 						return obj;
@@ -1220,7 +1259,7 @@ html
 							}
 							
 						});
-						console.log(latlngs)
+						//- console.log(latlngs)
 						//- cb(latlngs)
 					},
 					xrOrNo(arr) { 
@@ -1526,7 +1565,7 @@ html
 									}
 									dataCoords = [latlng.lat,latlng.lng]
 								}
-								// && self.pu && self.pu.properties.admin
+								// && self.pu && self.pu.admin
 								if (self.loggedin && self.loggedin !== '') self.dataLayer.enableEdit();
 
 								self.lMarker = L.marker(dataCoords, {draggable: true}).addTo(map);
