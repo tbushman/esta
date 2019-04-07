@@ -82,7 +82,13 @@ ul {
 ol {
 	list-style-type: decimal;
 }
-
+#maincanvas {
+	display: block;
+	background-color: rgb(238, 244, 222);
+	margin: 0 auto;
+	border: 1px dotted #555;
+	pointer-events: all;
+}
 #modal {
 	position: absolute;
 	width: 50%;

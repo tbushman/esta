@@ -31,6 +31,7 @@ html
 		//script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.0.2/mocha.min.js")
 		script(type='text/javascript', src='/scripts/leaflet-image_0_4_0.js')
 		script(type="text/javascript", src="/scripts/jszip.min.js")
+		script(type="text/javascript", src="/scripts/signaturePad.js")
 		//script(type='text/javascript', src='/scripts/html-docx.js')
 	body
 		block page
@@ -42,6 +43,8 @@ html
 
 		script(type="text/javascript").
 			
+			Vue.prototype.SignaturePad = SignaturePad;
+			Vue.prototype.$ = $;
 			new Vue({
 				el: '#vue',
 				data: function data(){
@@ -118,7 +121,8 @@ html
 						gp: (this.parseObj(#{session.importgdrive}) !== '' ? this.parseObj(!{JSON.stringify(gp)}) : null),
 						sliderIndex: 1,
 						str: this.parseObj(!{JSON.stringify(str)}),
-						ts: this.ifNullThenArr(!{JSON.stringify(ts)})
+						ts: this.ifNullThenArr(!{JSON.stringify(ts)}),
+						can: []
 					}
 				},
 				components: {
@@ -282,7 +286,7 @@ html
 							self.edit = self.doc.index;
 							self.dindexes = [self.edit];
 							self.dindex = 0;
-							if (((self.pu && !self.pu.geometry) || self.ts.length > 0 ) && self.signable) {
+							if ((self.pu && !self.pu.geometry) && self.unsigned || self.ts.length > 0) {
 								var pos = null;
 								if (navigator.geolocation) {
 									navigator.geolocation.getCurrentPosition(function(position) {
@@ -763,8 +767,13 @@ html
 						var nw = (!self.wWidth ? window.innerWidth : self.wWidth);
 						var nh = (!self.wHeight ? window.innerHeight : self.wHeight);
 						
-						var d = "M0,0v"+nh+"h"+nw+"V0H0L0,0z "+
-						"M"+(thickness)+","+(thickness)+"H"+(nw - thickness)+"V"+(nh - thickness)+"H"+(thickness)+"V"+(thickness)+"z "
+						var d;
+						if (self.type === 'draw') {
+							d = "M0,0v"+nh+"h"+nw+"V0H0L0,0z"
+						} else {
+							d = "M0,0v"+nh+"h"+nw+"V0H0L0,0z "+
+							"M"+(thickness)+","+(thickness)+"H"+(nw - thickness)+"V"+(nh - thickness)+"H"+(thickness)+"V"+(thickness)+"z "
+						}
 						return d;
 					},
 					widthRectAttr: function(plus,type){
@@ -883,16 +892,49 @@ html
 						
 						
 					},
+					checkNameValidity(type, aSearchTerm, aMsg, event) {
+						var self = this;
+						var elem = event.target;//document.getElementById(aID);
+						for (var i = 0; i < elem.value.length; i++) {
+							if (aSearchTerm.indexOf(elem.value.charAt(i)) !== -1) {
+								elem.setAttribute("aria-invalid", "true");
+								//- addAlert(aMsg);
+							} else {
+								elem.setAttribute("aria-invalid", "false");
+								//- removeOldAlert();
+							}
+						}
+						var check = elem.value;
+						if (check !== '' && type === 'givenName') {
+							//var check = $(elem).val();
+							var url = check.replace(' ', '_');
+							$.post('/check/'+check).done(function(result){
+								self.avail = (result === 'Available')
+								if (self.avail) {
+									$.post('/reserve/'+check+'');
+									if (self.pu[type]) {
+										self.pu[type] = check;
+									} else if (self.pu.properties[type]) {
+										self.pu.properties[type] = check;
+									}
+								}
+							})
+						}
+					},
 					initSig() {
 						var self = this;
 						self.type = 'draw';
-						self.drawtype = 'filling';
-						
+						document.getElementById('viewer').scrollIntoView();
 
 					},
 					setSigData(i, val, ts, can) {
 						var self = this;
-						Vue.set(self.can, i, can)
+						
+						Vue.set(self.can, parseInt(i,10), can)
+						console.log(self.ts, ts)
+						if (!Array.isArray(self.ts)) {
+							self.ts = [];
+						}
 						Vue.set(self.ts, 0, ts)
 						//- self.can = val;
 						//- console.log(self.ts, self.can)
@@ -937,6 +979,7 @@ html
 							
 							fd.append('img', blob);
 							fd.append('_csrf', '#{csrfToken}');
+							console.log(self.ts)
 							fd.append('ts', self.ts);
 							//- console.log(self.ts, self.can)
 

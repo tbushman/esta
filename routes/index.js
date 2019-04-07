@@ -256,28 +256,32 @@ var storage = multer.diskStorage({
 	
 	destination: function (req, file, cb) {
 		var p, q;
-		if (req.params.type === 'png') {
-			p = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+''
-			q = ''+publishers+'/pu/publishers/esta/images/thumbs/'+req.params.index+''
-
-		} else if (req.params.type === 'csv') {
-			p = ''+publishers+'/pu/publishers/esta/csv/'+req.params.id+''
-			q = ''+publishers+'/pu/publishers/esta/csv/thumbs/'+req.params.id+''
-			
-		} else if (req.params.type === 'txt') {
-			p = ''+publishers+'/pu/publishers/esta/txt'
-			q = ''+publishers+'/pu/publishers/esta/txt/thumbs'
-		} else if (req.params.type === 'doc') {
-			var os = require('os');
-			p = os.tmpdir() + '/gdoc';
-			q = ''+publishers+'/pu/publishers/esta/tmp';
-		} else if (req.params.type === 'docx') {
-			p = ''+publishers+'/pu/publishers/esta/docx'
-			q = null;//''+publishers+'/pu/publishers/esta/word/thumbs'
+		if (!req.params.type) {
+			p = ''+publishers+'/pu/publishers/gnd/signatures/'+req.params.did+'/'+req.params.puid+''
 		} else {
-			p = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+''
-			q = ''+publishers+'/pu/publishers/esta/images/thumbs/'+req.params.index+''
+			if (req.params.type === 'png') {
+				p = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+''
+				q = ''+publishers+'/pu/publishers/esta/images/thumbs/'+req.params.index+''
 
+			} else if (req.params.type === 'csv') {
+				p = ''+publishers+'/pu/publishers/esta/csv/'+req.params.id+''
+				q = ''+publishers+'/pu/publishers/esta/csv/thumbs/'+req.params.id+''
+				
+			} else if (req.params.type === 'txt') {
+				p = ''+publishers+'/pu/publishers/esta/txt'
+				q = ''+publishers+'/pu/publishers/esta/txt/thumbs'
+			} else if (req.params.type === 'doc') {
+				var os = require('os');
+				p = os.tmpdir() + '/gdoc';
+				q = ''+publishers+'/pu/publishers/esta/tmp';
+			} else if (req.params.type === 'docx') {
+				p = ''+publishers+'/pu/publishers/esta/docx'
+				q = null;//''+publishers+'/pu/publishers/esta/word/thumbs'
+			} else {
+				p = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+''
+				q = ''+publishers+'/pu/publishers/esta/images/thumbs/'+req.params.index+''
+
+			}
 		}
 				
 		fs.access(p, function(err) {
@@ -319,6 +323,8 @@ var storage = multer.diskStorage({
 			cb(null, 'txt_' + Date.now() + '.txt')
 		} else if (req.params.type === 'docx') {
 			cb(null, 'docx_'+Date.now()+'.docx')
+		} else if (!req.params.type){
+			cb(null, 'img_'+req.params.did+'_'+req.params.puid+'.png')
 		}
   }
 });
@@ -350,7 +356,7 @@ var curly = function(str){
 	//console.log(/\\n/g.test(str))
 	//console.log(str.match(/\s/g))
 	//console.log(str.match(/\"/g))
-	if (!str){
+	if (!str || typeof str.replace !== 'function'){
 		return ''
 	} else {
 		return str
@@ -2029,12 +2035,11 @@ router.get('/sig/editprofile', function(req, res, next){
 			} else {
 				data = null
 			}
-			return res.render('publish', {
+			return res.render('profile', {
+				dat: [data],
 				data: data,
 				loggedin: req.session.loggedin,
 				pu: pu,
-				type: 'blog', //'blog' //'map'
-				menu: 'pu', //home, login, register, data, doc, pu?
 				csrfToken: req.csrfToken()
 				// ,
 				// avail: true
@@ -2133,7 +2138,7 @@ router.post('/sig/editprofile', function(req, res, next){
 		if (err) {
 			return next(err)
 		}
-		return res.redirect('/profile/'+pu.username)
+		return res.redirect('/sig/editprofile')
 	})
 })
 
@@ -2893,6 +2898,19 @@ router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
 	
 });
 
+router.post('/check/:givenName', function(req, res, next){
+	Publisher.find({'properties.givenName': decodeURIComponent(req.params.givenName)}, function(error, pages){
+		if (error) {
+			return next(error)
+		}
+		if (!error && pages.length > 0) {
+			return res.send('This name is in use.')
+		}
+		return res.send('Available')
+
+	})
+})
+
 router.post('/checkchaptername/:name', function(req, res, next){
 	Content.findOne({'properties.chapter.str': {$regex:RegExp(''+req.params.name +'\.?$'), $options: 'im'}}, function(err, doc){
 		if (err) {
@@ -2928,22 +2946,23 @@ router.get('/list/:id/:index', function(req, res, next){
 					if (err) {
 						return next(err)
 					}
-					var pu = req.user.properties;
+					var pu = req.user;
 					console.log(pu)
 					isJurisdiction(doc, req.user, function(signable){
 						console.log('signable?')
 						console.log(signable)
+						var csrftoken = req.csrfToken();
 						if (signable === null) {
 							return res.redirect(m)
 						} else {
 							var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
-								unsigned: (!pud ? true : false),
-								csrfToken: req.csrfToken(),
+								csrfToken: csrftoken,
 								pu: pu,
 								menu: !req.session.menu ? 'view' : req.session.menu,
 								//data: data,
 								loggedin: req.session.loggedin,
 								doc: doc,
+								unsigned: (!pud ? true : false),
 								signable: signable,
 								appURL: req.app.locals.appURL,
 								mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
@@ -2951,6 +2970,10 @@ router.get('/list/:id/:index', function(req, res, next){
 								
 							});
 							return res.render('single', {
+								csrfToken: csrftoken,
+								unsigned: (!pud ? true : false),
+								loggedin: req.session.loggedin,
+								signable: signable,
 								doc: doc,
 								pu: pu,
 								mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),

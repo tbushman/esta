@@ -18,6 +18,8 @@ each mn, k in menus
 			
 			a.submenu.drop(class= mn, href="/")
 				span.tb-font-s Home
+			a.submenu.drop(v-if="loggedin", href="/sig/editprofile", title="View and edit your profile")
+				span.tb-font-s Profile
 			a.submenu.drop(v-if="!loggedin", class= mn, href="/login")
 				span.tb-font-s(v-text="'Login'")
 			a.submenu.drop(v-if="loggedin", class= mn, href="/logout")

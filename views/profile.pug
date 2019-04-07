@@ -1,0 +1,16 @@
+extends layout
+block page
+	- var menu = 'profile'
+block content
+
+	div#vue
+		include includes/menu.pug
+		
+		div.centerallwrap(:style="{'pointer-events':(mapActive? 'none' : 'auto')}")
+			div.maintitle.centerall
+				include includes/profile/puedit.pug
+				
+				//div.grid-mid
+				p.tb-font-s(v-text="'Documents I have signed'")
+				div(v-if="data[0]")
+					include includes/datatemplate.pug
