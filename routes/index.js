@@ -129,7 +129,7 @@ var isJurisdiction = async function isJurisdiction(doc, pu, cb) {
 	})
 	
 }
-var tis = //{
+const tis = //{
 	/*bill: [
 		'House Simple Resolution (H. Res.)',
 		'House Concurrent Resolution (H. Con. Res.)',
@@ -143,17 +143,17 @@ var tis = //{
 	// title: 
 	[
 		{
-			index: 0,
-			name: 'In support of legislation',
+			ind: 0,
+			name: 'in support of legislation',
 			code: 'BILLS-',
 			chapter: [
 				{
-					index: 115,
+					ind: 115,
 					name: 'United States Congress',
 					code: 'hres',
 					section: [
 						{
-							index: 108,
+							ind: 108,
 							name: 'House Simple Resolution (H. Res.)',
 							code: 'ih'
 						}
@@ -162,28 +162,41 @@ var tis = //{
 			]
 		},
 		{
-			index: 1,
+			ind: 1,
+			name: 'in Solidarity',
+			chapter: [
+				{
+					ind: 0,
+					name: 'Jurisdiction'
+				}
+			]
+		},
+		{
+			ind: 2,
 			name: 'Candidate for Public Office',
 			chapter: [
 				{
+					ind: 0,
 					name: 'Jurisdiction'
 				}
 			]
 		},
 		{
-			index: 2,
+			ind: 3,
 			name: 'Environmental Impact Statement',
 			chapter: [
 				{
+					ind: 0,
 					name: 'Jurisdiction'
 				}
 			]
 		},
 		{
-			index: 3,
+			ind: 4,
 			name: 'Geography',
 			chapter: [
 				{
+					ind: 0,
 					name: 'Jurisdiction'
 				}
 			]
@@ -813,7 +826,7 @@ function ensureHyperlink(req, res, next) {
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'')
+			return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.')
 		}
 		data.forEach(function(doc){
 			//console.log(doc.properties.description)
@@ -863,7 +876,7 @@ function ensureCurly(req, res, next) {
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'')
+			return res.redirect('/api/new/'+'Nation'+'/'+0+'/'+0+'/'+0+'/'+0+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.')
 		}
 		data.forEach(function(doc){
 			//console.log(doc.index)
@@ -888,7 +901,7 @@ function ensureContent(req, res, next) {
 			return next(err)
 		}
 		if (data.length === 0) {
-			return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'')
+			return res.redirect('/api/new/'+'Nation'+'/'+0+'/'+0+'/'+0+'/'+0+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.')
 		} else {
 			return next()
 		}
@@ -1402,14 +1415,20 @@ router.get('/runtests', function(req, res, next){
 	return next()
 })*/
 
+function ensureGpo(req, res, next) {
+	req.session.gpo = process.env.GPOKEY;
+	return next()
+}
 
 router.all(/^\/((api|import|export|check).*)/, ensureAdmin/*, ensureApiTokens*/);
+
+router.get(/(.*)/, ensureGpo)
 
 router.get('/', function(req, res, next){
 	return res.redirect('/home')
 });
 
-router.get('/home', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, function(req, res, next){
+router.get('/home', getDat, ensureCurly, /*ensureEscape,*//* ensureHyperlink,*/ function(req, res, next){
 	//getDat(function(dat, distinct){
 	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 	req.session.refer = newrefer;
@@ -1420,7 +1439,7 @@ router.get('/home', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, func
 				return next(err)
 			}
 			if (data.length === 0) {
-				return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'');
+				return res.redirect('/api/new/'+'Nation'+'/'+0+'/'+0+'/'+0+'/'+0+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.');
 			}
 			var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 				doctype: 'xml',
@@ -1435,6 +1454,7 @@ router.get('/home', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, func
 				dat: req.dat,
 				ff: req.distinct,
 				str: str,
+				pu: req.user,
 				gp: (req.isAuthenticated() && req.session.authClient ? req.session.gp : null)
 			});
 				
@@ -1450,7 +1470,7 @@ router.get('/home', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, func
 					return next(err)
 				}
 				if (data.length === 0) {
-					return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'');
+					return res.redirect('/api/new/'+'Nation'+'/'+0+'/'+0+'/'+0+'/'+0+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.');
 				}
 				var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 					doctype: 'xml',
@@ -1465,6 +1485,7 @@ router.get('/home', getDat, ensureCurly, /*ensureEscape,*/ ensureHyperlink, func
 					dat: req.dat,
 					ff: req.distinct,
 					str: str,
+					pu: req.user,
 					gp: (req.isAuthenticated() && req.session.authClient ? req.session.gp : null)
 				});
 					
@@ -2037,7 +2058,7 @@ router.get('/sig/editprofile', function(req, res, next){
 			}
 			return res.render('profile', {
 				dat: [data],
-				data: data,
+				// data: data,
 				loggedin: req.session.loggedin,
 				pu: pu,
 				csrfToken: req.csrfToken()
@@ -2649,7 +2670,7 @@ router.get('/exportpdf', getDat, function(req, res, next){
 				return next(err)
 			}
 			if (data.length === 0) {
-				return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'');
+				return res.redirect('/api/new/'+'Nation'+'/'+0+'/'+0+'/'+0+'/'+0+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.');
 			}
 			var str = pug.renderFile(path.join(__dirname, '../views/includes/exporttemplate.pug'), {
 				doctype: 'xml',
@@ -2734,7 +2755,7 @@ router.post('/api/exportpdf', getDat, function(req, res, next){
 	
 })
 
-router.get('/exportword', function(req, res, next){
+router.get('/api/exportword', function(req, res, next){
 	req.session.importgdrive = false;
 	getDat64(function(dat){
 		var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
@@ -2744,7 +2765,7 @@ router.get('/exportword', function(req, res, next){
 				return next(err)
 			}
 			if (data.length === 0) {
-				return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'');
+				return res.redirect('/api/new/'+'Nation'+'/'+0+'/'+0+'/'+0+'/'+0+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.');
 			}
 			
 			var pugviewpath = path.join(__dirname, '../views/includes/exportwordview.pug');
@@ -2827,7 +2848,7 @@ router.get('/exportindd'/*, ensureCurly*/, function(req, res, next){
 				return next(err)
 			}
 			if (data.length === 0) {
-				return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'');
+				return res.redirect('/api/new/'+'Nation'+'/'+0+'/'+0+'/'+0+'/'+0+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.');
 			}
 			var str = pug.renderFile(path.join(__dirname, '../views/includes/exportindd.pug'), {
 				doctype: 'xml',
@@ -2926,92 +2947,114 @@ router.post('/checkchaptername/:name', function(req, res, next){
 
 router.get('/list/:id/:index', function(req, res, next){
 	req.session.importgdrive = false;
-	Content.findOne({_id: req.params.id}, function(err, doc){
+	Content.findOne({_id: req.params.id}, async function(err, doc){
 		if (err) {
 			return next(err)
 		}
-		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
-			if (err) {
+		require('request').get({
+			url: doc.properties.xmlurl +'?api_key='+process.env.GPOKEY,
+			encoding: null
+			/*,
+			headers: {
+				Authorization: 'Bearer'+ pu.gaaccess
+			}*/
+		// })
+		// .on('response'
+		//.then(function(result){
+		}	, function (error, response, body) {
+			if (error) {
 				return next(err)
 			}
-			
-			
-			
-			if (req.isAuthenticated()) {
-				var l = '/publishers/gnd/signatures/'+doc._id+'/'+req.user._id+'/img_'+doc._id+'_'+req.user._id+'.png';
-				var m = '/sig/getgeo/'+doc._id+'/'+req.user._id+'';
-				console.log('m')
-				console.log(m)
-				Signature.findOne({image: l}, function(err, pud){
-					if (err) {
-						return next(err)
-					}
-					var pu = req.user;
-					console.log(pu)
-					isJurisdiction(doc, req.user, function(signable){
-						console.log('signable?')
-						console.log(signable)
-						var csrftoken = req.csrfToken();
-						if (signable === null) {
-							return res.redirect(m)
-						} else {
-							var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
-								csrfToken: csrftoken,
-								pu: pu,
-								menu: !req.session.menu ? 'view' : req.session.menu,
-								//data: data,
-								loggedin: req.session.loggedin,
-								doc: doc,
-								unsigned: (!pud ? true : false),
-								signable: signable,
-								appURL: req.app.locals.appURL,
-								mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
-								info: req.session.info
-								
-							});
-							return res.render('single', {
-								csrfToken: csrftoken,
-								unsigned: (!pud ? true : false),
-								loggedin: req.session.loggedin,
-								signable: signable,
-								doc: doc,
-								pu: pu,
-								mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
-								str: str
-							})
+			var xml = body.toString();
+			//console.log(result.body.toString())
+			Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+				if (err) {
+					return next(err)
+				}
+				
+				
+				
+				if (req.isAuthenticated()) {
+					var l = '/publishers/gnd/signatures/'+doc._id+'/'+req.user._id+'/img_'+doc._id+'_'+req.user._id+'.png';
+					var m = '/sig/getgeo/'+doc._id+'/'+req.user._id+'';
+					console.log('m')
+					console.log(m)
+					Signature.findOne({image: l}, function(err, pud){
+						if (err) {
+							return next(err)
 						}
+						var pu = req.user;
+						console.log(pu)
+						isJurisdiction(doc, req.user, function(signable){
+							console.log('signable?')
+							console.log(signable)
+							var csrftoken = req.csrfToken();
+							if (signable === null) {
+								return res.redirect(m)
+							} else {
+								var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
+									csrfToken: csrftoken,
+									pu: pu,
+									menu: !req.session.menu ? 'view' : req.session.menu,
+									//data: data,
+									loggedin: req.session.loggedin,
+									doc: doc,
+									unsigned: (!pud ? true : false),
+									signable: signable,
+									appURL: req.app.locals.appURL,
+									mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
+									info: req.session.info,
+									xml: xml
+									
+								});
+								return res.render('single', {
+									csrfToken: csrftoken,
+									unsigned: (!pud ? true : false),
+									loggedin: req.session.loggedin,
+									signable: signable,
+									doc: doc,
+									pu: pu,
+									mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
+									str: str,
+									xml: xml
+								})
+							}
+							
+						})
 						
 					})
-					
-				})
-			} else {
-				var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
-					menu: !req.session.menu ? 'view' : req.session.menu,
-					//data: data,
-					doc: doc,
-					appURL: req.app.locals.appURL,
-					mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
-					info: req.session.info
-					
-				});
-				return res.render('single', {
-					doc: doc,
-					mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
-					str: str
-				})
+				} else {
+					var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
+						menu: !req.session.menu ? 'view' : req.session.menu,
+						//data: data,
+						doc: doc,
+						appURL: req.app.locals.appURL,
+						mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
+						info: req.session.info,
+						xml: xml
+						
+					});
+					return res.render('single', {
+						doc: doc,
+						mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
+						str: str,
+						xml: xml
+					})
 
-				// return res.render('publish', {
-				// 	menu: 'doc',
-				// 	type: 'blog',
-				// 	doc: doc,
-				// 	mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null)
-				// })
-			}
-			
-			
-			
-			
+					// return res.render('publish', {
+					// 	menu: 'doc',
+					// 	type: 'blog',
+					// 	doc: doc,
+					// 	mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null)
+					// })
+				}
+				
+				
+				
+				
+			})
 		})
+		
 	})
 })
 
@@ -3063,6 +3106,7 @@ router.get('/menu/:tiind/:chiind', function(req, res, next){
 			menu: !req.session.menu ? 'view' : req.session.menu,
 			dat: [data],
 			str: str,
+			pu: req.user,
 			exports: false
 		})
 	})
@@ -3286,47 +3330,86 @@ router.get('/api/coverimg/:tiind/:chind', function(req, res, next){
 		
 	});
 })
-
-router.get('/api/new/:placetype/:place/:tiind/:chind/:secind', function(req, res, next){
+///api/new/State/45/0/undefined/undefined/Salt%20Lake%20City%20Corporation%20v%20Inland%20Port%20Authority
+// /api/new/Nation/0/0/0/0/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.
+router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle', async function(req, res, next){
 	req.session.importgdrive = false;
 	var outputPath = url.parse(req.url).pathname;
-	//console.log(outputPath)
+	console.log(outputPath)
 	// var csrf = req.csrfToken();
-	var arr = tis;
+	const arr = tis;
 	var usstates = //await //JSON.stringify(
-		require(''+path.join(__dirname, '/..')+'/public/json/usstates.json').features;
+		await require(''+path.join(__dirname, '/..')+'/public/json/usstates.json').features;
 	// var uscounties = 
 	// 	require(''+path.join(__dirname, '/..')+'/public/json/uscounties.json').features;
 	// var us = 
 	// 	require(''+path.join(__dirname, '/..')+'/public/json/us.json').features;
-	var places;
-	switch(req.params.placetype) {
-		case 'Nation':
-			places = usstates;
-			break;
-		case 'State':
-			places = usstates;
-			break;
-		default:
-			places = usstates;
-	}
+	var places,query;
 	var placeind = parseInt(req.params.place, 10)
-	var multipolygon = places[placeind].geometry.coordinates;
 	//console.log(places[placeind])
-	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+	Content.find({}).sort( { index: 1 } ).exec(async function(err, data){
 		if (err) {
 			return next(err)
 		}
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/esta/images/thumbs/'+(data.length)+'/thumb_0.png')
-		fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/esta/images/full/'+(data.length)+'/img_0.png')
+		await fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/esta/images/thumbs/'+(data.length)+'/thumb_0.png')
+		await fs.copySync(''+path.join(__dirname, '/..')+'/public/images/publish_logo_sq.jpg', ''+publishers+'/pu/publishers/esta/images/full/'+(data.length)+'/img_0.png')
 		var tiind = parseInt(req.params.tiind,10);
 		var chind = parseInt(req.params.chind,10);
 		var secind = parseInt(req.params.secind,10);
-		Content.find({'properties.title.ind': tiind, 'properties.chapter.ind': chind}, function(err, chunk){
+		if (isNaN(chind)) {
+			if (isNaN(secind)) {
+				
+			} else {
+				console.log('q has no chapter but has section?')
+
+			}
+			query = {'properties.title.ind': tiind}
+		} else {
+			if (isNaN(secind)) {
+				console.log('q has chapter but has no section?')
+				
+			} else {
+				
+			}
+			query = {'properties.title.ind': tiind, 'properties.chapter.ind': chind}
+		}
+		Content.find(query, function(err, chunk){
 			if (err) {
 				return next(err)
 			}
+			// var sind, 
+			var stitle, chtitle, chnd, snd, xmlurl;
+			console.log(req.params.placetype)
+			if (req.params.placetype === 'Nation' || req.params.placetype === "'Nation'") {
+				places = usstates;
+				if (isNaN(chind) || !arr[tiind].chapter[chind]) {
+					chnd = arr[tiind].chapter[chunk.length-1].ind;
+					snd = 0;
+					chtitle = 'Jurisdiction: '+ places[placeind].properties.name;
+					xmlurl = null;
+				} else {
+					chnd = arr[tiind].chapter[chind].ind;
+					snd = arr[tiind].chapter[chind].section[secind].ind;
+					chtitle = arr[tiind].chapter[chind].name;
+					stitle = arr[tiind].chapter[chind].section[secind].name;
+					xmlurl = (tiind === 0 ? 'https://api.govinfo.gov/packages/'+arr[tiind].code+''+(arr[tiind].chapter[chind].ind+1)+''+arr[tiind].chapter[chind].code+''+(arr[tiind].chapter[chind].section[secind].ind+1)+''+arr[tiind].chapter[chind].section[secind].code+'/xml' : null )
+				}
+				
+			} else {
+				places = usstates;
+				if (isNaN(chind) || !arr[tiind].chapter[chind]) {
+					chnd = chunk.length;
+				} else {
+				}
+				chtitle = 'Jurisdiction: '+ places[placeind].properties.name;
+				snd = chunk.length;
+				stitle = decodeURIComponent(req.params.stitle);
+				xmlurl = null
+				
+			}
 			
+			var multipolygon = JSON.parse(JSON.stringify(places[placeind].geometry.coordinates));
+
 			var content = new Content({
 				type: 'Feature',
 				index: data.length,
@@ -3334,22 +3417,22 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind', function(req, res
 					// db
 					
 					title: {
-						ind: arr[tiind].index,
+						ind: arr[tiind].ind,
 						str: arr[tiind].name
 					},
 					chapter: {
-						ind: arr[tiind].chapter[chind].index,
-						str: arr[tiind].chapter[chind].name
+						ind: chnd,
+						str: chtitle
 					},
 					section: {
-						ind: arr[tiind].chapter[chind].section[secind].index,
-						str: arr[tiind].chapter[chind].section[secind].name 
+						ind: snd,
+						str: stitle 
 					},
 					published: true,
-					label: 'Edit Title',
-					place: 'Edit Place',
+					label: (!stitle ? 'Edit Title' : req.params.stitle ),
+					place: places[placeind].properties.name,
 					description: marked(curly('Edit document text.')),
-					xmlurl: (tiind === 0 ? 'https://api.govinfo.gov/packages/'+arr[tiind].code+''+(arr[tiind].chapter[chind].index+1)+''+arr[tiind].chapter[chind].code+''+(arr[tiind].chapter[chind].section[secind].index+1)+''+arr[tiind].chapter[chind].section[secind].code+'/xml' : null ),
+					xmlurl: xmlurl,
 					current: false,
 					time: {
 						begin: moment().utc().format(),
@@ -3371,7 +3454,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind', function(req, res
 				},
 				geometry: {
 					type: 'MultiPolygon',
-					coordinates: multipolygon
+					coordinates: (!Array.isArray(multipolygon[0][0][0]) ? [multipolygon] : multipolygon)
 				}
 			});
 			content.save(function(err){

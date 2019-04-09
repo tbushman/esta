@@ -1,10 +1,10 @@
 
 //
-div.cell.tb-07-m0.tb-font-s(v-if="!diff || diff.index !== doc.index", v-show="(accordions[n].indexOf(doc.index) !== -1)", v-html="doc.properties.description", aid:pstyle="p", aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="desc")
+div.cell.tb-07-m0.tb-font-s(v-if="!diff || diff.ind !== doc.index", v-show="(accordions[n].indexOf(doc.index) !== -1)", v-html="doc.properties.description", aid:pstyle="p", aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="desc")
 	//input(v-bind:id="'diff'+doc.index")
 	span(v-html="doc.properties.description")
 div.cell.tb-07-m0.tb-font-s(
-	v-if="diff && diff.index === doc.index && doc.properties.diffs.length > 0",
+	v-if="diff && diff.ind === doc.index && doc.properties.diffs.length > 0",
 	v-show="(accordions[n].indexOf(doc.index) !== -1)",
 	aid:pstyle="p", aid:table="cell", aid:crows="1",
 	aid:ccols="1",
@@ -25,6 +25,6 @@ div.cell.tb-03-m0(v-show="(accordions[n].indexOf(doc.index) !== -1)", aid:table=
 
 div.cell.tb-11-m0(v-if="doc.properties.diffs.length > 0", v-show="(accordions[n].indexOf(doc.index) !== -1)")
 	label.tb-11-m0(v-bind:for="'diff'+doc.index", v-text="'Revision timeline'", style="margin-top:20px;")
-	select(v-bind:id="'diff'+doc.index", style="pointer-events: all;", v-on:change="changeDiff(doc, false)", v-bind:value="(diff && diff.index === doc.index ? diff.index : null)")
-		option(value="null", v-text="'Latest'", v-bind:selected="diff && diff.index !== doc.index")
-		option(v-if="doc.properties.diffs", v-for="(date, k) in doc.properties.diffs", v-bind:value="k", v-text="date.user.username + ' | ' + moment(date.date).format('YYYY-MM-DD mm:ss')")
+	select(v-bind:id="'diff'+doc.index", style="pointer-events: all;", v-on:change="changeDiff(doc, false)", v-bind:value="(diff && diff.ind === doc.index ? diff.ind : null)")
+		option(value="null", v-text="'Latest'", v-bind:selected="diff && diff.ind !== doc.index")
+		option(v-if="doc.properties.diffs", v-for="(date, k) in doc.properties.diffs", v-bind:value="k", v-text="date.user.uname + ' | ' + moment(date.date).format('YYYY-MM-DD mm:ss')")

@@ -5,7 +5,7 @@ var Signature = new Schema({
 	ts: String,
 	bin: String,
 	puid: String,
-	username: String,
+	uname: String,
 	givenName: String,
 	documentId: String,	
 	index: Number,

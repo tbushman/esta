@@ -3,10 +3,11 @@ html
 	head
 		meta(charset="utf-8")
 		meta(http-equiv="X-UA-Compatible", content="IE=edge; charset=utf-8")
-		meta(name="google-site-verification", content="p4ANTDMaoAMsiWW5CwWtiY9v8mEPGv8KhQetzWrJlwc")
+		//- meta(name="google-site-verification", content="p4ANTDMaoAMsiWW5CwWtiY9v8mEPGv8KhQetzWrJlwc")
 		title= appTitle
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
 		//link(rel="stylesheet", href="/stylesheets/simplemde.min.css")
+		link(rel="stylesheet", href="/stylesheets/gpo.css")
 		link(rel="stylesheet", href="/stylesheets/style.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.draw.css")
@@ -42,6 +43,7 @@ html
 		#map
 
 		script(type="text/javascript").
+			Vue.prototype.moment = moment;
 			
 			Vue.prototype.SignaturePad = SignaturePad;
 			Vue.prototype.$ = $;
@@ -62,7 +64,7 @@ html
 						loggedin: (this.parseObj(!{JSON.stringify(session)}) !== '' && this.parseObj(!{JSON.stringify(session.loggedin)}) !== '' ? this.parseObj(!{JSON.stringify(session.loggedin)}) : null ),
 						menu: this.parseObj(!{JSON.stringify(menu)}),
 						dat: this.parseObj(!{JSON.stringify(dat)}),
-						data: '',//this.parseObj(!{JSON.stringify(data)}),
+						//- data: '',//this.parseObj(!{JSON.stringify(data)}),
 						doc: this.parseObj(!{JSON.stringify(doc)}),
 						position: (!this.parseObj(!{JSON.stringify(session.position)}) ? {lat: 40, lng: -111.89, zoom: 6}/*null*/ : this.parseObj(!{JSON.stringify(session.position)})),
 						edit: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)}).index),
@@ -89,16 +91,8 @@ html
 						web: true,
 						export: this.parseBool(!{JSON.stringify(exports)}),
 						ff: this.parseObj(!{JSON.stringify(ff)}),//['General Provisions.', 'Concept Plan.', 'Sketch Plan.', 'Preliminary Subdivision Applications.', 'Final Subdivision Applications.', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final.', 'Subdivision Ordinance Amendments.', 'Noticing Requirements.', 'Appeals.', 'Special Excepetions.', 'Design and Construction Standards.', 'Guarantees for Subdivision Improvements, Facilities, and Amenities.', 'Definitions.'],
-						accordions: (this.parseObj(!{JSON.stringify(dat)}) !== '' && this.parseBool(!{JSON.stringify(exports)}) ? this.parseObj(!{JSON.stringify(dat)}).map(function(data){return data.map(function(doc){return doc.index})}) : 
-							(
-								this.parseObj(!{JSON.stringify(dat)}) !== '' ?
-								[
-									this.parseObj(!{JSON.stringify(dat)}).map(function(data){return []})
-								] :
-								[[]]
-							)
-						),
-						newDoc: {},
+						
+						newDoc: {tempGeo:[]},
 						placemenu: false,
 						placetypes: [{
 							name: 'Nation',
@@ -122,7 +116,78 @@ html
 						sliderIndex: 1,
 						str: this.parseObj(!{JSON.stringify(str)}),
 						ts: this.ifNullThenArr(!{JSON.stringify(ts)}),
-						can: []
+						can: [],
+						tis: [
+							{
+								index: 0,
+								name: 'in support of legislation',
+								code: 'BILLS-',
+								chapter: [
+									{
+										index: 115,
+										name: 'United States Congress',
+										code: 'hres',
+										section: [
+											{
+												index: 108,
+												name: 'House Simple Resolution (H. Res.)',
+												code: 'ih'
+											}
+										]
+									}
+								]
+							},
+							{
+								index: 1,
+								name: 'in Solidarity',
+								chapter: [
+									{
+										index: 0,
+										name: 'Jurisdiction'
+									}
+								]
+							},
+							{
+								index: 2,
+								name: 'Candidate for Public Office',
+								chapter: [
+									{
+										index: 0,
+										name: 'Jurisdiction'
+									}
+								]
+							},
+							{
+								index: 3,
+								name: 'Environmental Impact Statement',
+								chapter: [
+									{
+										index: 0,
+										name: 'Jurisdiction'
+									}
+								]
+							},
+							{
+								index: 4,
+								name: 'Geography',
+								chapter: [
+									{
+										index: 0,
+										name: 'Jurisdiction'
+									}
+								]
+							}
+						],
+						xml: this.parseObj(!{JSON.stringify(xml)}),
+						accordions: (this.parseObj(!{JSON.stringify(dat)}) !== '' && this.parseBool(!{JSON.stringify(exports)}) ? this.parseObj(!{JSON.stringify(dat)}).map(function(data){return data.map(function(doc){return doc.index})}) : 
+							(
+								this.parseObj(!{JSON.stringify(dat)}) !== '' ?
+								[
+									this.parseObj(!{JSON.stringify(dat)}).map(function(data){return []})
+								] :
+								[[]]
+							)
+						)
 					}
 				},
 				components: {
@@ -190,13 +255,25 @@ html
 					}
 				},
 				updated: function(){
-					if (this.dindexes.length === 0) {
-						var self = this;
-						self.dindexes = (self.data && self.data !== '' ? self.data.map(function(doc){
-							return doc.index;
-						}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
+					var self = this;
+					if (self.dindexes.length === 0) {
+						self.dindexes = (self.dat && self.dat !== '' ? self.data.map(function(data){
+							data.map(function(doc){
+								return doc.index;
+								
+							})
+						}) : [[(!self.doc || self.doc === '' ? 0 : self.doc.index)]] );
 						self.dindexes.sort();
 						
+					}
+					console.log(self.doc.properties.xmlurl)
+					if (self.doc.properties.xmlurl && self.doc.properties.xmlurl !== '') {
+						//- var url = 
+						//- $.get(self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}' )
+						//- .then(function(result){
+						//- 	console.log(result);
+							//- self.xml = self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}';
+						//- })
 					}
 				},
 				mounted: function(){
@@ -270,17 +347,17 @@ html
 						//self.dat = self.dat.reverse()
 					}
 					console.log(self.dat)
-					if (!self.data || self.data === '') {
+					//- if (!self.data || self.data === '') {
 						//self.dat.forEach(function(data))
-						if (self.dat[0] && self.dat[0][0].properties.chapter.ind === self.dat[self.dat.length - 1][0].properties.chapter.ind) {
-							self.data = self.dat[0]
-						} else {
-							if (self.dat[0]) {
-								self.data = [].concat.apply([], self.dat);
-							}
-						}
+						
 						if (!self.doc || self.doc === '') {
-							
+							//- if (self.dat[0] && self.dat[0][0].properties.chapter.ind === self.dat[self.dat.length - 1][0].properties.chapter.ind) {
+							//- 	self.data = self.dat[0]
+							//- } else {
+							//- 	if (self.dat[0]) {
+							//- 		self.data = [].concat.apply([], self.dat);
+							//- 	}
+							//- }	
 						} else {
 							
 							self.edit = self.doc.index;
@@ -306,7 +383,16 @@ html
 							
 							}
 						}
-					}
+						console.log(self.doc.properties.xmlurl)
+						if (self.doc.properties.xmlurl && self.doc.properties.xmlurl !== '') {
+							//- var url = 
+							//- $.get(self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}' )
+							//- .then(function(result){
+							//- 	console.log(result);
+								//- self.xml = self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}';
+							//- })
+						}
+					//- }
 
 					if (!self.tinymce && $('#description')[0] && tinymce) {
 						console.log('shouldn\'t be')
@@ -361,6 +447,31 @@ html
 					
 				},
 				methods: {
+					changeDocType(e) {
+						var self = this;
+						console.log(e.target.value)
+						var ind = parseInt(e.target.value, 10);
+						self.newDoc.tiind = ind;
+					},
+					changePlaceType(e) {
+						var self = this;
+						var url = e.target.value;
+						var type = (e.target.value === '/json/usstates.json' ? 'State' : (e.target.value === '/json/us.json' ? 'Nation' : null));
+						$.getJSON(url).then(async function(json){
+							await console.log(json)
+							self.newDoc.placetype = type;
+							self.newDoc.tempGeo = await json.features;
+							console.log(self.newDoc.tempGeo)
+						})
+						.catch((err)=>console.log(err))
+					},
+					changePlaceNew(e) {
+						var self = this;
+						console.log(e.target.value)
+						var ind = parseInt(e.target.value, 10);
+						console.log(ind)
+						self.newDoc.place = (isNaN(ind) || !self.newDoc.tempGeo[ind] ? (!self.newDoc.tempGeo[self.newDoc.tempGeo.length-1] ? null : self.newDoc.tempGeo.length-1) : ind )
+					},
 					submitZip(e) {
 						var self = this;
 						$.post('/sig/'+(self.unsigned ? 'getgeo' : 'geo')+'/'+self.doc._id+'/'+null+'/'+null+'/'+(self.ts.length ? self.ts[0] : null)+'/'+self.modal.zip+'')
@@ -406,7 +517,7 @@ html
 					},
 					clickSlider: function(diff, doc){
 						//`<a v-bind:click="" >${diff.user.username}<img class="avatar" src="${diff.user.avatar}"></img></a>`
-						$('#diff'+doc.index).val(diff.index)
+						$('#diff'+doc.index).val(diff.ind)
 					},
 					onGapiLoad: function() {
 						var self = this;

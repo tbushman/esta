@@ -5,7 +5,7 @@ var Diffs = new Schema({
 	old: String,
 	user: {
 		_id: String,
-		username: String,
+		uname: String,
 		avatar: String
 	},
 	// dif: [{

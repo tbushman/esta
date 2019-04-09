@@ -570,6 +570,7 @@ font-size: 10px;
 	width: auto;
 	left: auto;
 	right: 33px;
+	min-height: calc(100% - 40px);
 }
 .submenu.static {
 	display: inline-block!important;

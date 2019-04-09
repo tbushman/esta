@@ -3,16 +3,16 @@ div.maintitle(style="display: block; background-color: #fff; background-color: v
 	div.chapter
 		section.row
 			p.row.tb-font-xl Title 
-				titlenum.bd(v-text="(parseInt(data[0].properties.title.ind,10)+1)")
+				titlenum.bd(v-text="(parseInt(doc.properties.title.ind,10)+1)")
 				span(v-text="' '") 
-				titlename.bd(v-text="data[0].properties.title.str")
+				titlename.bd(v-text="doc.properties.title.str")
 			p.row.tb-font-xl Chapter 
-				div.chapternum.bd(v-text="(parseInt(data[0].properties.chapter.ind,10)+1)")
+				div.chapternum.bd(v-text="(parseInt(doc.properties.chapter.ind,10)+1)")
 				span(v-text="' '")
-				div.chaptername.bd(v-text="data[0].properties.chapter.str")
+				div.chaptername.bd(v-text="doc.properties.chapter.str")
 			hr
 
-			div.tb-10-m0(v-if="edit === null", v-for="doc in data")
+			div.tb-10-m0(v-if="edit === null")
 				include entry.pug
 				div.description.tb-10-m0.tb-font-s#description(v-html="marked(doc.properties.description)")
 
