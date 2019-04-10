@@ -955,57 +955,33 @@ function ensureEscape(req, res, next) {
 function getDat(req, res, next){
 	asynk.waterfall([
 		function(cb){
-			var dat = []
-			Content.distinct('properties.chapter.ind', function(err, distinct){
+			Content.distinct('properties.title.ind', async function(err, tdistinct){
 				if (err) {
 					cb(err)
 				}
-				if (distinct.length === 0) {
-					Content.find({}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
-						if (err) {
-							cb(err)
-						}
-						data = data.sort(function(a,b){
-							if (parseInt(a.properties.section.ind,10) < parseInt(b.properties.section.ind, 10)) {
-								return -1;
-							} else {
-								return 1;
-							}
-						})
-						dat.push(data)
-						cb(null, dat, [1])
-					})
-				} else {
-					distinct.forEach(function(key, i) {
-						Content.find({'properties.chapter.ind':key}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
-							if (err) {
-								cb(err)
-							}
-							
-							if (data.length === 0) return;
-							if (data.length > 0) {
-								data = data.sort(function(a,b){
-									if (parseInt(a.properties.section.ind,10) < parseInt(b.properties.section.ind, 10)) {
-										return -1;
-									} else {
-										return 1;
-									}
-								})
-								dat.push(data)
-							}
-						})
-					});
-					cb(null, dat, distinct)
+				if (tdistinct.length === 0) {
+					return res.redirect(logout)
 				}
-				
-			});
+				var dat = []; 
+				await tdistinct.forEach(function(td, i){
+					Content.find({'properties.title.ind': parseInt(td,10)}).lean().exec(function(err, distinct){
+						if (err) {
+							return cb(err)
+						}
+						
+						dat[i] = distinct;
+						
+					})
+				})
+				console.log(dat)
+				cb(null, dat)
+			})
 		}
-	], function(err, dat, distinct){
+	], function(err, dat){
 		if (err) {
 			return next(err)
 		}
 		req.dat = dat;
-		req.distinct = distinct;
 		return next()
 	})
 }
@@ -1447,7 +1423,8 @@ router.get('/home', getDat, ensureCurly, /*ensureEscape,*//* ensureHyperlink,*/ 
 				menu: !req.session.menu ? 'view' : req.session.menu,
 				ff: req.distinct,
 				dat: req.dat,
-				appURL: req.app.locals.appURL
+				appURL: req.app.locals.appURL,
+				exports: false
 			});
 			return res.render('agg', {
 				menu: !req.session.menu ? 'view' : req.session.menu,
@@ -1455,7 +1432,9 @@ router.get('/home', getDat, ensureCurly, /*ensureEscape,*//* ensureHyperlink,*/ 
 				ff: req.distinct,
 				str: str,
 				pu: req.user,
-				gp: (req.isAuthenticated() && req.session.authClient ? req.session.gp : null)
+				gp: (req.isAuthenticated() && req.session.authClient ? req.session.gp : null),
+				exports: false
+
 			});
 				
 			
@@ -2945,13 +2924,13 @@ router.post('/checkchaptername/:name', function(req, res, next){
 	})
 })
 
-router.get('/list/:id/:index', function(req, res, next){
+router.get('/list/:id/:index', async function(req, res, next){
 	req.session.importgdrive = false;
 	Content.findOne({_id: req.params.id}, async function(err, doc){
 		if (err) {
 			return next(err)
 		}
-		require('request').get({
+		const xml = await require('request').get({
 			url: doc.properties.xmlurl +'?api_key='+process.env.GPOKEY,
 			encoding: null
 			/*,
@@ -2963,96 +2942,99 @@ router.get('/list/:id/:index', function(req, res, next){
 		//.then(function(result){
 		}	, function (error, response, body) {
 			if (error) {
+				console.log(err);
+				return '<pre>';
+			} else {
+				if (!body) {
+					return '<pre>';
+				} else {
+					return body.toString();
+				}
+			}
+		})
+		//console.log(result.body.toString())
+		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+			if (err) {
 				return next(err)
 			}
-			var xml = body.toString();
-			//console.log(result.body.toString())
-			Content.find({}).sort( { index: 1 } ).exec(function(err, data){
-				if (err) {
-					return next(err)
-				}
-				
-				
-				
-				if (req.isAuthenticated()) {
-					var l = '/publishers/gnd/signatures/'+doc._id+'/'+req.user._id+'/img_'+doc._id+'_'+req.user._id+'.png';
-					var m = '/sig/getgeo/'+doc._id+'/'+req.user._id+'';
-					console.log('m')
-					console.log(m)
-					Signature.findOne({image: l}, function(err, pud){
-						if (err) {
-							return next(err)
+			
+			
+			
+			if (req.isAuthenticated()) {
+				var l = '/publishers/gnd/signatures/'+doc._id+'/'+req.user._id+'/img_'+doc._id+'_'+req.user._id+'.png';
+				var m = '/sig/getgeo/'+doc._id+'/'+req.user._id+'';
+				console.log('m')
+				console.log(m)
+				Signature.findOne({image: l}, function(err, pud){
+					if (err) {
+						return next(err)
+					}
+					var pu = req.user;
+					console.log(pu)
+					isJurisdiction(doc, req.user, function(signable){
+						console.log('signable?')
+						console.log(signable)
+						var csrftoken = req.csrfToken();
+						if (signable === null) {
+							return res.redirect(m)
+						} else {
+							var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
+								csrfToken: csrftoken,
+								pu: pu,
+								menu: !req.session.menu ? 'view' : req.session.menu,
+								//data: data,
+								loggedin: req.session.loggedin,
+								doc: doc,
+								unsigned: (!pud ? true : false),
+								signable: signable,
+								appURL: req.app.locals.appURL,
+								mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
+								info: req.session.info,
+								xml: xml
+								
+							});
+							return res.render('single', {
+								csrfToken: csrftoken,
+								unsigned: (!pud ? true : false),
+								loggedin: req.session.loggedin,
+								signable: signable,
+								doc: doc,
+								pu: pu,
+								mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
+								str: str,
+								xml: xml
+							})
 						}
-						var pu = req.user;
-						console.log(pu)
-						isJurisdiction(doc, req.user, function(signable){
-							console.log('signable?')
-							console.log(signable)
-							var csrftoken = req.csrfToken();
-							if (signable === null) {
-								return res.redirect(m)
-							} else {
-								var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
-									csrfToken: csrftoken,
-									pu: pu,
-									menu: !req.session.menu ? 'view' : req.session.menu,
-									//data: data,
-									loggedin: req.session.loggedin,
-									doc: doc,
-									unsigned: (!pud ? true : false),
-									signable: signable,
-									appURL: req.app.locals.appURL,
-									mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
-									info: req.session.info,
-									xml: xml
-									
-								});
-								return res.render('single', {
-									csrfToken: csrftoken,
-									unsigned: (!pud ? true : false),
-									loggedin: req.session.loggedin,
-									signable: signable,
-									doc: doc,
-									pu: pu,
-									mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
-									str: str,
-									xml: xml
-								})
-							}
-							
-						})
 						
 					})
-				} else {
-					var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
-						menu: !req.session.menu ? 'view' : req.session.menu,
-						//data: data,
-						doc: doc,
-						appURL: req.app.locals.appURL,
-						mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
-						info: req.session.info,
-						xml: xml
-						
-					});
-					return res.render('single', {
-						doc: doc,
-						mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
-						str: str,
-						xml: xml
-					})
+					
+				})
+			} else {
+				var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
+					menu: !req.session.menu ? 'view' : req.session.menu,
+					//data: data,
+					doc: doc,
+					appURL: req.app.locals.appURL,
+					mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
+					info: req.session.info,
+					xml: xml
+					
+				});
+				return res.render('single', {
+					doc: doc,
+					mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
+					str: str,
+					xml: xml
+				})
 
-					// return res.render('publish', {
-					// 	menu: 'doc',
-					// 	type: 'blog',
-					// 	doc: doc,
-					// 	mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null)
-					// })
-				}
-				
-				
-				
-				
-			})
+				// return res.render('publish', {
+				// 	menu: 'doc',
+				// 	type: 'blog',
+				// 	doc: doc,
+				// 	mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null)
+				// })
+			}
+			
 		})
 		
 	})
@@ -3392,7 +3374,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle', async fun
 					snd = arr[tiind].chapter[chind].section[secind].ind;
 					chtitle = arr[tiind].chapter[chind].name;
 					stitle = arr[tiind].chapter[chind].section[secind].name;
-					xmlurl = (tiind === 0 ? 'https://api.govinfo.gov/packages/'+arr[tiind].code+''+(arr[tiind].chapter[chind].ind+1)+''+arr[tiind].chapter[chind].code+''+(arr[tiind].chapter[chind].section[secind].ind+1)+''+arr[tiind].chapter[chind].section[secind].code+'/xml' : null )
+					xmlurl = (tiind === 0 ? 'https://api.govinfo.gov/packages/'+arr[tiind].code+''+(arr[tiind].chapter[chind].ind+1)+''+arr[tiind].chapter[chind].code+''+(arr[tiind].chapter[chind].section[secind].ind+1)+''+arr[tiind].chapter[chind].section[secind].code+'/htm' : null )
 				}
 				
 			} else {

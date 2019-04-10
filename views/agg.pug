@@ -21,12 +21,11 @@ block content
 				//- 			a(v-bind:href="'/'")
 				//- 				header.row.tb-font-l
 				//- 					span(v-text="ch[0].properties.title.str")
-				div.chapter(v-for="(ch,n) in dat", v-bind:id="n", v-bind:key="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+				div.chapter(v-for="(data,n) in dat", v-bind:id="n", v-bind:key="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
 					div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 
 					
 						div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
-							a(v-bind:href="'/menu/'+ch[0].properties.title.ind+'/'+ch[0].properties.chapter.ind+''")
-								header.row.tb-font-l 
-									span(v-text="ch[0].properties.chapter.str")
-					//!= str
+							a(v-bind:href="'/menu/'+data[0].properties.title.ind+'/'+null+''")
+								header.row.tb-font-l
+									span.bd(v-text="data[0].properties.title.str")

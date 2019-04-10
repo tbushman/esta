@@ -6,8 +6,9 @@ html
 		//- meta(name="google-site-verification", content="p4ANTDMaoAMsiWW5CwWtiY9v8mEPGv8KhQetzWrJlwc")
 		title= appTitle
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+		base(href="")
 		//link(rel="stylesheet", href="/stylesheets/simplemde.min.css")
-		link(rel="stylesheet", href="/stylesheets/gpo.css")
+		link(href="/stylesheets/gpo.css")
 		link(rel="stylesheet", href="/stylesheets/style.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.draw.css")
@@ -44,7 +45,7 @@ html
 
 		script(type="text/javascript").
 			Vue.prototype.moment = moment;
-			
+			Vue.prototype.marked = marked;
 			Vue.prototype.SignaturePad = SignaturePad;
 			Vue.prototype.$ = $;
 			new Vue({
@@ -191,6 +192,14 @@ html
 					}
 				},
 				components: {
+					//- xmlStylesheet: {
+					//- 	data(){
+					//- 		return {
+					//- 			url: '/stylesheets/billres.xsl'
+					//- 		}
+					//- 	},
+					//- 	template: '<?xml-stylesheet type="text/xsl" :href="url"?>'
+					//- },
 					canvasc: {
 						//- props: ['pu'],
 						//- inject: ['pu'],
@@ -266,15 +275,15 @@ html
 						self.dindexes.sort();
 						
 					}
-					console.log(self.doc.properties.xmlurl)
-					if (self.doc.properties.xmlurl && self.doc.properties.xmlurl !== '') {
-						//- var url = 
-						//- $.get(self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}' )
-						//- .then(function(result){
-						//- 	console.log(result);
-							//- self.xml = self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}';
-						//- })
-					}
+					//- console.log(self.doc.properties.xmlurl)
+					//- if (self.doc.properties.xmlurl && self.doc.properties.xmlurl !== '') {
+					//- 	//- var url = 
+					//- 	//- $.get(self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}' )
+					//- 	//- .then(function(result){
+					//- 	//- 	console.log(result);
+					//- 		//- self.xml = self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}';
+					//- 	//- })
+					//- }
 				},
 				mounted: function(){
 					$(document).ready(function(){
@@ -358,6 +367,7 @@ html
 							//- 		self.data = [].concat.apply([], self.dat);
 							//- 	}
 							//- }	
+							
 						} else {
 							
 							self.edit = self.doc.index;
@@ -383,15 +393,15 @@ html
 							
 							}
 						}
-						console.log(self.doc.properties.xmlurl)
-						if (self.doc.properties.xmlurl && self.doc.properties.xmlurl !== '') {
-							//- var url = 
-							//- $.get(self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}' )
-							//- .then(function(result){
-							//- 	console.log(result);
-								//- self.xml = self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}';
-							//- })
-						}
+						//- console.log(self.doc.properties.xmlurl)
+						//- if (self.doc.properties.xmlurl && self.doc.properties.xmlurl !== '') {
+						//- 	//- var url = 
+						//- 	//- $.get(self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}' )
+						//- 	//- .then(function(result){
+						//- 	//- 	console.log(result);
+						//- 		//- self.xml = self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}';
+						//- 	//- })
+						//- }
 					//- }
 
 					if (!self.tinymce && $('#description')[0] && tinymce) {

@@ -1,11 +1,6 @@
 div.maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/", v-if="dat.length > 0")
 	div.chapter(v-for="(data, n) in dat", v-if="data.length > 0" v-bind:id="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
 		div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-			div.cell(v-on:click="navigateTo('/')", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
-				a(v-bind:href="'/'")
-					header.row.tb-font-l
-						span(v-text="data[0].properties.title.str")
-			div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 			div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 				a(v-bind:href="'/menu/'+data[0].properties.title.ind+'/'+data[0].properties.chapter.ind+''")
 					header.row.tb-font-l

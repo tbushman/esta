@@ -4,7 +4,10 @@ div.row.tb-font-m
 	div#title(v-text="doc.properties.section.str")
 
 p(style="margin-top:20px;")
-	label.tb-10-m0(v-if="edit === doc.index", for="description") Edit Section:
+	label.tb-10-m0(v-if="edit === doc.index", for="label") Document label:
+	input#label.tb-font-s(type="text", name="label", :value="doc.properties.label")
+p
+	label.tb-10-m0(v-if="edit === doc.index", for="description") Document description:
 	div.description.tb-10-m0.tb-font-s#description(v-html="doc.properties.description", style="border-bottom: 1px solid #e1e1e1;")
 p(v-if="doc.properties.footnotes", v-for="(foot, k) in doc.properties.footnotes")
 	label(v-bind:for="'footnote'+k+''", v-text="'Footnote #'+ (k+1)")
@@ -20,8 +23,6 @@ p
 		span Add image
 	
 div(style="visibility: hidden;")
-//input#lat(v-bind:value="doc.geometry.coordinates[1]", name="lat", type="hidden")
-//input#lng(v-bind:value="doc.geometry.coordinates[0]", name="lng", type="hidden")
 input.block#latlng(v-bind:value="JSON.stringify(doc.geometry.coordinates)", name="latlng", style="width: 100%", type="hidden")
 div.row
 	a.danger.block.spacer.tb-10-m0.tb-03-m2(v-on:click="deleteEntry(doc)", role="button", style="float:left;box-sizing:border-box;")

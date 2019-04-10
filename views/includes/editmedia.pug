@@ -21,7 +21,7 @@ div.tb-10-m0(v-if="edit === doc.index")
 		div.tb-10-m0.tb-02-m3
 
 			p
-			label(for="media") Change media:
+			label(for="media") Switch out image:
 			input.block.spacer.success.tb-07-m0(v-bind:id="'media_'+img.index", v-on:change="handleFile(dindexes.indexOf(doc.index),img.index)", v-bind:class="'editmedia@'+img.index", type="file", style="padding: 18px;color:#fff;")
 			label(v-bind:for="'deletemedia_'+img.index")
 			a.danger.block.spacer.tb-08-m0(role="button", v-on:click="deleteMedia(img.index)", v-bind:id="'deletemedia_'+img.index")
