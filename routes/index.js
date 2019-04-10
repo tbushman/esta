@@ -961,7 +961,11 @@ function getDat(req, res, next){
 				}
 				var dat = []; 
 				if (tdistinct.length === 0) {
-					return res.redirect('/login')
+					if (req.isAuthenticated() && req.user.properties.admin) {
+						return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+0+'/'+0+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.')
+					} else {
+						return res.redirect('/login')
+					}
 				}
 				tdistinct.forEach(function(td, i){
 					Content.find({'properties.title.ind': parseInt(td,10)}).lean().exec(function(err, distinct){
@@ -1143,7 +1147,7 @@ function ensureApiTokens(req, res, next){
 		if (!pu) {
 			return res.redirect('/logout')
 		}
-		if (!pu.admin) {
+		if (!pu.properties.admin) {
 			return res.redirect('/')
 		}
 		authClient.setCredentials({
@@ -1540,7 +1544,7 @@ router.post('/register', function(req, res, next) {
 						}
 						req.session.userId = doc._id;
 						req.session.loggedin = doc.username;
-						if (!user.admin) {
+						if (!user.properties.admin) {
 							return res.redirect('/sig/editprofile')
 						}
 						return res.redirect('/api/publish')
