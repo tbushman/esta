@@ -296,7 +296,7 @@ app.use(function (err, req, res) {
 var uri = process.env.DEVDB;
 if (mongoose.connection.readyState === 0) {
 	var promise = mongoose.connect(uri, {
-		useNewUrlParser: true,
+		native_parser: true,
 		useMongoClient: true
 	}/*, {authMechanism: 'ScramSHA1'}*/);
 	promise.then(function(){
