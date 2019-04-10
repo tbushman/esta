@@ -4,9 +4,9 @@ var cors = require('cors');
 var marked = require('marked');
 var favicon = require('serve-favicon');
 var session = require('express-session');
+var dotenv = require('dotenv');
 var MongoDBStore = require('connect-mongodb-session')(session);
 var path = require('path');
-var dotenv = require('dotenv');
 var mongoose = require('mongoose');
 var promise = require('bluebird');
 var cookieParser = require('cookie-parser');
@@ -197,42 +197,6 @@ passport.use(new GoogleStrategy({
 	}
 ));
 
-var store = new MongoDBStore(
-	{
-		mongooseConnection: mongoose.connection,
-		uri: process.env.DEVDB,
-		collection: 'estaSession'
-	}
-);
-store.on('error', function(error, next){
-	next(error)
-});
-
-var sess = {
-	secret: process.env.SECRET,
-	name: 'nodecookie',
-	resave: false,
-	saveUninitialized: false,
-	store: store,
-  cookie: { maxAge: 180 * 60 * 1000 }
-}
-/*app.use(function(req, res){
-	res.set({'Content-Type': 'application/xhtml+xml'})
-})*/
-var pug = require('pug-runtime');
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
-
-app.use(cookieParser(sess.secret));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, '../../pu/publishers')));
-app.use('/publishers', express.static(path.join(__dirname, '../../pu/publishers')));
-app.use(favicon(path.join(__dirname, 'public/images', 'favicon.ico')));
-app.use(session(sess));
-app.use( passport.initialize());
-app.use( passport.session());
-
 // serialize and deserialize
 passport.serializeUser(function(user, done) {
   done(null, user._id);
@@ -247,6 +211,45 @@ passport.deserializeUser(function(id, done) {
 		}
 	});
 });
+
+
+var store = new MongoDBStore(
+	{
+		mongooseConnection: mongoose.connection,
+		uri: process.env.DEVDB,
+		collection: 'estaSession',
+		autoRemove: 'interval',     
+		autoRemoveInterval: 3600
+	}
+);
+store.on('error', function(error, next){
+	next(error)
+});
+
+var sess = {
+	secret: process.env.SECRET,
+	name: 'nodecookie',
+	resave: true,
+	saveUninitialized: true,
+	store: store,
+  cookie: { maxAge: 180 * 60 * 1000 }
+}
+/*app.use(function(req, res){
+	res.set({'Content-Type': 'application/xhtml+xml'})
+})*/
+var pug = require('pug-runtime');
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+
+app.use(cookieParser(sess.secret));
+app.use(session(sess));
+app.use( passport.initialize());
+app.use( passport.session());
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../../pu/publishers')));
+app.use('/publishers', express.static(path.join(__dirname, '../../pu/publishers')));
+app.use(favicon(path.join(__dirname, 'public/images', 'favicon.ico')));
 
 if (app.get('env') === 'production') {
 	app.set('trust proxy', 1)
@@ -285,10 +288,14 @@ app.use(function (err, req, res) {
 
 var uri = process.env.DEVDB;
 
-var promise = mongoose.connect(uri, {useNewUrlParser: true}/*, {authMechanism: 'ScramSHA1'}*/);
-/*promise.then(function(db){
-	db.on('error', console.error.bind(console, 'connection error:'));
-});*/
-var db = mongoose.connection;
-db.once('error', console.error.bind(console, 'connection error:'));
+var promise = mongoose.connect(uri, {
+	useNewUrlParser: true
+}/*, {authMechanism: 'ScramSHA1'}*/);
+promise.then(function(db){
+	// db.on('error', 
+	console.error.bind(console, 'connection error:')
+//);
+});
+// var db = mongoose.connection;
+// db.once('error', console.error.bind(console, 'connection error:'));
 module.exports = app;
