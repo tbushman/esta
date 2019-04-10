@@ -2930,7 +2930,7 @@ router.get('/list/:id/:index', async function(req, res, next){
 		if (err) {
 			return next(err)
 		}
-		const xml = await require('request').get({
+		const xml = await require('request-promise').get({
 			url: doc.properties.xmlurl +'?api_key='+process.env.GPOKEY,
 			encoding: null
 			/*,
@@ -2940,17 +2940,17 @@ router.get('/list/:id/:index', async function(req, res, next){
 		// })
 		// .on('response'
 		//.then(function(result){
-		}	, function (error, response, body) {
-			if (error) {
-				console.log(err);
+		}).then(function(response) {
+			console.log(response)
+			if (!response) {
 				return '<pre>';
 			} else {
-				if (!body) {
-					return '<pre>';
-				} else {
-					return body.toString();
-				}
+				return response.toString().replace(/([`][`])/g,"'").replace(/([']['])/g,"'").replace(/\r/g,'\n').replace(/\s{3,700}/g,'  ').replace(/\s{0,1}\n\n\s{1,4}[(](\d{1,4})[)]/g,'  \n1. ').replace(/\s{2}[(](\w{1})[)]/g,'  \n  * \($1\) ').replace(/\n\s\s(\([i,v]{1,4}\))/g,'    $1');
 			}
+		})
+		.catch(function(err){
+			console.log(err);
+			return '<pre>'
 		})
 		//console.log(result.body.toString())
 		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
@@ -2970,7 +2970,7 @@ router.get('/list/:id/:index', async function(req, res, next){
 						return next(err)
 					}
 					var pu = req.user;
-					console.log(pu)
+					// console.log(pu)
 					isJurisdiction(doc, req.user, function(signable){
 						console.log('signable?')
 						console.log(signable)
@@ -2988,7 +2988,7 @@ router.get('/list/:id/:index', async function(req, res, next){
 								unsigned: (!pud ? true : false),
 								signable: signable,
 								appURL: req.app.locals.appURL,
-								mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
+								// mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
 								info: req.session.info,
 								xml: xml
 								
@@ -3000,7 +3000,7 @@ router.get('/list/:id/:index', async function(req, res, next){
 								signable: signable,
 								doc: doc,
 								pu: pu,
-								mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
+								// mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
 								str: str,
 								xml: xml
 							})

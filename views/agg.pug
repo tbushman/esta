@@ -28,4 +28,4 @@ block content
 						div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
 							a(v-bind:href="'/menu/'+data[0].properties.title.ind+'/'+null+''")
 								header.row.tb-font-l
-									span.bd(v-text="data[0].properties.title.str")
+									span(v-text="data[0].properties.title.str")

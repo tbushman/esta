@@ -373,6 +373,7 @@ html
 							self.edit = self.doc.index;
 							self.dindexes = [self.edit];
 							self.dindex = 0;
+							console.log(self.doc.properties.xmlurl)
 							if ((self.pu && !self.pu.geometry) && self.unsigned || self.ts.length > 0) {
 								var pos = null;
 								if (navigator.geolocation) {
@@ -393,7 +394,6 @@ html
 							
 							}
 						}
-						//- console.log(self.doc.properties.xmlurl)
 						//- if (self.doc.properties.xmlurl && self.doc.properties.xmlurl !== '') {
 						//- 	//- var url = 
 						//- 	//- $.get(self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}' )

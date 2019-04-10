@@ -74,13 +74,13 @@ div.maintitle.centerall(:style="{'pointer-events':(mapActive? 'none' : 'auto')}"
 				//- div(xmlns:dc="http://purl.org/dc/elements/1.1/", v-html="xml")
 				//- p(v-html="marked(xml.replace(/\`/g, '^').split('<pre>')[1].split('</pre>')[0])")
 				p.tb-font-m(v-text="'External document'")
-				p(v-if="xml && typeof xml.split === 'function'", v-html="xml.split('<pre>')[1].split('</pre>')[0]")
+				p(v-if="xml && xml !== ''", v-html="marked(xml.split('<pre>')[1].split('</pre>')[0])")
 			div.row(v-if="edit === doc.index && loggedin && loggedin !==''", style="padding-top:20px;")
 				form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)
 					include editor.pug
 					p.tb-font-m(v-text="'External document'")
-					p(v-if="xml && typeof xml.split === 'function'", v-html="xml.split('<pre>')[1].split('</pre>')[0]")
+					p(v-if="xml && xml !== ''", v-html="marked(xml.split('<pre>')[1].split('</pre>')[0])")
 	
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
 		,

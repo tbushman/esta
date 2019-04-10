@@ -60,6 +60,7 @@
     "pug": "^2.0.3",
     "pug-runtime": "^2.0.4",
     "request": "^2.88.0",
+    "request-promise": "^4.2.4",
     "scriptjs": "^2.5.9",
     "serve-favicon": "^2.5.0"
   },

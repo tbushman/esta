@@ -348,7 +348,7 @@ breadcrumbs {
 	position: absolute;
 	z-index: 2;
 	top: 4px;
-	left: auto;
+	left: 0;
 	right: calc(26px * 1.5);
 	right: calc(var(--thumbw) * 1.5);
 	font-size: 10px;
