@@ -1,8 +1,9 @@
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema,
 		Content = require('mongoose-geojson-schema'),
-		Diffs = require('./diffs.js'),
-		Media = require('./media.js');
+		Diffs = require('./diffs.js');
+		// ,
+		// Media = require('./media.js');
 
 var schema = new Schema({
 	type: String,

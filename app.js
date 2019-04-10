@@ -247,7 +247,7 @@ app.use( passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, '../../pu/publishers')));
 app.use('/publishers', express.static(path.join(__dirname, '../../pu/publishers')));
-// app.use(favicon(path.join(__dirname, 'public/images', 'favicon.ico')));
+app.use(favicon(path.join(__dirname, 'public/images', 'favicon.ico')));
 
 // serialize and deserialize
 passport.serializeUser(function(user, done) {
@@ -294,9 +294,9 @@ app.use(function (err, req, res) {
 });
 
 var uri = process.env.DEVDB;
-if (mongoose.connection.readyState === 0) {
+// if (mongoose.connection.readyState === 0) {
 	var promise = mongoose.connect(uri, {
-		native_parser: true,
+		// native_parser: true,
 		useMongoClient: true
 	}/*, {authMechanism: 'ScramSHA1'}*/);
 	promise.then(function(){
@@ -309,7 +309,7 @@ if (mongoose.connection.readyState === 0) {
 		console.log(err);
         console.log('MongoDB connection unsuccessful');
 	});
-}
+// }
 
 // var db = mongoose.connection;
 // db.once('error', console.error.bind(console, 'connection error:'));
