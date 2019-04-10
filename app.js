@@ -35,31 +35,29 @@ var upload = multer();
 var csrfProtection = csrf({ cookie: true });
 
 var app = express();
-app.locals.appTitle = 'esta.bli.sh';
-app.locals.appURL = (process.env.NODE_ENV === 'production' ? 'esta.bli.sh' : 'localhost:'+process.env.PORT+'')
-app.locals.moment = require('moment');
-app.locals.pug = require('pug');
-marked.setOptions({
-  gfm: true,
-  tables: true
-});
-app.locals.$ = require('jquery');
-app.locals.md = marked;
-
-app.use(cors());
-
-app.use(function(req, res, next) {
+if (app.get('env') === 'production') {
+	app.enable('trust proxy');
+	app.set('trust proxy', true); // trust first proxy	
+	app.use(cors());
+	app.options('*', cors());
+	app.use(function(req, res, next) {
+		app.disable('x-powered-by');
+		app.disable('Strict-Transport-Security');
+		//app.disable('Access-Control-Allow-Credentials');
 		res.set({
-			'Access-Control-Allow-Origin' : req.headers.origin,
+			'Access-Control-Allow-Origin' : '*',
 			'Access-Control-Allow-Methods' : 'GET, POST, HEAD, OPTIONS',
 			'Access-Control-Allow-Headers' : 'Cache-Control, Origin, Content-Type, Accept',
 			'Access-Control-Allow-Credentials' : true
 		});
 
-		//app.use(helmet.noCache({}));
+		app.use(helmet.noCache({}));
 
 		next();
-});
+	});
+	
+}
+
 passport.use(new LocalStrategy(Publisher.authenticate()));
 passport.use(new SlackStrategy({
 	clientID: process.env.SLACK_CLIENT_ID,
@@ -131,6 +129,19 @@ function(accessToken, refreshToken, profile, done) {
 	})
 	
 }));
+
+app.locals.appTitle = 'esta.bli.sh';
+app.locals.appURL = (process.env.NODE_ENV === 'production' ? 'esta.bli.sh' : 'localhost:'+process.env.PORT+'')
+app.locals.moment = require('moment');
+app.locals.pug = require('pug');
+marked.setOptions({
+  gfm: true,
+  tables: true
+});
+app.locals.$ = require('jquery');
+app.locals.md = marked;
+
+
 
 // passport.use(new GoogleStrategy({
 // 	clientID: process.env.GOOGLE_OAUTH_CLIENTID,
@@ -285,7 +296,8 @@ app.use(function (err, req, res) {
 var uri = process.env.DEVDB;
 if (mongoose.connection.readyState === 0) {
 	var promise = mongoose.connect(uri, {
-		useNewUrlParser: true
+		useNewUrlParser: true,
+		useMongoClient: true
 	}/*, {authMechanism: 'ScramSHA1'}*/);
 	promise.then(function(){
 		console.log('connected')
