@@ -51,7 +51,7 @@ if (app.get('env') === 'production') {
 			'Access-Control-Allow-Credentials' : true
 		});
 
-		app.use(helmet.noCache({}));
+		// app.use(helmet.noCache({}));
 
 		next();
 	});
