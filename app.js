@@ -222,8 +222,8 @@ var store = new MongoDBStore(
 		autoRemoveInterval: 3600
 	}
 );
-store.on('error', function(error, next){
-	next(error)
+store.on('error', function(error){
+	console.log(error)
 });
 
 var sess = {
