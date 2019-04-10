@@ -955,7 +955,7 @@ function ensureEscape(req, res, next) {
 function getDat(req, res, next){
 	asynk.waterfall([
 		function(cb){
-			Content.distinct('properties.title.ind', async function(err, tdistinct){
+			Content.distinct('properties.title.ind', function(err, tdistinct){
 				if (err) {
 					cb(err)
 				}
@@ -963,7 +963,7 @@ function getDat(req, res, next){
 				if (tdistinct.length === 0) {
 					return res.redirect('/login')
 				}
-				await tdistinct.forEach(function(td, i){
+				tdistinct.forEach(function(td, i){
 					Content.find({'properties.title.ind': parseInt(td,10)}).lean().exec(function(err, distinct){
 						if (err) {
 							return cb(err)
