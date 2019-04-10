@@ -960,9 +960,9 @@ function getDat(req, res, next){
 					cb(err)
 				}
 				var dat = []; 
-				// if (tdistinct.length === 0) {
-				// 	return res.redirect('/logout')
-				// }
+				if (tdistinct.length === 0) {
+					return res.redirect('/login')
+				}
 				await tdistinct.forEach(function(td, i){
 					Content.find({'properties.title.ind': parseInt(td,10)}).lean().exec(function(err, distinct){
 						if (err) {
