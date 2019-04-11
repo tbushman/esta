@@ -44,15 +44,15 @@ each mn, k in menus
 				input(type="text", id="chtitle", v-model="newDoc.chtitle")
 				a(role="button", title="Create", :href="'/api/new/'+newDoc.placetype+'/'+newDoc.place+'/'+newDoc.tiind+'/'+newDoc.chind+'/'+newDoc.secind+'/'+encodeURIComponent(newDoc.chtitle)+''", style="margin-bottom: 50px") Create
 			
-			a.submenu.drop(v-if="loggedin && doc && pu && pu !== '' && pu.properties.admin", class= mn, title="Export")
+			a.submenu.drop(v-if="loggedin && doc && pu && pu !== '' && pu.properties.admin", class= mn, title="Export", :href="'/api/exportword/'+doc._id+''")
 				span.tb-font-s Export
-			div.slidedown(v-if="loggedin", class= mn)
-				a.submenu.drop(class= mn, href="/api/exportword")
-					if (mn !== "static")
-						if (menu !== "word")
-							.ui(class= mn)
-								include angle.pug
-					span.tb-font-s Download Word file
+			//- div.slidedown(v-if="loggedin", class= mn)
+			//- 	a.submenu.drop(class= mn, href="/api/exportword")
+			//- 		if (mn !== "static")
+			//- 			if (menu !== "word")
+			//- 				.ui(class= mn)
+			//- 					include angle.pug
+			//- 		span.tb-font-s Download Word file
 				
 				//- a.submenu.drop(class= mn, href="/api/exportgdrivewhole")
 				//- 	if (mn !== "static")

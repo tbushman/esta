@@ -18,6 +18,7 @@ var schema = new Schema({
 		oauthID: String
 	},
 	properties: {
+		lnglat: [],
 		avatar: String,
 		admin: Boolean,
 		address1: String,

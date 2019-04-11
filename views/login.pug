@@ -8,7 +8,7 @@ block content
 			div.module.full
 				div.row(style="display: block; position: fixed; height: 100%; background-color:var(--primary); background-color: #fff;")
 					
-					div.centerallwrap
+					div.centerallwrap(style="overflow-y: scroll; pointer-events: all;")
 						div.centerall
 							div.tb-10-m0.shift-00(style="padding: 50px")
 								//
@@ -32,7 +32,7 @@ block content
 								
 								p.tb-font-xl or connect using Slack:
 								p &nbsp
-								a.tb-font-xl(href="/auth/slack", ariaDescription="Sign in with Slack", style="display:block;height:auto;")
+								a.tb-font-xl(href="/auth/slack", ariaDescription="Sign in with Slack", style="display:inline-block;height:auto;")
 									img(src="https://api.slack.com/img/sign_in_with_slack.png")
 								p &nbsp
 								p.tb-font-xl First time authenticating?

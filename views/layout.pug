@@ -7,34 +7,23 @@ html
 		title= appTitle
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
 		base(href="")
-		//link(rel="stylesheet", href="/stylesheets/simplemde.min.css")
 		link(href="/stylesheets/gpo.css")
 		link(rel="stylesheet", href="/stylesheets/style.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.draw.css")
-
-		//
-			style(id="style", type="text/css")
-				include ../public/stylesheets/styleword.css
-			script(type="text/javascript", v-on:load="onGapiLoad()", src="https://apis.google.com/js/api.js")
 		script(type="text/javascript", src="/scripts/vue.min.js")
 		script(type="text/javascript", src="/scripts/jquery.min.js")
 		script(type="text/javascript", src="/scripts/jquery-ui.min.js")
 		script(type="text/javascript", src="/scripts/moment-with-locales.min.js")
 		script(type="text/javascript", src="/scripts/marked.min.js")
-		//script(type="text/javascript", src="/scripts/simplemde.min.js")
 		script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
 		script(type="text/javascript", src="/scripts/leaflet.js")
-		//script(type="text/javascript", src="/scripts/leaflet.draw.js")
-		//script(type="text/javascript", src="/scripts/Leaflet.draw.drag-src.js")
-		//script(defer src="https://use.fontawesome.com/releases/v5.2.0/js/all.js", integrity="sha384-4oV5EgaV02iISL2ban6c/RmotsABqE4yZxZLcYMAdG7FAPsyHYAPpywE9PJo+Khy", crossorigin="anonymous")
 		script(type="text/javascript", src="/scripts/Path.Drag.js")
 		script(type="text/javascript", src="/scripts/Leaflet.Editable.js")
-		//script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.0.2/mocha.min.js")
 		script(type='text/javascript', src='/scripts/leaflet-image_0_4_0.js')
 		script(type="text/javascript", src="/scripts/jszip.min.js")
 		script(type="text/javascript", src="/scripts/signaturePad.js")
-		//script(type='text/javascript', src='/scripts/html-docx.js')
+		script(type="text/javascript", src="/scripts/htmldiff.js")
 	body
 		block page
 		block header
@@ -48,6 +37,7 @@ html
 			Vue.prototype.marked = marked;
 			Vue.prototype.SignaturePad = SignaturePad;
 			Vue.prototype.$ = $;
+			Vue.prototype.htmldiff = htmldiff;
 			new Vue({
 				el: '#vue',
 				data: function data(){
@@ -61,7 +51,7 @@ html
 						unsigned: this.parseBool(!{JSON.stringify(unsigned)}),
 						avail: this.parseBool(!{JSON.stringify(avail)}),
 						type: this.parseObj(!{JSON.stringify(type)}),
-						pu: this.parseObj(!{JSON.stringify(pu)}),
+						pu: this.parsePu(!{JSON.stringify(pu)}),
 						loggedin: (this.parseObj(!{JSON.stringify(session)}) !== '' && this.parseObj(!{JSON.stringify(session.loggedin)}) !== '' ? this.parseObj(!{JSON.stringify(session.loggedin)}) : null ),
 						menu: this.parseObj(!{JSON.stringify(menu)}),
 						dat: this.parseObj(!{JSON.stringify(dat)}),
@@ -85,10 +75,8 @@ html
 						wHeight: window.innerHeight,
 						dPath: this.dPathAttr(),
 						tinymce: null,
-						diff: /*{
-							index: (this.parseObj(!{JSON.stringify(doc)}) !== '' ? this.parseObj(!{JSON.stringify(doc)}).index : 0),
-							ind: 0
-						}*/null,
+						dfi: 0,
+						diff: null,
 						web: true,
 						export: this.parseBool(!{JSON.stringify(exports)}),
 						ff: this.parseObj(!{JSON.stringify(ff)}),//['General Provisions.', 'Concept Plan.', 'Sketch Plan.', 'Preliminary Subdivision Applications.', 'Final Subdivision Applications.', 'Vacating or Amending a Recorded Final Subdivision Plat, Street or Alley Final.', 'Subdivision Ordinance Amendments.', 'Noticing Requirements.', 'Appeals.', 'Special Excepetions.', 'Design and Construction Standards.', 'Guarantees for Subdivision Improvements, Facilities, and Amenities.', 'Definitions.'],
@@ -356,6 +344,37 @@ html
 						//self.dat = self.dat.reverse()
 					}
 					console.log(self.dat)
+					var modal = document.getElementById('modal');
+					console.log(modal)
+					if (self.type === 'geo') {
+						var pos = null;
+						if (navigator.geolocation) {
+							var options = {
+								enableHighAccuracy: true,
+								timeout: 5000,
+								maximumAge: 0
+							};
+							navigator.geolocation.getCurrentPosition(function(position) {
+								pos = {
+									lat: position.coords.latitude,
+									lng: position.coords.longitude
+								};
+								console.log(pos)
+								self.handleLocationOutcome(true, pos);
+							}, function() {
+								console.log('adfslkn')
+								self.handleLocationOutcome(false, pos);
+							}, options);
+						} else {
+							// Browser doesn't support Geolocation
+							self.handleLocationOutcome(false, pos);
+						}
+					
+					}
+					//- else if (modal) {
+					//- 	self.modal.msg = 'geolocator didn\'t work. Please provide the zip code you vote from. ';
+					//- 	self.modal.id = 'zip'
+					//- }
 					//- if (!self.data || self.data === '') {
 						//self.dat.forEach(function(data))
 						
@@ -373,26 +392,13 @@ html
 							self.edit = self.doc.index;
 							self.dindexes = [self.edit];
 							self.dindex = 0;
-							console.log(self.doc.properties.xmlurl)
-							if ((self.pu && !self.pu.geometry) && self.unsigned || self.ts.length > 0) {
-								var pos = null;
-								if (navigator.geolocation) {
-									navigator.geolocation.getCurrentPosition(function(position) {
-										pos = {
-											lat: position.coords.latitude,
-											lng: position.coords.longitude
-										};
-										console.log(pos)
-										self.handleLocationOutcome(true, pos);
-									}, function() {
-										self.handleLocationOutcome(false, pos);
-									});
-								} else {
-									// Browser doesn't support Geolocation
-									self.handleLocationOutcome(false, pos);
-								}
+							console.log(self.pu, self.ts.length, !self.unsigned)
 							
-							}
+							//-  else if (self.pu && self.ts.length > 0 && !self.unsigned) {
+							//- 	console.log('blrg')
+							//- 	self.handleLocationOutcome(false, pos);
+							//- } 
+							
 						}
 						//- if (self.doc.properties.xmlurl && self.doc.properties.xmlurl !== '') {
 						//- 	//- var url = 
@@ -405,8 +411,8 @@ html
 					//- }
 
 					if (!self.tinymce && $('#description')[0] && tinymce) {
-						console.log('shouldn\'t be')
-						console.log($('#description')[0])
+						//- console.log('shouldn\'t be')
+						//- console.log($('#description')[0])
 						self.tinymce = tinymce.init({
 							menubar: false,
 							statusbar: false,
@@ -457,6 +463,16 @@ html
 					
 				},
 				methods: {
+					parsePu(obj) {
+						if (!obj) {
+							return {
+								properties: {
+									givenName: ''
+								}
+							}
+						}
+						return obj;
+					},
 					changeDocType(e) {
 						var self = this;
 						console.log(e.target.value)
@@ -484,22 +500,26 @@ html
 					},
 					submitZip(e) {
 						var self = this;
-						$.post('/sig/'+(self.unsigned ? 'getgeo' : 'geo')+'/'+self.doc._id+'/'+null+'/'+null+'/'+(self.ts.length ? self.ts[0] : null)+'/'+self.modal.zip+'')
+						$.post('/pu/getgeo/'+null+'/'+null+'/'+self.modal.zip+'')
 						.then(function(href){
 							window.location.href = href
 						})
 					},
 					handleLocationOutcome(geolocation, pos) {
 						var self = this;
-						if (!geolocation) {
+						console.log(geolocation)
+						var modal = document.getElementById('modal');
+						if (!geolocation && modal) {
 							self.modal.msg = 'geolocator didn\'t work. Please provide the zip code you vote from. ';
 							self.modal.id = 'zip'
-						} else {
+						} else if (geolocation) {
 							//http://localhost:8686/sig/getgeo/5ca8cd51aa87b56585bedbb4/40.666473599999996/-111.8096681/null/null
-							$.post('/sig/'+(self.unsigned ? 'getgeo' : 'geo')+'/'+self.doc._id+'/'+pos.lat+'/'+pos.lng+'/'+(self.ts.length ? self.ts[0] : null)+'/'+null+'')
+							$.post('/pu/getgeo/'+pos.lat+'/'+pos.lng+'/'+null+'')
 							.then(function(href){
 								window.location.href = href
 							})
+						} else {
+							window.location.href = '/pu/getgeo/'+self.pu._id+''
 						}
 					},
 					ifNullThenArr(obj) {
@@ -529,232 +549,10 @@ html
 						//`<a v-bind:click="" >${diff.user.username}<img class="avatar" src="${diff.user.avatar}"></img></a>`
 						$('#diff'+doc.index).val(diff.ind)
 					},
-					onGapiLoad: function() {
+					changeDiff(e) {
 						var self = this;
-						console.log(gapi)
-						self.initPicker(self.gp.access_token)
-					},
-					
-					insertFile: function(fileData, callback) {
-						var self = this;
-						var boundary = '-------314159265358979323846';
-						var delimiter = "\r\n--" + boundary + "\r\n";
-						var close_delim = "\r\n--" + boundary + "--";
-
-					  var reader = new FileReader();
-					  reader.readAsBinaryString(fileData);
-					  reader.onload = function(e) {
-							var contentType = 
-								//'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-								fileData.type || 'application/octet-stream';
-							var metadata = {
-							  'name': fileData.fileName,
-							  'mimeType': contentType,
-								'Content-Type': contentType,
-								'Content-Length': fileData.size
-							};
-							var base64Data = btoa(reader.result);
-							var multipartRequestBody =
-									delimiter +
-									'Content-Type: application/json\r\n\r\n' +
-									JSON.stringify(metadata) +
-									delimiter +
-									'Content-Type: ' + 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'+ '\r\n' +
-									'Content-Transfer-Encoding: base64\r\n' +
-									'\r\n' +
-									base64Data +
-									close_delim;
-
-							var request = gapi.client.request({
-									'path': '/upload/drive/v3/files',
-									'method': 'POST',
-									'params': {'uploadType': 'multipart'},
-									'headers': {
-										//'X-Upload-Content-Type' : fileData.type,
-										//'Content-Type': 'application/json; charset=UTF-8',
-										'Authorization': 'Bearer ' + self.gp.picker_token,
-										'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
-									},
-									'body': multipartRequestBody});
-							if (!callback) {
-							  callback = function(file) {
-									console.log(file)
-							  };
-							}
-							request.execute(callback);
-					  }
-					},
-					handleGapiClient: function(file){
-						var self = this;
-						//gapi.client.setApiKey(self.gp.google_key);
-						/*gapi.client.load('drive', 'v3', function(){
-							self.initPicker(self.gp.access_token)
-						})
-						*/
-						console.log('client loaded')
-						gapi.client.load('drive', 'v3', function(){
-							var drive = gapi.client.drive;
-							var request = drive.files.get({
-								fileId: file.id,
-								fields: 'webContentLink'
-							})
-							request.then(function(response){
-								console.log(response)
-								var webContentLink = response.result.webContentLink.split('&')[0]
-								$.get(webContentLink, function(err, result){
-									console.log(err, result)
-								})
-								/*self.insertFile(response.result.webContentLink, function(err, fl){
-									if (err) {
-										console.log(err)
-									}
-									var fileId = fl.id;
-									drive.files.export({
-										fileId, mimeType: 'text/plain'
-									}).then( function(result){
-										if (err){
-											console.log(err)
-										}
-										console.log(result)
-										self.uploadTxt(result)
-									}).catch(function(err){
-										if (err) {
-											console.log(err)
-										}
-									})
-								})*/
-							}).catch(function(err){
-								if (err) {
-									console.log(err)
-								}
-							})
-							
-							/*console.log(drive)//({version: 'v3'});
-							*/
-							
-						});
-						
-						
-
-					},
-					initPicker: function(authresult) {
-						var self = this;
-						
-								gapi.load('picker', {
-									callback: function() {
-										self.createPicker(authresult);
-									},
-									onerror: function() {
-										alert('gapi.client failed to load!');
-									},
-									timeout: 5000, // 5 seconds.
-									ontimeout: function() {
-										alert('gapi.client could not load in a timely manner!');
-									}
-								});
-
-					},
-					// Create and render a Picker object for picking user Photos.
-					createPicker: function(authresult) {
-						console.log(authresult)
-						var self = this;
-						if (self.gp && self.gp.access_token) {
-							var picker = new google.picker.PickerBuilder().
-								addView(google.picker.ViewId.DOCUMENTS).
-								setOAuthToken(authresult).
-								setDeveloperKey(self.gp.picker_key).
-								setCallback(self.pickerCallback).
-								build();
-							picker.setVisible(true);
-						}
-					},
-					// A simple callback implementation.
-					pickerCallback: function (data) {
-						var self = this;
-						google.picker.Response.ACTION
-						var url = 'nothing';
-						if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
-							var doc = data[google.picker.Response.DOCUMENTS][0];
-							url = doc[google.picker.Document.URL];
-							self.initGdocFileUploader(doc, 'doc');
-							//self.initGdriveRevisionGetter(doc);
-						}
-					},
-					initGdriveRevisionGetter: function(file){
-						var self = this;
-						console.log(file)
-						$.post('/api/importgdriverev/'+file.id, function(err, doc){
-							
-							window.location.href = '/'
-						})
-						
-
-						
-					},
-					initGdocFileUploader: function(file, type){
-						var self = this;
-						
-						$.post('/api/importgdoc/'+file.id, function(err, doc){
-							
-							window.location.href = '/'
-						})
-					},
-					exportPDF: function(e) {
-						$(e.target).hide();
-						$('.menu').hide();
-						$('.danger').hide();
-						$.post('/api/exportpdf')
-					},
-					changeDiff: function(doc, newclick) {
-						var self = this;
-						var input = document.getElementById('diff'+doc.index);
-						if (!input) {
-							self.diff = 
-							(
-								!doc || !doc.properties.diffs || doc.properties.diffs.length === 0 ?
-								{
-									index: doc.index,
-									ind: null
-								}
-								:
-								{
-									index: doc.index,
-									ind: doc.properties.diffs.length - 1
-								}
-							) 
-						} else {
-							var inputval = parseInt(input.value, 10);
-							//inputval = (!doc.properties.diffs[inputval] ? 0 : inputval)
-							
-							self.diff = (
-								newclick ? 
-								(
-									!doc.properties.diffs || doc.properties.diffs.length === 0 ?
-									{
-										index: doc.index,
-										ind: 0
-									}
-									:
-									{
-										index: doc.index,
-										ind: doc.properties.diffs.length - 1
-									}
-								) 
-								:
-								( !doc.properties.diffs[inputval] 
-									? 
-									null 
-									:
-									{
-										index: doc.index,
-										ind: inputval
-									}
-								)
-								
-							)
-						}
-						
-						
+						console.log(e.target.value)
+						self.dfi = (!isNaN(parseInt(e.target.value, 10)) ? parseInt(e.target.value, 10) : null);
 					},
 					dragEnd: function(event, layer) {
 						var marker = event.target;
@@ -777,25 +575,6 @@ html
 							}*/
 						}
 
-					},
-					featureImg: function(ind){
-						var self = this;
-						var index = parseInt(ind, 10);
-						//console.log(self.doc.properties.media[index].featured)
-						self.doc.properties.media[index].featured = !self.doc.properties.media[index].featured;
-					},
-					checkChapterName: function() {
-						var self = this;
-						$.post('/checkchaptername/'+$('#chaptername').val()+'', function(res){
-							if (!res) {
-								self.uploadisreplace = false;
-							} else {
-								$('#info').html('<p class="danger">You will be replacing an existing chapter.</p>')
-								self.uploadisreplace = true;
-								self.uploadchtitle = res;
-							}
-							$('#importarea').show();
-						})
 					},
 					navigateTo: function(url){
 						window.location.href = url;
@@ -849,39 +628,7 @@ html
 						span.innerHTML = str;
 						return span.outerHTML;
 					},
-					computeDiffStr: function(diffs) {
-						diffs.forEach(function(diff) {
-							return diff
-						})
-					},
-					getDiffHtml: function() {
-						var self = this;
-						sendDiff(function(diffs){
-							return ('<test></test>')
-						})
-					},
-					sendDiff: function(cb) {
-						var self = this;
-						var fd = new FormData();
-						var innerhtmldiv = $('div.centerallwrap')[0];
-						if (!innerhtmldiv) return;
-						var innerhtml = $(innerhtmldiv).html().toString();
-						fd.append("str", innerhtml);
-						
-						var uploadurl = '/diff';
-						$.ajax({
-							url: uploadurl,
-							type: 'POST',
-							data: fd,
-							processData: false,
-							contentType: false,
-							success: function(diff) { 
-								cb(diff)
-								console.log(self.diff)
-							}
-							
-						})
-					},
+
 					dPathAttr: function() {
 						var self = this;
 						var thickness = (!thickness ? 50 : thickness);
@@ -913,61 +660,6 @@ html
 							})
 						}
 						
-					},
-					uploadDocx: function(evt) {
-						var self = this;
-
-						var file = evt.target.files[0]
-						
-						JSZip.loadAsync(file)
-						.then(function(zip) {
-							zip.generateAsync({type: 'Blob'})
-							.then(function(blob){
-								var fd = new FormData();
-								fd.append("docx", blob);
-								var uploadurl = '/api/importdocx/docx';
-								$.ajax({
-									url: uploadurl,
-									type: 'POST',
-									data: fd,
-									processData: false,
-									contentType: false,
-									success: function(response) { 
-										window.location.href = '/'
-									}
-									
-								})
-							})
-						})
-					},
-					uploadTxt: function(file) {
-						var reader = new FileReader();
-						var self = this;
-						reader.onloadend = function(e) {
-							var fd = new FormData();
-
-							fd.append("txt", file);
-							var chtitle = encodeURIComponent($('#chaptername').val());
-							var uploadurl = '/api/importtxt/txt';
-							$.ajax({
-								url: uploadurl,
-								type: 'POST',
-								data: fd,
-								processData: false,
-								contentType: false,
-								success: function(response) { 
-									window.location.href = '/'
-								}
-								
-							})
-						}
-						reader.readAsDataURL(file)
-
-					},
-					importTxt: function(e){
-						var self = this;
-						var file = e.target.files[0]//document.getElementById('importtxt').files[0];//e.target.files[0];
-						self.uploadTxt(file);
 					},
 					importCsv: function(e){
 
@@ -1029,16 +721,9 @@ html
 						if (check !== '' && type === 'givenName') {
 							//var check = $(elem).val();
 							var url = check.replace(' ', '_');
-							$.post('/check/'+check).done(function(result){
+							$.post('/check/'+check).done(function(result, res){
+								console.log(result, res)
 								self.avail = (result === 'Available')
-								if (self.avail) {
-									$.post('/reserve/'+check+'');
-									if (self.pu[type]) {
-										self.pu[type] = check;
-									} else if (self.pu.properties[type]) {
-										self.pu.properties[type] = check;
-									}
-								}
 							})
 						}
 					},
@@ -1650,32 +1335,6 @@ html
 									self.latlngs = dll;
 									self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
 									console.log(self.doc.geometry.coordinates)
-									
-									//- if (cll.lng) {
-									//- 	//- self.dataLayer.getLatLngs().forEach(function(latlng, h){
-									//- 		switch(self.lvl){
-									//- 			case 'hi':
-									//- 				console.log(self.doc.geometry.coordinates[self.h][self.i], [cll.lat, cll.lng])
-									//- 				self.doc.geometry.coordinates[self.i] = [cll.lng, cll.lat]
-									//- 				break;
-									//- 			case 'hij':
-									//- 				if (self.doc.geometry.coordinates[self.h][self.i][self.j]) {
-									//- 					console.log(self.doc.geometry.coordinates[self.h][self.i][self.j], [cll.lat, cll.lng])
-									//- 					self.doc.geometry.coordinates[self.h][self.i][self.j] = [cll.lng, cll.lat]
-									//- 				}
-									//- 				break;
-									//- 			case 'hijm':
-									//- 				self.doc.geometry.coordinates[self.h][self.i][self.j][self.m] = [cll.lng, cll.lat]
-									//- 				break;
-									//- 			default:
-									//- 				self.doc.geometry.coordinates[self.h] = [cll.lng, cll.lat]
-									//- 		}
-									//- 
-									//- 	//- })
-									//- }
-									
-									
-									//- self.doc.geometry.coordinates = latlngs
 								})
 								//dataLayer.on('dblclick', L.DomEvent.stop).on('dblclick', dataLayer.toggleEdit);
 								var latlng;
@@ -1735,15 +1394,7 @@ html
 								self.lMarker = L.marker(dataCoords, {draggable: true}).addTo(map);
 								
 							}
-							/*L.Canvas.include({
-									_extendRedrawBounds: function (layer) {
-											if (!layer._pxBounds) return;
-											var padding = (layer.options.weight || 0) + 1;
-											this._redrawBounds = this._redrawBounds || new L.Bounds();
-											this._redrawBounds.extend(layer._pxBounds.min.subtract([padding, padding]));
-											this._redrawBounds.extend(layer._pxBounds.max.add([padding, padding]));
-									}
-							});*/
+
 							self.map.panTo(latlng);
 							
 							cb(latlng)

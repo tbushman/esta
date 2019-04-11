@@ -23,8 +23,3 @@ div.cell.tb-03-m0(v-show="(accordions[n].indexOf(doc.index) !== -1)", aid:table=
 		div.breadcrumbs.tb-font-xxs(v-text="img.caption", aid:pstyle="breadcrumbs", style="position: absolute;")
 		img(v-bind:src="img.image+'?version='+doc.__v", v-bind:alt="(img.caption !== 'Sample caption' ? img.caption : '' )")
 
-div.cell.tb-11-m0(v-if="doc.properties.diffs.length > 0", v-show="(accordions[n].indexOf(doc.index) !== -1)")
-	label.tb-11-m0(v-bind:for="'diff'+doc.index", v-text="'Revision timeline'", style="margin-top:20px;")
-	select(v-bind:id="'diff'+doc.index", style="pointer-events: all;", v-on:change="changeDiff(doc, false)", v-bind:value="(diff && diff.ind === doc.index ? diff.ind : null)")
-		option(value="null", v-text="'Latest'", v-bind:selected="diff && diff.ind !== doc.index")
-		option(v-if="doc.properties.diffs", v-for="(date, k) in doc.properties.diffs", v-bind:value="k", v-text="date.user.uname + ' | ' + moment(date.date).format('YYYY-MM-DD mm:ss')")

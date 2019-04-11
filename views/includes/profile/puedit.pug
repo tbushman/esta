@@ -42,7 +42,7 @@ div.grid-right
 						:value="(pu && pu.properties ? pu.properties.zip : '')")
 				
 
-				div.tb-10-m0.input-field
+				//div.tb-10-m0.input-field
 					//- //div.tb-10-m0.input-field
 					//- label.ms-Label I represent a 
 					//- select(@change="changePlace($event)", name="placetype")
@@ -88,10 +88,10 @@ div.grid-right
 					//- 				min="1900-1-1"
 					//- 				max="2050-1-1"
 					//- 			)
-						div.tb-10-m0.input-field(v-if="(pu && pu.username !== loggedin)")
-							label.ms-Label Username
-							input.ms-TextField-field.is-required(type="text", name="username", maxlength="40", id="username", aria-required="true", 
-								@blur="checkNameValidity('username', '\s!@#$%^*()+=-[]\\\';,./{}|\<>?:', 'Alpha-numeric characters only, please', $event)", required, :disabled="(pu && pu.username === loggedin)")
+				div.tb-10-m0.input-field(v-if="(pu && pu.username !== loggedin)")
+					label.ms-Label Username
+					input.ms-TextField-field.is-required(type="text", name="username", maxlength="40", id="username", aria-required="true", 
+						@blur="checkNameValidity('username', '\s!@#$%^*()+=-[]\\\';,./{}|\<>?:', 'Alpha-numeric characters only, please', $event)", required, :disabled="(pu && pu.username === loggedin)")
 						//- div.tb-10-m0.input-field
 						//- 	label.ms-Label(for="languages") Language
 						//- 		datalist#theselanguages
@@ -103,18 +103,18 @@ div.grid-right
 						//- 					span #{lang.name}
 							//input.ms-TextField-field.is-required(type="text", list="theselanguages", id="languages")
 						
-						div.tb-10-m0.input-field
-							label.ms-Label Email
-							//									@blur="checkEmailValidity()", 
+				div.tb-10-m0.input-field
+					label.ms-Label Email
+					//									@blur="checkEmailValidity()", 
 
-							input.ms-TextField-field.is-required(type="email", name="email", id="email", aria-required="true", 
-								:value="(pu && pu.username === loggedin ? pu.email : '')",
-								:placeholder="(pu && pu.username === loggedin ? pu.email : '')",
-								required
-								)
-						div.tb-10-m0.input-field.is-required(v-if="(pu && pu.username !== loggedin)")
-							label.ms-Label Password
-							input.ms-TextField-field.is-required(type="password", name="password", aria-required="true", required, 
-								:disabled="(pu && pu.username === loggedin)")
-					p
-					button.btn.waves-effect.waves-light#submitregister(type="submit", :ariaDescription="(menu === 'register' ? 'Register' : 'Submit')", v-text="(menu === 'register' ? 'Register' : 'Submit')")
+					input.ms-TextField-field.is-required(type="email", name="email", id="email", aria-required="true", 
+						:value="(pu && pu.username === loggedin ? pu.email : '')",
+						:placeholder="(pu && pu.username === loggedin ? pu.email : '')",
+						required
+						)
+				div.tb-10-m0.input-field.is-required(v-if="(pu && pu.username !== loggedin)")
+					label.ms-Label Password
+					input.ms-TextField-field.is-required(type="password", name="password", aria-required="true", required, 
+						:disabled="(pu && pu.username === loggedin)")
+				p
+				button.btn.waves-effect.waves-light#submitregister(type="submit", :ariaDescription="(menu === 'register' ? 'Register' : 'Submit')", v-text="(menu === 'register' ? 'Register' : 'Submit')")

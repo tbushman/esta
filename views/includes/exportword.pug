@@ -8,171 +8,53 @@ html(xmlns:v="urn:schemas-microsoft-com:vml", xmlns:o='urn:schemas-microsoft-com
 		//
 			&nbsp
 		style(type="text/css")
-			include ../../public/stylesheets/styleword.css
+			include ../../public/stylesheets/style.css
 
 		
 	body
 		
 		div.Section1.WordSection1
 			
-			table(cellspacing="0px", width="100%", style="width: 100%;table-layout: fixed;overflow:hidden;")
-				tr
-					td
-						- var ct = 0
-						each data, n in dat.length ? dat : []
-							- var cnt = 0
-							- var cntt = 0
-							each doc, i in data.length ? data : []
-								if (n === 0)
-									if (doc.properties.section.ind === "000")
-										- cnt++
-										if (cnt === 1)
-											if (i === 0)
-												each img, j in doc.properties.media
-												
-													if (j === 0)
-														span.img.tb-10-m0(style="position:relative;display:inline-block;")
-															img(width= 680,src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
-									
-									if (i === data.length - 1)
-										
-										div(style="padding:100px;background-color:rgba(250,251,237,0.9);position:absolute;display:block;margin:0 0 20px 0;page-break-after:always;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index:2;")
-											p.tb-font-xxxl(style="text-transform:uppercase;letter-spacing:5px;text-align:center;") City
-											p.tb-font-l(style="text-transform:uppercase;letter-spacing:2px;text-align:center;") Title 
-												span.bd #{(parseInt(data[data.length-1].properties.title.ind,10)+1)} 
-												span #{data[data.length-1].properties.title.str}
-									
-									if (doc.properties.diffs.length > 0)
-										- ct++
-										if (ct === 1)
-										
-											p.tb-font-xxs(style="text-align:center;margin-bottom:20px;padding-bottom:20px;") Revised 
-												span #{moment(doc.properties.diffs[doc.properties.diffs.length-1].date).format('YYYY-MM-DD')}
-								else
-									
-									if (n < 3)
-										if (doc.properties.section.ind === "000")
-											- cntt++
-											if (cntt === 1)
-												if (i === 0)
-													
-													each img, j in doc.properties.media
-													
-														if (j === 0)
-															span.img.tb-10-m0(style="position:relative;display:inline-block;")
-																img(width= 680,src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ), style="width:100%;")
-						
-
-		
-				
-
-						
 			div.centerallwrap(style="visibility:visible;background-color: #fff; background-color: var(--primary); pointer-events:all;")
 				
 				div.centerall
 					
-					each data, n in dat
-						if (n === 0)
-							div#chapter
-								table(cellspacing="0px", style="width:100%;table-layout: auto;")
-									tr.tb-font-xxl(style="padding: 0;")
-										td 
-											div(style="clear:both!important;")
-											p.tb-font-xxl(style="page-break-before:always;display:block;") Title 
-												span.bd #{(parseInt(data[0].properties.title.ind,10)+1)}
-												span &nbsp
-												span #{data[0].properties.title.str}
-											div(style="clear:both!important;")
-					p.tb-font-xl Table of Contents
-					<!--[if supportFields]>
-					span(style='mso-element:field-begin')
-					| TOC \o "1-2" \h \z \t
-					span(style='mso-element:field-separator')
-					span.tb-font-xl(style='mso-no-proof:yes; font-size: 20px; color: red;') Table of contents - Please right-click here and then choose "Update Field" to initialize this field.
-					span(style='mso-element:field-end')
-
-					<![endif]-->
-					p.tb-11-m0.footrule &nbsp
-						
+					
 					table(cellspacing="0px", style="width: 100%;table-layout: fixed;overflow:hidden;")
 						tr#chapter
-							td(style="padding: 0;width:100%;", colspan="1")
-							td(style="padding: 0;width:100%;", colspan="1")
-						- var c = 0
-						each data, n in dat.length ? dat : []
-							
-							
-							tr#chapter.tb-font-l
-								
-								td(style="padding: 0;", colspan="2")
-									div(style="clear:both!important;")
-									h1(style="page-break-before:always;display:block;")
-										span Chapter 
-										span.bd #{(parseInt(data[0].properties.chapter.ind,10)+1)}
-										span &nbsp
-										span #{data[0].properties.chapter.str}
-									div(style="clear:both!important;")
-							- var count = 0
-							each doc, i in data.length ? data : []
-								tr.tb-font-l
-									td.headrule(colspan="2", style="overflow:hidden;")
-										if (doc.properties.section.ind !== "000")
-											h2
-												span.bd #{(parseInt(doc.properties.title.ind,10)+1)}
-													span .
-													span #{(parseInt(doc.properties.chapter.ind,10)+1)}
-													span .
-													span #{(parseInt(doc.properties.section.ind,10)+1)}
-												span &nbsp
-													span #{doc.properties.section.str}
-										
-										each img, j in doc.properties.media
-											if (img.orientation === 'landscape')
-												//div.row
-												span.img.tb-10-m0
-													img(width= 680,src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-												if (doc.properties.section.ind !== "000")
-													p.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
-										
-										if (doc.properties.description)
-											p.tb-font-xs(style="font-family:'Calibri',sans-serif;page-break-before:avoid;")
-												
-												!= md(doc.properties.description.replace(/<p>/g,`<p style="font-size:10pt;line-height:13.5pt;">`).replace(/<ol>/g,`<ol style="font-size:10pt;line-height:13.5pt;">`).replace(/<li>/g,`<li style="font-size:10pt;line-height:13.5pt;">`).replace(/href="\/menu\/(\d{1,4})\/(\d{2,4})#(\d{2,5})(&rdquo;|"| )/g, 'href="#$1.$2.$3"').replace(/href="\/menu\/(\d{1,4})\/(\d{2,4})(&rdquo;|"| )/g, 'href="#Chapter_$2"'))
-												//stackoverflow.com/a/49634225/3530394
-												p.tb-font-xs(style="font-family:'Calibri',sans-serif;page-break-before:avoid;")
-											each img, j in doc.properties.media
-												if (img.orientation !== 'landscape')
-													p.img.tb-05-m0(style="margin-top:10px;")
-														img(src= img.image, alt= (img.caption !== 'Sample caption' ? img.caption : '' ))
-													if (doc.properties.section.ind !== "000")
-														p.tb-11-m0.tb-font-xxs(style="position: relative;") #{img.caption}
-								
-								tr
-									td(style="padding: 0 0 0 0;margin:0 0 0 0;width:100%;", colspan="1")
-										p(style="padding: 0 0 0 0;margin:0 0 0 0;") &nbsp
-									td(style="padding: 0 0 0 0;margin:0 0 0 0;width:100%;", colspan="1")
-										p(style="padding: 0 0 0 0;margin:0 0 0 0;") &nbsp
-								- count++
-							- c++
-							tr
-								td.footrule(colspan="2", style="width: 100%;")
-									p.tb-11-m0.footrule &nbsp
+							th(scope="col") &nbsp 
+							th(scope="col") &nbsp 
+							th(scope="col") &nbsp 
+						tr
+							td(style="padding: 0;", colspan="3")
+								div(style="clear:both!important;")
+									h2
+										span #{doc.properties.title.str}
+											span  | 
+											span #{doc.properties.chapter.str}
+											span  | 
+										span.bd #{doc.properties.section.str}
+						tr
+							td(style="padding: 0;", colspan="3")
+								p !{doc.properties.description}
+					
+						tr
+							each si, s in sig
+								td(style="padding: 0;", colspan="1")
+									if (sig && sig.length > 0)
+									
+										div.img.tb-02-m0(style="margin-top:10px;")
+											img(src= si.image)
+											p(style="color:black;font-size:5pt;") #{si.ts}
 
-			
-			
-			
-			
-			
-			
-			
 			div#f1(style="mso-element:footer;")
 				p.MsoFooter
 					table(width="100%", border="0", cellspacing="0", cellpadding="0")
 						tr.tb-font-xxs
 							td(width="80%")
-								span.tb-font-xxs(style="color:#999;") City 
+								span.tb-font-xxs(style="color:#999;") #{doc.properties.title.str}
 								span.tb-font-xxs(style="color:#999;") | 
-								span.tb-font-xxs(style="color:#555;") Subdivisions
+								span.tb-font-xxs(style="color:#555;") #{doc.properties.section.str}
 							td(align="right", width="20%")
 								
 								span(class="MsoPageNumber")
