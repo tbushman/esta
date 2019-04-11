@@ -1247,6 +1247,7 @@ table {
 }
 div.cell {
 	z-index: 99999;
+	display: inline-block;
 }
 ins {
 	color: green!important;
