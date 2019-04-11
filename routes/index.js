@@ -234,7 +234,7 @@ var storage = multer.diskStorage({
 	destination: function (req, file, cb) {
 		var p, q;
 		if (!req.params.type) {
-			p = ''+publishers+'/pu/publishers/gnd/signatures/'+req.params.did+'/'+req.params.puid+''
+			p = ''+publishers+'/pu/publishers/esta/signatures/'+req.params.did+'/'+req.params.puid+''
 		} else {
 			if (req.params.type === 'png') {
 				p = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+''
@@ -1452,7 +1452,7 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 // 				return next(err)
 // 			}
 // 			console.log('blrgh');
-// 			var l = '/publishers/gnd/signatures/'+doc._id+'/'+pu._id+'/img_'+doc._id+'_'+pu._id+'.png';
+// 			var l = '/publishers/esta/signatures/'+doc._id+'/'+pu._id+'/img_'+doc._id+'_'+pu._id+'.png';
 // 			Signature.findOne({image: l}, function(err, pud){
 // 				if (err) {
 // 					return next(err)
@@ -1577,8 +1577,8 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 // 			uname: pu.username,
 // 			givenName: pu.properties.givenName,
 // 			documentId: did,	
-// 			image: '/publishers/gnd/signatures/'+did+'/'+puid+'/img_'+did+'_'+puid+'.png',
-// 			image_abs: ''+publishers+'/pu/publishers/gnd/signatures/'+did+'/'+puid+'/img_'+did+'_'+puid+'.png'
+// 			image: '/publishers/esta/signatures/'+did+'/'+puid+'/img_'+did+'_'+puid+'.png',
+// 			image_abs: ''+publishers+'/pu/publishers/esta/signatures/'+did+'/'+puid+'/img_'+did+'_'+puid+'.png'
 // 		});
 // 		var push = {$push:{}};
 // 		var key = 'sig';
@@ -1649,7 +1649,7 @@ router.post('/sig/uploadsignature/:did/:puid', uploadmedia.single('img'), csrfPr
 					username: pu.username,
 					givenName: pu.properties.givenName,
 					documentId: doc._id,	
-					image: '/publishers/gnd/signatures/'+req.params.did+'/'+req.params.puid+'/img_'+req.params.did+'_'+req.params.puid+'.png',
+					image: '/publishers/esta/signatures/'+req.params.did+'/'+req.params.puid+'/img_'+req.params.did+'_'+req.params.puid+'.png',
 					image_abs: req.url
 				});
 				var push = {$push:{}};
@@ -1718,7 +1718,7 @@ router.post('/sig/editprofile', function(req, res, next){
 				if (err) {
 					return next(err)
 				}
-				var imgurl = ''+publishers+'/publishers/gnd/images/avatar/'+ pu.username + '.png';
+				var imgurl = ''+publishers+'/publishers/esta/images/avatar/'+ pu.username + '.png';
 				var pd = (process.env.NODE_ENV === 'production' ? process.env.PD.toString() :  process.env.DEVPD.toString())
 				if (body.avatar) {
 					if (body.avatar.substring(0,1) !== "/") {
@@ -1822,7 +1822,7 @@ router.get('/api/exportword/:id', async function(req, res, next){
 							return next(err)
 						}
 						//this doesnt work on server:
-						// return res.redirect('/publishers/gnd/word/'+now+'.docx');
+						// return res.redirect('/publishers/esta/word/'+now+'.docx');
 						//need to use:
 						var pugpath = path.join(__dirname, '../views/includes/exportwordview.pug');
 						var str = pug.renderFile(pugpath, {
@@ -1922,7 +1922,7 @@ router.get('/list/:id/:index', async function(req, res, next){
 			
 			
 			if (req.isAuthenticated()) {
-				var l = '/publishers/gnd/signatures/'+doc._id+'/'+req.user._id+'/img_'+doc._id+'_'+req.user._id+'.png';
+				var l = '/publishers/esta/signatures/'+doc._id+'/'+req.user._id+'/img_'+doc._id+'_'+req.user._id+'.png';
 				var m = '/pu/getgeo/'+req.user._id+'';
 				console.log('m')
 				console.log(m)

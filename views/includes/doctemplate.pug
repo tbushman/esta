@@ -41,12 +41,12 @@ div.maintitle.centerall(:style="{'pointer-events':(mapActive? 'none' : 'auto')}"
 		section.row(v-if="doc")
 			a(v-bind:href="'/'", style="pointer-events:all;")
 				div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-					div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+					div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head", style="display:block;")
 						header.row.tb-font-l Title 
 							span.bd(v-text="(parseInt(doc.properties.title.ind,10)+1)")
 							span(v-text="' '") 
 							span(v-text="doc.properties.title.str")
-					div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+					div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head", style="display:block;")
 						header.row.tb-font-l Chapter 
 							span.bd(v-text="(parseInt(doc.properties.chapter.ind,10)+1)")
 							span(v-text="' '")

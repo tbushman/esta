@@ -514,12 +514,21 @@ html
 							self.modal.id = 'zip'
 						} else if (geolocation) {
 							//http://localhost:8686/sig/getgeo/5ca8cd51aa87b56585bedbb4/40.666473599999996/-111.8096681/null/null
-							$.post('/pu/getgeo/'+pos.lat+'/'+pos.lng+'/'+null+'')
-							.then(function(href){
-								window.location.href = href
-							})
+							if (!pos || !pos.lat) {
+								
+							} else {
+								$.post('/pu/getgeo/'+pos.lat+'/'+pos.lng+'/'+null+'')
+								.then(function(href){
+									window.location.href = href
+								})
+							}
+							
 						} else {
-							window.location.href = '/pu/getgeo/'+self.pu._id+''
+							if (!self.pu || !self.pu._id){
+								
+							}else {
+								window.location.href = '/pu/getgeo/'+self.pu._id+''
+							}
 						}
 					},
 					ifNullThenArr(obj) {

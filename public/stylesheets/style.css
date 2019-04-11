@@ -1236,7 +1236,8 @@ div.maintitle {
 	background-color: var(--primary);
 	padding: 45px; 
 	pointer-events: auto;
-	min-height: auto!important;
+	min-height: 100vh;
+	/* min-height: auto!important; */
 }
 rss {
 	text-align:right; 
