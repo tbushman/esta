@@ -40,7 +40,7 @@ each mn, k in menus
 
 				input(type="hidden", v-model="newDoc.tiind")
 				input(type="hidden", v-model="newDoc.chind")
-				label(for="placetype") Petition Title
+				label(for="placetype") Document Title
 				input(type="text", id="chtitle", v-model="newDoc.chtitle")
 				a(role="button", title="Create", :href="'/api/new/'+newDoc.placetype+'/'+newDoc.place+'/'+newDoc.tiind+'/'+newDoc.chind+'/'+newDoc.secind+'/'+encodeURIComponent(newDoc.chtitle)+''", style="margin-bottom: 50px") Create
 			

@@ -455,7 +455,7 @@ html
 							
 						})
 					}
-					//self.sliderImg()
+					self.sliderImg()
 					
 					
 				},
@@ -542,7 +542,7 @@ html
 								$('#slider').css('opacity',0);
 								setTimeout(function(){
 									if (self.sliderIndex > 3) {
-										self.sliderIndex = 1
+										self.sliderIndex = 0
 									} else {
 										self.sliderIndex += 1;
 									}
@@ -552,6 +552,8 @@ html
 									
 								},2000)
 							},10000)
+						} else {
+							console.log('no slider')
 						}
 					},
 					clickSlider: function(diff, doc){
