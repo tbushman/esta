@@ -51,7 +51,7 @@ div.maintitle.centerall(:style="{'pointer-events':(mapActive? 'none' : 'auto')}"
 							span.bd(v-text="(parseInt(doc.properties.chapter.ind,10)+1)")
 							span(v-text="' '")
 							span(v-text="doc.properties.chapter.str")
-			div.row(v-if="(!loggedin || loggedin === '') && (!edit || edit === null)")
+			div.row(v-if="(!loggedin || loggedin === '')")
 				include header.pug
 				include bodysingle.pug
 				//- div.row

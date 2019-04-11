@@ -1,14 +1,15 @@
 
 div.cell.tb-07-m0.tb-font-s(
-	v-if="dfi && doc.properties.diffs[dfi]",
+	v-if="dfi",
 	aid:pstyle="p", aid:table="cell", aid:crows="1",
 	aid:ccols="1",
 	aid5:cellstyle="desc"
 	)
-	span(v-if="doc.properties.diffs[dfi-1]", v-html="htmldiff(doc.properties.diffs[dfi-1].str, doc.properties.diffs[dfi].str)")
-	span(v-else-if="doc.properties.diffs[dfi].str && doc.properties.description", v-html="htmldiff(doc.properties.description, doc.properties.diffs[dfi].str)")
+	span(v-if="!doc.properties.diffs[dfi]", v-html="doc.properties.description")
+	span(v-else-if="doc.properties.diffs[dfi] && doc.properties.diffs[dfi-1]", v-html="htmldiff(doc.properties.diffs[dfi-1].str, doc.properties.diffs[dfi].str)")
+	span(v-else-if="doc.properties.diffs[dfi] && doc.properties.diffs[dfi].str && doc.properties.description", v-html="htmldiff(doc.properties.description, doc.properties.diffs[dfi].str)")
 div.cell.tb-07-m0.tb-font-s(
-	v-else-if="!dfi || !doc.properties.diffs[dfi]",
+	v-else-if="!dfi",
 	aid:pstyle="p", aid:table="cell", aid:crows="1",
 	aid:ccols="1",
 	aid5:cellstyle="desc"
