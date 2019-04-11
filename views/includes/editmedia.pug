@@ -17,8 +17,8 @@ div.tb-10-m0(v-if="edit === doc.index")
 	//- 			input.tb-font-s(type="text", v-bind:name="'img'+img.index+'_name'", v-bind:id="'img'+img.index+'_name'", v-bind:value="img.name" disabled)
 	div.row
 		div.tb-10-m0.tb-02-m3
-			div.row(style="height: 100px;")
-				span.img(v-bind:id="img.index", v-bind:name="doc._id")
+			div.row(style="height: auto;")
+				span.img(v-bind:id="img.index", v-bind:name="doc._id", style="height:150px;")
 					img(v-bind:id="'view'+img.index", v-bind:src="img.image+'?version='+Math.random()")
 				p
 				label(for="media") Switch out image:

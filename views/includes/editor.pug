@@ -21,7 +21,7 @@ p
 	//div.row.spacer#appendmedia(v-if="j")
 	a.success.block.spacer.tb-03-m0(role="button", v-on:click="addNewMedia(doc._id, doc.properties.media.length)")
 		span Add image
-	
+hr
 div(style="visibility: hidden;")
 input.block#latlng(v-bind:value="JSON.stringify(doc.geometry.coordinates)", name="latlng", style="width: 100%", type="hidden")
 div.row

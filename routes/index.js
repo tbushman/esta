@@ -55,7 +55,7 @@ var isJurisdiction = async function isJurisdiction(doc, pu, cb) {
 		if (!pu.geometry || !pu.geometry.type || pu.geometry.coordinates.length === 0) {
 			gtype = 'MultiPolygon'
 			if (!pu.sig[pu.sig.length-1]) {
-				console.log(pu)
+			// console.log(pu)
 				
 				var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
 				var zipcoden; 
@@ -72,8 +72,8 @@ var isJurisdiction = async function isJurisdiction(doc, pu, cb) {
 						zipcoden
 						)
 				});
-				console.log('zipcode')
-				console.log(zipcode)
+			// console.log('zipcode')
+			// console.log(zipcode)
 				
 				if (zipcode.length === 0) return cb(null);
 				lat = parseFloat(zipcode[0].properties["INTPTLAT10"]);
@@ -97,10 +97,10 @@ var isJurisdiction = async function isJurisdiction(doc, pu, cb) {
 			gcoords = pu.geometry.coordinates;
 		}
 		if (!gcoords || gcoords.length === 0) {
-			console.log(gcoords)
+		// console.log(gcoords)
 			cb(null)
 		} else {
-			console.log(gcoords)
+		// console.log(gcoords)
 			Content.findOne({_id: doc._id, geometry: {$geoIntersects: {$geometry: {type: gtype, coordinates: gcoords}}}}).lean().exec(function(err, doc){
 				if (err) {
 					console.log(err)
@@ -618,7 +618,7 @@ function getDat(req, res, next){
 						
 					})
 				})
-				console.log(dat)
+			// console.log(dat)
 				cb(null, dat)
 			})
 		}
@@ -1060,7 +1060,7 @@ router.get('/auth/slack', passport.authenticate('slack'));
 router.get('/auth/slack/callback',
   passport.authenticate('slack', { failureRedirect: '/login' }),
   (req, res) => {
-		console.log(req.user)
+	// console.log(req.user)
 		req.session.userId = req.user._id;
 		req.session.loggedin = req.user.username;
 		return res.redirect('/sig/editprofile');
@@ -1640,7 +1640,7 @@ router.post('/sig/uploadsignature/:did/:puid', uploadmedia.single('img'), csrfPr
 			var position;
 			if (!pu.properties.lnglat || pu.properties.lnglat.length !== 2) {
 				position  = puPosition(pu);
-				console.log(pu)
+			// console.log(pu)
 			} else {
 				position = {lat:pu.properties.lnglat[1], lng:pu.properties.lnglat[0]}
 				var signature = new Signature({
@@ -1675,7 +1675,7 @@ router.post('/sig/uploadsignature/:did/:puid', uploadmedia.single('img'), csrfPr
 });
 
 router.get('/sig/editprofile', function(req, res, next){
-	console.log('bleh')
+// console.log('bleh')
 	Content.find({}).lean().sort({'properties.time.end': 1}).exec(function(err, data){
 		if (err) {return next(err)}
 		Publisher.findOne({_id: req.session.userId}, async function(err, pu){
@@ -1710,10 +1710,10 @@ router.get('/sig/editprofile', function(req, res, next){
 router.post('/sig/editprofile', function(req, res, next){
 	var body = req.body;
 	var username = req.user.username;
-	console.log(body)
+// console.log(body)
 	asynk.waterfall([
 		function(next) {
-			console.log(req.user._id)
+		// console.log(req.user._id)
 			Publisher.findOne({_id: req.user._id}).lean().exec(function(err, pu){
 				if (err) {
 					return next(err)
@@ -1924,17 +1924,17 @@ router.get('/list/:id/:index', async function(req, res, next){
 			if (req.isAuthenticated()) {
 				var l = '/publishers/esta/signatures/'+doc._id+'/'+req.user._id+'/img_'+doc._id+'_'+req.user._id+'.png';
 				var m = '/pu/getgeo/'+req.user._id+'';
-				console.log('m')
-				console.log(m)
+			// console.log('m')
+			// console.log(m)
 				Signature.findOne({image: l}, function(err, pud){
 					if (err) {
 						return next(err)
 					}
 					var pu = req.user;
-					// console.log(pu)
+					//// console.log(pu)
 					isJurisdiction(doc, req.user, function(signable){
-						console.log('signable?')
-						console.log(signable)
+					// console.log('signable?')
+					// console.log(signable)
 						var csrftoken = req.csrfToken();
 						if (signable === null) {
 							return res.redirect(m)
@@ -1994,7 +1994,7 @@ router.get('/list/:id/:index', async function(req, res, next){
 
 router.get('/menu/:tiind/:chiind', function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
-	console.log(outputPath)
+// console.log(outputPath)
 	req.session.importgdrive = false;
 	var key, val;
 	var key2 = null, val2;
@@ -2141,7 +2141,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle', async fun
 			}
 			// var sind, 
 			var stitle, chtitle, chnd, snd, xmlurl;
-			console.log(req.params.placetype)
+		// console.log(req.params.placetype)
 			if (req.params.placetype === 'Nation' || req.params.placetype === "'Nation'") {
 				places = usstates;
 				if (isNaN(chind) || !arr[tiind].chapter[chind]) {
@@ -2221,7 +2221,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle', async fun
 			});
 			content.save(function(err){
 				if (err) {
-					console.log(err)
+				// console.log(err)
 				}
 				Content.find({}).sort( { index: 1 } ).exec(function(err, data){
 					if (err) {
@@ -2278,8 +2278,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 							var thumburl = ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
 							thumburls.push(thumburl.replace(publishersDir, ''))
 							count++;
-							console.log('thumburl, thumbbuf')
-							console.log(thumburl, thumbbuf)
+						// console.log('thumburl, thumbbuf')
+						// console.log(thumburl, thumbbuf)
 							fs.writeFile(thumburl, thumbbuf, function(err) {
 								if(err) {
 									console.log("err", err);
@@ -2359,7 +2359,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			}
 
 			var newdate = new Date();
-			console.log(body.latlng)
+		// console.log(body.latlng)
 			//console.log(desc, body.description);
 			var end;
 			var current;
@@ -2442,7 +2442,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					count++
 				}
 			}
-			console.log(id)// doc._id = ''+doc._id
+		// console.log(id)// doc._id = ''+doc._id
 			entry = JSON.parse(JSON.stringify(entry))
 			var set1 = {$set: {}};
 			set1.$set['properties'] = entry.properties;

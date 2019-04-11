@@ -768,7 +768,7 @@ html
 						//- 	arr[i] = binStr.charCodeAt(i);
 						//- }
 						//- cb( new Blob( [arr], {type: 'image/png'} ) );
-						console.log(self.can)
+					// console.log(self.can)
 						if (!HTMLCanvasElement.prototype.toBlob) {
 						 Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
 							value: function (callback, type, quality) {
@@ -783,7 +783,7 @@ html
 						 });
 						}
 						self.can[0].toBlob(function(blob){
-							console.log(blob)
+						// console.log(blob)
 							cb(blob);
 						}, 'image/png')
 					},
@@ -794,12 +794,12 @@ html
 							
 							fd.append('img', blob);
 							fd.append('_csrf', '#{csrfToken}');
-							console.log(self.ts)
+						// console.log(self.ts)
 							fd.append('ts', self.ts);
 							//- console.log(self.ts, self.can)
 
 							var uploadurl = '/sig/uploadsignature/'+self.doc._id+'/'+self.pu._id+'';
-							console.log(blob)
+						// console.log(blob)
 							$.ajax({
 								url: uploadurl,
 								type: 'POST',
@@ -809,7 +809,7 @@ html
 								success: function(response) {
 									//- $('#inputimg').val(response);
 									self.mode = 'blog';
-									console.log(response)
+								// console.log(response)
 									window.location.href = response
 								}
 							})
@@ -1008,7 +1008,7 @@ html
 						can.height = h;
 						can.width = w;
 						var ctx = can.getContext('2d');
-						console.log(w,h)
+					// console.log(w,h)
 						ctx.drawImage(img, 0, 0, w, h);
 						self.uploadBlob(img, can, imgindex, function(){
 							var can = $('#canvas'+imgindex+'')[0];
@@ -1039,14 +1039,14 @@ html
 						
 					},
 					latlngsToArr(latlngs, cll){
-						console.log(latlngs)
+					// console.log(latlngs)
 						if (!Array.isArray(latlngs)) {
 							return;
 						}
 						return latlngs.map(function(latlng, h){
 							if (!Array.isArray(latlng)) {
-								console.log('latlng')
-								console.log(latlng)
+							// console.log('latlng')
+							// console.log(latlng)
 								self.h = null;
 								return [latlng.lng,latlng.lat];
 							} else {
@@ -1056,8 +1056,8 @@ html
 								return latlng.map(function(ll, i){
 									if (!Array.isArray(ll)) {
 										if (ll.lat === cll.lat && ll.lng === cli.lng) {
-											console.log('ll')
-											console.log(ll)
+										// console.log('ll')
+										// console.log(ll)
 											self.h = h;
 											self.i = i;
 											self.lvl = 'hi'
@@ -1066,16 +1066,16 @@ html
 										return [ll.lng,ll.lat]
 
 									} else {
-										console.log(ll[0])
+									// console.log(ll[0])
 										if (ll[0].lat && ll[0].lat !== ll[ll.length-1].lat && ll[0].lng !== ll[ll.length-1].lng) {
 											ll.push(ll[0])
 										}
 										return ll.map(function(l, j) {
 											if (!Array.isArray(l)) {
 												if (l.lat === cll.lat && l.lng === cll.lng) {
-													console.log('l')
-													console.log(l);
-													//- console.log(self.doc.geometry.coordinates[h][i][j], cll)
+												// console.log('l')
+												// console.log(l);
+													//-// console.log(self.doc.geometry.coordinates[h][i][j], cll)
 													self.h = h;
 													self.i = i;
 													self.j = j;
@@ -1093,8 +1093,8 @@ html
 												return l.map(function(k, m){
 													if (!Array.isArray(k)) {
 														if (k.lat === cll.lat && k.lng === cll.lng) {
-															console.log('k')
-															console.log(k);
+														// console.log('k')
+														// console.log(k);
 															self.h = h;
 															self.i = i;
 															self.j = j;
@@ -1143,7 +1143,7 @@ html
 							if (!Array.isArray(c[0])) {return self.xrOrNo(c) }
 							else {return} })} else {return} })} else {return} })} else {return}
 						});
-						console.log(arr)
+					// console.log(arr)
 						return arr; 
 					},
 					rxArr(arr) {
@@ -1170,7 +1170,7 @@ html
 															if (!Array.isArray(d[0])) {
 																return self.rxOrNo(d)
 															} else {
-																console.log(d)
+															// console.log(d)
 																return
 															}
 														})
@@ -1317,33 +1317,33 @@ html
 									var latlngs = [];
 									//- console.log(self.dataLayer.getLatLngs(), e)
 									var cll = e.vertex.latlng.__vertex.latlng;
-									console.log(cll);
+								// console.log(cll);
 									var dll = self.dataLayer.getLatLngs();
-									//- console.log(dll)
+									//-// console.log(dll)
 									var lvl = 0;
 									var p = 0;
 									var dl;
 									var lll = self.dataLayer.getLatLngs();
 									self.latlngs = lll;
 									//- if (lll) await self.latlngsToArr(lll, cll, function(arr){
-									//- 	console.log(arr)
+									//- // console.log(arr)
 									//- 	self.doc.geometry.coordinates = arr;
 									//- });
 									
 								})
 								self.map.on('editable:vertex:dragend', function(e){
 									//- var latlngs = [];
-									//- console.log(self.dataLayer.getLatLngs(), e)
+									//-// console.log(self.dataLayer.getLatLngs(), e)
 									var cll = e.vertex.latlng.__vertex.latlng;
-									console.log(cll);
+								// console.log(cll);
 									var dll = self.dataLayer.getLatLngs();
-									//- console.log(dll)
+									//-// console.log(dll)
 									var lvl = 0;
 									var p = 0;
 									var dl;
 									self.latlngs = dll;
 									self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
-									console.log(self.doc.geometry.coordinates)
+								// console.log(self.doc.geometry.coordinates)
 								})
 								//dataLayer.on('dblclick', L.DomEvent.stop).on('dblclick', dataLayer.toggleEdit);
 								var latlng;
@@ -1353,7 +1353,7 @@ html
 									
 									 //- && self.pu && self.pu !== ''
 								} else if (self.mapActive && self.loggedin && self.loggedin !== '') {
-									//- console.log(self.rxArr(self.doc.geometry.coordinates))
+									//-// console.log(self.rxArr(self.doc.geometry.coordinates))
 									dataCoords = //self.rxArr(
 										self.latlngsToArr(latlngs, latlng)
 										//- self.doc.geometry.coordinates
@@ -1362,7 +1362,7 @@ html
 									if (Array.isArray(dataCoords[0])) {
 										if (Array.isArray(dataCoords[0][0])) {
 											if (Array.isArray(dataCoords[0][0][0])) {
-												console.log(dataCoords[0][0][0])
+											// console.log(dataCoords[0][0][0])
 												if (Array.isArray(dataCoords[0][0][0][0])) {
 													
 												} else {
@@ -1376,7 +1376,7 @@ html
 										}
 									}
 									latlng = new L.LatLng(dataCoords[1], dataCoords[0]);
-									console.log(latlng)
+								// console.log(latlng)
 								} else {
 									var coords = //L.latLng(
 										//- self.rxArr(
@@ -1384,7 +1384,7 @@ html
 										self.latlngs;
 									
 									//- );
-									console.log(coords)
+								// console.log(coords)
 									var cd;
 									if (coords) {
 										cd = L.latLngBounds(coords).getCenter();
@@ -1392,7 +1392,7 @@ html
 									if (!cd) {
 										latlng = L.latLng([40, -111.8]);
 									} else {
-										console.log(cd)
+									// console.log(cd)
 										latlng = cd;//- dataCoords = [cd.lng, cd.lat]
 									}
 									dataCoords = [latlng.lat,latlng.lng]
@@ -1410,7 +1410,7 @@ html
 
 						} else {
 							cb(null)
-							console.log('when?')
+						// console.log('when?')
 						}
 					}
 				}
