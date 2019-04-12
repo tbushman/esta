@@ -46,6 +46,7 @@ var schema = new Schema({
 				layers: [String]
 			}
 		],
+		layers: [String],
 		diffs: [Diffs],
 		footnotes: [ ]
 	},

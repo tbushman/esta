@@ -222,7 +222,18 @@ a span, a img {
 	color: #fff;
 	color: var(--secondary);
 }
-
+.tb-font-xxxs {
+	font-family: var(--bfontname), var(--bfonttype)!important;
+	color: #000;
+	color: var(--secondary);
+	font-size: 0.4rem;
+	font-weight: 300;
+	line-height: .6rem;
+	padding: 1px 0 0 0;
+	letter-spacing: 0.02rem;
+	text-transform: none;
+	
+}
 .tb-font-xxs {
 	font-family: var(--afontname), var(--afonttype)!important;
 	color: #481368;
@@ -1312,13 +1323,23 @@ del {
 	}
 }
 
+#publish_logo {
+	position: fixed;
+	bottom: 10px;
+	right: 23px;
+	top: auto;
+	left: auto;
+	min-width: 80px;
+	max-width: 100px;
+	margin: 0 0 0 51%;
+	z-index:1;
+}
+#publish_logo > img {
+	width: 100%;
+	height: auto;
+}
+
 @media (min-width: 600px) {
-	#publish_logo {
-		bottom: 10px;
-	}
-	#publish_logo {
-		right: 23px;
-	}
 	.dropdown {
 	width: 250px;
 	}
