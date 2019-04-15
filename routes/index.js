@@ -593,6 +593,20 @@ function ensureContent(req, res, next) {
 	});
 }
 
+function getLayers(req, res, next) {
+	Content.findOne({_id:req.params.id}).lean().exec(async function(err, doc){
+		if (err) {
+			return next(err)
+		}
+		var layerids = doc.properties.layers;
+		const layers = await layerids.map(function(id){
+			return Content.findOne({_id:id}).then((doc) =>doc).catch((err)=>next(err));
+		})
+		req.layers = layers;
+		return next();
+	})
+}
+
 function getDat(req, res, next){
 	asynk.waterfall([
 		function(cb){
@@ -1891,7 +1905,7 @@ router.post('/checkchaptername/:name', function(req, res, next){
 	})
 })
 
-router.get('/list/:id/:index', async function(req, res, next){
+router.get('/list/:id/:index', getLayers, async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	req.session.importgdrive = false;
@@ -1918,20 +1932,14 @@ router.get('/list/:id/:index', async function(req, res, next){
 			if (err) {
 				return next(err)
 			}
-			
-			
-			
 			if (req.isAuthenticated()) {
 				var l = '/publishers/esta/signatures/'+doc._id+'/'+req.user._id+'/img_'+doc._id+'_'+req.user._id+'.png';
 				var m = '/pu/getgeo/'+req.user._id+'';
-			// console.log('m')
-			// console.log(m)
 				Signature.findOne({image: l}, function(err, pud){
 					if (err) {
 						return next(err)
 					}
 					var pu = req.user;
-					//// console.log(pu)
 					isJurisdiction(doc, req.user, function(signable){
 					// console.log('signable?')
 					// console.log(signable)
@@ -1944,6 +1952,7 @@ router.get('/list/:id/:index', async function(req, res, next){
 								pu: pu,
 								menu: !req.session.menu ? 'view' : req.session.menu,
 								//data: data,
+								layers: req.layers,
 								loggedin: req.session.loggedin,
 								doc: doc,
 								unsigned: (!pud ? true : false),
@@ -1957,6 +1966,7 @@ router.get('/list/:id/:index', async function(req, res, next){
 								csrfToken: csrftoken,
 								unsigned: (!pud ? true : false),
 								loggedin: req.session.loggedin,
+								layers: req.layers,
 								signable: signable,
 								doc: doc,
 								pu: pu,
@@ -2047,6 +2057,20 @@ router.get('/menu/:tiind/:chiind', function(req, res, next){
 		})
 	})
 	
+})
+
+router.get('/api/geointersect/:id', function(req, res, next){
+	Content.findOne({_id:req.params.id}).lean().exec(function(err, doc){
+		if (err) {
+			return next(err)
+		}
+		Content.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: doc.geometry}}}).lean().exec(function(err, data){
+			if (err) {
+				return next(err)
+			}
+			return res.status(200).send(data)
+		})
+	})
 })
 
 router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req, res, next){

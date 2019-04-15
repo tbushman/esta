@@ -21,6 +21,10 @@ p
 	//div.row.spacer#appendmedia(v-if="j")
 	a.success.block.spacer.tb-03-m0(role="button", v-on:click="addNewMedia(doc._id, doc.properties.media.length)")
 		span Add image
+	a.success.block.spacer.tb-03-m0(role="button", v-on:click="getLayers(doc._id)")
+		span Add Geodata
+	input.block.spacer.success.tb-07-m0(v-bind:id="'lyr_'+doc._id", v-on:change="handleGeoJson($event)", type="file", style="padding: 18px;color:#fff;")
+
 hr
 div(style="visibility: hidden;")
 input.block#latlng(v-bind:value="JSON.stringify(doc.geometry.coordinates)", name="latlng", style="width: 100%", type="hidden")
