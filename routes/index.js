@@ -15,6 +15,7 @@ var spawn = require("child_process").exec;
 var dotenv = require('dotenv');
 var marked = require('marked');
 var pug = require('pug');
+var jsts = require('jsts');
 var csrf = require('csurf');
 var Publisher = require('../models/publishers.js');
 var Content = require('../models/content.js');
@@ -254,6 +255,9 @@ var storage = multer.diskStorage({
 			} else if (req.params.type === 'docx') {
 				p = ''+publishers+'/pu/publishers/esta/docx'
 				q = null;//''+publishers+'/pu/publishers/esta/word/thumbs'
+			} else if (req.params.type === 'json') {
+				p = ''+publishers+'/pu/publishers/esta/json';
+				q = null;
 			} else {
 				p = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+''
 				q = ''+publishers+'/pu/publishers/esta/images/thumbs/'+req.params.index+''
@@ -300,6 +304,8 @@ var storage = multer.diskStorage({
 			cb(null, 'txt_' + Date.now() + '.txt')
 		} else if (req.params.type === 'docx') {
 			cb(null, 'docx_'+Date.now()+'.docx')
+		} else if (req.params.type === 'json') {
+			cb(null, 'json_'+req.params.id+'.json')
 		} else if (!req.params.type){
 			cb(null, 'img_'+req.params.did+'_'+req.params.puid+'.png')
 		}
@@ -2073,31 +2079,57 @@ router.get('/api/geointersect/:id', function(req, res, next){
 	})
 })
 
-router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req, res, next){
+router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtection, function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 
-	fs.readFile(req.file.path, 'utf8', function (err, content) {
+	fs.readFile(req.file.path, 'utf8', async function (err, content) {
 		if (err) {
 			return console.log(err)
 		}
-		//console.log(req.file)
-		var entry = [[]];
-		var json = require('d3').csvParse(content);
-		for (var i in json) {
-			if (!isNaN(parseFloat(json[i].longitude))) {
-				var coords = [parseFloat(json[i].longitude), parseFloat(json[i].latitude)];
-				entry[0].push(coords)
-			}
+		var json = JSON.parse(content);
+// 		var reader = new jsts.io.GeoJSONReader();
+// 
+// 		//read your geometries
+// 		var geoms = reader.read(json);
+// console.log(geoms)
+// 		//grab the first one
+// 		var multiPolygon = geoms[0].geometry;
+// 
+// 		//union with all the others
+// 		for (var x=1; x < geoms.length ; x++){
+// 		    multiPolygon = await multiPolygon.union(geoms[x]);
+// 		}
+// 		// { 
+// 		// 	geometry: { 
+// 		// 		_shell: { 
+// 		// 			_points: { 
+// 		// 				_dimension: 3, 
+// 		// 				_coordinates: [
+// 		// console.log(multiPolygon.geometry._shell._points._coordinates)	
+// 		var mp = multiPolygon.geometry._shell._points._coordinates		
+// 		var mpc = await mp.map(function(ft){
+// 			console.log(ft.x)
+// 			return [ft.x,ft.y]
+// 		})
+		var multiPolygon;
+		if (json.features && json.features.length) {
+			console.log(json.features)
+			multiPolygon = await json.features.map(function(ft){
+				return [ft.geometry.coordinates[0], ft.geometry.coordinates[1]];
+			})
+		} else if (json.geometry) {
+			multiPolygon = json.geometry.coordinates;
 		}
+		// console.log(multiPolygon)
 		var geo = {
-			type: 'Polygon',
-			coordinates: entry
+			type: 'MultiPolygon',
+			coordinates: multiPolygon
 		}
-		Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: null }}, function(err, doc){
-			if (err) {
-				return next(err)
-			}
+		// Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: null }}, function(err, doc){
+		// 	if (err) {
+		// 		return next(err)
+		// 	}
 			
 			Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
 				if (err) {
@@ -2111,7 +2143,7 @@ router.post('/api/importcsv/:id/:type', uploadmedia.single('csv'), function(req,
 				//})
 			})
 			
-		})
+		// })
 		
 	})
 })

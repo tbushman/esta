@@ -773,12 +773,15 @@ html
 						//- 
 						//- } else {
 							var reader = new FileReader();
-							reader.addEventListener("load", function () {
+							reader.onloadend = function(e) {
+							//- reader.addEventListener("load", function () {
 								var fd = new FormData();
 								var blob = this.result;
 								console.log(blob)
-								fd.append("json", blob);
-								var uploadurl = '/api/uploadmedia/'+self.doc.index+'/'+(!self.layers.length ? 0 : self.layers.length)+'/json';
+								fd.append("json", file);
+								fd.append('_csrf', '#{csrfToken}');
+
+								var uploadurl = '/api/importjson/'+self.doc._id+'/json';
 								$.ajax({
 									url: uploadurl,
 									type: 'POST',
@@ -789,8 +792,8 @@ html
 											console.log(response)
 										}
 									})
-								
-							}, false)
+							}
+							//- }, false)
 							reader.readAsDataURL(file);
 						//- }
 						
