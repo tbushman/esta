@@ -1,6 +1,6 @@
 
 
-div.maintitle.centerall(:style="{'pointer-events':(mapActive? 'none' : 'auto')}")
+div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 'auto')}")
 	//- div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;z-index:2; position:absolute;pointer-events:all;")
 	//- && pu && pu !== '' && pu.admin
 	div#inputs(v-if="pu && pu !== '' && pu.properties.admin && type !== 'draw'", style="z-index:1;")
@@ -11,7 +11,7 @@ div.maintitle.centerall(:style="{'pointer-events':(mapActive? 'none' : 'auto')}"
 		
 		button.success.mapActive(v-else-if="mapActive && loggedin && loggedin !== ''", class= mn, v-on:click="addMapBlob()",
 			:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: ((wWidth/2) - 50)+'px', 'text-align':'center', 'z-index':1}")
-			span(v-text="'Save Map'")
+			span(v-text="'Save Map Snapshot'")
 	
 	div#inputs(v-else-if="!loggedin || loggedin === '' && type !== 'draw'")
 		button.mapActive(v-if="!mapActive", v-on:click="activateMap()",

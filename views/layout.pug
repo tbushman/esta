@@ -11,7 +11,7 @@ html
 		link(rel="stylesheet", href="/stylesheets/style.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.draw.css")
-		script(type="text/javascript", src="/scripts/vue.min.js")
+		script(type="text/javascript", src="/scripts/vue.js")
 		script(type="text/javascript", src="/scripts/jquery.min.js")
 		script(type="text/javascript", src="/scripts/jquery-ui.min.js")
 		script(type="text/javascript", src="/scripts/moment-with-locales.min.js")
@@ -494,21 +494,6 @@ html
 						console.log(e.target.value)
 						self.dfi = (!isNaN(parseInt(e.target.value, 10)) ? parseInt(e.target.value, 10) : null);
 					},
-					dragEnd: function(event, layer) {
-						var marker = event.target;
-						var position = event.target.getLatLng();
-						//console.log(position)
-						var lat = position.lat;
-						var lng = position.lng;
-						self.lMarker.setLatLng(new L.LatLng(position.lat, position.lng),{draggable:'true'});
-						self.map.panTo(new L.LatLng(position.lat, position.lng))
-						self.position.lng = lng;
-						self.position.lat = lat;
-						if (self.dragind) {
-							self.doc.geometry.coordinates[0][self.dragind] = [lng,lat];
-						}
-
-					},
 					navigateTo: function(url){
 						window.location.href = url;
 					},
@@ -765,37 +750,30 @@ html
 						if (!file) return;
 						console.log(file)
 						// TODO validate json type somehow before upload
-						//- var jsonfile = file.type;
-						//- var jsonTypes= ["application/json"];
-						//- if(jsonTypes.indexOf(jsonfile) === -1) {
-						//- 	$("#info").html("<span class='msg-error'>Please Select A valid JSON File</span><br /><span>Only JSON types allowed</span>");
-						//- 	return false;
-						//- 
-						//- } else {
-							var reader = new FileReader();
-							reader.onloadend = function(e) {
-							//- reader.addEventListener("load", function () {
-								var fd = new FormData();
-								var blob = this.result;
-								console.log(blob)
-								fd.append("json", file);
-								fd.append('_csrf', '#{csrfToken}');
+						var reader = new FileReader();
+						reader.onloadend = function(e) {
+						//- reader.addEventListener("load", function () {
+							var fd = new FormData();
+							var blob = this.result;
+							console.log(blob)
+							fd.append("json", file);
+							fd.append('_csrf', '#{csrfToken}');
 
-								var uploadurl = '/api/importjson/'+self.doc._id+'/json';
-								$.ajax({
-									url: uploadurl,
-									type: 'POST',
-									data: fd,
-									processData: false,
-									contentType: false,
-										success: function(response) { 
-											console.log(response)
-										}
-									})
-							}
-							//- }, false)
-							reader.readAsDataURL(file);
-						//- }
+							var uploadurl = '/api/importjson/'+self.doc._id+'/json';
+							$.ajax({
+								url: uploadurl,
+								type: 'POST',
+								data: fd,
+								processData: false,
+								contentType: false,
+									success: function(response) { 
+										self.doc = response
+										console.log(response)
+									}
+								})
+						}
+						//- }, false)
+						reader.readAsDataURL(file);
 						
 					},
 					processImage: function(imgindex) {
@@ -959,7 +937,7 @@ html
 								self.h = null;
 								return [latlng.lng,latlng.lat];
 							} else {
-								if (latlng[0].lat && latlng[0].lat !== latlng[latlng.length-1].lat && latlng[0].lng !== latlng[latlng.length-1].lng) {
+								if (latlng[0].lat && (latlng[0].lat !== latlng[latlng.length-1].lat || latlng[0].lng !== latlng[latlng.length-1].lng)) {
 									latlng.push(latlng[0])
 								}
 								return latlng.map(function(ll, i){
@@ -972,7 +950,7 @@ html
 										return [ll.lng,ll.lat]
 
 									} else {
-										if (ll[0].lat && ll[0].lat !== ll[ll.length-1].lat && ll[0].lng !== ll[ll.length-1].lng) {
+										if (ll[0].lat && (ll[0].lat !== ll[ll.length-1].lat || ll[0].lng !== ll[ll.length-1].lng)) {
 											ll.push(ll[0])
 										}
 										return ll.map(function(l, j) {
@@ -986,7 +964,7 @@ html
 												return [l.lng,l.lat]
 
 											} else {
-												if (l[0].lat && l[0].lat !== l[l.length-1].lat && l[0].lng !== l[l.length-1].lng) {
+												if (l[0].lat && (l[0].lat !== l[l.length-1].lat || l[0].lng !== l[l.length-1].lng)) {
 													l.push(l[0])
 												}
 												return l.map(function(k, m){
@@ -1011,76 +989,6 @@ html
 							
 						});
 					},
-					xrOrNo(arr) { 
-						// TODO -- better conditional for whole planet
-						return arr.reverse()//true
-						//( arr[0] < arr[1] ? arr.reverse() : arr ) 
-					},
-					rxOrNo(arr) { 
-						// TODO -- better conditional for whole planet
-						return arr.reverse()//true
-						//( arr[0] < arr[1] ? arr.reverse() : arr ) 
-					},
-					xrArr(arr) {
-						var self = this;
-						if (!Array.isArray(arr[0])) return self.xrOrNo(arr);
-						var rxa = arr.map(async function(ar){ if (!Array.isArray(ar[0])) { 
-							return self.xrOrNo(ar) } else if (Array.isArray(ar)) {
-								return await ar.map(function(a){ if (!Array.isArray(a[0])) { 
-									return self.xrOrNo(a) } else if (Array.isArray(a)) {
-										return a.map(function(b){ if (!Array.isArray(b[0])) { 
-											return self.xrOrNo(b) } else if (Array.isArray(b)) {
-												return b.map(function(c){ 
-							if (!Array.isArray(c[0])) {return self.xrOrNo(c) }
-							else {return} })} else {return} })} else {return} })} else {return}
-						});
-					// console.log(arr)
-						return arr; 
-					},
-					rxArr(arr) {
-						var self = this;
-						//console.log(arr)
-						if (!Array.isArray(arr[0])) return self.rxOrNo(arr);
-						var rxa = arr.map(function(ar){ 
-							if (!Array.isArray(ar[0])) { 
-								return self.rxOrNo(ar) 
-							} else if (Array.isArray(ar)) {
-								return ar.map(function(a){ 
-									if (!Array.isArray(a[0])) { 
-										return self.rxOrNo(a) 
-									} else if (Array.isArray(a)) {
-										return a.map(function(b){ 
-											if (!Array.isArray(b[0])) { 
-												return self.rxOrNo(b) 
-											} else if (Array.isArray(b)) {
-												return b.map(function(c){ 
-													if (!Array.isArray(c[0])) {
-														return self.rxOrNo(c) 
-													} else {
-														return c.map(function(d){
-															if (!Array.isArray(d[0])) {
-																return self.rxOrNo(d)
-															} else {
-															// console.log(d)
-																return
-															}
-														})
-													} 
-												})
-											} else {
-												return
-											} 
-										})
-									} else {
-										return
-									} 
-								})
-							} else {
-								return
-							}
-						});
-						return rxa; 
-					},
 					handleGeoJson(e){
 						var self = this;
 						self.file = 
@@ -1099,48 +1007,8 @@ html
 						})
 					},
 					loadLayer(item) {
-						return L.GeoJSON.geometryToLayer(item, {
-							onEachFeature: async function (feature, layer) {
-								if (feature.geometry.type === 'Point') {
-								}
-								if (feature.geometry.type === 'Polygon') {
-									self.latlngs = layer.getLatLngs()
-								}
-								
-							},
-							geometryToLayer: function(feature) {
-								if (feature.geometry.type === 'Polygon') {
-									var geojsonPolygonOptions = {
-										fillColor: 'var(--highlight)',
-										color: '#fff',
-										weight: 2,
-										opacity: 1,
-										fillOpacity: 0.8,
-										className: feature._id
-										
-									};
-									var polygon = L.polygon(feature.geometry.coordinates, geojsonPolygonOptions);
-									return polygon;
-								}
-							},
-							pointToLayer: function (feature, latlng) {
-								if (feature.geometry.type === 'Point') {
-									var geojsonMarkerOptions = {
-										radius: 11,
-										fillColor: 'var(--highlight)',
-										color: '#fff',
-										weight: 2,
-										opacity: 1,
-										fillOpacity: 0.8,
-										className: feature._id+'@'+self.map.latLngToLayerPoint(latlng).x+','+self.map.latLngToLayerPoint(latlng).y+''
-									};
-									var circleMarker = L.circleMarker(latlng, geojsonMarkerOptions);
-									return circleMarker;
-								}
-								
-							}
-						});
-						
+						console.log(item)
+						return L.GeoJSON.geometryToLayer(item);
 					}
 					 /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
 					loadMap(cb) {
@@ -1149,8 +1017,8 @@ html
 						var dataCoords;
 						var map = new L.map('map', { 
 							center: [
-								(!self.position ? 40.7608 : self.position.lat),
-								(!self.position ? -111.8910 : self.position.lng)
+								(!self.latlng ? 40.7608 : self.latlng.lat),
+								(!self.latlng ? -111.8910 : self.latlng.lng)
 							], 
 							zoom: (!self.position ? 6 : self.position.zoom),
 							zoomControl: false,
@@ -1174,18 +1042,7 @@ html
 							
 							attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
 						};
-						//https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png
-						//L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', options3).addTo(map);
-						//var canvas = L.tileLayer.canvas();
-						//canvas.drawTile = function(can, )
 						L.tileLayer('https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A', {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000)}).addTo(map);
-						//var tileCanvas = L.tileLayer.canvas('https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A', {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(100)}).addTo(map); //slc transit
-						//tileCanvas.drawTile = function()
-						//var stamenLayer = new L.StamenTileLayer('terrain');
-						//map.addLayer(stamenLayer)
-						//L.tileLayer('http://{s}.tiles.mapbox.com/v3/tbushman.iba1gl27/{z}/{x}/{y}.png').addTo(map);
-						
-						//L.tileLayer('http://tile.thunderforest.com/outdoors/${z}/${x}/${y}.png').addTo(map);
 						self.map = map
 						if (!self.dataLayer && self.doc) {
 							// generate geographic points from data
@@ -1196,6 +1053,7 @@ html
 								self.dataLayer = self.loadLayer(self.doc);
 								
 								self.map.addLayer(self.dataLayer);
+								self.latlngs = self.dataLayer.getLatLngs();
 								if (self.layers.length) {
 									self.layers.forEach(function(item){
 										self.lyr[item._id] = self.loadLayer(item);
@@ -1221,66 +1079,36 @@ html
 									e.layer.setStyle({color: 'DarkRed'});
 								});
 								self.map.on('editable:vertex:dragstart', async function(e){
-									var latlngs = [];
-									//- console.log(self.dataLayer.getLatLngs(), e)
 									var cll = e.vertex.latlng.__vertex.latlng;
-								// console.log(cll);
 									var dll = self.dataLayer.getLatLngs();
-									//-// console.log(dll)
 									var lvl = 0;
 									var p = 0;
 									var dl;
 									var lll = self.dataLayer.getLatLngs();
 									self.latlngs = lll;
-									//- if (lll) await self.latlngsToArr(lll, cll, function(arr){
-									//- // console.log(arr)
-									//- 	self.doc.geometry.coordinates = arr;
-									//- });
-									
 								})
 								self.map.on('editable:vertex:dragend', function(e){
-									//- var latlngs = [];
-									//-// console.log(self.dataLayer.getLatLngs(), e)
+									console.log(e)
 									var cll = e.vertex.latlng.__vertex.latlng;
-								// console.log(cll);
 									var dll = self.dataLayer.getLatLngs();
-									//-// console.log(dll)
 									var lvl = 0;
 									var p = 0;
 									var dl;
 									self.latlngs = dll;
 									self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
 								})
-								//dataLayer.on('dblclick', L.DomEvent.stop).on('dblclick', dataLayer.toggleEdit);
-								var latlng;
-								if (!Array.isArray(self.doc.geometry.coordinates[0])) {
-									dataCoords = self.doc.geometry.coordinates;
-									latlng = new L.LatLng(dataCoords[0], dataCoords[1]);
-									
-									 //- && self.pu && self.pu !== ''
-								} else if (self.mapActive && self.loggedin && self.loggedin !== '') {
-									//-// console.log(self.rxArr(self.doc.geometry.coordinates))
-									console.log(self.latlngs)
-									dataCoords = 
-										self.latlngsToArr(self.latlngs, L.latLngBounds(self.latlngs).getCenter());
-									latlng = L.latLngBounds(self.latlngs).getCenter();
+								var coords = self.latlngs;
+								if (coords) {
+									latlng = L.latLngBounds(coords).getCenter();
 								} else {
-									var coords = self.latlngs;
-									var cd;
-									if (coords) {
-										cd = L.latLngBounds(coords).getCenter();
-									}
-									if (!cd) {
-										latlng = L.latLng([40, -111.8]);
-									} else {
-										latlng = cd;
-									}
-									dataCoords = [latlng.lat,latlng.lng]
+									console.log(self.latlngs)
+									self.latlngs = self.dataLayer.getLatLngs();
+									latlng = L.latLngBounds(self.latlngs).getCenter();
 								}
 								// TODO admin only for certain things?
 								if (self.loggedin && self.loggedin !== '') self.dataLayer.enableEdit();
 
-								self.lMarker = L.marker(dataCoords, {draggable: true}).addTo(map);
+								self.lMarker = L.marker(latlng, {draggable: true}).addTo(map);
 								
 							}
 

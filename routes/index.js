@@ -15,7 +15,7 @@ var spawn = require("child_process").exec;
 var dotenv = require('dotenv');
 var marked = require('marked');
 var pug = require('pug');
-var jsts = require('jsts');
+// var jsts = require('jsts');
 var csrf = require('csurf');
 var Publisher = require('../models/publishers.js');
 var Content = require('../models/content.js');
@@ -604,7 +604,7 @@ function getLayers(req, res, next) {
 		if (err) {
 			return next(err)
 		}
-		var layerids = doc.properties.layers;
+		var layerids = doc.properties.layers || [];
 		const layers = await layerids.map(function(id){
 			return Content.findOne({_id:id}).then((doc) =>doc).catch((err)=>next(err));
 		})
@@ -2088,62 +2088,32 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 			return console.log(err)
 		}
 		var json = JSON.parse(content);
-// 		var reader = new jsts.io.GeoJSONReader();
-// 
-// 		//read your geometries
-// 		var geoms = reader.read(json);
-// console.log(geoms)
-// 		//grab the first one
-// 		var multiPolygon = geoms[0].geometry;
-// 
-// 		//union with all the others
-// 		for (var x=1; x < geoms.length ; x++){
-// 		    multiPolygon = await multiPolygon.union(geoms[x]);
-// 		}
-// 		// { 
-// 		// 	geometry: { 
-// 		// 		_shell: { 
-// 		// 			_points: { 
-// 		// 				_dimension: 3, 
-// 		// 				_coordinates: [
-// 		// console.log(multiPolygon.geometry._shell._points._coordinates)	
-// 		var mp = multiPolygon.geometry._shell._points._coordinates		
-// 		var mpc = await mp.map(function(ft){
-// 			console.log(ft.x)
-// 			return [ft.x,ft.y]
-// 		})
 		var multiPolygon;
 		if (json.features && json.features.length) {
 			console.log(json.features)
 			multiPolygon = await json.features.map(function(ft){
-				return [ft.geometry.coordinates[0], ft.geometry.coordinates[1]];
+				if (!Array.isArray(ft.geometry.coordinates[0])) {
+					return [ft.geometry.coordinates[0], ft.geometry.coordinates[1]];
+				} else {
+					return ft.geometry.coordinates[0];
+				}
 			})
+		} else if (json[0].geometry) {
+			multiPolygon = json[0].geometry.coordinates;
 		} else if (json.geometry) {
-			multiPolygon = json.geometry.coordinates;
+			multiPolygon = json.geometry.coordinates
 		}
 		// console.log(multiPolygon)
 		var geo = {
 			type: 'MultiPolygon',
 			coordinates: multiPolygon
 		}
-		// Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: null }}, function(err, doc){
-		// 	if (err) {
-		// 		return next(err)
-		// 	}
-			
-			Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
-				if (err) {
-					return next(err)
-				}
-				/*Content.findOneAndUpdate({_id: req.params.id}, {$set:{'geometry.type': 'Polygon'}}, {safe: true, new: true}, function(err, doc){
-					if (err) {
-						return next(err)
-					}*/
-					return res.status(200).send(doc)
-				//})
-			})
-			
-		// })
+		Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
+			if (err) {
+				return next(err)
+			}
+			return res.status(200).send(doc)
+		})
 		
 	})
 })

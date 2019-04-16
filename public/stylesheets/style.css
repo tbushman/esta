@@ -989,7 +989,7 @@ form {
 }
 form label {
 	color: #888;
-	font-size: 13px;
+	font-size: 16px;
 }
 
 textarea {
@@ -998,7 +998,7 @@ textarea {
 	font-family: var(--afontname), calc(var(--afonttype))!important;
 }
 
-input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="tel"], textarea, select {
+input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="tel"], input[type="file"], textarea, select, hr {
 	line-height: normal;
 	background-color: #fff;
 	background-color: var(--primary);
@@ -1137,7 +1137,6 @@ a:hover header {
 hr {
 	height: 0;
 	border-top: 1px solid #c8c8c8;
-	border-top: 1px solid var(--tertiary);
 	border-left: 0;
 	border-right: 0;
 	border-bottom: 0
