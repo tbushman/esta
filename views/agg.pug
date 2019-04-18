@@ -9,18 +9,7 @@ block content
 				div.slidercontainer(style="position:relative;height:auto;width:100%;")
 					img#slider(style="width:100%;height:auto; transition-property: opacity; transition-duration:2s;margin-top:20px;position:absolute;z-index:1", v-bind:src="'/images/slide_'+sliderIndex+'.jpg'")
 					img(style="width:100%;height:auto;margin-top:20px;position:relative;z-index:0;", v-bind:src="'/images/slide_1.jpg'")
-				//- v-bind:key="n", 
-				//- div.chapter(v-for="(ch,n) in dat", v-bind:id="n", 
-				//- 	xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
-				//- 	div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-				//- 		//(v-if="(ch[n-1] && parseInt(doc.properties.chapter.ind, 10) > parseInt(ch[i - 1]].properties.chapter.ind, 10))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-				//- 
-				//- 		//v-for="doc in data", v-if="(!data[dindexes.indexOf(doc.index) - 1] ? (true === true) : (data[dindexes.indexOf(doc.index)].properties.chapter.ind !== data[dindexes.indexOf(doc.index) - 1].properties.chapter.ind))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry", v-once)
-				//- 		//v-show="(!data[dindexes.indexOf(doc.index) - 1] ? (true === true) : (data[dindexes.indexOf(doc.index)].properties.chapter.ind !== data[dindexes.indexOf(doc.index) - 1].properties.chapter.ind))", aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-				//- 		div.cell(v-if="n === 0", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
-				//- 			a(v-bind:href="'/'")
-				//- 				header.row.tb-font-l
-				//- 					span(v-text="ch[0].properties.title.str")
+				
 				div.chapter
 					div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 						div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
@@ -28,10 +17,22 @@ block content
 							header.row.tb-font-l
 								span(v-text="'Table of Contents'", style="font-weight:200;")
 				div.chapter(v-for="(data,n) in dat", v-bind:id="n", v-bind:key="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
-					div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
-
 					
-						div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
-							a(v-bind:href="'/menu/'+data[0].properties.title.ind+'/'+null+''")
-								header.row.tb-font-l
-									span(v-text="data[0].properties.title.str")
+					section.headline.headrule.row(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/", style="display: table;margin-top: 15px; position:relative;")
+						a.accordion.tb-01-m0(style="pointer-events: none; line-height: 23px; display:table-cell;vertical-align:bottom;z-index:9;")
+							div.ui(v-on:click="accordion(n, null)", style="width: 23px; padding-top:5px;pointer-events:all;")
+								svg(v-bind:style="(!accordions[n].length ? {transform: 'rotate(0deg)'} : {transform: 'rotate(180deg)'} )", xmlns="http://www.w3.org/2000/svg", viewBox="0 0 448 512")
+									path(d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z")
+						div.table.tb-09-m0(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry", style="display: table-cell;position:relative;pointer-events:none;")
+							
+							div.cell.tb-11-m0(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+								a(v-bind:href="'/menu/'+data[0].properties.title.ind+'/'+null+''")
+									header.row.tb-font-l
+										span(v-text="data[0].properties.title.str")
+					
+							
+							div.cell(v-if="accordions[n].length", v-for="(doc, i) in data", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+								a(v-bind:href="'/menu/'+doc.properties.title.ind+'/'+doc.properties.chapter.ind+''")
+									header.row.tb-font-m
+										span(v-text="doc.properties.chapter.str")
+										span.tb-font-s(v-text="' | '+doc.properties.section.str")

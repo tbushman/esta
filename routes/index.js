@@ -1919,12 +1919,12 @@ router.get('/list/:id/:index', getLayers, async function(req, res, next){
 		if (err) {
 			return next(err)
 		}
-		const xml = await require('request-promise').get({
-			url: ((!doc.properties.xmlurl ? '' : doc.properties.xmlurl) +'?api_key='+process.env.GPOKEY),
+		const xml = await require('request-promise')({
+			uri: ((!doc.properties.xmlurl ? '' : doc.properties.xmlurl) +'?api_key='+process.env.GPOKEY),
 			encoding: null
 		}).then(function(response) {
 			// console.log(response)
-			if (!response) {
+			if (!response || typeof response !== 'string') {
 				return '<pre>';
 			} else {
 				return response.toString().replace(/([`][`])/g,"'").replace(/([']['])/g,"'").replace(/\r/g,'\n').replace(/\s{3,700}/g,'  ').replace(/\s{0,1}\n\n\s{1,4}[(](\d{1,4})[)]/g,'  \n1. ').replace(/\s{2}[(](\w{1})[)]/g,'  \n  * \($1\) ').replace(/\n\s\s(\([i,v]{1,4}\))/g,'    $1');
@@ -1980,9 +1980,7 @@ router.get('/list/:id/:index', getLayers, async function(req, res, next){
 								xml: xml
 							})
 						}
-						
 					})
-					
 				})
 			} else {
 				var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
@@ -2021,12 +2019,12 @@ router.get('/menu/:tiind/:chiind', function(req, res, next){
 			return res.redirect('/')
 		}
 		key = 'properties.title.ind';
-		val = ''+req.params.tiind;
+		val = req.params.tiind;
 		
 			
 	} else {
 		key = 'properties.chapter.ind';
-		val = ''+req.params.chiind;
+		val = req.params.chiind;
 		key2 = 'properties.title.ind';
 		val2 = req.params.tiind;
 		
@@ -2035,11 +2033,11 @@ router.get('/menu/:tiind/:chiind', function(req, res, next){
 	/*if (key2) {
 		find[key2] = val2;
 	}*/
-	Content.find(find).sort( { index: 1 } ).lean().exec(function(err, data){
+	Content.find(find).sort( { index: 1 } ).lean().exec(async function(err, data){
 		if (err) {
 			return next(err)
 		}
-		data = data.sort(function(a,b){
+		data = await data.sort(function(a,b){
 			if (parseInt(a.properties.section.ind,10) < parseInt(b.properties.section.ind, 10)) {
 				return -1;
 			} else {

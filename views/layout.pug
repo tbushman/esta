@@ -16,7 +16,6 @@ html
 		script(type="text/javascript", src="/scripts/jquery-ui.min.js")
 		script(type="text/javascript", src="/scripts/moment-with-locales.min.js")
 		script(type="text/javascript", src="/scripts/marked.min.js")
-		script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
 		script(type="text/javascript", src="/scripts/leaflet.js")
 		script(type="text/javascript", src="/scripts/Path.Drag.js")
 		script(type="text/javascript", src="/scripts/Leaflet.Editable.js")
@@ -24,6 +23,7 @@ html
 		script(type="text/javascript", src="/scripts/jszip.min.js")
 		script(type="text/javascript", src="/scripts/signaturePad.js")
 		script(type="text/javascript", src="/scripts/htmldiff.js")
+		script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
 	body
 		block page
 		block header
@@ -171,15 +171,8 @@ html
 							}
 						],
 						xml: this.parseObj(!{JSON.stringify(xml)}),
-						accordions: (this.parseObj(!{JSON.stringify(dat)}) !== '' && this.parseBool(!{JSON.stringify(exports)}) ? this.parseObj(!{JSON.stringify(dat)}).map(function(data){return data.map(function(doc){return doc.index})}) : 
-							(
-								this.parseObj(!{JSON.stringify(dat)}) !== '' ?
-								[
-									this.parseObj(!{JSON.stringify(dat)}).map(function(data){return []})
-								] :
-								[[]]
-							)
-						)
+						accordions: (!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
+						
 					}
 				},
 				components: {
@@ -250,16 +243,16 @@ html
 				},
 				updated: function(){
 					var self = this;
-					if (self.dindexes.length === 0) {
-						self.dindexes = (self.dat && self.dat !== '' ? self.data.map(function(data){
-							data.map(function(doc){
-								return doc.index;
-								
-							})
-						}) : [[(!self.doc || self.doc === '' ? 0 : self.doc.index)]] );
-						self.dindexes.sort();
-						
-					}
+					//- if (self.dindexes.length === 0) {
+					//- 	self.dindexes = (self.dat && self.dat !== '' ? self.dat.map(function(data){
+					//- 		return data.map(function(doc){
+					//- 			return doc.index;
+					//- 
+					//- 		})
+					//- 	}) : [[(!self.doc || self.doc === '' ? 0 : self.doc.index)]] );
+					//- 	self.dindexes.sort();
+					//- 
+					//- }
 				},
 				mounted: function(){
 					$(document).ready(function(){
@@ -272,8 +265,8 @@ html
 					$(document).on('click', '.href', function(e){
 						e.stopPropagation();
 					});
-					self.dindexes = (self.data && self.data !== '' ? self.data.map(function(doc){
-						return doc.index;
+					self.dindexes = (self.dat && self.dat !== '' ? self.dat.map(function(data){
+						return data.map(function(doc){return doc.index});
 					}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
 					self.dindexes.sort();
 					$('.drop').slideToggle(100);
@@ -335,11 +328,25 @@ html
 						}
 					
 					}
+					self.accordions = (!self.doc || self.doc === '' ? 
+						(!self.dat || self.dat === '' ? [[]] 
+							: 
+							self.dat.map(function(data){
+								return []
+							}) 
+						)
+						: 
+						(
+							self.dat && self.dat !== '' ?
+							self.dat.map(function(data){return data.map(function(doc){return doc.index})})
+							:
+							[[self.doc.index]]
+						)
+					)
 						if (!self.doc || self.doc === '') {
 						} else {
 							
 							self.edit = self.doc.index;
-							self.dindexes = [self.edit];
 							self.dindex = 0;
 							console.log(self.pu, self.ts.length, !self.unsigned)
 							
@@ -389,7 +396,7 @@ html
 					self.sliderImg()
 				},
 				beforeDestroy: function(){
-					
+					//TODO clearTimout
 				},
 				methods: {
 					ifNullThenArr(obj) {
@@ -510,12 +517,24 @@ html
 					},
 					accordion: function(n, ind) {
 						var self = this;
-						var input = document.getElementById('diff'+ind);
-						if (self.accordions[n].indexOf(ind) === -1) {
-							self.accordions[n].push(ind);
-							self.accordions[n].sort();
+						if (!ind) {
+							if (!self.accordions[n].length) {
+								self.dat.forEach(function(datas, i){
+									if (i === n) {
+										self.accordions[n] = datas.map(function(doc){return doc.index})
+									}
+								});
+								self.accordions[n].sort();
+							} else {
+								self.accordions[n] = [];
+							}
 						} else {
-							self.accordions[n].splice(self.accordions[n].indexOf(ind), 1);
+							if (self.accordions[n].indexOf(ind) === -1) {
+								self.accordions[n].push(ind);
+								self.accordions[n].sort();
+							} else {
+								self.accordions[n].splice(self.accordions[n].indexOf(ind), 1);
+							}
 						}
 					},
 					parseBool: function(item) {
