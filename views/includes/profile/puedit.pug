@@ -2,10 +2,10 @@ div.grid-right
 	div.tb-10-m0
 		p.tb-font-xl Your information:
 		div#registersection(style="height:auto;overflow-y:hidden;")
-			form#form(enctype="multipart/form-data", method="POST", :action="(menu === 'register' ? '/register' : (pu && pu.username !== loggedin ? '/sig/editprofile' : null))", style="margin-bottom: 50px")
+			form#form(enctype="multipart/form-data", method="POST", :action="(menu === 'register' ? '/register' : (pu && pu !== '' && pu.username !== loggedin ? '/sig/editprofile' : null))", style="margin-bottom: 50px")
 				input(type="hidden", name="_csrf", value= csrfToken)
 				input#svgurl(type="hidden", name="svg")
-				input#avatarurl(type="hidden", name="avatar", :value="(pu && pu.username !== loggedin ? pu.avatar : '')")
+				input#avatarurl(type="hidden", name="avatar", :value="(pu && pu !== '' && pu.username !== loggedin ? pu.avatar : '')")
 				div.tb-10-m0.input-field
 					label.ms-Label Full Name
 					input.ms-TextField-field(type="text", name="givenName", id="givenName", aria-required="true", @blur="checkNameValidity('givenName', '\d!@#$%^*()+=-[]\\\';,./{}|\<>?:', 'Alphabetic characters only, please', $event)", required, style="margin: 0 0 5px 0;", 
@@ -21,25 +21,25 @@ div.grid-right
 				div.tb-10-m0.input-field
 					//div.tb-10-m0.input-field
 					label.ms-Label Address 1
-					input.ms-TextField-field(type="text", name="address1", id="address1", :value="(pu && pu.properties ? pu.properties.address1 : '')")
+					input.ms-TextField-field(type="text", name="address1", id="address1", :value="(pu && pu !== '' && pu.properties ? pu.properties.address1 : '')")
 				
 				div.tb-10-m0.input-field
 					//div.tb-10-m0.input-field
 					label.ms-Label Address 2
-					input.ms-TextField-field(type="text", name="address2", id="address2", :value="(pu && pu.properties ? pu.properties.address2 : '')")
+					input.ms-TextField-field(type="text", name="address2", id="address2", :value="(pu && pu !== '' && pu.properties ? pu.properties.address2 : '')")
 				
 				div.tb-10-m0.input-field
 					//div.tb-10-m0.input-field
 					label.ms-Label City
-					input.ms-TextField-field(type="text", name="city", id="city", :value="(pu && pu.properties ? pu.properties.city : '')")
+					input.ms-TextField-field(type="text", name="city", id="city", :value="(pu && pu !== '' && pu.properties ? pu.properties.city : '')")
 				div.tb-10-m0.input-field
 					//div.tb-10-m0.input-field
 					label.ms-Label State
-					input.ms-TextField-field(type="text", name="state", id="state", :value="(pu && pu.properties ? pu.properties.state : '')")
+					input.ms-TextField-field(type="text", name="state", id="state", :value="(pu && pu !== '' && pu.properties ? pu.properties.state : '')")
 				div.tb-10-m0.input-field
 					label.ms-Label(v-text="'The ZIP code you vote from'")
 					input.ms-TextField-field(type="number", name="zip", id="zip", aria-required="true", required, 
-						:value="(pu && pu.properties ? pu.properties.zip : '')")
+						:value="(pu && pu !== '' && pu.properties ? pu.properties.zip : '')")
 				
 
 				//div.tb-10-m0.input-field
@@ -88,10 +88,12 @@ div.grid-right
 					//- 				min="1900-1-1"
 					//- 				max="2050-1-1"
 					//- 			)
-				div.tb-10-m0.input-field(v-if="(pu && pu.username !== loggedin)")
+				div.tb-10-m0.input-field(v-if="(pu && pu !== '' && pu.username !== loggedin)")
 					label.ms-Label Username
-					input.ms-TextField-field.is-required(type="text", name="username", maxlength="40", id="username", aria-required="true", 
-						@blur="checkNameValidity('username', '\s!@#$%^*()+=-[]\\\';,./{}|\<>?:', 'Alpha-numeric characters only, please', $event)", required, :disabled="(pu && pu.username === loggedin)")
+					//- :disabled="(pu && pu !== '' && pu.username === loggedin)", 
+					input.ms-TextField-field.is-required(
+						type="text", name="username", maxlength="40", id="username", aria-required="true", 
+						@blur="checkNameValidity('username', '\s!@#$%^*()+=-[]\\\';,./{}|\<>?:', 'Alpha-numeric characters only, please', $event)", required)
 						//- div.tb-10-m0.input-field
 						//- 	label.ms-Label(for="languages") Language
 						//- 		datalist#theselanguages
@@ -108,13 +110,14 @@ div.grid-right
 					//									@blur="checkEmailValidity()", 
 
 					input.ms-TextField-field.is-required(type="email", name="email", id="email", aria-required="true", 
-						:value="(pu && pu.username === loggedin ? pu.email : '')",
-						:placeholder="(pu && pu.username === loggedin ? pu.email : '')",
+						:value="(pu && pu !== '' && pu.username === loggedin ? pu.email : '')",
+						:placeholder="(pu && pu !== '' && pu.username === loggedin ? pu.email : '')",
 						required
 						)
-				div.tb-10-m0.input-field.is-required(v-if="(pu && pu.username !== loggedin)")
+				div.tb-10-m0.input-field.is-required(v-if="(pu && pu !== '' && pu.username !== loggedin)")
 					label.ms-Label Password
-					input.ms-TextField-field.is-required(type="password", name="password", aria-required="true", required, 
-						:disabled="(pu && pu.username === loggedin)")
+					//- :disabled="(pu && pu !== '' && pu.username === loggedin)", 
+					input.ms-TextField-field.is-required(
+						type="password", name="password", aria-required="true", required)
 				p
 				button.btn.waves-effect.waves-light#submitregister(type="submit", :ariaDescription="(menu === 'register' ? 'Register' : 'Submit')", v-text="(menu === 'register' ? 'Register' : 'Submit')")

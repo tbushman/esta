@@ -42,6 +42,7 @@ html
 			Vue.prototype.SignaturePad = SignaturePad;
 			Vue.prototype.$ = $;
 			Vue.prototype.htmldiff = htmldiff;
+			Vue.prototype.tinymce = tinymce;
 			new Vue({
 				el: '#vue',
 				data: function data(){
@@ -103,8 +104,11 @@ html
 						uploadchtitle: null,
 						dragind: null,
 						latlngs: null,
-						gp: (this.parseObj(#{session.importgdrive}) !== '' ? this.parseObj(!{JSON.stringify(gp)}) : null),
+						//- gp: (this.parseObj(#{session.importgdrive}) !== '' ? this.parseObj(!{JSON.stringify(gp)}) : null),
 						sliderIndex: 1,
+						sliderInterval: '',
+						sliderTimeout1: '',
+						sliderTimeout2: '',
 						str: this.parseObj(!{JSON.stringify(str)}),
 						ts: this.ifNullThenArr(!{JSON.stringify(ts)}),
 						can: [],
@@ -171,7 +175,9 @@ html
 							}
 						],
 						xml: this.parseObj(!{JSON.stringify(xml)}),
-						accordions: (!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
+						accordions: [[]],
+						sliderOpacity: 1
+							//(!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
 						
 					}
 				},
@@ -243,6 +249,8 @@ html
 				},
 				updated: function(){
 					var self = this;
+					
+					
 					//- if (self.dindexes.length === 0) {
 					//- 	self.dindexes = (self.dat && self.dat !== '' ? self.dat.map(function(data){
 					//- 		return data.map(function(doc){
@@ -265,10 +273,6 @@ html
 					$(document).on('click', '.href', function(e){
 						e.stopPropagation();
 					});
-					self.dindexes = (self.dat && self.dat !== '' ? self.dat.map(function(data){
-						return data.map(function(doc){return doc.index});
-					}) : [(!self.doc || self.doc === '' ? 0 : self.doc.index)] );
-					self.dindexes.sort();
 					$('.drop').slideToggle(100);
 					$('.slidedown').slideToggle(100);
 					$('.mainmenu').on('click', function(){
@@ -281,17 +285,17 @@ html
 					});
 					$('.submenu.drop').on('click', function(){
 						if (!$(this).next('.slidedown')) {
-							
+					
 							return;
 						} else {
-							
+					
 							$('.submenu.drop').not($(this)).removeClass('active');
 							$(this).next('.slidedown').slideToggle(100);
 							$(this).toggleClass('active');
 							if (!$('.submenu.drop').not($(this)).next('.slidedown a').attr('href')) {
 								$('.submenu.drop').not($(this)).next('.slidedown').slideUp(100);
 							} else {
-								
+					
 								$(this).parent('.slidedown').slideUp(100);
 								if (!$(this).attr('href')) {
 									$(this).children('.ui').children('i').toggleClass('fa-angle-right');
@@ -327,39 +331,37 @@ html
 							self.handleLocationOutcome(false, pos);
 						}
 					
-					}
-					self.accordions = (!self.doc || self.doc === '' ? 
-						(!self.dat || self.dat === '' ? [[]] 
-							: 
-							self.dat.map(function(data){
-								return []
-							}) 
-						)
-						: 
-						(
-							self.dat && self.dat !== '' ?
-							self.dat.map(function(data){return data.map(function(doc){return doc.index})})
-							:
-							[[self.doc.index]]
-						)
-					)
+					} else {
+						self.dindexes = (!self.dat || self.dat === '' ? [[(!self.doc || self.doc === '' ? 0 : self.doc.index)]]
+						:
+						self.dat.map(function(data){
+							return data.map(function(doc){return doc.index});
+						}) );
+						self.dindexes.sort();
+
 						if (!self.doc || self.doc === '') {
+							if (!self.dat || self.dat === '') {
+								self.accordions = [[]];
+							} else {
+								self.accordions = self.dat.map(function(data){
+									return []
+								});
+								//- 
+
+								
+							}
 						} else {
-							
+							if (!self.dat || self.dat === '') {
+								self.accordions = [[self.doc.index]];
+							} else {
+								self.accordions = self.dat.map(function(data){return data.map(function(doc){return doc.index})});
+							}
 							self.edit = self.doc.index;
 							self.dindex = 0;
 							console.log(self.pu, self.ts.length, !self.unsigned)
 							
 						}
-						//- if (self.doc.properties.xmlurl && self.doc.properties.xmlurl !== '') {
-						//- 	//- var url = 
-						//- 	//- $.get(self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}' )
-						//- 	//- .then(function(result){
-						//- 	//- 	console.log(result);
-						//- 		//- self.xml = self.doc.properties.xmlurl +'?api_key='+ '#{session.gpo}';
-						//- 	//- })
-						//- }
-					//- }
+					}
 
 					if (!self.tinymce && $('#description')[0] && tinymce) {
 						self.tinymce = tinymce.init({
@@ -391,12 +393,19 @@ html
 						self.loadMap(function(dataCoords){
 							self.latlng = dataCoords
 							self.panZoom();
+							if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {
+								var int = 10000;
+								self.sliderImg(int)
+							}
 						})
 					}
-					self.sliderImg()
 				},
 				beforeDestroy: function(){
 					//TODO clearTimout
+					var self = this;
+					clearInterval(self.sliderInterval);
+					clearTimeout(self.sliderTimeout1);
+					clearTimeout(self.sliderTimeout2)
 				},
 				methods: {
 					ifNullThenArr(obj) {
@@ -471,31 +480,10 @@ html
 							}
 						}
 					},
-					sliderImg: function(){
-						var self = this;
-						if ($('#slider')[0]) {
-							setInterval(function(){
-								$('#slider').css('opacity',0);
-								setTimeout(function(){
-									if (self.sliderIndex > 3) {
-										self.sliderIndex = 1;
-									} else {
-										self.sliderIndex += 1;
-									}
-									setTimeout(function(){
-										$('#slider').css('opacity',1);
-									},2000)
-									
-								},2000)
-							},10000)
-						} else {
-							console.log('no slider')
-						}
-					},
-					clickSlider: function(diff, doc){
-						//`<a v-bind:click="" >${diff.user.username}<img class="avatar" src="${diff.user.avatar}"></img></a>`
-						$('#diff'+doc.index).val(diff.ind)
-					},
+					//- clickSlider(diff, doc){
+					//- 	//`<a v-bind:click="" >${diff.user.username}<img class="avatar" src="${diff.user.avatar}"></img></a>`
+					//- 	$('#diff'+doc.index).val(diff.ind)
+					//- },
 					changeDiff(e) {
 						var self = this;
 						console.log(e.target.value)
@@ -515,24 +503,40 @@ html
 							self.doc = res;
 						})
 					},
-					accordion: function(n, ind) {
+					accordion(n, ind, e) {
+						console.log(n,ind)
 						var self = this;
+						if (e) e.preventDefault();
 						if (!ind) {
+							console.log('no ind')
 							if (!self.accordions[n].length) {
-								self.dat.forEach(function(datas, i){
-									if (i === n) {
-										self.accordions[n] = datas.map(function(doc){return doc.index})
-									}
-								});
+								console.log('no length at accordions[n]')
+								if (!self.dat || self.dat === '') {
+									console.log('no self.dat')
+									//- self.accordions[n] = [0]
+								} else {
+									self.dat.forEach(async function(datas, i){
+										if (i === n) {
+											self.accordions[n] = await datas.map(function(doc){return doc.index})
+										}
+									});
+									
+								}
 								self.accordions[n].sort();
 							} else {
-								self.accordions[n] = [];
+								console.log(self.accordions, self.accordions[n])
+								while(self.accordions[n].length > 0) {self.accordions[n].pop();}
+								//- self.accordions[n].splice(0, self.accordions[n].length);
+								console.log(self.accordions, self.accordions[n])
 							}
 						} else {
+							console.log('ind')
 							if (self.accordions[n].indexOf(ind) === -1) {
+								console.log('no ind in accordions[n]')
 								self.accordions[n].push(ind);
 								self.accordions[n].sort();
 							} else {
+								console.log('removing ind from accordions[n]')
 								self.accordions[n].splice(self.accordions[n].indexOf(ind), 1);
 							}
 						}
@@ -1139,6 +1143,28 @@ html
 							cb(null)
 						// console.log('when?')
 						}
+					},
+					sliderImg(int){
+						var self = this;
+						if ($('#slider')[0]) {
+							self.sliderInterval = setInterval(function(){
+								self.sliderOpacity = 0;
+								self.sliderTimeout1 = setTimeout(function(){
+									if (self.sliderIndex > 3) {
+										self.sliderIndex = 1;
+									} else {
+										self.sliderIndex += 1;
+									}
+									self.sliderTimeout2 = setTimeout(function(){
+										self.sliderOpacity = 1;
+									},(int/5))
+									
+								},(int/5))
+							},int) //10000
+						} else {
+							console.log('no slider')
+						}
 					}
+
 				}
 			});
