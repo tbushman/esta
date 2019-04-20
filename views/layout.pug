@@ -247,6 +247,15 @@ html
 						`
 					}
 				},
+				watch: {
+					accordions: {
+						deep: true,
+						handler(accordions) {
+							var self = this;
+							self.accordions = accordions
+						}
+					}
+				},
 				updated: function(){
 					var self = this;
 					
@@ -504,16 +513,11 @@ html
 						})
 					},
 					accordion(n, ind, e) {
-						console.log(n,ind)
 						var self = this;
 						if (e) e.preventDefault();
 						if (!ind) {
-							console.log('no ind')
 							if (!self.accordions[n].length) {
-								console.log('no length at accordions[n]')
 								if (!self.dat || self.dat === '') {
-									console.log('no self.dat')
-									//- self.accordions[n] = [0]
 								} else {
 									self.dat.forEach(async function(datas, i){
 										if (i === n) {
@@ -524,19 +528,15 @@ html
 								}
 								self.accordions[n].sort();
 							} else {
-								console.log(self.accordions, self.accordions[n])
-								while(self.accordions[n].length > 0) {self.accordions[n].pop();}
-								//- self.accordions[n].splice(0, self.accordions[n].length);
-								console.log(self.accordions, self.accordions[n])
+								var sac = self.accordions;
+								while(sac[n].length > 0) {sac[n].pop();}
+								self.accordions = sac;
 							}
 						} else {
-							console.log('ind')
 							if (self.accordions[n].indexOf(ind) === -1) {
-								console.log('no ind in accordions[n]')
 								self.accordions[n].push(ind);
 								self.accordions[n].sort();
 							} else {
-								console.log('removing ind from accordions[n]')
 								self.accordions[n].splice(self.accordions[n].indexOf(ind), 1);
 							}
 						}
