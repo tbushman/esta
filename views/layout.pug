@@ -89,7 +89,7 @@ html
 						placemenu: false,
 						placetypes: [{
 							name: 'Nation',
-							url: '/json/us.json'
+							url: '/json/usstates.json'
 						},
 						{
 							name: 'State',
@@ -176,7 +176,10 @@ html
 						],
 						xml: this.parseObj(!{JSON.stringify(xml)}),
 						accordions: [[]],
-						sliderOpacity: 1
+						sliderOpacity: 1,
+						gpo: null,
+						latlng: {lat: 40, lng: -111.8},
+						lyrs: []
 							//(!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
 						
 					}
@@ -363,6 +366,8 @@ html
 							if (!self.dat || self.dat === '') {
 								self.accordions = [[self.doc.index]];
 							} else {
+								//- self.lyrs = 
+								
 								self.accordions = self.dat.map(function(data){return data.map(function(doc){return doc.index})});
 							}
 							self.edit = self.doc.index;
@@ -398,16 +403,16 @@ html
 							selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | footnote'
 						});
 					}
-					if (self.position) {
-						self.loadMap(function(dataCoords){
-							self.latlng = dataCoords
-							self.panZoom();
-							if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {
-								var int = 10000;
-								self.sliderImg(int)
-							}
-						})
-					}
+					self.loadMap(function(dataCoords){
+						console.log(dataCoords)
+						self.latlng.lng = dataCoords.lng;
+						self.latlng.lat = dataCoords.lat;
+						self.panZoom();
+						if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {
+							var int = 10000;
+							self.sliderImg(int)
+						}
+					})
 				},
 				beforeDestroy: function(){
 					//TODO clearTimout
@@ -431,6 +436,28 @@ html
 						}
 						return obj;
 					},
+					getGpo() {
+						var self = this;
+						$.get('https://api.govinfo.gov/collections/BILLS/'+encodeURIComponent(moment().subtract('1', 'years').utc().format())+'?offset=0&pageSize=1000&api_key='+'#{process.env.GPOKEY}')
+						.then(function(data){
+							console.log(data)
+							self.gpo = data;
+						})
+						.catch(function(err){
+							console.log(err)
+						})
+					},
+					changeLayers(e) {
+						var self = this;
+						if (e.target.checked) {
+							self.doc.properties.layers.push(e.target.value)
+						} else {
+							self.doc.properties.layers.splice(self.doc.properties.layer.indexOf(e.target.value), 1)
+						}
+					},
+					filterGpo(e) {
+						
+					},
 					changeDocType(e) {
 						var self = this;
 						console.log(e.target.value)
@@ -439,12 +466,21 @@ html
 					},
 					changePlaceType(e) {
 						var self = this;
-						var url = e.target.value;
-						var type = (e.target.value === '/json/usstates.json' ? 'State' : (e.target.value === '/json/us.json' ? 'Nation' : null));
+						var url = self.placetypes.filter(function(pt){
+							return pt.name === e.target.value;
+						})[0].url;
+						//- e.target.value;
+						var type = //(
+							e.target.value
+							// === 'State' ? : (e.target.value === '/json/us.json' ? 'Nation' : null));
 						$.getJSON(url).then(async function(json){
 							await console.log(json)
 							self.newDoc.placetype = type;
 							self.newDoc.tempGeo = await json.features;
+							if (type === 'Nation') {
+								self.newDoc.tempGeo = [self.newDoc.tempGeo[0]];
+								self.getGpo();
+							}
 							console.log(self.newDoc.tempGeo)
 						})
 						.catch((err)=>console.log(err))
@@ -581,8 +617,8 @@ html
 					panZoom: function(){
 						var self = this;
 						//console.log(self.map)
-						if (self.map) {
-							$.post('/panzoom/'+self.map.getCenter().lat+'/'+self.map.getCenter().lng+'/'+self.map.getZoom()+'', function(result){
+						if (self.map && self.latlng) {
+							$.post('/panzoom/'+self.latlng.lat+'/'+self.latlng.lng+'/'+self.map.getZoom()+'', function(result){
 							})
 						}
 						
@@ -1040,8 +1076,8 @@ html
 						var dataCoords;
 						var map = new L.map('map', { 
 							center: [
-								(!self.latlng ? 40.7608 : self.latlng.lat),
-								(!self.latlng ? -111.8910 : self.latlng.lng)
+								(!self.latlng ? 40.7608 : self.latlng.lng),
+								(!self.latlng ? -111.8910 : self.latlng.lat)
 							], 
 							zoom: (!self.position ? 6 : self.position.zoom),
 							zoomControl: false,
@@ -1122,11 +1158,11 @@ html
 								})
 								var coords = self.latlngs;
 								if (coords) {
-									latlng = L.latLngBounds(coords).getCenter();
+									latlng = L.latLngBounds(coords[0]).getCenter();
 								} else {
 									console.log(self.latlngs)
 									self.latlngs = self.dataLayer.getLatLngs();
-									latlng = L.latLngBounds(self.latlngs).getCenter();
+									latlng = L.latLngBounds(self.latlngs[0]).getCenter();
 								}
 								// TODO admin only for certain things?
 								if (self.loggedin && self.loggedin !== '') self.dataLayer.enableEdit();

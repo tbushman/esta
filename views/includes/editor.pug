@@ -25,10 +25,17 @@ p
 	//- a.success.block.spacer.tb-03-m0(role="button", v-on:click="getLayers(doc._id)")
 	//- 	span Add Geodata
 	hr
-	p
+	p(v-if="doc.properties.title.str === 'Geography'")
 		label.tb-10-m0(for="geojson") Replace geometry (geoJSON)
 		input.block.spacer.success.tb-07-m0#geojson(v-bind:id="'lyr_'+doc._id", v-on:change="handleGeoJson($event)", type="file", style="padding: 18px;color:#fff;")
-
+	//, v-for="(lyr, o) in doc.properties.layers"
+	fieldset(v-else-if="doc.properties.title.str !== 'Geography'")
+		legend Add geo-layer
+		p(v-for="(lyr, o) in layers")
+			//, @click="changeLayers($event)"
+			input(type="checkbox", :value="lyr._id", :id="'lyr_'+o", name="layers[]", v-text="lyr.properties.label", style="display:inline-block")
+			label(for="geojson", v-text="lyr.properties.label") 
+		input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers")
 hr
 div(style="visibility: hidden;")
 input.block#latlng(v-bind:value="JSON.stringify(doc.geometry.coordinates)", name="latlng", style="width: 100%", type="hidden")

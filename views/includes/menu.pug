@@ -27,7 +27,7 @@ each mn, k in menus
 				label(for="placetype") Type of jurisdiction
 				select#placetype(style="pointer-events: all;", name="placetype",@change="changePlaceType($event)")
 					option(value="null", v-text="'None'", v-bind:selected="!newDoc.placetype")
-					option(v-for="(pl, p) in placetypes", v-text="pl.name", :value="pl.url")
+					option(v-for="(pl, p) in placetypes", v-text="pl.name", :value="pl.name")
 				label(for="placetype") Jurisdiction
 				select#place(style="pointer-events: all;", @change="changePlaceNew($event)", name="place", v-model="newDoc.place")
 					option(value="null", v-text="'None'", v-bind:selected="!newDoc.place")
@@ -40,8 +40,13 @@ each mn, k in menus
 
 				input(type="hidden", v-model="newDoc.tiind")
 				input(type="hidden", v-model="newDoc.chind")
+				input(type="hidden", v-model="newDoc.xmlid")
 				label(for="placetype") Document Title
-				input(type="text", id="chtitle", v-model="newDoc.chtitle")
+				input(type="text", title="search GPO", @change="filterGpo($event)", v-text="'Search Bills'")
+				select#gpoapi(v-if="newDoc.placetype && newDoc.placetype === 'Nation' && gpo", @change="getGpo($event)")
+					option(value="null", v-text="'None'", v-bind:selected="!newDoc.chtitle")
+					option(v-for="(ct, l) in gpo.packages", v-text="ct.title", :value="ct.packageId")
+				input(v-if="newDoc.placetype !== 'Nation'", type="text", id="chtitle", v-model="newDoc.chtitle")
 				a(role="button", title="Create", :href="'/api/new/'+newDoc.placetype+'/'+newDoc.place+'/'+newDoc.tiind+'/'+newDoc.chind+'/'+newDoc.secind+'/'+encodeURIComponent(newDoc.chtitle)+''", style="margin-bottom: 50px") Create
 			
 			a.submenu.drop(v-if="loggedin && doc && pu && pu !== '' && pu.properties.admin", class= mn, title="Export", :href="'/api/exportword/'+doc._id+''")

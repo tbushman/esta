@@ -613,6 +613,17 @@ function getLayers(req, res, next) {
 	})
 }
 
+function getGeo(req, res, next) {
+	Content.find({'properties.title.str': 'Geography'}).lean().exec(function(err, data){
+		if (err) {
+			return cb(err)
+		}
+		
+		req.layers = data;
+		return next()
+	})
+}
+
 function getDat(req, res, next){
 	asynk.waterfall([
 		function(cb){
@@ -1911,7 +1922,7 @@ router.post('/checkchaptername/:name', function(req, res, next){
 	})
 })
 
-router.get('/list/:id/:index', getLayers, async function(req, res, next){
+router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	req.session.importgdrive = false;
@@ -2417,7 +2428,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					media: [],
 					// (!doc.properties.media || doc.properties.media.length === 0 ? [] : doc.properties.media),
 					diffs: doc.properties.diffs,
-					footnotes: footnotes
+					footnotes: footnotes,
+					layers: body.layers
 				},
 				geometry: {
 					type: "MultiPolygon",
@@ -2482,9 +2494,9 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			var key4 = 'properties.diffs'
 			set4.$push[key4] = newdiff;
 			
-			var set5 = {$set:{}}
-			var key5 = 'properties.section.str'
-			set5.$set[key5] = entry.properties.section.str;
+			// var set5 = {$set:{}}
+			// var key5 = 'properties.section.str'
+			// set5.$set[key5] = entry.properties.section.str;
 
 			var options = {safe: true, new: true, upsert: false};
 			Content.findOneAndUpdate({_id: id}, set1, options, function(err, docc) {
@@ -2499,22 +2511,22 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						if (errr) {
 							return next(errr)
 						}
-						Content.findOneAndUpdate({_id: id}, set5, options, function(errr, doc) {
-							if (err) {
-								return next(err)
-							}
+						// Content.findOneAndUpdate({_id: id}, set5, options, function(errr, doc) {
+						// 	if (err) {
+						// 		return next(err)
+						// 	}
 							if (!newdiff) {
-								next(null)
+								next(null, doc)
 							} else {
 								Content.findOneAndUpdate({_id: id}, set4, options, function(errr, doc) {
 									if (errr) {
 										next(errr)
 									} else {
-										next(null)
+										next(null, doc)
 									}
 								})
 							}
-						})
+						// })
 						
 						
 					})
@@ -2522,11 +2534,11 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			})
 			
 		}
-	], function(err){
+	], function(err, doc){
 		if (err) {
 			return next(err)
 		}
-		return res.redirect('/');
+		return res.redirect('/list/'+doc._id+'/'+null+'');
 	})
 	
 });
