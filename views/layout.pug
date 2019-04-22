@@ -405,9 +405,11 @@ html
 					}
 					self.loadMap(function(dataCoords){
 						console.log(dataCoords)
-						self.latlng.lng = dataCoords.lng;
-						self.latlng.lat = dataCoords.lat;
-						self.panZoom();
+						if (dataCoords){
+							self.latlng.lng = dataCoords.lng;
+							self.latlng.lat = dataCoords.lat;
+							self.panZoom();
+						}
 						if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {
 							var int = 10000;
 							self.sliderImg(int)
@@ -438,10 +440,13 @@ html
 					},
 					getGpo() {
 						var self = this;
-						$.get('https://api.govinfo.gov/collections/BILLS/'+encodeURIComponent(moment().subtract('1', 'years').utc().format())+'?offset=0&pageSize=1000&api_key='+'#{process.env.GPOKEY}')
+						$.get(
+							'/api/gpo'
+							//- 'https://api.govinfo.gov/collections/BILLS/'+encodeURIComponent(moment().subtract('1', 'years').utc().format())+'?offset=0&pageSize=1000&api_key='+'#{process.env.GPOKEY}'
+						)
 						.then(function(data){
 							console.log(data)
-							self.gpo = data;
+							self.gpo = JSON.parse(data);
 						})
 						.catch(function(err){
 							console.log(err)
@@ -455,8 +460,26 @@ html
 							self.doc.properties.layers.splice(self.doc.properties.layer.indexOf(e.target.value), 1)
 						}
 					},
+					setXmlId(e){
+						var self = this;
+						var ind = parseInt(e.target.value, 10);
+						self.newDoc.xmlid = self.gpo.packages[ind].packageId;
+						self.newDoc.chind = (parseInt(self.gpo.packages[ind].congress, 10) - 1);
+						self.newDoc.chtitle = self.gpo.packages[ind].title;
+					},
 					filterGpo(e) {
-						
+						var self = this;
+						if (e.target.value === '') {
+							self.getGpo();
+						}
+						var gpo = self.gpo.packages;
+						gpo = gpo.filter(function(g){
+							return new RegExp(e.target.value).test(g.title)
+						})
+						console.log(gpo)
+						if (gpo.length) {
+							self.gpo.packages = gpo;
+						}
 					},
 					changeDocType(e) {
 						var self = this;

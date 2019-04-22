@@ -2074,6 +2074,18 @@ router.get('/menu/:tiind/:chiind', function(req, res, next){
 	
 })
 
+router.get('/api/gpo', function(req, res, next){
+	require('request-promise')({
+		uri: 'https://api.govinfo.gov/collections/BILLS/'+moment().subtract('1', 'years').utc().format()+'?offset=0&pageSize=1000&api_key='+process.env.GPOKEY,
+		encoding: null
+	}).then(function(result){
+		return res.status(200).send(result)
+	})
+	.catch(function(err){
+		return next(err)
+	})
+})
+
 router.get('/api/geointersect/:id', function(req, res, next){
 	Content.findOne({_id:req.params.id}).lean().exec(function(err, doc){
 		if (err) {
@@ -2129,7 +2141,7 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 
 ///api/new/State/45/0/undefined/undefined/Salt%20Lake%20City%20Corporation%20v%20Inland%20Port%20Authority
 // /api/new/Nation/0/0/0/0/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.
-router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle', async function(req, res, next){
+router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', async function(req, res, next){
 	req.session.importgdrive = false;
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
@@ -2179,17 +2191,22 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle', async fun
 		// console.log(req.params.placetype)
 			if (req.params.placetype === 'Nation' || req.params.placetype === "'Nation'") {
 				places = usstates;
-				if (isNaN(chind) || !arr[tiind].chapter[chind]) {
-					chnd = arr[tiind].chapter[chunk.length-1].ind;
+				if (isNaN(chind)) {
+					chnd = arr[tiind].chapter[arr[tiind].chapter.length-1].ind;
 					snd = 0;
 					chtitle = 'Jurisdiction: '+ places[placeind].properties.name;
-					xmlurl = null;
+					xmlurl = (tiind === 0 ? 'https://api.govinfo.gov/packages/'+
+						req.params.xmlid
+						+'/htm' : null )
 				} else {
 					chnd = arr[tiind].chapter[chind].ind;
 					snd = arr[tiind].chapter[chind].section[secind].ind;
 					chtitle = arr[tiind].chapter[chind].name;
 					stitle = arr[tiind].chapter[chind].section[secind].name;
-					xmlurl = (tiind === 0 ? 'https://api.govinfo.gov/packages/'+arr[tiind].code+''+(arr[tiind].chapter[chind].ind+1)+''+arr[tiind].chapter[chind].code+''+(arr[tiind].chapter[chind].section[secind].ind+1)+''+arr[tiind].chapter[chind].section[secind].code+'/htm' : null )
+					xmlurl = (tiind === 0 ? 'https://api.govinfo.gov/packages/'+
+						req.params.xmlid
+						//arr[tiind].code+''+(arr[tiind].chapter[chind].ind+1)+''+arr[tiind].chapter[chind].code+''+(arr[tiind].chapter[chind].section[secind].ind+1)+''+arr[tiind].chapter[chind].section[secind].code
+						+'/htm' : null )
 				}
 				
 			} else {
@@ -2197,11 +2214,15 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle', async fun
 				if (isNaN(chind) || !arr[tiind].chapter[chind]) {
 					chnd = chunk.length;
 				} else {
+					chnd = chind;
 				}
 				chtitle = 'Jurisdiction: '+ places[placeind].properties.name;
 				snd = chunk.length;
 				stitle = decodeURIComponent(req.params.stitle);
-				xmlurl = null
+				// xmlurl = (tiind === 0 ? 'https://api.govinfo.gov/packages/'+
+				// 	req.params.xmlid
+				// 	+'/htm' : null )
+				//arr[tiind].code+''+(arr[tiind].chapter[chind].ind+1)+''+arr[tiind].chapter[chind].code+''+(arr[tiind].chapter[chind].section[secind].ind+1)+''+arr[tiind].chapter[chind].section[secind].code
 				
 			}
 			
@@ -2226,7 +2247,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle', async fun
 						str: stitle 
 					},
 					published: true,
-					label: (!stitle ? 'Edit Title' : req.params.stitle ),
+					label: (!req.params.stitle ? 'Edit Title' : decodeURIComponent(req.params.stitle) ),
 					place: places[placeind].properties.name,
 					description: marked(curly('Edit document text.')),
 					xmlurl: xmlurl,
