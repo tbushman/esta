@@ -85,7 +85,7 @@ html
 						web: true,
 						export: this.parseBool(!{JSON.stringify(exports)}),
 						ff: this.parseObj(!{JSON.stringify(ff)}),
-						newDoc: {tempGeo:[]},
+						newDoc: {tempGeo:[],placetype:'',place:null,tiind:null,xmlid:'',chind:null,chtitle:''},						
 						placemenu: false,
 						placetypes: [{
 							name: 'Nation',
@@ -466,18 +466,19 @@ html
 						self.newDoc.xmlid = self.gpo.packages[ind].packageId;
 						self.newDoc.chind = (parseInt(self.gpo.packages[ind].congress, 10) - 1);
 						self.newDoc.chtitle = self.gpo.packages[ind].title;
+						console.log(self.newDoc)
 					},
 					filterGpo(e) {
 						var self = this;
 						if (e.target.value === '') {
-							self.getGpo();
+							return self.getGpo();
 						}
 						var gpo = self.gpo.packages;
 						gpo = gpo.filter(function(g){
 							return new RegExp(e.target.value).test(g.title)
 						})
 						console.log(gpo)
-						if (gpo.length) {
+						if (gpo.length > 0) {
 							self.gpo.packages = gpo;
 						}
 					},
@@ -489,24 +490,36 @@ html
 					},
 					changePlaceType(e) {
 						var self = this;
-						var url = self.placetypes.filter(function(pt){
-							return pt.name === e.target.value;
-						})[0].url;
+						var url;
+						if (self.placetypes.length > 0) {
+							url = self.placetypes.filter(function(pt){
+								if (pt && pt.name) {
+									return pt.name === e.target.value;
+								} else {
+									return false;
+								}
+								
+							});
+						} 
+						if (url[0]) {
+							url = url[0].url;
+							var type = //(
+								e.target.value
+								// === 'State' ? : (e.target.value === '/json/us.json' ? 'Nation' : null));
+							$.getJSON(url).then(async function(json){
+								await console.log(json)
+								self.newDoc.placetype = type;
+								self.newDoc.tempGeo = await json.features;
+								if (type === 'Nation') {
+									self.newDoc.tempGeo = [self.newDoc.tempGeo[0]];
+									self.getGpo();
+								}
+								console.log(self.newDoc.tempGeo)
+							})
+							.catch((err)=>console.log(err))
+						}
 						//- e.target.value;
-						var type = //(
-							e.target.value
-							// === 'State' ? : (e.target.value === '/json/us.json' ? 'Nation' : null));
-						$.getJSON(url).then(async function(json){
-							await console.log(json)
-							self.newDoc.placetype = type;
-							self.newDoc.tempGeo = await json.features;
-							if (type === 'Nation') {
-								self.newDoc.tempGeo = [self.newDoc.tempGeo[0]];
-								self.getGpo();
-							}
-							console.log(self.newDoc.tempGeo)
-						})
-						.catch((err)=>console.log(err))
+						
 					},
 					changePlaceNew(e) {
 						var self = this;

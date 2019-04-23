@@ -38,9 +38,9 @@ each mn, k in menus
 					option(value="null", v-text="'None'", v-bind:selected="!newDoc.tiind")
 					option(v-for="(tp, j) in tis", v-text="tp.name", :value="j", :selected="newDoc.tiind === j")
 
-				input(type="hidden", v-model="newDoc.tiind")
-				input(type="hidden", v-model="newDoc.chind")
-				input(type="hidden", v-model="newDoc.xmlid")
+				input(type="hidden", :value="newDoc.tiind")
+				input(type="hidden", :value="newDoc.chind")
+				input(type="hidden", :value="newDoc.xmlid")
 				label(for="placetype") Search Document Title
 				input(type="text", title="search GPO", @change="filterGpo($event)", v-text="'Search Bills'")
 				select#gpoapi(v-if="newDoc.placetype && newDoc.placetype === 'Nation' && gpo", @change="setXmlId($event)")

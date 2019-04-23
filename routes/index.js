@@ -2199,13 +2199,13 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 						req.params.xmlid
 						+'/htm' : null )
 				} else {
-					chnd = arr[tiind].chapter[chind].ind;
-					snd = arr[tiind].chapter[chind].section[secind].ind;
-					chtitle = arr[tiind].chapter[chind].name;
-					stitle = arr[tiind].chapter[chind].section[secind].name;
+					chnd = chind;//arr[tiind].chapter[chind].ind;
+					snd = chunk.length;//arr[tiind].chapter[chind].section[secind].ind;
+					chtitle = arr[tiind].chapter[0].name;
+					stitle = req.params.stitle;//arr[tiind].chapter[chind].section[secind].name;
+					//arr[tiind].code+''+(arr[tiind].chapter[chind].ind+1)+''+arr[tiind].chapter[chind].code+''+(arr[tiind].chapter[chind].section[secind].ind+1)+''+arr[tiind].chapter[chind].section[secind].code
 					xmlurl = (tiind === 0 ? 'https://api.govinfo.gov/packages/'+
 						req.params.xmlid
-						//arr[tiind].code+''+(arr[tiind].chapter[chind].ind+1)+''+arr[tiind].chapter[chind].code+''+(arr[tiind].chapter[chind].section[secind].ind+1)+''+arr[tiind].chapter[chind].section[secind].code
 						+'/htm' : null )
 				}
 				
