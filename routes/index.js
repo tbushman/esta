@@ -1930,19 +1930,24 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 		if (err) {
 			return next(err)
 		}
+		console.log(doc.properties.xmlurl)
 		const xml = await require('request-promise')({
-			uri: ((!doc.properties.xmlurl ? '' : doc.properties.xmlurl) +'?api_key='+process.env.GPOKEY),
+			uri: (!doc.properties.xmlurl ? '' : (doc.properties.xmlurl +'?api_key='+process.env.GPOKEY)),
 			encoding: null
 		}).then(function(response) {
-			// console.log(response)
-			if (!response || typeof response !== 'string') {
+			console.log(response)
+			if (!response) {
 				return '<pre>';
 			} else {
+				console.log('ok!')
 				return response.toString().replace(/([`][`])/g,"'").replace(/([']['])/g,"'").replace(/\r/g,'\n').replace(/\s{3,700}/g,'  ').replace(/\s{0,1}\n\n\s{1,4}[(](\d{1,4})[)]/g,'  \n1. ').replace(/\s{2}[(](\w{1})[)]/g,'  \n  * \($1\) ').replace(/\n\s\s(\([i,v]{1,4}\))/g,'    $1');
 			}
 		})
 		.catch(function(err){
-			return '<pre>'
+			console.log(err)
+			if (err) {
+				return '<pre>'
+			}
 		})
 		//console.log(result.body.toString())
 		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
