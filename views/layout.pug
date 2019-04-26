@@ -34,7 +34,7 @@ html
 		a#publish_logo(href="https://github.com/tbushman/esta" target="_blank")
 			img(src="/images/publish_logo.svg")
 		
-		a#publish_logo.tb-font-xxxs(href="//bli.sh/pp/blish", target="_blank", style="top: calc(100vh - calc(var(--thumbw) * 1.35));right: 23px;margin:0;text-align:right;bottom: auto;") Privacy policy
+		a#publish_logo.tb-font-xxxs(href="http://bli.sh/pp/blish", target="_blank", style="top: calc(100vh - calc(var(--thumbw) * 1.35));right: 23px;margin:0;text-align:right;bottom: auto;") Privacy policy
 
 		script(type="text/javascript").
 			Vue.prototype.moment = moment;
@@ -79,7 +79,7 @@ html
 						wWidth: window.innerWidth,
 						wHeight: window.innerHeight,
 						dPath: this.dPathAttr(),
-						tinymce: null,
+						tinymce: '',
 						dfi: 0,
 						diff: null,
 						web: true,
@@ -377,7 +377,8 @@ html
 						}
 					}
 
-					if (!self.tinymce && $('#description')[0] && tinymce) {
+					if (self.tinymce === ''  && $('#description')[0] && tinymce) {
+						console.log($('#description')[0])
 						self.tinymce = tinymce.init({
 							menubar: false,
 							statusbar: false,
@@ -1149,9 +1150,11 @@ html
 								
 								self.map.addLayer(self.dataLayer);
 								self.latlngs = self.dataLayer.getLatLngs();
+								var colors = ['#B0E0E6', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
 								if (self.layers.length) {
-									self.layers.forEach(function(item){
+									self.layers.forEach(function(item, i){
 										self.lyr[item._id] = self.loadLayer(item);
+										self.lyr[item._id].setStyle({color: colors[i]})
 										self.map.addLayer(self.lyr[item._id])
 									})
 								}
@@ -1170,6 +1173,15 @@ html
 								//- 	})
 								//- 	self.doc.geometry.coordinates = latlngs
 								//- })
+								map.on('editable:vertex:rawclick', function(e){
+									self.layers.forEach(function(item, i){
+										if (item._id !== e.layer._id) {
+											item.disableEdit();
+										} else {
+											item.enableEdit();
+										}
+									})
+								})
 								map.on('editable:editing', function (e) {
 									e.layer.setStyle({color: 'DarkRed'});
 								});

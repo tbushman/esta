@@ -1931,24 +1931,30 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 			return next(err)
 		}
 		console.log(doc.properties.xmlurl)
-		const xml = await require('request-promise')({
-			uri: (!doc.properties.xmlurl ? '' : (doc.properties.xmlurl +'?api_key='+process.env.GPOKEY)),
-			encoding: null
-		}).then(function(response) {
-			console.log(response)
-			if (!response) {
-				return '<pre>';
-			} else {
-				console.log('ok!')
-				return response.toString().replace(/([`][`])/g,"'").replace(/([']['])/g,"'").replace(/\r/g,'\n').replace(/\s{3,700}/g,'  ').replace(/\s{0,1}\n\n\s{1,4}[(](\d{1,4})[)]/g,'  \n1. ').replace(/\s{2}[(](\w{1})[)]/g,'  \n  * \($1\) ').replace(/\n\s\s(\([i,v]{1,4}\))/g,'    $1');
-			}
-		})
-		.catch(function(err){
-			console.log(err)
-			if (err) {
-				return '<pre>'
-			}
-		})
+		var xml;
+		if (doc.properties.xmlurl) {
+			xml = await require('request-promise')({
+				uri: (doc.properties.xmlurl +'?api_key='+process.env.GPOKEY),
+				encoding: null
+			}).then(function(response) {
+				console.log(response)
+				if (!response) {
+					return '<pre>';
+				} else {
+					console.log('ok!')
+					return response.toString().replace(/([`][`])/g,"'").replace(/([']['])/g,"'").replace(/\r/g,'\n').replace(/\s{3,700}/g,'  ').replace(/\s{0,1}\n\n\s{1,4}[(](\d{1,4})[)]/g,'  \n1. ').replace(/\s{2}[(](\w{1})[)]/g,'  \n  * \($1\) ').replace(/\n\s\s(\([i,v]{1,4}\))/g,'    $1');
+				}
+			})
+			.catch(function(err){
+				console.log(err)
+				if (err) {
+					return '<pre>'
+				}
+			})
+		} else {
+			xml = '<pre>'
+		}
+		
 		//console.log(result.body.toString())
 		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
 			if (err) {
@@ -2146,6 +2152,7 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 
 ///api/new/State/45/0/undefined/undefined/Salt%20Lake%20City%20Corporation%20v%20Inland%20Port%20Authority
 // /api/new/Nation/0/0/0/0/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal.
+// /api/new/State/45/4/null/undefined/Inland Port b/
 router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', async function(req, res, next){
 	req.session.importgdrive = false;
 	var outputPath = url.parse(req.url).pathname;
