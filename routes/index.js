@@ -31,7 +31,7 @@ var htmlDiffer = new HtmlDiffer({
 var publishersDir = (process.env.NODE_ENV === 'production' ? process.env.PD : process.env.DEVPD);
 var {google} = require('googleapis');
 dotenv.load();
-var upload = multer();
+var upload = multer({fieldSize: 25 * 1024 * 1024});
 marked.setOptions({
 	gfm: true,
 	smartLists: true,
@@ -311,7 +311,7 @@ var storage = multer.diskStorage({
 		}
   }
 });
-var uploadmedia = multer({ storage: storage/*, limits: { fieldSize: 25 * 1024 * 1024 }*/});
+var uploadmedia = multer({ storage: storage, limits: { fieldSize: 25 * 1024 * 1024 }});
 
 var removeExtras = function(str){
 	var desc = null;

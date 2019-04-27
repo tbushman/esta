@@ -30,7 +30,7 @@ dotenv.load();
 var parseForm = bodyParser.urlencoded({ extended: false });
 var parseJSONBody = bodyParser.json();
 var parseBody = [parseJSONBody, parseForm];
-var upload = multer();
+var upload = multer({limits:{ fieldSize: 25 * 1024 * 1024 }});
 
 var csrfProtection = csrf({ cookie: true });
 

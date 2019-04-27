@@ -23,7 +23,7 @@ html
 		script(type="text/javascript", src="/scripts/jszip.min.js")
 		script(type="text/javascript", src="/scripts/signaturePad.js")
 		script(type="text/javascript", src="/scripts/htmldiff.js")
-		script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
+		//- script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
 	body
 		block page
 		block header
@@ -42,7 +42,7 @@ html
 			Vue.prototype.SignaturePad = SignaturePad;
 			Vue.prototype.$ = $;
 			Vue.prototype.htmldiff = htmldiff;
-			Vue.prototype.tinymce = tinymce;
+			if (typeof tinymce === 'function') Vue.prototype.tinymce = tinymce;
 			new Vue({
 				el: '#vue',
 				data: function data(){
@@ -179,7 +179,19 @@ html
 						sliderOpacity: 1,
 						gpo: null,
 						latlng: {lat: 40, lng: -111.8},
-						lyrs: []
+						lyrs: [],
+						base: 0,
+						baseMaps: [
+							{
+								url: 'https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A',
+								attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+							},
+							{
+								url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+								attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+							}
+							
+						]
 							//(!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
 						
 					}
@@ -285,40 +297,8 @@ html
 					$(document).on('click', '.href', function(e){
 						e.stopPropagation();
 					});
-					$('.drop').slideToggle(100);
+					$('.submenu.drop').slideToggle(100);
 					$('.slidedown').slideToggle(100);
-					$('.mainmenu').on('click', function(){
-						if ($('.dropdown').hasClass('active')) {
-							$('.dropdown').removeClass('active');
-						} else {
-							$('.dropdown').addClass('active');
-						}
-						$('.drop').slideToggle(100);
-					});
-					$('.submenu.drop').on('click', function(){
-						if (!$(this).next('.slidedown')) {
-					
-							return;
-						} else {
-					
-							$('.submenu.drop').not($(this)).removeClass('active');
-							$(this).next('.slidedown').slideToggle(100);
-							$(this).toggleClass('active');
-							if (!$('.submenu.drop').not($(this)).next('.slidedown a').attr('href')) {
-								$('.submenu.drop').not($(this)).next('.slidedown').slideUp(100);
-							} else {
-					
-								$(this).parent('.slidedown').slideUp(100);
-								if (!$(this).attr('href')) {
-									$(this).children('.ui').children('i').toggleClass('fa-angle-right');
-									$(this).children('.ui').children('i').toggleClass('fa-angle-down');
-								} else {
-									$('.dropdown').not($('.static')).slideUp(100);
-								}
-								//
-							}
-						}
-					});
 					var modal = document.getElementById('modal');
 					if (self.type === 'geo') {
 						var pos = null;
@@ -377,7 +357,7 @@ html
 						}
 					}
 
-					if (self.tinymce === ''  && $('#description')[0] && tinymce) {
+					if (self.tinymce === ''  && $('#description')[0] && typeof tinymce === 'function') {
 						console.log($('#description')[0])
 						self.tinymce = tinymce.init({
 							menubar: false,
@@ -439,6 +419,40 @@ html
 						}
 						return obj;
 					},
+					subDropdown(e) {
+						var self = this;
+						if (!$(e.target).next('.slidedown')) {
+					
+							return;
+						} else {
+					
+							$('.submenu.drop').not($(e.target)).removeClass('active');
+							$(e.target).next('.slidedown').slideToggle(100);
+							$(e.target).toggleClass('active');
+							if (!$('.submenu.drop').not($(e.target)).next('.slidedown a').attr('href')) {
+								$('.submenu.drop').not($(e.target)).next('.slidedown').slideUp(100);
+							} else {
+					
+								$(e.target).parent('.slidedown').slideUp(100);
+								if (!$(e.target).attr('href')) {
+									$(e.target).children('.ui').children('i').toggleClass('fa-angle-right');
+									$(e.target).children('.ui').children('i').toggleClass('fa-angle-down');
+								} else {
+									$('.dropdown').not($('.static')).slideUp(100);
+								}
+								//
+							}
+						}
+					},
+					mainDropdown(e) {
+						var self = this;
+						if ($('.dropdown').hasClass('active')) {
+							$('.dropdown').removeClass('active');
+						} else {
+							$('.dropdown').addClass('active');
+						}
+						$('.submenu.drop').slideToggle(100);
+					},
 					getGpo() {
 						var self = this;
 						$.get(
@@ -453,12 +467,29 @@ html
 							console.log(err)
 						})
 					},
-					changeLayers(e) {
+					changeBase(i, e) {
 						var self = this;
 						if (e.target.checked) {
-							self.doc.properties.layers.push(e.target.value)
+							self.base = i
+							self.tilelayer.remove();
+							self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: self.map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(self.map);
+						}
+
+					},
+					changeLayers(id, e) {
+						var self = this;
+						if (e.target.checked) {
+							self.doc.properties.layers.push(id);
+							self.map.addLayer(self.lyr[id]);
+							var bounds = self.lyr[id].getBounds();
+							self.map.fitBounds(bounds);
 						} else {
-							self.doc.properties.layers.splice(self.doc.properties.layer.indexOf(e.target.value), 1)
+							self.doc.properties.layers.splice(self.doc.properties.layers.indexOf(id), 1);
+							if (self.doc.properties.layers.length === 0) {
+								var bounds = self.dataLayer.getBounds();
+								self.map.fitBounds(bounds)
+							}
+							self.map.removeLayer(self.lyr[id])
 						}
 					},
 					setXmlId(e){
@@ -998,8 +1029,8 @@ html
 						ctx.drawImage(img, 0, 0, w, h);
 						self.uploadBlob(img, can, imgindex, function(){
 							var can = $('#canvas'+imgindex+'')[0];
-							var maxWidth = 400 ;
-							var maxHeight = 400 ;
+							var maxWidth = 250 ;
+							var maxHeight = 250 ;
 							var w = img.width;
 							var h = img.height;
 
@@ -1014,7 +1045,7 @@ html
 						var ctx = can.getContext('2d');
 						
 						ctx.drawImage(img, 0, 0, w, h);
-						var dataurl = can.toDataURL("image/png", 0.8);
+						var dataurl = can.toDataURL("image/png", 0.78);
 						setTimeout(function(){
 							self.doc.properties.media[imgindex].thumb = dataurl.replace(/data:image\/png;base64,/, '');
 							//$('#inputthumb'+imgindex+'').val(dataurl.replace(/data:image\/png;base64,/, ''));
@@ -1134,11 +1165,8 @@ html
 							}).addTo(map);
 						}
 						
-						var options3 = {
-							
-							attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
-						};
-						L.tileLayer('https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A', {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000)}).addTo(map);
+						
+						self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(map);
 						self.map = map
 						if (!self.dataLayer && self.doc) {
 							// generate geographic points from data
@@ -1147,16 +1175,19 @@ html
 								
 								var myRenderer = L.canvas({ padding: 0.5 });
 								self.dataLayer = self.loadLayer(self.doc);
-								
+								self.dataLayer.bringToBack();
 								self.map.addLayer(self.dataLayer);
 								self.latlngs = self.dataLayer.getLatLngs();
-								var colors = ['#B0E0E6', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
+								var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
 								if (self.layers.length) {
+									self.dataLayer.disableEdit();
 									self.layers.forEach(function(item, i){
 										self.lyr[item._id] = self.loadLayer(item);
 										self.lyr[item._id].setStyle({color: colors[i]})
 										self.map.addLayer(self.lyr[item._id])
 									})
+									//- var layer = self.map.getLayer(self.dataLayer)
+									//- layer.setZIndex(0);
 								}
 								//- self.dataLayer.on('dragend', function(e){
 								//- 	var latlngs = [];

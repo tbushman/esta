@@ -4,7 +4,7 @@ div.tb-10-m0(v-if="edit === doc.index")
 	input(v-bind:id="'inputimg'+img.index", v-bind:name="'img'+img.index", v-bind:value="img.image", type="hidden")
 	input(v-bind:id="'orientation'+img.index", v-bind:name="'orientation'+img.index", v-bind:value="img.orientation", type="hidden")
 	canvas(v-bind:id="'canvas'+img.index", style="display: none;")
-	img(v-bind:id="'return'+img.index", v-bind:src="img.image+'?version='+Math.random()", style="display:none;")
+	img(v-bind:id="'return'+img.index", v-bind:src="img.image+'?version='+Math.random(100).toFixed(0)", style="display:none;")
 	//input(class="featuredimg", v-bind:id="'featured'+img.index", v-bind:name="'img'+img.index+'_featured'", v-bind:value="img.featured", type="hidden")
 
 	//- div.row
@@ -19,7 +19,7 @@ div.tb-10-m0(v-if="edit === doc.index")
 		div.tb-10-m0.tb-02-m3
 			div.row(style="height: auto;")
 				span.img(v-bind:id="img.index", v-bind:name="doc._id", style="height:150px;")
-					img(v-bind:id="'view'+img.index", v-bind:src="img.image+'?version='+Math.random()")
+					img(v-bind:id="'view'+img.index", v-bind:src="img.image+'?version='+Math.random(100).toFixed()")
 			
 		div.tb-10-m0.tb-06-m3.shift-00
 			div.row
