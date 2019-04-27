@@ -346,9 +346,9 @@ var curly = function(str){
 	}
 }
 
-function ensureCorrectAbsPath(req, res, next){
-	Content.update({''})
-}
+// function ensureCorrectAbsPath(req, res, next){
+// 	Content.update({''})
+// }
 
 function ensureLocation(req, res, next) {
 	Publisher.findOne({_id: req.user._id}).lean().exec(async function(err, pu){
