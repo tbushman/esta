@@ -18,7 +18,7 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 			:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: (wWidth - 50)+'px', 'text-align':'center', 'z-index':1}"
 			)
 			span Make Map clickable
-	button.success.mapActive(@click="initSig", title="Sign", v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length === 0)",
+	button.success.mapActive(@click="initSig", title="Sign", v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length === 0 && doc.properties.title.str !== 'Geography')",
 		:style="{'pointer-events': 'all', position: 'fixed', bottom: '25px', right:'auto', left: '25px', width: ((wWidth/2) - 50)+'px', 'text-align':'center', 'z-index':1}"
 		)
 		span(v-text="(type === 'draw' ? 'Done signing' : 'Sign to indicate support')")

@@ -1984,7 +1984,7 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 								loggedin: req.session.loggedin,
 								doc: doc,
 								unsigned: (!pud ? true : false),
-								signable: signable,
+								signable: (doc.properties.title.str !== 'Geography' ? signable : false),
 								appURL: req.app.locals.appURL,
 								info: req.session.info,
 								xml: xml
