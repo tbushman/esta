@@ -124,6 +124,7 @@ ol {
 	bottom: auto;
 	width: var(--thumbw);
 	display: flex;
+	flex-direction: column;
 }
 #maincanvas {
 	display: block;
