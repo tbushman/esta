@@ -346,6 +346,10 @@ var curly = function(str){
 	}
 }
 
+function ensureCorrectAbsPath(req, res, next){
+	Content.update({''})
+}
+
 function ensureLocation(req, res, next) {
 	Publisher.findOne({_id: req.user._id}).lean().exec(async function(err, pu){
 		if (err) {
@@ -1681,7 +1685,7 @@ router.post('/sig/uploadsignature/:did/:puid', uploadmedia.single('img'), csrfPr
 					givenName: pu.properties.givenName,
 					documentId: doc._id,	
 					image: '/publishers/esta/signatures/'+req.params.did+'/'+req.params.puid+'/img_'+req.params.did+'_'+req.params.puid+'.png',
-					image_abs: req.url
+					image_abs: ''+publishers+'/pu/publishers/esta/signatures/'+req.params.did+'/'+req.params.puid+'/img_'+req.params.did+'_'+req.params.puid+'.png'
 				});
 				var push = {$push:{}};
 				var key = 'sig';
