@@ -42,7 +42,7 @@ html
 			Vue.prototype.SignaturePad = SignaturePad;
 			Vue.prototype.$ = $;
 			Vue.prototype.htmldiff = htmldiff;
-			if (typeof tinymce === 'function') Vue.prototype.tinymce = tinymce;
+			if (typeof tinymce === 'object') Vue.prototype.tinymce = tinymce;
 			new Vue({
 				el: '#vue',
 				data: function data(){
@@ -357,7 +357,7 @@ html
 						}
 					}
 
-					if (self.tinymce === ''  && $('#description')[0] && typeof tinymce === 'function') {
+					if (self.tinymce === ''  && $('#description')[0] && typeof tinymce === 'object') {
 						console.log($('#description')[0])
 						self.tinymce = tinymce.init({
 							menubar: false,
