@@ -350,6 +350,15 @@ var curly = function(str){
 // 	Content.update({''})
 // }
 
+async function ifExistsReturn(req, res, next) {
+	var path = ''+publishers+'/pu/publishers/esta/signatures/'+req.params.did+'/'+req.params.puid+'/img_'+req.params.did+'_'+req.params.puid+'.png';
+	var exists = await fs.existsSync(path);
+	if (exists) {
+		return res.redirect('/list/'+req.params.id+'/'+null);
+	}
+	return next();
+}
+
 function ensureLocation(req, res, next) {
 	Publisher.findOne({_id: req.user._id}).lean().exec(async function(err, pu){
 		if (err) {
@@ -1660,7 +1669,7 @@ var puPosition = function(pu){
 	return {lng: lng, lat: lat}
 }
 
-router.post('/sig/uploadsignature/:did/:puid', uploadmedia.single('img'), csrfProtection, function(req, res, next){
+router.post('/sig/uploadsignature/:did/:puid', ifExistsReturn, uploadmedia.single('img'), csrfProtection, function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath, req.file)
 	Content.findOne({_id: req.params.did}, function(err, doc){
@@ -1937,16 +1946,26 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 		console.log(doc.properties.xmlurl)
 		var xml;
 		if (doc.properties.xmlurl) {
+			console.log(doc.properties.xmlurl)
 			xml = await require('request-promise')({
-				uri: (doc.properties.xmlurl +'?api_key='+process.env.GPOKEY),
+				uri: (doc.properties.xmlurl.replace('/htm', '/xml') +'?api_key='+process.env.GPOKEY),
 				encoding: null
-			}).then(function(response) {
-				console.log(response)
+			}).then(async function(response) {
+				// console.log(response)
 				if (!response) {
 					return '<pre>';
 				} else {
-					console.log('ok!')
-					return response.toString().replace(/([`][`])/g,"'").replace(/([']['])/g,"'").replace(/\r/g,'\n').replace(/\s{3,700}/g,'  ').replace(/\s{0,1}\n\n\s{1,4}[(](\d{1,4})[)]/g,'  \n1. ').replace(/\s{2}[(](\w{1})[)]/g,'  \n  * \($1\) ').replace(/\n\s\s(\([i,v]{1,4}\))/g,'    $1');
+					console.log('ok!');
+					// var xslt = require('xslt');
+					// var inputXml = await pug.renderFile(path.join(__dirname, '../views/includes/gpo/xml.pug'), {
+					// 	xml: response.toString().replace(/href=(.)billres/gm, 'href=$1/billres'),
+					// 	doctype: 'xml'
+					// })
+					// console.log(inputXml)
+					var inputXml = response.toString().replace(/href=(.)billres/gm, 'href=$1/billres')
+					// var resp = xmljs(response.toString())
+					return inputXml
+					// return response.toString().replace(/([`][`])/g,"'").replace(/([']['])/g,"'").replace(/\r/g,'\n').replace(/\s{3,700}/g,'  ').replace(/\s{0,1}\n\n\s{1,4}[(](\d{1,4})[)]/g,'  \n1. ').replace(/\s{2}[(](\w{1})[)]/g,'  \n  * \($1\) ').replace(/\n\s\s(\([i,v]{1,4}\))/g,'    $1');
 				}
 			})
 			.catch(function(err){

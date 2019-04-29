@@ -64,7 +64,9 @@
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
     "scriptjs": "^2.5.9",
-    "serve-favicon": "^2.5.0"
+    "serve-favicon": "^2.5.0",
+    "xslt-processor": "^0.11.5",
+    "xth": "^1.1.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",

@@ -1,0 +1,23 @@
+//- doctype xml
+//- //- p(
+//- //- 	xmlns="http://xml.house.gov/schemas/uslm/1.0", 
+//- //- 	xmlns:schemaLocation="http://xml.house.gov/schemas/uslm/1.0 USLM-1.0.15.xsd", 
+//- //- identifier="/us/usc/t1", 
+//- //- xml:lang="en",
+//- //- xml:base="https://api.govinfo.gov",
+//- //- xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance",
+//- //-  xmlns:dc="http://purl.org/dc/elements/1.1/", xmlns:dcterms="http://purl.org/dc/terms/"
+//- //- 
+//- //- )
+//- //- - console.log(xml)
+//- //- v-html="xml.replace(/href=(.)billres/gm, 'href=$1/billres')"
+//- <?xml-stylesheet type="text/xsl" href="billres.xsl"?>
+//- //- div(xmlns="http://xml.house.gov/schemas/uslm/1.0", 
+//- //- 	xmlns:schemaLocation="http://xml.house.gov/schemas/uslm/1.0 ./USLM-1.0.15.xsd", 
+//- //- 	xmlns:dc="http://purl.org/dc/elements/1.1/", xmlns:dcterms="http://purl.org/dc/terms/"
+//- //- 	identifier="/us/usc/t1", 
+//- //- 	xml:lang="en")
+//- //- - console.log(xml)
+//- //- != xml
+//- != xml
+embed(v-html="xml")

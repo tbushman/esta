@@ -618,7 +618,7 @@ Changes incorporated in version 1.1 (7/13/04):
 <!-- ========================== END ============================== -->
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 	xmlns:ms="urn:schemas-microsoft-com:xslt" xmlns:dc="http://purl.org/dc/elements/1.1/">
-	<xsl:include href="table.xsl"/>
+	<!--xsl:include href="table.xsl"/-->
 
 
 	<xsl:variable name="enact"> Be it enacted by the Senate and House of Representatives of the

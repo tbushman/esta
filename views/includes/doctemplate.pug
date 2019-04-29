@@ -54,33 +54,31 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 			div.row(v-if="(!loggedin || loggedin === '') || (!pu || !pu.properties.admin)")
 				include header.pug
 				include bodysingle.pug
-				//- div.row
-				//- embed(v-html="marked(xml.split('<pre>')[1].split('</pre>')[0])")
-				//- doctype xml
-				//- xmlns:xsi="http://xml.house.gov/schemas/uslm/1.0/USLM-1.0.xsd", 
-				//- identifier="/us/usc/t5", 
-				//- xmlns="https://xml.house.gov/schemas/uslm/1.0/", 
-				//- xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance",
-				//- xsi:schemaLocation="https://xml.house.gov/schemas/uslm/1.0/ ./USLM-1.0.xsd", 
-				//- xml:base="https://api.govinfo.gov",
-				//- xsi:schemaLocation="/stylesheets ./USLM-1.0.xsd",
-				//- xmlStylesheet
-				//- <!DOCTYPE resolution PUBLIC "-//US Congress//DTDs/res.dtd//EN" "/stylesheets/res.dtd">
-				//- 	p(
-				//- 		xmlns="http://www.w3.org/1999/xhtml"
-				//- 		xmlns:xsi="/stylesheets/USLM-1.0.xsd",
-				//- 		v-html='marked(xml)'
-				//- 		)
-				//- div(xmlns:dc="http://purl.org/dc/elements/1.1/", v-html="xml")
-				//- p(v-html="marked(xml.replace(/\`/g, '^').split('<pre>')[1].split('</pre>')[0])")
 				p.tb-font-m(v-text="'External document'")
-				p(v-if="xml && xml !== ''", v-html="marked(xml.split('<pre>')[1].split('</pre>')[0])")
+				//- div.row
+				include gpo/xml.pug
+				
+
+				//- p(v-if="xml && xml !== ''", v-html="marked(xml)")
 			div.row(v-if="edit === doc.index && loggedin && loggedin !=='' && pu && pu.properties.admin", style="padding-top:20px;")
 				form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)
 					include editor.pug
 					p.tb-font-m(v-text="'External document'")
-					p(v-if="xml && xml !== ''", v-html="marked(xml.split('<pre>')[1].split('</pre>')[0])")
+					//xml.split('<pre>')[1].split('</pre>')[0]
+					//- p(v-if="xml && xml !== ''", v-html="marked(xml)")
+					include gpo/xml.pug
+					
+
+			//- 	p.tb-font-m(v-text="'External document'")
+			//- 	p(v-if="xml && xml !== ''", v-html="marked(xml)")
+			//- div.row(v-if="edit === doc.index && loggedin && loggedin !=='' && pu && pu.properties.admin", style="padding-top:20px;")
+			//- 	form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+			//- 		input(type="hidden", name="_csrf", value= csrfToken)
+			//- 		include editor.pug
+			//- 		p.tb-font-m(v-text="'External document'")
+			//- 		//xml.split('<pre>')[1].split('</pre>')[0]
+			//- 		p(v-if="xml && xml !== ''", v-html="marked(xml)")
 	
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
 		,
