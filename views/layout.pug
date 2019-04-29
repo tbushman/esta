@@ -608,12 +608,15 @@ html
 						}
 					},
 					changeDocType(e) {
+						e.preventDefault()
+						
 						var self = this;
 						console.log(e.target.value)
 						var ind = parseInt(e.target.value, 10);
 						self.newDoc.tiind = ind;
 					},
 					changePlaceType(e) {
+						e.preventDefault()
 						var self = this;
 						var url;
 						if (self.placetypes.length > 0) {
@@ -647,6 +650,7 @@ html
 						
 					},
 					changePlaceNew(e) {
+						e.preventDefault()
 						var self = this;
 						console.log(e.target.value)
 						var ind = parseInt(e.target.value, 10);

@@ -14,12 +14,12 @@ each mn, k in menus
 			div.dropdown.static(style="float: left; left:6px; right:auto; display: flex;height:45px;overflow-y:hidden!important;")
 				a.submenu.drop(href="/", class= mn, style="max-height:45px;")
 					span esta.bli.sh
-		div.dropdown(class= mn, @click="subDropdown($event)")
+		div.dropdown(class= mn)
 			
 			a.submenu.drop(class= mn, href="/")
 				span.tb-font-s Home
 			
-			a.submenu.drop(v-if="loggedin && pu && pu !== '' && pu.properties.admin", class= mn, title="New")
+			a.submenu.drop(v-if="loggedin && pu && pu !== '' && pu.properties.admin", class= mn, title="New", @click="subDropdown($event)")
 				span.tb-font-s New
 			
 			div.slidedown(v-if="loggedin && pu && pu !== '' && pu.properties.admin", class= mn)
