@@ -1946,15 +1946,24 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 		console.log(doc.properties.xmlurl)
 		var xml;
 		if (doc.properties.xmlurl) {
-			console.log(doc.properties.xmlurl)
-			xml = await require('request-promise')({
+			console.log(doc.properties.xmlurl);
+			var xmlpath = ''+publishers+'/pu/publishers/esta/xml/';
+			var xmlfolder = await fs.existsSync(xmlpath);
+			if (!xmlfolder) {
+				await mkdirp(xmlpath, function(err){
+					if (err){
+						console.log(err)
+					}
+				})
+			}
+			xml = (!xmlfolder ? await require('request-promise')({
 				uri: (doc.properties.xmlurl.replace('/htm', '/xml') +'?api_key='+process.env.GPOKEY),
 				encoding: null
 			}).then(async function(response) {
 				// console.log(response)
-				if (!response) {
-					return '<pre>';
-				} else {
+				// if (!response) {
+				// 	return '<pre>';
+				// } else {
 					console.log('ok!');
 					// var xslt = require('xslt');
 					// var inputXml = await pug.renderFile(path.join(__dirname, '../views/includes/gpo/xml.pug'), {
@@ -1962,20 +1971,41 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 					// 	doctype: 'xml'
 					// })
 					// console.log(inputXml)
-					var inputXml = response.toString().replace(/href=(.)billres/gm, 'href=$1/billres')
+					var np = (xmlpath+doc._id+'.xml')
+					await fs.writeFileSync(np, response);
+					// var xsl = (docxmlpath+'billres.xsl');
+					var opxsl = path.join(__dirname, '../views/includes/gpo/billres.xsl');
+					var npxsl = xmlpath+'billres.xsl';
+					await fs.moveSync(opxsl, npxsl, { overwrite: true });
+					
+					var opxsl2 = path.join(__dirname, '../views/includes/gpo/billres-details.xsl');
+					var npxsl2 = xmlpath+'billres-details.xsl';
+					await fs.moveSync(opxsl2, npxsl2, { overwrite: true });
+					
+					var opdc = path.join(__dirname, '../views/includes/gpo/dc.xsd');
+					var npdc = xmlpath+'dc.xsd';
+					await fs.moveSync(opdc, npdc, { overwrite: true });
+					
+					var opdtd = path.join(__dirname, '../views/includes/gpo/res.dtd');
+					var npdtd = xmlpath+'res.dtd';
+					await fs.moveSync(opdtd, npdtd, { overwrite: true });
+					
+					return '/publishers/esta/xml/'+doc._id+'.xml'
+					
+					// var inputXml = response.toString().replace(/href=(.)billres/gm, 'href=$1/billres')
 					// var resp = xmljs(response.toString())
-					return inputXml
+					// return inputXml
 					// return response.toString().replace(/([`][`])/g,"'").replace(/([']['])/g,"'").replace(/\r/g,'\n').replace(/\s{3,700}/g,'  ').replace(/\s{0,1}\n\n\s{1,4}[(](\d{1,4})[)]/g,'  \n1. ').replace(/\s{2}[(](\w{1})[)]/g,'  \n  * \($1\) ').replace(/\n\s\s(\([i,v]{1,4}\))/g,'    $1');
-				}
+				// }
 			})
 			.catch(function(err){
 				console.log(err)
-				if (err) {
-					return '<pre>'
-				}
-			})
+				// if (err) {
+				// 	return '<pre>'
+				// }
+			}) : '/publishers/esta/xml/'+doc._id+'.xml' )
 		} else {
-			xml = '<pre>'
+			xml = ''
 		}
 		
 		//console.log(result.body.toString())

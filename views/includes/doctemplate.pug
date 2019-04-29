@@ -55,30 +55,15 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 				include header.pug
 				include bodysingle.pug
 				p.tb-font-m(v-text="'External document'")
-				//- div.row
 				include gpo/xml.pug
 				
 
-				//- p(v-if="xml && xml !== ''", v-html="marked(xml)")
 			div.row(v-if="edit === doc.index && loggedin && loggedin !=='' && pu && pu.properties.admin", style="padding-top:20px;")
 				form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)
 					include editor.pug
 					p.tb-font-m(v-text="'External document'")
-					//xml.split('<pre>')[1].split('</pre>')[0]
-					//- p(v-if="xml && xml !== ''", v-html="marked(xml)")
 					include gpo/xml.pug
-					
-
-			//- 	p.tb-font-m(v-text="'External document'")
-			//- 	p(v-if="xml && xml !== ''", v-html="marked(xml)")
-			//- div.row(v-if="edit === doc.index && loggedin && loggedin !=='' && pu && pu.properties.admin", style="padding-top:20px;")
-			//- 	form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
-			//- 		input(type="hidden", name="_csrf", value= csrfToken)
-			//- 		include editor.pug
-			//- 		p.tb-font-m(v-text="'External document'")
-			//- 		//xml.split('<pre>')[1].split('</pre>')[0]
-			//- 		p(v-if="xml && xml !== ''", v-html="marked(xml)")
 	
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
 		,
