@@ -1976,19 +1976,19 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 					// var xsl = (docxmlpath+'billres.xsl');
 					var opxsl = path.join(__dirname, '../views/includes/gpo/billres.xsl');
 					var npxsl = xmlpath+'billres.xsl';
-					await fs.moveSync(opxsl, npxsl, { overwrite: true });
+					await fs.copySync(opxsl, npxsl, { overwrite: true });
 					
 					var opxsl2 = path.join(__dirname, '../views/includes/gpo/billres-details.xsl');
 					var npxsl2 = xmlpath+'billres-details.xsl';
-					await fs.moveSync(opxsl2, npxsl2, { overwrite: true });
+					await fs.copySync(opxsl2, npxsl2, { overwrite: true });
 					
 					var opdc = path.join(__dirname, '../views/includes/gpo/dc.xsd');
 					var npdc = xmlpath+'dc.xsd';
-					await fs.moveSync(opdc, npdc, { overwrite: true });
+					await fs.copySync(opdc, npdc, { overwrite: true });
 					
 					var opdtd = path.join(__dirname, '../views/includes/gpo/res.dtd');
 					var npdtd = xmlpath+'res.dtd';
-					await fs.moveSync(opdtd, npdtd, { overwrite: true });
+					await fs.copySync(opdtd, npdtd, { overwrite: true });
 					
 					return '/publishers/esta/xml/'+doc._id+'.xml'
 					
