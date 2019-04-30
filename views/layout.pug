@@ -1252,15 +1252,15 @@ html
 							renderer: L.canvas(),
 							preferCanvas: true
 						});
-						if (self.infowindow === 'tooltip') {
+						//- if (self.infowindow === 'tooltip') {
 							L.control.zoom({
 								position:'bottomleft'
 							}).addTo(map);
-						} else {
-							L.control.zoom({
-								position:'topleft'
-							}).addTo(map);
-						}
+						//- } else {
+						//- 	L.control.zoom({
+						//- 		position:'topleft'
+						//- 	}).addTo(map);
+						//- }
 						
 						
 						self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(map);

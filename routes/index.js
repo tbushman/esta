@@ -1983,7 +1983,8 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 					// 	doctype: 'xml'
 					// })
 					// console.log(inputXml)
-					var rp = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+'/'+'img_' + req.params.counter + '.png';
+					var rp = ''+publishers+'/pu/publishers/esta/xml/' + doc._id + '.png';
+					var rq = ''+publishers+'/pu/publishers/esta/xml/bill.dtd';
 					//console.log(imgp, thumbp)
 					var options = {nonull:true,nodir:true}
 					var p = glob.sync(rp, options)[0];
@@ -2011,6 +2012,17 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 							var npdtd = xmlpath+'res.dtd';
 							await fs.copySync(opdtd, npdtd, { overwrite: true });
 							
+							var opbdtd = path.join(__dirname, '../views/includes/gpo/bill.dtd');
+							var npbdtd = xmlpath+'bill.dtd';
+							await fs.copySync(opbdtd, npbdtd, { overwrite: true });
+						} else {
+							var q = glob.sync(rq, options)[0];
+							var qexists = await fs.pathExistsSync(p);
+							if (!qexists) {
+								var opbdtd = path.join(__dirname, '../views/includes/gpo/bill.dtd');
+								var npbdtd = xmlpath+'bill.dtd';
+								await fs.copySync(opbdtd, npbdtd, { overwrite: true });
+							}
 						}
 					})
 					
