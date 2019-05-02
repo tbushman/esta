@@ -2210,8 +2210,13 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 		}
 		var json = JSON.parse(content);
 		var multiPolygon;
+		var type = 'MultiPolygon'
 		if (json.features && json.features.length) {
-			console.log(json.features)
+			// console.log(json.features)
+			if (!Array.isArray(json.features[0].geometry.coordinates[0])) {
+				type = 'MultiPoint'
+			}
+			console.log(type)
 			multiPolygon = await json.features.map(function(ft){
 				if (!Array.isArray(ft.geometry.coordinates[0])) {
 					return [ft.geometry.coordinates[0], ft.geometry.coordinates[1]];
@@ -2226,7 +2231,7 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 		}
 		// console.log(multiPolygon)
 		var geo = {
-			type: 'MultiPolygon',
+			type: type,
 			coordinates: multiPolygon
 		}
 		Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
@@ -2552,6 +2557,11 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			//console.log(desc, body.description);
 			var end;
 			var current;
+			var type = 'MultiPolygon';
+			console.log(body.latlng)
+			if (!Array.isArray(JSON.parse(body.latlng)[0][0])) {
+				type = 'MultiPoint'
+			}
 			var entry = {
 				_id: id,
 				type: "Feature",
@@ -2586,7 +2596,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					layers: body.layers
 				},
 				geometry: {
-					type: "MultiPolygon",
+					type: type,
 					coordinates: JSON.parse(body.latlng)
 				}
 			}

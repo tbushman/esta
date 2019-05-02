@@ -1230,9 +1230,46 @@ html
 							console.log(res)
 						})
 					},
+					styleOf(feature, type) {
+						var self = this;
+						var style = {
+												fillColor: 'var(--highlight)',
+												color: '#fff',
+												weight: 2,
+												opacity: 1,
+												fillOpacity: 0.8,
+												className: feature._id
+												
+												}
+						switch(type){
+							case 'Point':
+								style.radius = 10;
+								style.fillColor = 'blue';
+								break;
+							case 'Polygon':
+								break;
+							case 'MultiPolygon':
+								break;
+							default: 
+						}
+						return style;
+					},
 					loadLayer(item) {
 						console.log(item)
-						return L.GeoJSON.geometryToLayer(item);
+						var self = this;
+						var options = {
+							style: function(feature) {
+								return self.styleOf(feature, feature.geometry.type)
+							},
+							pointToLayer: function(feature, latlng) {
+								return new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type));
+							},
+							coordsToLatLng: null,
+							onEachFeature: function (feature, layer) {
+								layer.bindPopup(feature.properties.label);
+							}
+						}
+						return L.GeoJSON.geometryToLayer(item, options.pointToLayer, options.coordsToLatLng, options);
 					}
 					 /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
 					loadMap(cb) {
