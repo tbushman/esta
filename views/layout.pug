@@ -1264,12 +1264,13 @@ html
 							pointToLayer: function(feature, latlng) {
 								return new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type));
 							},
-							coordsToLatLng: null,
 							onEachFeature: function (feature, layer) {
 								layer.bindPopup(feature.properties.label);
 							}
 						}
-						return L.GeoJSON.geometryToLayer(item, options.pointToLayer, options.coordsToLatLng, options);
+						return L.GeoJSON.geometryToLayer(item, options.pointToLayer, null, options);
+						
+						
 					}
 					 /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
 					loadMap(cb) {
@@ -1308,12 +1309,30 @@ html
 								//- var key = 'dataLayer';
 								
 								var myRenderer = L.canvas({ padding: 0.5 });
-								self.dataLayer = self.loadLayer(self.doc);
+								//- if (!Array.isArray(self.doc.geometry.coordinates[0][0])) {
+								//- 	self.doc.geometry.coordinates.forEach(async function(ft){
+								//- 		console.log(ft)
+								//- 	})
+								//- } else {
+									self.dataLayer = self.loadLayer(self.doc);
+								//- }
 								self.dataLayer.bringToBack();
 								self.map.addLayer(self.dataLayer);
-								self.latlngs = self.dataLayer.getLatLngs();
+								if (self.dataLayer) {
+									if (self.dataLayer._layers) {
+										var keys = Object.keys(self.dataLayer._layers)
+										console.log(keys)
+										self.latlngs = keys.map(function(key){
+											console.log(key, self.dataLayer._layers[parseInt(key, 10)])
+											return L.latLng([self.dataLayer._layers[parseInt(key, 10)]._latlng.lat, self.dataLayer._layers[parseInt(key, 10)]._latlng.lng]);
+										})
+									} else {
+										self.latlngs = self.dataLayer.getLatLngs();
+									}
+									
+								}
 								var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
-								if (self.layers.length) {
+								if (self.doc.properties.title.str !== 'Geography' && self.layers.length) {
 									self.dataLayer.disableEdit();
 									self.layers.forEach(function(item, i){
 										self.lyr[item._id] = self.loadLayer(item);
@@ -1325,7 +1344,7 @@ html
 								}
 								//- self.dataLayer.on('dragend', function(e){
 								//- 	var latlngs = [];
-								//- 	console.log(e.target.getLatLngs)
+								//- 	console.log(e.target.getLatLngs())
 								//- 	e.target.getLatLngs().forEach(function(latlng){
 								//- 		console.log(latlng)
 								//- 		if (latlng) {
