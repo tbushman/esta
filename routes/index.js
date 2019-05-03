@@ -1474,7 +1474,7 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 		var set2 = {$set:{}};
 		var key2 = 'properties.lnglat';
 		set2.$set[key2] = lnglat;
-		console.log(lnglat)
+		// console.log(lnglat)
 		Publisher.findOneAndUpdate({_id: req.user._id}, set1, {new:true, safe:true}, function(err, pu){
 			if (err) {
 				return next(err)
@@ -2558,7 +2558,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			var end;
 			var current;
 			var type = 'MultiPolygon';
-			console.log(body.latlng)
+			// console.log(body.latlng)
 			if (!Array.isArray(JSON.parse(body.latlng)[0][0])) {
 				type = 'MultiPoint'
 			}

@@ -925,7 +925,9 @@ html
 						self.mapActive = !mapActive;
 						document.getElementById('inputs').scrollIntoView();
 
-						self.dataLayer.disableEdit();
+						if (typeof self.dataLayer.disableEdit === 'function'){
+							self.dataLayer.disableEdit();
+						}
 						self.addNewMedia(self.doc._id, ind, function(){
 							leafletImage(self.map, function(err, canvas){
 								if (err) {
@@ -1242,6 +1244,10 @@ html
 												
 												}
 						switch(type){
+							case 'MultiPoint':
+								style.radius = 10;
+								style.fillColor = 'blue';
+								break;
 							case 'Point':
 								style.radius = 10;
 								style.fillColor = 'blue';
@@ -1254,23 +1260,59 @@ html
 						}
 						return style;
 					},
+					coordsToLatLng(coords) { // (Array[, Boolean]) -> LatLng
+						return new L.LatLng(coords[1], coords[0]);
+					},
+					coordsToLatLngs(coords, levelsDeep, coordsToLatLng) { // (Array[, Number, Function]) -> Array
+						var latlng, i, len,
+								latlngs = [];
+						for (i = 0, len = coords.length; i < len; i++) {
+							latlng = levelsDeep ?
+								this.coordsToLatLngs(coords[i], levelsDeep - 1, coordsToLatLng) :
+								(coordsToLatLng || this.coordsToLatLng)(coords[i]);
+							latlngs.push(latlng);
+						}
+						return latlngs;
+					},
 					loadLayer(item) {
-						console.log(item)
+						//- console.log(item)
 						var self = this;
-						var options = {
+						//- var options = 
+						
+						//- return L.GeoJSON.geometryToLayer(item, options.pointToLayer, null, options);
+						//- return L.GeoJSON.geometryToLayer(item, options.pointToLayer, options.coordsToLatLngs, options)
+						return L.GeoJSON.geometryToLayer(item, {
 							style: function(feature) {
 								return self.styleOf(feature, feature.geometry.type)
 							},
 							pointToLayer: function(feature, latlng) {
-								return new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type));
+								//- console.log(feature, latlng);
+								var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type));
+								//- console.log(circle)
+								//- L.GeoJSON.coordsToLatLng(feature.geometry.coordinates, false)
+								return circle;
 							},
+							//- coordsToLatLng: self.coordsToLatLng(),
+							//- coordsToLatLngs: self.coordsToLatLngs(),
+
 							onEachFeature: function (feature, layer) {
+								console.log(feature)
 								layer.bindPopup(feature.properties.label);
 							}
-						}
-						return L.GeoJSON.geometryToLayer(item, options.pointToLayer, null, options);
-						
-						
+						})
+					},
+					layerToDataLayer(dataLayer) {
+						var self = this;
+						var keys = Object.keys(dataLayer._layers)
+						self.latlngs = [keys.map(function(key){
+							if (dataLayer._layers[parseInt(key, 10)]._latlng) {
+								return L.latLng([dataLayer._layers[parseInt(key, 10)]._latlng.lat, dataLayer._layers[parseInt(key, 10)]._latlng.lng]);
+							} else {
+								console.log('bleh')
+								console.log(dataLayer._layers[parseInt(key, 10)]);
+
+							}
+						})]
 					}
 					 /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
 					loadMap(cb) {
@@ -1290,119 +1332,108 @@ html
 							renderer: L.canvas(),
 							preferCanvas: true
 						});
-						//- if (self.infowindow === 'tooltip') {
-							L.control.zoom({
-								position:'topleft'
-							}).addTo(map);
-						//- } else {
-						//- 	L.control.zoom({
-						//- 		position:'bottomleft'
-						//- 	}).addTo(map);
-						//- }
+						L.control.zoom({
+							position:'topleft'
+						}).addTo(map);
 						
 						
 						self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(map);
 						self.map = map
-						if (!self.dataLayer && self.doc) {
+						if (!self.dataLayer && self.doc && self.doc !== '') {
 							// generate geographic points from data
-							if (self.doc && self.doc !== '') {
-								//- var key = 'dataLayer';
-								
-								var myRenderer = L.canvas({ padding: 0.5 });
-								//- if (!Array.isArray(self.doc.geometry.coordinates[0][0])) {
-								//- 	self.doc.geometry.coordinates.forEach(async function(ft){
-								//- 		console.log(ft)
-								//- 	})
-								//- } else {
-									self.dataLayer = self.loadLayer(self.doc);
-								//- }
-								self.dataLayer.bringToBack();
-								self.map.addLayer(self.dataLayer);
-								if (self.dataLayer) {
-									if (self.dataLayer._layers) {
-										var keys = Object.keys(self.dataLayer._layers)
-										console.log(keys)
-										self.latlngs = keys.map(function(key){
-											console.log(key, self.dataLayer._layers[parseInt(key, 10)])
-											return L.latLng([self.dataLayer._layers[parseInt(key, 10)]._latlng.lat, self.dataLayer._layers[parseInt(key, 10)]._latlng.lng]);
-										})
+							var myRenderer = L.canvas({ padding: 0.5 });
+							self.dataLayer = self.loadLayer(self.doc);
+							self.dataLayer.bringToBack();
+							self.map.addLayer(self.dataLayer);
+							if (self.dataLayer._bounds) {
+								console.log(self.dataLayer._latlngs)
+								self.latlngs = self.dataLayer.getLatLngs();
+							} else if (self.dataLayer._layers) {
+								self.layerToDataLayer(self.dataLayer)
+							}
+							var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
+							if (self.doc.properties.title.str !== 'Geography' && self.layers.length) {
+								self.dataLayer.disableEdit();
+								self.layers.forEach(function(item, i){
+									self.lyr[item._id] = self.loadLayer(item);
+									self.lyr[item._id].setStyle({color: colors[i]})
+									self.map.addLayer(self.lyr[item._id])
+								})
+								//- var layer = self.map.getLayer(self.dataLayer)
+								//- layer.setZIndex(0);
+							}
+							//- self.dataLayer.on('dragend', function(e){
+							//- 	var latlngs = [];
+							//- 	console.log(e.target.getLatLngs())
+							//- 	e.target.getLatLngs().forEach(function(latlng){
+							//- 		console.log(latlng)
+							//- 		if (latlng) {
+							//- 			latlng.forEach(function(ll){
+							//- 				console.log(ll)
+							//- 				latlngs.push([ll.lng,ll.lat])
+							//- 			})
+							//- 			latlngs.push([latlng[0].lng, latlng[0].lat])
+							//- 		}
+							//- 	})
+							//- 	self.doc.geometry.coordinates = latlngs
+							//- })
+							map.on('editable:vertex:rawclick', function(e){
+								self.layers.forEach(function(item, i){
+									if (item._id !== e.layer._id) {
+										item.disableEdit();
 									} else {
-										self.latlngs = self.dataLayer.getLatLngs();
+										item.enableEdit();
 									}
-									
-								}
-								var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
-								if (self.doc.properties.title.str !== 'Geography' && self.layers.length) {
-									self.dataLayer.disableEdit();
-									self.layers.forEach(function(item, i){
-										self.lyr[item._id] = self.loadLayer(item);
-										self.lyr[item._id].setStyle({color: colors[i]})
-										self.map.addLayer(self.lyr[item._id])
-									})
-									//- var layer = self.map.getLayer(self.dataLayer)
-									//- layer.setZIndex(0);
-								}
-								//- self.dataLayer.on('dragend', function(e){
-								//- 	var latlngs = [];
-								//- 	console.log(e.target.getLatLngs())
-								//- 	e.target.getLatLngs().forEach(function(latlng){
-								//- 		console.log(latlng)
-								//- 		if (latlng) {
-								//- 			latlng.forEach(function(ll){
-								//- 				console.log(ll)
-								//- 				latlngs.push([ll.lng,ll.lat])
-								//- 			})
-								//- 			latlngs.push([latlng[0].lng, latlng[0].lat])
-								//- 		}
-								//- 	})
-								//- 	self.doc.geometry.coordinates = latlngs
-								//- })
-								map.on('editable:vertex:rawclick', function(e){
-									self.layers.forEach(function(item, i){
-										if (item._id !== e.layer._id) {
-											item.disableEdit();
-										} else {
-											item.enableEdit();
-										}
-									})
 								})
-								map.on('editable:editing', function (e) {
-									e.layer.setStyle({color: 'DarkRed'});
-								});
-								self.map.on('editable:vertex:dragstart', async function(e){
-									var cll = e.vertex.latlng.__vertex.latlng;
-									var dll = self.dataLayer.getLatLngs();
-									var lvl = 0;
-									var p = 0;
-									var dl;
-									var lll = self.dataLayer.getLatLngs();
-									self.latlngs = lll;
-								})
-								self.map.on('editable:vertex:dragend', function(e){
-									console.log(e)
-									var cll = e.vertex.latlng.__vertex.latlng;
-									var dll = self.dataLayer.getLatLngs();
-									var lvl = 0;
-									var p = 0;
-									var dl;
-									self.latlngs = dll;
-									self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
-								})
-								var coords = self.latlngs;
-								if (coords) {
-									latlng = L.latLngBounds(coords[0]).getCenter();
+							})
+							map.on('editable:editing', function (e) {
+								e.layer.setStyle({color: 'DarkRed'});
+							});
+							self.map.on('editable:vertex:dragstart', async function(e){
+								var cll = e.vertex.latlng.__vertex.latlng;
+								var dll = self.dataLayer.getLatLngs();
+								var lvl = 0;
+								var p = 0;
+								var dl;
+								var lll = self.dataLayer.getLatLngs();
+								self.latlngs = lll;
+							})
+							self.map.on('editable:vertex:dragend', function(e){
+								console.log(e)
+								var cll = e.vertex.latlng.__vertex.latlng;
+								var dll = self.dataLayer.getLatLngs();
+								var lvl = 0;
+								var p = 0;
+								var dl;
+								self.latlngs = dll;
+								self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
+							})
+							var coords = self.latlngs;
+							if (coords) {
+								console.log(coords)
+								if (!coords[0] || !Array.isArray(coords[0])) {
+									if (self.dataLayer._bounds) {
+										self.layerToDataLayer(self.dataLayer)
+										coords = self.latlngs;
+									}
+									latlng = L.latLng(coords)//L.latLngBounds(coords).getCenter();
 								} else {
-									console.log(self.latlngs)
-									self.latlngs = self.dataLayer.getLatLngs();
+									latlng = L.latLngBounds(coords[0]).getCenter();
+								}
+							} else {
+								console.log(self.latlngs)
+								self.latlngs = self.dataLayer.getLatLngs();
+								if (!Array.isArray(self.latlngs[0])) {
+									latlng = L.latLngBounds(self.latlngs).getCenter();
+								} else {
 									latlng = L.latLngBounds(self.latlngs[0]).getCenter();
 								}
-								// TODO admin only for certain things?
-								if (self.loggedin && self.loggedin !== '') self.dataLayer.enableEdit();
-
-								self.lMarker = L.marker(latlng, {draggable: true}).addTo(map);
-								
 							}
-
+							// TODO admin only for certain things?
+							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.admin) {
+								self.dataLayer.enableEdit();
+							}
+							self.lMarker = L.marker(latlng, {draggable: true}).addTo(map);
 							self.map.panTo(latlng);
 							
 							cb(latlng)
