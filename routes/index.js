@@ -2451,7 +2451,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	asynk.waterfall([
 		function(next){
 			
-			Content.findOne({_id: req.params.id},function(err, doc) {
+			Content.findOne({_id: req.params.id}, async function(err, doc) {
 				if (err) {
 					return next(err)
 				}
@@ -2462,15 +2462,15 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				var thumburls = [];
 				var count = 0;
 				var i = 0;
-				for (var i in keys) {
+				await keys.forEach(function(key, i){
 					var thiskey = 'thumb'+count+'';
-					if (keys[i] === thiskey) {
-						//console.log(body[thiskey])
+					if (key === thiskey) {
+						console.log(thiskey, body[thiskey])
 						var thisbody = body[thiskey];
 						if (thisbody && typeof thisbody.split === 'function' && thisbody.split('').length > 100) {
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
 							var thumburl = ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
-							thumburls.push(thumburl.replace(publishersDir, ''))
+							thumburls.push(thumburl.replace(''+publishersDir+'', ''))
 							count++;
 						// console.log('thumburl, thumbbuf')
 						// console.log(thumburl, thumbbuf)
@@ -2487,7 +2487,10 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					} else {
 						count = count;
 					}
-				}
+				})
+				// for (var i in keys) {
+				// 
+				// }
 				next(null, doc, thumburls, body, keys, pu, id)
 				
 			})
@@ -2623,7 +2626,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			if (thumbs.length > 0) {
 				for (var i = 0; i < thumbs.length; i++) {
 					var media;
-			
+					console.log(thumbs[i])
 					media = {
 						index: count,
 						name: (body['img'+i+'_name'] ? curly(body['img'+i+'_name']) : ''),
@@ -2837,8 +2840,8 @@ router.post('/api/deletemedia/:id/:index', function(req, res, next) {
 					}
 					media[i].image_abs = newImgPath;
 					media[i].thumb_abs = newThumbPath;
-					media[i].image = newImgPath.replace(publishersDir, '');
-					media[i].thumb = newThumbPath.replace(publishersDir, '')
+					media[i].image = newImgPath.replace(''+publishersDir+'', '');
+					media[i].thumb = newThumbPath.replace(''+publishersDir+'', '')
 					media[i].index -= 1;
 				}
 			}
