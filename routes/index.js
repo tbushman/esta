@@ -28,7 +28,6 @@ var publishers = path.join(__dirname, '/../../..');
 var htmlDiffer = new HtmlDiffer({
 	ignoreAttributes: ['id', 'for', 'class', 'href', 'style']
 });
-var publishersDir = (process.env.NODE_ENV === 'production' ? process.env.PD : process.env.DEVPD);
 var {google} = require('googleapis');
 dotenv.load();
 var upload = multer({fieldSize: 25 * 1024 * 1024});
@@ -2450,7 +2449,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	}
 	asynk.waterfall([
 		function(next){
-			
+			var publishersDir = (process.env.NODE_ENV === 'production' ? process.env.PD.toString() : process.env.DEVPD.toString());
+
 			Content.findOne({_id: req.params.id}, async function(err, doc) {
 				if (err) {
 					return next(err)
@@ -2465,12 +2465,12 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				await keys.forEach(function(key, i){
 					var thiskey = 'thumb'+count+'';
 					if (key === thiskey) {
-						console.log(thiskey, body[thiskey])
+						// console.log(thiskey, body[thiskey])
 						var thisbody = body[thiskey];
 						if (thisbody && typeof thisbody.split === 'function' && thisbody.split('').length > 100) {
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
 							var thumburl = ''+publishers+'/pu/publishers/esta/images/thumbs/'+doc.index+'/thumb_'+count+'.png'
-							thumburls.push(thumburl.replace(''+publishersDir+'', ''))
+							thumburls.push(thumburl.replace(publishersDir, ''))
 							count++;
 						// console.log('thumburl, thumbbuf')
 						// console.log(thumburl, thumbbuf)
@@ -2820,6 +2820,8 @@ router.post('/api/deletemedia/:id/:index', function(req, res, next) {
 			if (err) {
 				return next(err) 
 			}
+			var publishersDir = (process.env.NODE_ENV === 'production' ? process.env.PD.toString() : process.env.DEVPD.toString());
+
 			var media = doc.properties.media;
 			if (media.length === 0) {
 				media = []
@@ -2840,8 +2842,8 @@ router.post('/api/deletemedia/:id/:index', function(req, res, next) {
 					}
 					media[i].image_abs = newImgPath;
 					media[i].thumb_abs = newThumbPath;
-					media[i].image = newImgPath.replace(''+publishersDir+'', '');
-					media[i].thumb = newThumbPath.replace(''+publishersDir+'', '')
+					media[i].image = newImgPath.replace(publishersDir, '');
+					media[i].thumb = newThumbPath.replace(publishersDir, '')
 					media[i].index -= 1;
 				}
 			}
