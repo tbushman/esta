@@ -2173,6 +2173,10 @@ router.get('/menu/:tiind/:chiind', function(req, res, next){
 	
 })
 
+// router.get('/point/:id/:lat/:lng', function(req, res, next){
+// 
+// })
+
 router.get('/api/gpo', function(req, res, next){
 	require('request-promise')({
 		uri: 'https://api.govinfo.gov/collections/BILLS/'+moment().subtract('1', 'years').utc().format()+'?offset=0&pageSize=1000&api_key='+process.env.GPOKEY,

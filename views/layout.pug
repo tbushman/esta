@@ -122,6 +122,7 @@ html
 						ts: this.ifNullThenArr(!{JSON.stringify(ts)}),
 						can: [],
 						lyr: {},
+						geo: [],
 						tis: [
 							{
 								ind: 0,
@@ -204,7 +205,10 @@ html
 								attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
 							}
 							
-						]
+						],
+						zfactor: (0.01 * (!this.map ? 6 : (18 - this.map.getZoom() ) )),
+						cZF: null
+							//(!this.map ? (6 * this.zfactor) : (this.map.getZoom() + this.zfactor))
 							//(!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
 						
 					}
@@ -1274,6 +1278,84 @@ html
 						}
 						return latlngs;
 					},
+					setView(feature, latlng){
+						var self = this;
+						var buf = L.circle(latlng, { radius: 1400 * self.cZF }).addTo(self.map);
+						var ll1 = buf.getBounds();
+						var ll2 = latlng;
+						buf.remove();
+						var keys = Object.keys(self.dataLayer._layers);
+						$.get('/publishers/esta/json/json_'+feature._id+'.json')
+						.then(function(json){
+							console.log(json)
+							if (json.features){
+								self.geo = keys.map(function(key){
+									var match;
+									if (self.dataLayer._layers[key]._latlng) {
+										//- console.log(json.features[0].geometry.coordinates)
+										for (var j = 0; j < json.features.length; j++) {
+											var jf = json.features[j];
+											if (self.dataLayer._layers[key]._latlng.lat === jf.geometry.coordinates[1] && self.dataLayer._layers[key]._latlng.lng === jf.geometry.coordinates[0]) {
+													match = jf
+													console.log(self.dataLayer._layers[key]._latlng.lat, jf.geometry.coordinates[1])
+											} else {
+												//- console.log(self.dataLayer._layers[key]._latlng.lat, jf.geometry.coordinates[1])
+											}
+										}
+										//- json.features.forEach(function(jf){
+										//- })
+									}
+									if (match) return match;
+								})
+								.filter(function(ft){
+									//- console.log(ft)
+									var rx = ft.geometry.coordinates.reverse()
+									var center = L.latLng(rx);
+									console.log(center)
+									//- if (ft._latlng) {
+									//- 	center = ft._latlng;
+									//- } else {
+										//- center = L.latLngBounds(ft.geometry.coordinates);
+									//- }
+									console.log(ll1.contains(center))
+									return ll1.contains(center)
+								})
+								
+							}
+							
+						})
+						.catch(function(err){
+							console.log(err)
+						})
+						
+						//- if (self.map) self.map.panTo(latlng);
+					},
+					//- /* get features contained within a given map Polygon and time range*/
+					//- containArr(mod, fts) {
+					//- 	var self = this, features;
+					//- 	var g1 = (!coords[0] || !Array.isArray(coords[0]))
+					//- 	return self.data.sort( /* ensure data sorted by time range */
+					//- 		function(a,b){return a.properties.time.end < b.properties.time.end}
+					//- 	).filter(function(feature){ /*ret documents with overlapping geotime*/
+					//- 		var g2 = self.rxArr(feature.geometry.coordinates);
+					//- 		return (self.containGeo(g1, g2)); 
+					//- 	});
+					//- }/*end get features contained within a map polygon and time range */,
+					//- /*begin map geometry contains-checker*/
+					//- containGeo(cd1, cd2) { /* does cd1 contain cd2 ? Boolean */
+					//- 	var self = this, cZF = (self.position.zoom + self.zfactor), center;
+					//- 	if (!self.map) return;
+					//- 	if (!isNaN(cd1[0])) {
+					//- 		center = L.latLng(cd1);
+					//- 	} else {
+					//- 		center = L.latLngBounds(cd1).getCenter();
+					//- 	}
+					//- 	var buf = L.circle(center, { radius: 1400 * cZF }).addTo(self.map);
+					//- 	var ll1 = buf.getBounds(),
+					//- 	ll2 = (!isNaN(cd2[0]) ? /*Point*/cd2 : /*Polygon*/L.latLngBounds(cd2) ); 
+					//- 	buf.remove();
+					//- 	return ll1.contains(ll2); 
+					//- }/*end does cd1 contain cd2 Bool*/,
 					loadLayer(item) {
 						//- console.log(item)
 						var self = this;
@@ -1287,9 +1369,13 @@ html
 							},
 							pointToLayer: function(feature, latlng) {
 								//- console.log(feature, latlng);
-								var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type));
+								var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type))
+									.on('click', function(){
+										return self.setView(feature, latlng)
+									});
 								//- console.log(circle)
 								//- L.GeoJSON.coordsToLatLng(feature.geometry.coordinates, false)
+								
 								return circle;
 							},
 							//- coordsToLatLng: self.coordsToLatLng(),
@@ -1338,7 +1424,8 @@ html
 						
 						
 						self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(map);
-						self.map = map
+						self.map = map;
+						self.cZF = (self.map.getZoom() + self.zfactor)
 						if (!self.dataLayer && self.doc && self.doc !== '') {
 							// generate geographic points from data
 							var myRenderer = L.canvas({ padding: 0.5 });
@@ -1377,7 +1464,7 @@ html
 							//- 	})
 							//- 	self.doc.geometry.coordinates = latlngs
 							//- })
-							map.on('editable:vertex:rawclick', function(e){
+							self.map.on('editable:vertex:rawclick', function(e){
 								self.layers.forEach(function(item, i){
 									if (item._id !== e.layer._id) {
 										item.disableEdit();
@@ -1386,7 +1473,7 @@ html
 									}
 								})
 							})
-							map.on('editable:editing', function (e) {
+							self.map.on('editable:editing', function (e) {
 								e.layer.setStyle({color: 'DarkRed'});
 							});
 							self.map.on('editable:vertex:dragstart', async function(e){
@@ -1408,32 +1495,28 @@ html
 								self.latlngs = dll;
 								self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
 							})
-							var coords = self.latlngs;
-							if (coords) {
-								console.log(coords)
-								if (!coords[0] || !Array.isArray(coords[0])) {
-									if (self.dataLayer._bounds) {
+							var coords;
+							if (self.latlngs) {
+								if (!self.latlngs || !isNaN(self.latlngs[0])) {
+									//- latlng = L.latLng(self.doc.geometry.coordinates);
+									if (self.dataLayer._layers) {
 										self.layerToDataLayer(self.dataLayer)
-										coords = self.latlngs;
+									} else {
+										self.latlngs = self.dataLayer.getLatLngs()
 									}
-									latlng = L.latLng(coords)//L.latLngBounds(coords).getCenter();
-								} else {
-									latlng = L.latLngBounds(coords[0]).getCenter();
+									//- latlng = L.latLng(self.latlngs)	
 								}
-							} else {
-								console.log(self.latlngs)
-								self.latlngs = self.dataLayer.getLatLngs();
-								if (!Array.isArray(self.latlngs[0])) {
+								if (self.latlngs) {
 									latlng = L.latLngBounds(self.latlngs).getCenter();
-								} else {
-									latlng = L.latLngBounds(self.latlngs[0]).getCenter();
 								}
 							}
+							
+							//- if (self.map) self.setView(self.map.getLatLng());
 							// TODO admin only for certain things?
 							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.admin) {
 								self.dataLayer.enableEdit();
 							}
-							self.lMarker = L.marker(latlng, {draggable: true}).addTo(map);
+							self.lMarker = L.marker(latlng, {draggable: true}).addTo(self.map);
 							self.map.panTo(latlng);
 							
 							cb(latlng)
