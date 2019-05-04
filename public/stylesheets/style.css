@@ -150,7 +150,21 @@ ol {
 	box-shadow: 0 0 2px #000;
 	overflow: hidden!important;
 }
+#vue > .centerallwrap {
+	clip-path: url(#clipPath);	
+}
+.viewerlist {
+height:auto;width:auto;right:0;top:0;
+position:absolute;
+display: inline-block;
+z-index: 999;	
+background-color: var(--primary);
+margin-top: calc(var(--thumbw) * 1.1);
 
+}
+.viewerlist > ul > li {
+	margin-top: 8px;
+}
 blockquote, .blockquote {
 	margin: 60px;
 	padding-right: 2rem;

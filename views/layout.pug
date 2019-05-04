@@ -57,6 +57,9 @@ html
 				data: function data(){
 					return {
 						lvl: 'h',
+						btn: { x: (this.wWidth / 2), 
+							y: (this.wHeight/ 2),r: 45
+						},
 						h: 0,
 						i: 0,
 						j: 0,
@@ -87,6 +90,7 @@ html
 						thickness: 45,
 						wWidth: window.innerWidth,
 						wHeight: window.innerHeight,
+						res: (window.innerWidth < 600),
 						dPath: this.dPathAttr(),
 						tinymce: '',
 						dfi: 0,
@@ -1311,13 +1315,14 @@ html
 									//- console.log(ft)
 									var rx = ft.geometry.coordinates.reverse()
 									var center = L.latLng(rx);
-									console.log(center)
+									latlng = center;
+									//- console.log(center)
 									//- if (ft._latlng) {
 									//- 	center = ft._latlng;
 									//- } else {
 										//- center = L.latLngBounds(ft.geometry.coordinates);
 									//- }
-									console.log(ll1.contains(center))
+									//- console.log(ll1.contains(center))
 									return ll1.contains(center)
 								})
 								
@@ -1328,7 +1333,10 @@ html
 							console.log(err)
 						})
 						
-						//- if (self.map) self.map.panTo(latlng);
+						if (self.map) {
+							self.map.panTo(latlng);
+							self.lMarker.setLatLng(latlng)
+						}
 					},
 					//- /* get features contained within a given map Polygon and time range*/
 					//- containArr(mod, fts) {
@@ -1525,6 +1533,23 @@ html
 							cb(null)
 						// console.log('when?')
 						}
+					},
+					getClip() { 
+						var self = this;
+						if (self.btn) {// make central clipping svg d value reactive
+						var wW = ( !self.wWidth ? window.innerWidth : self.wWidth ), 
+						wH = ( !self.wHeight ? window.innerHeight : self.wHeight ), 
+						pW = ( !self.pWidth ? ( wW * (self.res?0.75:0.5) ) : self.pWidth ), 
+						pH = ( !self.pHeight ? (wH * (self.res?0.75:0.5) ) : self.pHeight ), 
+						r = self.btn.r, cRc = (r * 0.5523), cRr = 0.81, 
+						sY = (isNaN(self.btn.y)?(wH*(self.res?0.75:0.5)):self.btn.y);
+						var str =`M${wW},${wH}H0V0h${wW}V${wH}z 
+						M${(wW - pW) + r},${sY}c0-${cRc}-${(cRc * cRr)}-${r}-${r}-${r}
+							c-${cRc},0-${r},${(cRc * cRr)}-${r},${r} 
+						c0,${cRc},${(cRc * cRr)},${r},${r},${r}
+							C${(wW - pW) + cRc},${(sY+r)},${(wW - pW)+r},${(sY + cRc)},
+							${((wW - pW) + r)},${sY}z`
+						return str; }
 					},
 					sliderImg(int){
 						var self = this;
