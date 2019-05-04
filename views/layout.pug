@@ -36,6 +36,7 @@ html
 		block page
 		block header
 		block content
+
 		div#gpresult
 		
 		#map
@@ -410,6 +411,10 @@ html
 						if (dataCoords){
 							self.latlng.lng = dataCoords.lng;
 							self.latlng.lat = dataCoords.lat;
+							self.panZoom();
+						} else {
+							self.latlng.lat = 40;
+							self.latlng.lng = -111;
 							self.panZoom();
 						}
 						if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {

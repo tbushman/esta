@@ -6,7 +6,7 @@ block content
 	div#vue
 		include includes/menu.pug
 		svg(version="1.1", xmlns="http://www.w3.org/2000/svg" 
-			v-if="!isNaN(wWidth)" xmlns:xlink="http://www.w3.org/1999/xlink" x="0"
+			v-if="!isNaN(wWidth) && mapActive" xmlns:xlink="http://www.w3.org/1999/xlink" x="0"
 			y="0" :width="(!wWidth ? 0:wWidth)" :height="(!wHeight ? 0:wHeight)" 
 			:viewBox="'0 0 '+ wWidth +' '+ wHeight + ''" 
 			style="position:absolute;" xml:space="preserve" 
@@ -16,6 +16,6 @@ block content
 					path(v-if="btn && !isNaN(wWidth)" 
 						:d="getClip()")
 
-		div.centerallwrap(:style="{'pointer-events':(mapActive? 'none' : 'auto')}")
+		div.centerallwrap(:style="{'clip-path': (!isNaN(wWidth) && mapActive ? 'url(#clipPath)' : 'none'), 'pointer-events':(mapActive ? 'none' : 'auto')}")
 
 			!= str

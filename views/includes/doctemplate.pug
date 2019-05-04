@@ -84,8 +84,10 @@ div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: n
 	div.viewerlist(v-if="geo.length", :style="{'pointer-events':'all',left: (wWidth / 2) + 'px',bottom:(wHeight / 2) + 'px'}")
 		p(v-text="(geo.length)+' nearby:'")
 		ul
+			//, @click="accordion(g, null, $event)"
+			//v-if="accordions[g]", 
 			li(v-for="(go, g) in geo", v-text="go.properties.SITENAME")
-				//- p(v-text="go.properties.PROJDESC")
+				p(v-text="go.properties.PROJDESC")
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px",
 		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
 		, 

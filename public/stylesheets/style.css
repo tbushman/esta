@@ -151,7 +151,7 @@ ol {
 	overflow: hidden!important;
 }
 #vue > .centerallwrap {
-	clip-path: url(#clipPath);	
+		
 }
 .viewerlist {
 height:auto;width:auto;right:0;top:0;
