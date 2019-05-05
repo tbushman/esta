@@ -2351,7 +2351,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 				var doc = await Content.findOne({'properties.chapter.str': 'Jurisdiction: '+ places[placeind].properties.name}).then(function(doc){return doc}).catch(function(err){return console.log(err)});
 					
 				if (isNaN(chind) || !arr[tiind].chapter[chind]) {
-					chnd = doc.properties.chapter.ind;
+					chnd = (!doc ? 0 : doc.properties.chapter.ind);
 				} else {
 					chnd = chind;
 				}
