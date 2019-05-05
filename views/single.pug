@@ -16,6 +16,6 @@ block content
 					path(v-if="btn && !isNaN(wWidth)" 
 						:d="getClip()")
 
-		div.centerallwrap(:style="{'clip-path': (!isNaN(wWidth) && mapActive ? 'url(#clipPath)' : 'none'), 'pointer-events':(mapActive ? 'none' : 'auto')}")
+		div.centerallwrap(:style="{'clip-path': (!isNaN(wWidth) && mapActive ? 'url(#clipPath)' : 'none'), 'pointer-events':(mapActive ? 'none' : 'auto'), 'overflow-y': (mapActive ? 'hidden' : 'scroll')}")
 
 			!= str

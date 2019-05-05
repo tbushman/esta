@@ -43,7 +43,7 @@ html
 		a#publish_logo(href="https://github.com/tbushman/esta" target="_blank")
 			img(src="/images/publish_logo.svg")
 		
-		a#publish_logo.tb-font-xxxs(href="http://bli.sh/pp/blish", target="_blank", style="top: calc(100vh - calc(var(--thumbw) * 1.35));right: 23px;margin:0;text-align:right;bottom: auto;") Privacy policy
+		a#publish_logo.tb-font-xxxs(href="http://bli.sh/pp/blish", target="_blank", style="top: calc(100vh - calc(var(--thumbw) * 1.1));right: 23px;margin:0;text-align:right;bottom: auto;") Privacy policy
 
 		script(type="text/javascript").
 			Vue.prototype.moment = moment;
@@ -59,7 +59,7 @@ html
 					return {
 						lvl: 'h',
 						btn: { x: (this.wWidth / 2), 
-							y: (this.wHeight/ 2),r: 45
+							y: (this.wHeight/ 2),r: 42
 						},
 						h: 0,
 						i: 0,
@@ -335,7 +335,7 @@ html
 									lat: position.coords.latitude,
 									lng: position.coords.longitude
 								};
-								console.log(pos)
+								//- console.log(pos)
 								self.handleLocationOutcome(true, pos);
 							}, function() {
 								self.handleLocationOutcome(false, pos);
@@ -374,7 +374,7 @@ html
 							}
 							self.edit = self.doc.index;
 							self.dindex = 0;
-							console.log(self.pu, self.ts.length, !self.unsigned)
+							//- console.log(self.pu, self.ts.length, !self.unsigned)
 							
 						}
 					}
@@ -407,7 +407,7 @@ html
 						});
 					}
 					self.loadMap(function(dataCoords){
-						console.log(dataCoords)
+						//- console.log(dataCoords)
 						if (dataCoords){
 							self.latlng.lng = dataCoords.lng;
 							self.latlng.lat = dataCoords.lat;
@@ -1289,26 +1289,43 @@ html
 					},
 					setView(feature, latlng){
 						var self = this;
-						var buf = L.circle(latlng, { radius: 1400 * self.cZF }).addTo(self.map);
+						console.log(self.cZF)
+						self.cZF = (18 - self.map.getZoom() + self.zfactor)
+						var buf = L.circle(latlng, { radius: (140 * self.cZF) }).addTo(self.map);
+						console.log(buf)
 						var ll1 = buf.getBounds();
 						var ll2 = latlng;
 						buf.remove();
-						var keys = Object.keys(self.dataLayer._layers);
+						//- console.log(feature)
+						var keys;
+						var vals;
+						if (!self.dataLayer._layers) {
+							if (!self.lyr[feature._id]._layers) {
+								keys = []
+							} else {
+								vals = self.lyr[feature._id];
+								console.log(vals)
+								keys = Object.keys(vals._layers)
+							}
+						} else {
+							vals = self.dataLayer;
+							keys = Object.keys(vals._layers);
+						}
 						$.get('/publishers/esta/json/json_'+feature._id+'.json')
-						.then(function(json){
-							console.log(json)
+						.then(async function(json){
+							//- console.log(json)
 							if (json.features){
-								self.geo = keys.map(function(key){
+								self.geo = await keys.map(function(key){
 									var match;
-									if (self.dataLayer._layers[key]._latlng) {
+									if (vals._layers[key]._latlng) {
 										//- console.log(json.features[0].geometry.coordinates)
 										for (var j = 0; j < json.features.length; j++) {
 											var jf = json.features[j];
-											if (self.dataLayer._layers[key]._latlng.lat === jf.geometry.coordinates[1] && self.dataLayer._layers[key]._latlng.lng === jf.geometry.coordinates[0]) {
+											if (vals._layers[key]._latlng.lat === jf.geometry.coordinates[1] && vals._layers[key]._latlng.lng === jf.geometry.coordinates[0]) {
 													match = jf
-													console.log(self.dataLayer._layers[key]._latlng.lat, jf.geometry.coordinates[1])
+													//- console.log(vals._layers[key]._latlng.lat, jf.geometry.coordinates[1])
 											} else {
-												//- console.log(self.dataLayer._layers[key]._latlng.lat, jf.geometry.coordinates[1])
+												//- console.log(vals._layers[key]._latlng.lat, jf.geometry.coordinates[1])
 											}
 										}
 										//- json.features.forEach(function(jf){
@@ -1330,18 +1347,22 @@ html
 									//- console.log(ll1.contains(center))
 									return ll1.contains(center)
 								})
-								
 							}
-							
+							if (self.geo) {
+								self.map.fitBounds(ll1);
+								//- setTimeout(function(){
+									if (buf && typeof buf.remove === 'function') {
+										buf.remove()
+									} 
+								//- }, 1000)//- self.map.panTo(latlng);
+								self.lMarker.setLatLng(latlng)
+							}
+
 						})
 						.catch(function(err){
 							console.log(err)
 						})
 						
-						if (self.map) {
-							self.map.panTo(latlng);
-							self.lMarker.setLatLng(latlng)
-						}
 					},
 					//- /* get features contained within a given map Polygon and time range*/
 					//- containArr(mod, fts) {
@@ -1395,7 +1416,7 @@ html
 							//- coordsToLatLngs: self.coordsToLatLngs(),
 
 							onEachFeature: function (feature, layer) {
-								console.log(feature)
+								//console.log(feature)
 								layer.bindPopup(feature.properties.label);
 							}
 						})
@@ -1438,7 +1459,7 @@ html
 						
 						self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(map);
 						self.map = map;
-						self.cZF = (self.map.getZoom() + self.zfactor)
+						self.cZF = (18 - self.map.getZoom() + self.zfactor)
 						if (!self.dataLayer && self.doc && self.doc !== '') {
 							// generate geographic points from data
 							var myRenderer = L.canvas({ padding: 0.5 });
@@ -1446,7 +1467,7 @@ html
 							self.dataLayer.bringToBack();
 							self.map.addLayer(self.dataLayer);
 							if (self.dataLayer._bounds) {
-								console.log(self.dataLayer._latlngs)
+								//- console.log(self.dataLayer._latlngs)
 								self.latlngs = self.dataLayer.getLatLngs();
 							} else if (self.dataLayer._layers) {
 								self.layerToDataLayer(self.dataLayer)

@@ -160,6 +160,8 @@ display: inline-block;
 z-index: 999;	
 background-color: var(--primary);
 margin-top: calc(var(--thumbw) * 1.1);
+margin-right: var(--thumbw);
+overflow-y: scroll; 
 
 }
 .viewerlist > ul > li {
@@ -900,13 +902,23 @@ breadcrumbs a {
 }
 
 .leaflet-top {
-	top: 45px!important;
-	top: var(--thumbw)!important;
+	top: 50px!important;
+	top: calc(var(--thumbw) * 1.2 )!important;
 }
 
 .leaflet-left {
 	left: 45px!important;
 	left: var(--thumbw)!important;
+}
+
+.leaflet-right {
+	right: 48px!important;
+	right: calc(var(--thumbw) * 1.1 )!important;
+}
+
+.leaflet-bottom {
+	bottom: 48px!important;
+	bottom: calc(var(--thumbw) * 1.1 )!important;
 }
 
 .mce-panel {
@@ -1389,7 +1401,7 @@ del {
 
 #publish_logo {
 	position: fixed;
-	bottom: 10px;
+	bottom: 3px;
 	right: 23px;
 	top: auto;
 	left: auto;
