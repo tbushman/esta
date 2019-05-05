@@ -2291,7 +2291,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 			}
 			query = {'properties.title.ind': tiind, 'properties.chapter.ind': chind}
 		}
-		Content.find(query, function(err, chunk){
+		Content.find(query, async function(err, chunk){
 			if (err) {
 				return next(err)
 			}
@@ -2336,12 +2336,8 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 						var chobj = usleg.filter(function(l){
 							return (req.params.xmlid.split('BILLS-')[1].split(/(\d{0,4})/)[2] === l.code)
 						})[0];
-						//arr[tiind].chapter[chind].ind;
-						console.log(chobj, req.params.xmlid.split(chobj.code)[1])
 						snd = parseInt(req.params.xmlid.split(chobj.code)[1].split(/\D/)[0], 10) - 1;//arr[tiind].chapter[chind].section[secind].ind;
 						chtitle = (!chobj ? arr[0].chapter[0].name : chobj.name);
-						//arr[tiind].chapter[chind].section[secind].name;
-						//arr[tiind].code+''+(arr[tiind].chapter[chind].ind+1)+''+arr[tiind].chapter[chind].code+''+(arr[tiind].chapter[chind].section[secind].ind+1)+''+arr[tiind].chapter[chind].section[secind].code
 						xmlurl = (tiind === 0 ? 'https://api.govinfo.gov/packages/'+
 							req.params.xmlid
 							+'/xml' : null )
@@ -2352,14 +2348,18 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 				
 			} else {
 				places = usstates;
+				var doc = await Content.findOne({'properties.chapter.str': 'Jurisdiction: '+ places[placeind].properties.name}).then(function(doc){return doc}).catch(function(err){return console.log(err)});
+					
 				if (isNaN(chind) || !arr[tiind].chapter[chind]) {
-					chnd = chunk.length;
+					chnd = doc.properties.chapter.ind;
 				} else {
 					chnd = chind;
 				}
 				chtitle = 'Jurisdiction: '+ places[placeind].properties.name;
 				snd = (isNaN(secind) ? chunk.length : secind);
 				stitle = decodeURIComponent(req.params.stitle);
+			
+				
 				// xmlurl = (tiind === 0 ? 'https://api.govinfo.gov/packages/'+
 				// 	req.params.xmlid
 				// 	+'/htm' : null )
