@@ -108,11 +108,11 @@ html
 						{
 							name: 'State',
 							url: '/json/usstates.json'
-						}/*,
+						},
 						{
 							name: 'County',
 							url: '/json/uscounties.json'
-						}*/],
+						}],
 						modal: {msg:null},
 						uploadisreplace: false,
 						uploadchtitle: null,
@@ -651,7 +651,7 @@ html
 								await console.log(json)
 								self.newDoc.placetype = type;
 								self.newDoc.tempGeo = await json.features;
-								if (type === 'Nation') {
+								if (type === 'Nation' && self.newDoc.tiind === 0) {
 									self.newDoc.tempGeo = [self.newDoc.tempGeo[0]];
 									self.getGpo();
 								}

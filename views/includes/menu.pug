@@ -47,25 +47,12 @@ each mn, k in menus
 				select#gpoapi(v-if="newDoc.placetype && newDoc.placetype === 'Nation' && gpo", @change="setXmlId($event)")
 					option(value="null", v-text="'None'", v-bind:selected="!newDoc.chtitle")
 					option(v-for="(ct, l) in gpo.packages", v-text="ct.title", :value="l")
-				input(v-if="newDoc.placetype !== 'Nation'", type="text", id="chtitle", v-model="newDoc.chtitle")
+				input(v-if="!gpo", type="text", id="chtitle", v-model="newDoc.chtitle")
 				a(role="button", title="Create", :href="'/api/new/'+newDoc.placetype+'/'+newDoc.place+'/'+newDoc.tiind+'/'+newDoc.chind+'/'+newDoc.secind+'/'+encodeURIComponent(newDoc.chtitle)+'/'+(!newDoc.xmlid ? undefined : newDoc.xmlid)+''", style="margin-bottom: 50px") Create
 			
 			a.submenu.drop(v-if="loggedin && doc && pu && pu !== '' && pu.properties.admin", class= mn, title="Export", :href="'/api/exportword/'+doc._id+''")
 				span.tb-font-s Export
-			//- div.slidedown(v-if="loggedin", class= mn)
-			//- 	a.submenu.drop(class= mn, href="/api/exportword")
-			//- 		if (mn !== "static")
-			//- 			if (menu !== "word")
-			//- 				.ui(class= mn)
-			//- 					include angle.pug
-			//- 		span.tb-font-s Download Word file
-				
-				//- a.submenu.drop(class= mn, href="/api/exportgdrivewhole")
-				//- 	if (mn !== "static")
-				//- 		if (menu !== "word")
-				//- 			.ui(class= mn)
-				//- 				include angle.pug
-				//- 	span.tb-font-s Save to Google Drive
+
 			a.submenu.drop(class= mn, v-if="loggedin && loggedin !== ''", href="/sig/editprofile", title="View and edit your profile")
 				span.tb-font-s Profile
 
@@ -73,48 +60,3 @@ each mn, k in menus
 				span.tb-font-s(v-text="'Login'")
 			a.submenu.drop(v-if="loggedin", class= mn, href="/logout")
 				span.tb-font-s Logout
-
-				//- a.submenu.drop(v-if="loggedin", class= mn, title="Import")
-				//- 	span.tb-font-s Import
-				//- div.slidedown(v-if="loggedin", class= mn)
-				//- 
-				//- 	a.submenu.drop(class= mn, href="/importgdrive", title="Import Chapter from Google Drive")
-				//- 		if (mn !== "static")
-				//- 			if (menu !== "word")
-				//- 				.ui(class= mn)
-				//- 					include angle.pug
-				//- 		span.tb-font-s Google Drive
-				//- 	if (menu !== "word")
-				//- 		div.submenu.drop.spacer(class= mn, style="padding-left: "+(mn === 'static' ? '10px' : '0')+"; padding-bottom:10px;pointer-events:all;")
-				//- 			if (mn !== "static")
-				//- 				.ui(class= mn)
-				//- 					include angle.pug
-				//- 
-				//- 			label.tb-font-s(for="importword") MS Word
-				//- 			input.block#importword(class= mn, v-on:change="uploadDocx", type="file", value="Import Docx")
-				//- 
-				//- 	div.submenu.drop(class= mn, style="padding-left: "+(mn === 'static' ? '10px' : '0')+";pointer-events:all;")
-				//- 		if (mn !== "static")
-				//- 			if (menu !== "word")
-				//- 				.ui(class= mn)
-				//- 					include angle.pug
-				//- 		label.tb-font-s(for="importtxt") Plain .txt
-				//- 		input.block#importtxt(v-on:change="importTxt", class= mn, type="file", value="Import TXT", ref="myImportTxt")
-				//- if (menu === "publish")
-				//- a.submenu.drop(class= mn, v-if="dat[0] !== undefined && dat[0][0] !== undefined && dat[0][0].properties.section.ind !== '000'", v-bind:href="'/api/coverimg/'+encodeURIComponent(dat[0][0].properties.chapter.ind)", v-bind:title="'Add Cover to Ch. '+(parseInt(dat[0][0].properties.chapter.ind,10)+1)+''")
-				//- 	span.tb-font-s(v-text="'Add Cover to Ch. '+dat[0][0].properties.chapter.ind+''")
-
-				//- a.submenu.drop(class= mn, 
-				//- 	v-if="dat && dat.length === 1 && pu && pu !== '' && pu.properties.admin", 
-				//- 	v-bind:href="'/api/new/'+encodeURIComponent(dat[0][0].properties.chapter.str)", 
-				//- 	v-bind:title="'Add Section to Ch. '+(parseInt(dat[0][0].properties.chapter.ind,10)+1)+''"
-				//- 	)
-				//- 	span.tb-font-s(v-text="'Add Section to Ch. '+(parseInt(dat[0][0].properties.chapter.ind,10)+1)+''")
-
-				//- if (menu === "map")
-				//- 	a.submenu.drop(v-if="loggedin", class= mn, v-on:click="addMapBlob")
-				//- 		span.tb-font-s(v-text="'Save Map'")
-				//
-					a.submenu.drop(class= mn, v-bind:href="'/exportpdf'")
-						span.tb-font-s(v-text="'Export PDF file'")
-
