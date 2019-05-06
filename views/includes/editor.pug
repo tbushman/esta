@@ -20,14 +20,14 @@ p
 		include editmedia.pug
 		hr
 	//div.row.spacer#appendmedia(v-if="j")
-	a.success.block.spacer.tb-03-m0(role="button", v-on:click="addNewMedia(doc._id, doc.properties.media.length)")
+	a.success.block.spacer.tb-03-m0(role="button", @click="addNewMedia(doc._id, doc.properties.media.length)")
 		span Add image
-	//- a.success.block.spacer.tb-03-m0(role="button", v-on:click="getLayers(doc._id)")
+	//- a.success.block.spacer.tb-03-m0(role="button", @click="getLayers(doc._id)")
 	//- 	span Add Geodata
 	hr
 	p(v-if="doc.properties.title.str === 'Geography'")
 		label.tb-10-m0(for="geojson") Replace geometry (geoJSON)
-		input.block.spacer.success.tb-07-m0#geojson(v-bind:id="'lyr_'+doc._id", v-on:change="handleGeoJson($event)", type="file", style="padding: 18px;color:#fff;")
+		input.block.spacer.success.tb-07-m0#geojson(v-bind:id="'lyr_'+doc._id", @change="handleGeoJson($event)", type="file", style="padding: 18px;color:#fff;")
 	fieldset.lcontrol(v-else-if="doc.properties.title.str !== 'Geography' && mapActive", style="padding:0;border:none;")
 		legend(style="font-size: 11px;") layers
 		a.drop(v-for="(lyr, o) in layers", style="display: flex;")
@@ -55,7 +55,7 @@ hr
 div(style="visibility: hidden;")
 input.block#latlng(v-bind:value="JSON.stringify(doc.geometry.coordinates)", name="latlng", style="width: 100%", type="hidden")
 div.row
-	a.danger.block.spacer.tb-10-m0.tb-03-m2(v-on:click="deleteEntry(doc)", role="button", style="float:left;box-sizing:border-box;")
+	a.danger.block.spacer.tb-10-m0.tb-03-m2(@click="deleteEntry(doc, $event)", role="button", style="float:left;box-sizing:border-box;")
 		span Delete entry
 	a.block.spacer.tb-10-m0.tb-01-m2(v-bind:href="'/'", role="button", style="float:right; border:2px solid #000; margin-left: 20px;")
 		span Cancel
@@ -64,4 +64,4 @@ div.row
 
 //- p
 //- 	label(for="importcsv") Import Geographic Data (experimental)
-//- input#importcsv(v-on:change="importCsv", type="file", value="Import CSV")
+//- input#importcsv(@change="importCsv", type="file", value="Import CSV")

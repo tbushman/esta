@@ -715,9 +715,15 @@ html
 					navigateTo: function(url){
 						window.location.href = url;
 					},
-					deleteEntry: function(doc) {
-						$.post('/api/deleteentry/'+doc._id+'', function(res){
+					deleteEntry(doc, e) {
+						e.preventDefault()
+						console.log(doc)
+						$.post('/api/deleteentry/'+doc._id+'').then(function(res){
+							console.log(res)
 							window.location.href = '/menu/'+doc.properties.title.ind+'/'+doc.properties.chapter.ind+'';
+						})
+						.catch(function(err){
+							console.log(err)
 						})
 					},
 					deleteMedia: function(ind) {

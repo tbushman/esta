@@ -2301,8 +2301,8 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 			if (req.params.placetype === 'Nation' || req.params.placetype === "'Nation'") {
 				places = usstates;
 				if (isNaN(chind)) {
-					if (!req.params.xmlid) {
-						chnd = arr[tiind].chapter[arr[tiind].chapter.length-1].ind;
+					if (!req.params.xmlid || req.params.xmlid === 'undefined' || req.params.xmlid === 'null') {
+						chnd = chunk.length;//arr[tiind].chapter[arr[tiind].chapter.length-1].ind;
 						snd = (isNaN(secind) ? 0 : secind);
 						chtitle = 'Jurisdiction: '+ places[placeind].properties.name;
 						
@@ -2775,9 +2775,14 @@ router.post('/api/newmedia/:id/:index', function(req, res, next) {
 	
 });
 
-router.post('/api/deleteentry/:id/:index', function(req, res, next) {
+router.post('/api/deleteentry/:id', async function(req, res, next) {
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
 	var id = req.params.id;
-	var index = parseInt(req.params.index, 10);
+	// var index = parseInt(req.params.index, 10);
+	var dc = await Content.findOne({_id: id}).then(function(doc){return doc}).catch(function(err){return next(err)});
+	var med = dc.properties.media[0].thumb;
+	var index = med.split('thumbs/')[1].split('/')[0];
 	Content.remove({_id: id}, function(err, data) {
 		if (err) {
 			return next(err); 
