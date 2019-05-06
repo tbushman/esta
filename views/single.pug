@@ -15,7 +15,15 @@ block content
 				clipPath(id="clipPath")
 					path(v-if="btn && !isNaN(wWidth)" 
 						:d="getClip()")
-
+		
+		// User Interface Button-->
+		div.skittle(v-if="btn.vis === 'block' && !isNaN(wWidth)" 
+		:style="{'top': btn.y+'px', 'left': btn.x+'px'}")
+		div.skittle.vis(v-if="btn.vis === 'block'" 
+		:style="{'top': btn.y +'px', 'left': btn.x +'px'}" 
+		@mousedown="clickSkittle" @mouseleave="unclickSkittle"
+		@mouseup="unclickSkittle" @touchstart="touchHandler" 
+		@touchend="touchStart" @touchmove="touchEnd")
 		div.centerallwrap(:style="{'clip-path': (!isNaN(wWidth) && mapActive ? 'url(#clipPath)' : 'none'), 'pointer-events':(mapActive ? 'none' : 'auto'), 'overflow-y': (mapActive ? 'hidden' : 'scroll')}")
 
 			!= str

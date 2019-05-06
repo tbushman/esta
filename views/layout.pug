@@ -59,7 +59,9 @@ html
 					return {
 						lvl: 'h',
 						btn: { x: (this.wWidth / 2), 
-							y: (this.wHeight/ 2),r: 42
+							y: (this.wHeight/ 2),
+							r: 42,
+							vis: (!this.mapActive || !this.mapEdit ? null : 'block')
 						},
 						h: 0,
 						i: 0,
@@ -86,6 +88,7 @@ html
 						fixedPug: '',
 						map: '',
 						mapActive: false,
+						mapEdit: false,
 						dataLayer: '',
 						lMarker: '',
 						thickness: 45,
@@ -929,12 +932,27 @@ html
 					activateMap(){
 						var self = this;
 						var mapActive = self.mapActive;
+						var mapEdit = self.mapEdit;
 						if (!mapActive) {
+							//- //- if (self.map) self.setView(self.map.getLatLng());
+							//- // TODO admin only for certain things?
+							//- if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
+							//- 	await self.dataLayer.enableEdit();
+							//- 	self.mapEdit = !mapEdit;
+							//- }
 							document.getElementById('viewer').scrollIntoView();
 						} else {
+							//- //- if (self.map) self.setView(self.map.getLatLng());
+							//- // TODO admin only for certain things?
+							//- if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
+							//- 	await self.dataLayer.disableEdit();
+							//- 	self.mapEdit = !mapEdit;
+							//- }
+
 							document.getElementById('inputs').scrollIntoView();
 						}
 						self.mapActive = !mapActive;
+
 					},
 					
 					addMapBlob() {
@@ -946,6 +964,7 @@ html
 
 						if (typeof self.dataLayer.disableEdit === 'function'){
 							self.dataLayer.disableEdit();
+							self.mapEdit = false;
 						}
 						self.addNewMedia(self.doc._id, ind, function(){
 							leafletImage(self.map, function(err, canvas){
@@ -1456,7 +1475,10 @@ html
 							maxZoom: 18,
 							editable: true,
 							renderer: L.canvas(),
-							preferCanvas: true
+							preferCanvas: true,
+							editOptions: {
+								skipMiddleMarkers: true
+							}
 						});
 						L.control.zoom({
 							position:'topleft'
@@ -1481,6 +1503,7 @@ html
 							var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
 							if (self.doc.properties.title.str !== 'Geography' && self.layers.length) {
 								self.dataLayer.disableEdit();
+								self.mapEdit = false;
 								self.layers.forEach(function(item, i){
 									self.lyr[item._id] = self.loadLayer(item);
 									self.lyr[item._id].setStyle({color: colors[i]})
@@ -1510,6 +1533,7 @@ html
 										item.disableEdit();
 									} else {
 										item.enableEdit();
+										self.mapEdit = true;
 									}
 								})
 							})
@@ -1550,11 +1574,12 @@ html
 									latlng = L.latLngBounds(self.latlngs).getCenter();
 								}
 							}
-							
+							var mapEdit = self.mapEdit;
 							//- if (self.map) self.setView(self.map.getLatLng());
 							// TODO admin only for certain things?
-							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.admin) {
+							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
 								self.dataLayer.enableEdit();
+								self.mapEdit = !mapEdit;
 							}
 							self.lMarker = L.marker(latlng, {draggable: true}).addTo(self.map);
 							self.map.panTo(latlng);
