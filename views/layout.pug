@@ -1530,7 +1530,7 @@ html
 							self.map.on('editable:vertex:rawclick', function(e){
 								self.layers.forEach(function(item, i){
 									if (item._id !== e.layer._id) {
-										item.disableEdit();
+										//- item.disableEdit();
 									} else {
 										item.enableEdit();
 										self.mapEdit = true;
@@ -1578,8 +1578,8 @@ html
 							//- if (self.map) self.setView(self.map.getLatLng());
 							// TODO admin only for certain things?
 							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
-								self.dataLayer.enableEdit();
-								self.mapEdit = !mapEdit;
+								//- self.dataLayer.enableEdit();
+								//- self.mapEdit = !mapEdit;
 							}
 							self.lMarker = L.marker(latlng, {draggable: true}).addTo(self.map);
 							self.map.panTo(latlng);
