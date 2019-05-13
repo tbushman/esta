@@ -251,6 +251,7 @@
         },
 
         onMousedown: function (e) {
+            if (e.originalEvent.which != 1) return;
             this._mouseDown = e;
             this._drawingEditor.onDrawingMouseDown(e);
         },
@@ -471,10 +472,25 @@
             this.latlng = latlng;
             this.latlngs = latlngs;
             this.editor = editor;
-            L.Marker.prototype.initialize.call(this, latlng, options);
-            this.options.icon = this.editor.tools.createVertexIcon({className: this.options.className});
-            this.latlng.__vertex = this;
-            this.editor.editLayer.addLayer(this);
+            var llpx = this.editor.map.latLngToLayerPoint(latlng);
+            var topRight = [window.innerWidth,0];
+            var bottomRight = [window.innerWidth,window.innerHeight];
+            var topLeft = [0,0];
+            var bottomLeft = [0,window.innerHeight];
+            if (
+              llpx.y > topLeft[1] && 
+              llpx.y < bottomRight[1] &&
+              llpx.x > topLeft[0] &&
+              llpx.x < bottomRight[0] 
+            ) {
+              L.Marker.prototype.initialize.call(this, latlng, options);
+              console.log(llpx)
+              this.options.icon = this.editor.tools.createVertexIcon({className: this.options.className + (this.editor.editLayer.isClicked ? '' : ' hidden')});
+              this.latlng.__vertex = this;
+              this.editor.editLayer.addLayer(this);
+            } else {
+              // console.log('nope', llpx.y, topLeft[1],bottomRight[1])
+            }
             this.setZIndexOffset(editor.tools._lastZIndex + 1);
         },
 
@@ -926,6 +942,7 @@
             // 🍂event editable:drawing:click: CancelableEvent
             // Fired when user `click` while drawing, before any internal action is being processed.
             this.fireAndForward('editable:drawing:click', e);
+
             if (e._cancelled) return;
             if (!this.isConnected()) this.connect(e);
             this.processDrawingClick(e);
@@ -1744,7 +1761,7 @@
 
     // 🍂namespace Editable; 🍂class EditableMixin
     // `EditableMixin` is included to `L.Polyline`, `L.Polygon`, `L.Rectangle`, `L.Circle`
-    // and `L.Marker`. It adds some methods to them.
+    // and `L.Marker`. It adds some methods to them.
     // *When editing is enabled, the editor is accessible on the instance with the
     // `editor` property.*
     var EditableMixin = {

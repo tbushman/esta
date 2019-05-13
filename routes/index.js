@@ -2303,7 +2303,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 				if (isNaN(chind)) {
 					if (!req.params.xmlid || req.params.xmlid === 'undefined' || req.params.xmlid === 'null') {
 						chnd = chunk.length;//arr[tiind].chapter[arr[tiind].chapter.length-1].ind;
-						snd = (isNaN(secind) ? 0 : secind);
+						snd = (isNaN(secind) ? (chunk.length === 0 ? 0 : (chunk[chunk.length-1].properties.section.ind + 1)) : secind);
 						chtitle = 'Jurisdiction: '+ places[placeind].properties.name;
 						
 					} else {
@@ -2356,7 +2356,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 					chnd = chind;
 				}
 				chtitle = 'Jurisdiction: '+ places[placeind].properties.name;
-				snd = (isNaN(secind) ? chunk.length : secind);
+				snd = (isNaN(secind) ? (chunk[chunk.length-1].properties.section.ind + 1) : secind);
 				stitle = decodeURIComponent(req.params.stitle);
 			
 				

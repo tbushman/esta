@@ -53,8 +53,8 @@ p.MsoFooter {
 }
 html {
 	font-family: 'Overpass', sans-serif;
-	width: 100%;
-	height: 100%;
+	width: 100vw;
+	height: 100vh;
 	position: absolute;
 	margin: 0;
 	padding: 0;
@@ -83,6 +83,9 @@ body {
 	z-index: 0;
 	background-color: #fff;
 	background-color: var(--primary);
+}
+.hidden {
+  display: none!important;
 }
 .skittle {
 	position: fixed;
@@ -490,8 +493,8 @@ em {
 	max-height: calc(100% - calc(var(--thumbw) * 2));
 	/*min-height: 230px;*/
 	height: auto;
-	right: 13px;
-	left: auto;
+	right: auto;
+	left: 0;
 	top: 10px;
 	margin-top: 2px;
 	z-index: 5;
@@ -545,18 +548,18 @@ em {
 
 .dropdown {
 	width: auto;
-	left: auto;
-	right: 0;
+	left: 0;
+	right: auto;
 	margin-top: 0;
 	background-color: #fff;
 	box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
-	height: calc(100% - 90px);
+	height: calc(100% - 100px);
 	overflow-y: hidden;
 	overflow-x: hidden;
 	position: fixed;
 	visibility: hidden;
 	pointer-events: none;
-	padding: 0 20px;
+	padding: 0 20px 0 17px;
 	
 	background-repeat: no-repeat;
 	background-size: auto 100%;

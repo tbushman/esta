@@ -89,6 +89,7 @@ html
 						map: '',
 						mapActive: false,
 						mapEdit: false,
+						mapEditable: false,
 						dataLayer: '',
 						lMarker: '',
 						thickness: 45,
@@ -929,25 +930,25 @@ html
 							})
 						})
 					},
-					activateMap(){
+					async activateMap(){
 						var self = this;
 						var mapActive = self.mapActive;
 						var mapEdit = self.mapEdit;
 						if (!mapActive) {
-							//- //- if (self.map) self.setView(self.map.getLatLng());
-							//- // TODO admin only for certain things?
-							//- if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
-							//- 	await self.dataLayer.enableEdit();
-							//- 	self.mapEdit = !mapEdit;
-							//- }
+							//- if (self.map) self.setView(self.map.getLatLng());
+							// TODO admin only for certain things?
+							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
+								await self.dataLayer.enableEdit();
+								self.mapEdit = !mapEdit;
+							}
 							document.getElementById('viewer').scrollIntoView();
 						} else {
-							//- //- if (self.map) self.setView(self.map.getLatLng());
-							//- // TODO admin only for certain things?
-							//- if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
-							//- 	await self.dataLayer.disableEdit();
-							//- 	self.mapEdit = !mapEdit;
-							//- }
+							//- if (self.map) self.setView(self.map.getLatLng());
+							// TODO admin only for certain things?
+							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
+								await self.dataLayer.disableEdit();
+								self.mapEdit = !mapEdit;
+							}
 
 							document.getElementById('inputs').scrollIntoView();
 						}
@@ -1511,7 +1512,7 @@ html
 								})
 								//- var layer = self.map.getLayer(self.dataLayer)
 								//- layer.setZIndex(0);
-							}
+							} 
 							//- self.dataLayer.on('dragend', function(e){
 							//- 	var latlngs = [];
 							//- 	console.log(e.target.getLatLngs())
@@ -1532,8 +1533,8 @@ html
 									if (item._id !== e.layer._id) {
 										//- item.disableEdit();
 									} else {
-										item.enableEdit();
-										self.mapEdit = true;
+										//- item.enableEdit();
+										//- self.mapEdit = true;
 									}
 								})
 							})
