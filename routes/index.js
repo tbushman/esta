@@ -377,7 +377,7 @@ function ensureSequentialSectionInd(req, res, next){
 		}
 		var count = -1
 		await data.forEach(async function(doc, i){
-			const dc = await Content.findOne({_id:doc._id, 'properties.chapter.str': 'Jurisdiction: Utah'}).then(function(d){return d}).catch(function(err){console.log(err)});
+			const dc = await Content.findOne({_id:doc._id, 'properties.title.str': 'Geography', 'properties.chapter.str': 'Jurisdiction: Utah'}).then(function(d){return d}).catch(function(err){console.log(err)});
 			if (dc) {
 				count++;
 				await Content.findOneAndUpdate({_id:dc._id}, {$set:{'properties.section.ind': count, 'properties.chapter.ind': 0}}, {safe:true, upsert:false, new:true}).then(function(d){
