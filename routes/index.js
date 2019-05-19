@@ -1802,7 +1802,7 @@ router.post('/sig/uploadsignature/:did/:puid', ifExistsReturn, uploadmedia.singl
 	})
 });
 
-router.get('/sig/editprofile', ensureSigPorted, function(req, res, next){
+router.get('/sig/editprofile', function(req, res, next){
 // console.log('bleh')
 	Content.find({}).lean().sort({'properties.time.end': 1}).exec(function(err, data){
 		if (err) {return next(err)}
