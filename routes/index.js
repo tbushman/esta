@@ -1105,7 +1105,7 @@ function ensureGpo(req, res, next) {
 	return next()
 }
 
-router.all(/^\/((api|import|export).*)/, ensureAdmin, ensureSigPorted/*, ensureApiTokens*/);
+router.all(/^\/((api|import|export).*)/, ensureAdmin/*, ensureApiTokens*/);
 
 router.get(/(.*)/, ensureGpo/*, ensureSequentialSectionInd*/)
 
@@ -1434,7 +1434,7 @@ router.get('/logout', function(req, res, next) {
 	})
 })*/
 
-router.get('/profile/:username', function(req, res, next) {
+router.get('/profile/:username', ensureSigPorted,  function(req, res, next) {
 	Content.find({}).sort({'properties.time.end': 1}).lean().exec(function(err, data){
 		if (err) {return next(err)}
 		Publisher.findOne({_id: req.session.userId}, function(err, pu){
