@@ -84,9 +84,9 @@ body {
 	background-color: #fff;
 	background-color: var(--primary);
 }
-.hidden {
+/* .hidden {
   display: none!important;
-}
+} */
 .skittle {
 	position: fixed;
 	width: 36px;

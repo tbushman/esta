@@ -478,20 +478,21 @@
             var topLeft = [0,0];
             var bottomLeft = [0,window.innerHeight];
             if (
+              // latlngs.length < 100 &&
               llpx.y > topLeft[1] && 
               llpx.y < bottomRight[1] &&
               llpx.x > topLeft[0] &&
               llpx.x < bottomRight[0] 
             ) {
               L.Marker.prototype.initialize.call(this, latlng, options);
-              console.log(llpx)
+              // console.log(llpx)
               this.options.icon = this.editor.tools.createVertexIcon({className: this.options.className + (this.editor.editLayer.isClicked ? '' : ' hidden')});
               this.latlng.__vertex = this;
               this.editor.editLayer.addLayer(this);
+              this.setZIndexOffset(editor.tools._lastZIndex + 1);
             } else {
               // console.log('nope', llpx.y, topLeft[1],bottomRight[1])
             }
-            this.setZIndexOffset(editor.tools._lastZIndex + 1);
         },
 
         onAdd: function (map) {

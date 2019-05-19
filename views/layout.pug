@@ -930,15 +930,17 @@ html
 							})
 						})
 					},
-					async activateMap(){
+					activateMap(){
 						var self = this;
 						var mapActive = self.mapActive;
 						var mapEdit = self.mapEdit;
 						if (!mapActive) {
 							//- if (self.map) self.setView(self.map.getLatLng());
 							// TODO admin only for certain things?
-							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
-								await self.dataLayer.enableEdit();
+							console.log(self.dataLayer._latlngs.length)
+							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && self.dataLayer._latlngs.length < 2) {
+								//- console.log(self.dataLayer)
+								self.dataLayer.enableEdit();
 								self.mapEdit = !mapEdit;
 							}
 							document.getElementById('viewer').scrollIntoView();
@@ -946,7 +948,7 @@ html
 							//- if (self.map) self.setView(self.map.getLatLng());
 							// TODO admin only for certain things?
 							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
-								await self.dataLayer.disableEdit();
+								self.dataLayer.disableEdit();
 								self.mapEdit = !mapEdit;
 							}
 
@@ -1441,9 +1443,10 @@ html
 							//- coordsToLatLng: self.coordsToLatLng(),
 							//- coordsToLatLngs: self.coordsToLatLngs(),
 
-							onEachFeature: function (feature, layer) {
+							onEachFeature: function (feature, latlng) {
 								//console.log(feature)
-								layer.bindPopup(feature.properties.label);
+								latlng.wrap()
+								feature.bindPopup(feature.properties.label);
 							}
 						})
 					},
@@ -1452,7 +1455,7 @@ html
 						var keys = Object.keys(dataLayer._layers)
 						self.latlngs = [keys.map(function(key){
 							if (dataLayer._layers[parseInt(key, 10)]._latlng) {
-								return L.latLng([dataLayer._layers[parseInt(key, 10)]._latlng.lat, dataLayer._layers[parseInt(key, 10)]._latlng.lng]);
+								return L.latLng([dataLayer._layers[parseInt(key, 10)]._latlng.lat, dataLayer._layers[parseInt(key, 10)]._latlng.lng]).wrap();
 							} else {
 								console.log('bleh')
 								console.log(dataLayer._layers[parseInt(key, 10)]);
@@ -1561,27 +1564,30 @@ html
 								self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
 							})
 							var coords;
-							if (self.latlngs) {
+							//- if (self.latlngs) {
 								if (!self.latlngs || !isNaN(self.latlngs[0])) {
 									//- latlng = L.latLng(self.doc.geometry.coordinates);
 									if (self.dataLayer._layers) {
 										self.layerToDataLayer(self.dataLayer)
 									} else {
-										self.latlngs = self.dataLayer.getLatLngs()
+										self.latlngs = L.CRS.wrapLatLng(self.dataLayer.getLatLngs())
 									}
 									//- latlng = L.latLng(self.latlngs)	
 								}
 								if (self.latlngs) {
-									latlng = L.latLngBounds(self.latlngs).getCenter();
+									latlng = //L.CRS.wrapLatLngBounds(
+										L.latLngBounds(self.latlngs[0])
+									//)
+									.getCenter();
 								}
-							}
+							//- }
 							var mapEdit = self.mapEdit;
 							//- if (self.map) self.setView(self.map.getLatLng());
 							// TODO admin only for certain things?
-							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
-								//- self.dataLayer.enableEdit();
-								//- self.mapEdit = !mapEdit;
-							}
+							//- if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && self.dataLayer._latlngs.length < 2) {
+							//- 	self.dataLayer.enableEdit();
+							//- 	self.mapEdit = true;
+							//- }
 							self.lMarker = L.marker(latlng, {draggable: true}).addTo(self.map);
 							self.map.panTo(latlng);
 							
