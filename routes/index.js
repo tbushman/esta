@@ -1064,7 +1064,7 @@ function ensureGpo(req, res, next) {
 
 router.all(/^\/((api|import|export).*)/, ensureAdmin/*, ensureApiTokens*/);
 
-router.get(/(.*)/, ensureGpo, ensureSequentialSectionInd)
+router.get(/(.*)/, ensureGpo/*, ensureSequentialSectionInd*/)
 
 router.get('/', function(req, res, next){
 	return res.redirect('/home')
