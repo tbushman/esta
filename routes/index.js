@@ -370,6 +370,36 @@ async function ifExistsReturn(req, res, next) {
 	return next();
 }
 
+function ensureSequentialSectionInd(req, res, next){
+	Content.find({}).lean().sort({'properties.section.ind':1}).exec(async function(err, data){
+		if (err){
+			console.log('no data')
+		}
+		var count = -1
+		await data.forEach(async function(doc, i){
+			const dc = await Content.findOne({_id:doc._id, 'properties.chapter.str': 'Jurisdiction: Utah'}).then(function(d){return d}).catch(function(err){console.log(err)});
+			if (dc) {
+				count++;
+				await Content.findOneAndUpdate({_id:dc._id}, {$set:{'properties.section.ind': count, 'properties.chapter.ind': 0}}, {safe:true, upsert:false, new:true}).then(function(d){
+					console.log('ok')
+				})
+				.catch(function(err){
+					console.log(err);
+				})
+			}
+			// Content.findOneAndUpdate({_id:doc._id, 'properties.chapter.str': 'Jurisdiction: Utah'}, {$set:{'properties.section.ind': count}}, {safe:true, upsert:false, new:true}, function(err, dc){
+			// 	if (err){
+			// 		console.log('')
+			// 	}
+			// 	if (dc) {
+			// 		count++;
+			// 	}
+			// })
+		})
+		return next();
+	})
+}
+
 function ensureLocation(req, res, next) {
 	Publisher.findOne({_id: req.user._id}).lean().exec(async function(err, pu){
 		if (err) {
@@ -1034,7 +1064,7 @@ function ensureGpo(req, res, next) {
 
 router.all(/^\/((api|import|export).*)/, ensureAdmin/*, ensureApiTokens*/);
 
-router.get(/(.*)/, ensureGpo)
+router.get(/(.*)/, ensureGpo, ensureSequentialSectionInd)
 
 router.get('/', function(req, res, next){
 	return res.redirect('/home')
