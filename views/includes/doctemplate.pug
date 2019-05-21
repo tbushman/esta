@@ -1,5 +1,6 @@
 
-
+p(v-if="doc.properties.title.str !== 'Geography' && mapActive")
+	include mapedit.pug
 div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 'auto')}")
 	//- div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;z-index:2; position:absolute;pointer-events:all;")
 	//- && pu && pu !== '' && pu.admin
@@ -64,7 +65,7 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 					include editor.pug
 					p.tb-font-m(v-text="'External document'")
 					include gpo/xml.pug
-	
+
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
 		,
 		v-bind:viewBox="'0 0 ' + wWidth +' '+ (wHeight)", v-bind:style="{'enable-background':'new 0 0 ' + wWidth + ' ' + (wHeight) +'', 'display': 'block', 'margin': '0 auto'}", xml:space="preserve"

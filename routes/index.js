@@ -46,78 +46,86 @@ var geolocation = require ('google-geolocation') ({
 
 var isJurisdiction = async function isJurisdiction(doc, pu, cb) {
 	var lat, lng;
-	
-	Publisher.findOne({_id: pu._id}).lean().exec(async function(err, pu){
-		if (err) {
-			return next(err)
+	var gtype, gcoords;
+	if (!pu) {
+		console.log(req.session)
+		if (!req.session || !req.session.position) {
+			return cb(null)
+		} else {
+			gtype = 'Point';
+			gcoords = [req.session.position.lng, req.session.position.lat]
 		}
-		var gtype, gcoords;
-		if (!pu.geometry || !pu.geometry.type || pu.geometry.coordinates.length === 0) {
-			gtype = 'MultiPolygon'
-			if (!pu.sig[pu.sig.length-1]) {
-			// console.log(pu)
-				
-				var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
-				var zipcoden; 
-				if (pu.properties.zip) {
-					zipcoden = pu.properties.zip;
-				}
-				else if (pu.properties.place && !isNaN(parseInt(pu.properties.place, 10))) {
-					zipcoden = pu.properties.place;
-				}
-				var zipcode = await JSON.parse(zipcodes).features.filter(function(zip){
-					return (
-						zip.properties['ZCTA5CE10']
-						=== 
-						zipcoden
-						)
-				});
-			// console.log('zipcode')
-			// console.log(zipcode)
-				
-				if (zipcode.length === 0) return cb(null);
-				lat = parseFloat(zipcode[0].properties["INTPTLAT10"]);
-				lng = parseFloat(zipcode[0].properties["INTPTLON10"]);
-				gcoords = 
-					[[[[lng,lat],[(lng+.00001),lat],[(lng+.00001),(lat+.00001)],[lng,(lat+.00001)],[lng,lat]]]]
-				
-			} else {
-				var ts = pu.sig[pu.sig.length-1].ts;
-				var pos = ts.split('G/')[0];
-				pos = pos.split(',');
-				pos.forEach(function(l){
-					return parseFloat(l)
-				})
-				
-				gcoords = 
-					[[[[pos[1], pos[0]],[(pos[1]+.00001),pos[0]],[(pos[1]+.00001),(pos[0]+.00001)],[pos[1],(pos[0]+.00001)],[pos[1],pos[0]]]]]
+	} else {
+		pu = await Publisher.findOne({_id: pu._id}).lean().exec(async function(err, pubr){
+			if (err) {
+				return cb(err)
 			}
+			return pubr;
+		});
+	}
+	if (!gcoords || !pu.geometry || !pu.geometry.type || pu.geometry.coordinates.length === 0) {
+		gtype = 'MultiPolygon'
+		if (!pu.sig[pu.sig.length-1]) {
+		// console.log(pu)
+			
+			var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
+			var zipcoden; 
+			if (pu.properties.zip) {
+				zipcoden = pu.properties.zip;
+			}
+			else if (pu.properties.place && !isNaN(parseInt(pu.properties.place, 10))) {
+				zipcoden = pu.properties.place;
+			}
+			var zipcode = await JSON.parse(zipcodes).features.filter(function(zip){
+				return (
+					zip.properties['ZCTA5CE10']
+					=== 
+					zipcoden
+					)
+			});
+		// console.log('zipcode')
+		// console.log(zipcode)
+			
+			if (zipcode.length === 0) return cb(null);
+			lat = parseFloat(zipcode[0].properties["INTPTLAT10"]);
+			lng = parseFloat(zipcode[0].properties["INTPTLON10"]);
+			gcoords = 
+				[[[[lng,lat],[(lng+.00001),lat],[(lng+.00001),(lat+.00001)],[lng,(lat+.00001)],[lng,lat]]]]
+			
 		} else {
-			gtype = 'MultiPolygon';
-			gcoords = pu.geometry.coordinates;
-		}
-		if (!gcoords || gcoords.length === 0) {
-		// console.log(gcoords)
-			cb(null)
-		} else {
-		// console.log(gcoords)
-			Content.findOne({_id: doc._id, geometry: {$geoIntersects: {$geometry: {type: gtype, coordinates: gcoords}}}}).lean().exec(function(err, doc){
-				if (err) {
-					console.log(err)
-					cb(null)
-				} else {
-					if (!err && !doc) {
-						cb(false);
-					} else {
-						cb(true);
-					}
-				}
-				
+			var ts = pu.sig[pu.sig.length-1].ts;
+			var pos = ts.split('G/')[0];
+			pos = pos.split(',');
+			pos.forEach(function(l){
+				return parseFloat(l)
 			})
+			
+			gcoords = 
+				[[[[pos[1], pos[0]],[(pos[1]+.00001),pos[0]],[(pos[1]+.00001),(pos[0]+.00001)],[pos[1],(pos[0]+.00001)],[pos[1],pos[0]]]]]
 		}
-		
-	})
-	
+	} else {
+		gtype = 'MultiPolygon';
+		gcoords = pu.geometry.coordinates;
+	}
+	if (!gcoords || gcoords.length === 0) {
+	// console.log(gcoords)
+		cb(null)
+	} else {
+	// console.log(gcoords)
+		Content.findOne({_id: doc._id, geometry: {$geoIntersects: {$geometry: {type: gtype, coordinates: gcoords}}}}).lean().exec(function(err, doc){
+			if (err) {
+				console.log(err)
+				cb(null)
+			} else {
+				if (!err && !doc) {
+					cb(false);
+				} else {
+					cb(true);
+				}
+			}
+			
+		})
+	}
 }
 
 const usleg =  [
@@ -672,11 +680,16 @@ function getGeo(req, res, next) {
 		if (err) {
 			return next(err)
 		}
-		Content.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: {coordinates: doc.geometry.coordinates}}} }).lean().exec(function(err, data){
+		Content.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: {type: 'MultiPolygon', coordinates: doc.geometry.coordinates}}} }).lean().exec(async function(err, data){
 			if (err) {
-				return cb(err)
+				return next(err)
 			}
-			
+			await data.filter(async function(doc){
+				const isJ = await isJurisdiction(doc, req.user, function(jd){
+					return jd;
+				});
+				return isJ;
+			})
 			req.layers = data;
 			return next()
 		})
@@ -1464,6 +1477,48 @@ router.get('/pu/getgeo/:puid', function(req, res, next){
 	})
 })
 
+router.get('/user/getgeo', async function(req, res, next){
+	var str = pug.renderFile(path.join(__dirname, '../views/includes/modal.pug'), {
+		type: 'geo',
+		menu: !req.session.menu ? 'view' : req.session.menu,
+		info: 'visitor geo'
+		
+	});
+	return res.render('single', {
+		type: 'geo',
+		menu: !req.session.menu ? 'view' : req.session.menu,
+		str: str
+	})
+})
+
+router.post('/user/getgeo/:lat/:lng/:zip', async function(req, res, next){
+	var lat = parseFloat(req.params.lat);
+	var lng = parseFloat(req.params.lng);
+	var coordinates, lnglat;
+	if (!lat || lat === 'null') {
+		if (req.params.zip && req.params.zip !== 'null') {
+			var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
+			var zipcode = JSON.parse(zipcodes).features.filter(function(zip){
+				return (parseInt(zip.properties['ZCTA5CE10'], 10) === parseInt(pu.properties.zip, 10))
+			});
+			if (zipcode.length === 0) {
+				// default chicago for now
+				lat = 42
+				lng = -87.6
+			}
+			lat = parseFloat(zipcode[0].properties["INTPTLAT10"]);
+			lng = parseFloat(zipcode[0].properties["INTPTLON10"]);
+		} else {
+			lng = puPosition(pu).lng;
+			lat = puPosition(pu).lat;
+		}
+		
+	}
+	req.session.position.lng = lng;
+	req.session.position.lat = lat;
+	return res.status(200).send('ok')
+})
+
 router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
@@ -2131,6 +2186,7 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 				var str = pug.renderFile(path.join(__dirname, '../views/includes/doctemplate.pug'), {
 					menu: !req.session.menu ? 'view' : req.session.menu,
 					//data: data,
+					layers: req.layers,
 					doc: doc,
 					appURL: req.app.locals.appURL,
 					mi: (!isNaN(parseInt(req.params.mi, 10)) ? parseInt(req.params.mi, 10) : null),
@@ -2139,6 +2195,7 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 					
 				});
 				return res.render('single', {
+					layers: req.layers,
 					doc: doc,
 					mindex: (!isNaN(parseInt(req.params.index, 10)) ? parseInt(req.params.index, 10) : null),
 					str: str,
@@ -2190,7 +2247,7 @@ router.get('/menu/:tiind/:chiind', function(req, res, next){
 			}
 		})
 		//console.log(data)
-		var str = pug.renderFile(path.join(__dirname, '../views/includes/dattemplate.pug'), {
+		var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
 			doctype: 'xml',
 			csrfToken: req.csrfToken(),
 			menu: !req.session.menu ? 'view' : req.session.menu,

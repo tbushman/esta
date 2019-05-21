@@ -28,28 +28,8 @@ p
 	p(v-if="doc.properties.title.str === 'Geography'")
 		label.tb-10-m0(for="geojson") Replace geometry (geoJSON)
 		input.block.spacer.success.tb-07-m0#geojson(v-bind:id="'lyr_'+doc._id", @change="handleGeoJson($event)", type="file", style="padding: 18px;color:#fff;")
-	fieldset.lcontrol(v-else-if="doc.properties.title.str !== 'Geography' && mapActive", style="padding:0;border:none;")
-		legend(style="font-size: 11px;") layers
-		a.drop(v-for="(lyr, o) in layers", style="display: flex;")
-			.ui(style="pointer-events: none;")
-				//- (style="position:absolute;")
-				label(:for="lyr._id", v-text="lyr.properties.label", style="font-size: 7px;line-height:7px;height:7px;pointer-events:none;position:absolute;background-color:var(--primary);") 
-
-				img(:src="!lyr.properties.media[lyr.properties.media.length - 1] || !lyr.properties.media[lyr.properties.media.length - 1].thumb || lyr.properties.media[lyr.properties.media.length - 1].thumb === '' ? lyr.properties.media[0].thumb : lyr.properties.media[lyr.properties.media.length - 1].thumb ", style="pointer-events: none;")
-			input(type="checkbox", :value="lyr._id", :id="'lyr_'+o", name="layers[]", v-text="lyr.properties.label", style="position:absolute;", @click="changeLayers(lyr._id, $event)")
-			input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers")
-	
-		legend(style="font-size: 11px;") base
-		a.drop(style="display: flex;")
-			.ui(style="pointer-events: none;")
-				label(for="base_0", v-text="'streets'", style="font-size: 7px;line-height:7px;height:7px;pointer-events:none;position:absolute;background-color:var(--primary);") 
-				img(src="/images/base_0.jpg", style="pointer-events: none;")
-			input(type="radio", value="0", id="base_0", v-text="'Streets'", style="position:absolute;", @click="changeBase(0, $event)", :checked="base === 0")
-		a.drop(style="display: flex;")
-			.ui(style="pointer-events: none;")
-				label(for="base_1", v-text="'satellite'", style="font-size: 7px;line-height:7px;height:7px;pointer-events:none;position:absolute;background-color:var(--primary);") 
-				img(src="/images/base_1.jpg", style="pointer-events: none;")
-			input(type="radio", value="1", id="base_1", v-text="'Satellite'", style="position:absolute;", @click="changeBase(1, $event)", :checked="base === 1")
+	p(v-else-if="doc.properties.title.str !== 'Geography' && mapActive")
+		include mapedit.pug
 
 hr
 div(style="visibility: hidden;")
