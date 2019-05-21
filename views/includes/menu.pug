@@ -11,10 +11,10 @@ each mn, k in menus
 
 
 		if (mn === 'static')
-			div.dropdown.static(style="float: left; left:14px; right:auto; display: flex;height:45px;overflow-y:hidden!important;")
+			div.dropdown.static(v-cloak, style="float: left; left:14px; right:auto; display: flex;height:45px;overflow-y:hidden!important;")
 				a.submenu.drop(href="/", class= mn, style="max-height:45px;")
 					span esta.bli.sh
-		div.dropdown(class= mn)
+		div.dropdown(v-cloak, class= mn)
 			
 			a.submenu.drop(class= mn, href="/")
 				span.tb-font-s Home

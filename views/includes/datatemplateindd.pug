@@ -1,0 +1,21 @@
+div.maintitle.centerall(xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/", v-if="dat.length > 0")
+	div.chapter(v-for="(data, n) in dat", v-if="data.length > 0" v-bind:id="n", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/")
+		div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
+			div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+				a(v-bind:href="'/menu/'+data[0].properties.title.ind+'/'+data[0].properties.chapter.ind+''")
+					header.row.tb-font-l
+						span(v-text="data[0].properties.chapter.str")
+			div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
+				a.slidercontainer(v-if="data[0].properties.section.ind === '000'", v-bind:href="'/list/'+data[0]._id+'/null'", style="position:relative;height:auto;width:100%;")
+					img(style="width:100%;height:auto;margin-top:20px;position:relative;z-index:0;display:block;", v-bind:src="data[0].properties.media[0].image")
+		section.headline.headrule(v-for="(doc, i) in data", v-if="doc.properties.section.ind !== '000'", v-bind:id="doc.properties.section.ind", xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/", xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/", style="margin-top: 15px; position:relative;")
+			a.accordion(style="pointer-events: none; width: 100%; height: 100%; position: absolute;display:table-cell;vertical-align:bottom;")
+				div.ui(v-on:click="accordion(n, doc.index)", style="width: 23px; top:68px;position:absolute;display:block;padding-top:5px;pointer-events:all;")
+					svg(v-bind:style="(accordions[n].indexOf(doc.index) !== -1 ? {transform: 'rotate(180deg)'} : {transform: 'rotate(0deg)'})", xmlns="http://www.w3.org/2000/svg", viewBox="0 0 448 512")
+						path(d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z")
+			div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry", style="position:relative;pointer-events:none;")
+				
+				include header.pug
+				include body.pug
+			div.row
+				img(v-for="(sg, k) in pu.sig", v-if="sg.documentId === doc._id", :src="sg.image", style="height:150px;width:auto;")

@@ -18,7 +18,7 @@
     --panelwper: 100%;
     --panelhper: 100%;
 }
-[v-cloak] {display: none}
+[v-cloak]  {display: none!important;}
 @page { 
 	margin: 0.5in 0.75in 0.5in 0.75in; 
 	mso-page-orientation: portrait; 

@@ -370,49 +370,6 @@ async function ifExistsReturn(req, res, next) {
 	return next();
 }
 
-function ensureSigPorted(req, res, next){
-	Signature.find({documentId: '5cafa63d9e917e5574dddabd'}).lean().exec(async function(err, sigs){
-		if (err) {
-			return next(err)
-		}
-		var rx = new RegExp('5cafa63d9e917e5574dddabd', 'g')
-		await sigs.forEach(async function(sig, i){
-			var match = rx.test(sig.image);
-			if (match) {
-				var img = sig.image.replace(rx, '5ccf512b6f585572e6c48fe4');
-				var set = {$set:{}};
-				set.$set.image = img;
-				set.$set['image_abs'] = ''+publishers+'/pu'+img;
-				set.$set['documentId'] = '5ccf512b6f585572e6c48fe4'
-				
-				await Signature.findOneAndUpdate({_id: sig._id}, set, {new:true, safe:true, upsert:false}, function(err, s){
-					if (err){
-						return next(err)
-					}
-					
-				})
-			}
-			
-		})
-		Publisher.find({'sig.0':{$exists:true, $ne: ' '}}).lean().exec(async function(err, pubs){
-			if (err){
-				return next(err)
-			}
-			await pubs.forEach(async function(pu, i){
-				await pu.sig.forEach(function(s, j){
-					var img = s.image.replace(rx, '5ccf512b6f585572e6c48fe4');
-					//Publisher.findOneAndUpdate
-					s.image = img;
-					s.image_abs = ''+publishers+'/pu'+img
-				})
-				await Publisher.findOneAndUpdate({_id: pu._id}, {$set:{sig:pu.sig}}, {safe:true, new:true, upsert:false}).then(function(pu){console.log('k')}).catch(function(err){return next(err)})
-			})
-			return next()
-		})
-
-	})
-}
-
 function ensureSequentialSectionInd(req, res, next){
 	Content.find({}).lean().sort({'properties.section.ind':1}).exec(async function(err, data){
 		if (err){
@@ -711,13 +668,18 @@ function getLayers(req, res, next) {
 }
 
 function getGeo(req, res, next) {
-	Content.find({'properties.title.str': 'Geography'}).lean().exec(function(err, data){
+	Content.findOne({_id:req.params.id}).lean().exec(async function(err, doc){
 		if (err) {
-			return cb(err)
+			return next(err)
 		}
-		
-		req.layers = data;
-		return next()
+		Content.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: {coordinates: doc.geometry.coordinates}}} }).lean().exec(function(err, data){
+			if (err) {
+				return cb(err)
+			}
+			
+			req.layers = data;
+			return next()
+		})
 	})
 }
 
@@ -2228,7 +2190,7 @@ router.get('/menu/:tiind/:chiind', function(req, res, next){
 			}
 		})
 		//console.log(data)
-		var str = pug.renderFile(path.join(__dirname, '../views/includes/datatemplate.pug'), {
+		var str = pug.renderFile(path.join(__dirname, '../views/includes/dattemplate.pug'), {
 			doctype: 'xml',
 			csrfToken: req.csrfToken(),
 			menu: !req.session.menu ? 'view' : req.session.menu,
