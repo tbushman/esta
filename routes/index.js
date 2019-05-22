@@ -55,20 +55,21 @@ var isJurisdiction = async function isJurisdiction(reqpos, doc, pu, cb) {
 			gtype = 'Point';
 			gcoords = [reqpos.lng, reqpos.lat]
 		}
-	} else {
-		pu = await Publisher.findOne({_id: pu._id}).lean().exec(async function(err, pubr){
-			if (err) {
-				return cb(err)
-			}
-			return pubr;
-		})
-		.catch(function(err){
-			console.log(err)
-		});
 	}
-	if (
-		!gcoords 
-		// || !pu || !pu.geometry || !pu.geometry.type || pu.geometry.coordinates.length === 0
+	//  else {
+	// 	pu = await Publisher.findOne({_id: pu._id}).lean().exec(async function(err, pubr){
+	// 		if (err) {
+	// 			return cb(err)
+	// 		}
+	// 		return pubr;
+	// 	})
+	// 	.catch(function(err){
+	// 		console.log(err)
+	// 	});
+	// }
+	else if (
+		// !gcoords 
+		!pu.geometry || !pu.geometry.type || pu.geometry.coordinates.length === 0
 	) {
 		gtype = 'MultiPolygon'
 		if (!pu || !pu.sig[pu.sig.length-1]) {
