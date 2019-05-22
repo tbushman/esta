@@ -1511,7 +1511,8 @@ html
 								self.layers.forEach(function(item, i){
 									self.lyr[item._id] = self.loadLayer(item);
 									self.lyr[item._id].setStyle({color: colors[i]})
-									self.map.addLayer(self.lyr[item._id])
+									self.map.addLayer(self.lyr[item._id]);
+									self.lyr[item._id].remove()
 								})
 								//- var layer = self.map.getLayer(self.dataLayer)
 								//- layer.setZIndex(0);

@@ -84,6 +84,12 @@ body {
 	background-color: #fff;
 	background-color: var(--primary);
 }
+fieldset.lcontrol {
+  margin-inline-start: 0;
+margin-inline-end: 0;
+padding-inline-start: 0;
+padding-inline-end: 0;
+}
 /* .hidden {
   display: none!important;
 } */
@@ -583,7 +589,7 @@ em {
 }
 
 .drop span {
-	display: inline-block;
+	display: none;
 	width: calc(100% - 72px);
 	width: calc(100% - calc(var(--thumbw) * 2));
 	padding: 0 0 0 0;
@@ -592,6 +598,18 @@ em {
 	pointer-events: none;
 	color: #9e1e62;
 	color: var(--highlight);
+  z-index: 9;
+  white-space: nowrap;
+  vertical-align: top;
+}
+.submenu.drop span {
+  display: inline-block;
+}
+.drop:hover span {
+  display: inline-block;
+  color: #000;
+  color: var(--secondary);
+  background-color: #fff;
 }
 
 .qty {
@@ -613,7 +631,7 @@ a.submenu.drop {
 	color: var(--secondary);
 }*/
 
-.submenu.drop .ui {
+/* .submenu.drop .ui {
 	width: 12px;
 height: 12px;
 display: inline-block;
@@ -627,7 +645,7 @@ font-size: 10px;
 .submenu.drop .ui path {
 	fill: #652c90;
 	fill: var(--quarternary);
-}
+} */
 /*Static menu*/
 .menu.static {
 	min-height: auto;
@@ -963,7 +981,7 @@ span.img {
 }
 .ui {
 	position: relative;
-	width: 100%;
+	width: auto;
 	height: 100%;
 	right: 0;
 	left: 0;
@@ -971,6 +989,19 @@ span.img {
 	bottom: 0;
 	display: inline-block;
 	overflow: hidden;
+  min-width: 30px;
+  min-width: calc(var(--thumbw) / 1.7);
+  max-width: 30px;
+  max-width: calc(var(--thumbw) / 1.7);
+  margin: 8px 8px 0 -5px;
+}
+.ui path, .ui rect, .ui polygon, .ui circle {
+	fill: #652c90;
+	fill: var(--quarternary);
+}
+.drop:hover > .ui path, .drop:hover > .ui rect, .drop:hover > .ui polygon, .drop:hover > .ui circle {
+  fill: #000;
+	fill: var(--secondary);
 }
 span.img > img {
 	

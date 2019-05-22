@@ -44,16 +44,16 @@ var geolocation = require ('google-geolocation') ({
 	key: process.env.GOOGLE_KEY
 });
 
-var isJurisdiction = async function isJurisdiction(doc, pu, cb) {
+var isJurisdiction = async function isJurisdiction(reqpos, doc, pu, cb) {
 	var lat, lng;
 	var gtype, gcoords;
 	if (!pu) {
-		console.log(req.session)
-		if (!req.session || !req.session.position) {
+		// console.log(req.session)
+		if (!reqpos) {
 			return cb(null)
 		} else {
 			gtype = 'Point';
-			gcoords = [req.session.position.lng, req.session.position.lat]
+			gcoords = [reqpos.lng, reqpos.lat]
 		}
 	} else {
 		pu = await Publisher.findOne({_id: pu._id}).lean().exec(async function(err, pubr){
@@ -61,20 +61,28 @@ var isJurisdiction = async function isJurisdiction(doc, pu, cb) {
 				return cb(err)
 			}
 			return pubr;
+		})
+		.catch(function(err){
+			console.log(err)
 		});
 	}
-	if (!gcoords || !pu.geometry || !pu.geometry.type || pu.geometry.coordinates.length === 0) {
+	if (
+		!gcoords 
+		// || !pu || !pu.geometry || !pu.geometry.type || pu.geometry.coordinates.length === 0
+	) {
 		gtype = 'MultiPolygon'
-		if (!pu.sig[pu.sig.length-1]) {
+		if (!pu || !pu.sig[pu.sig.length-1]) {
 		// console.log(pu)
 			
 			var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
 			var zipcoden; 
-			if (pu.properties.zip) {
+			if (pu && pu.properties.zip) {
 				zipcoden = pu.properties.zip;
 			}
-			else if (pu.properties.place && !isNaN(parseInt(pu.properties.place, 10))) {
+			else if (pu && pu.properties.place && !isNaN(parseInt(pu.properties.place, 10))) {
 				zipcoden = pu.properties.place;
+			} else {
+				return cb(null)
 			}
 			var zipcode = await JSON.parse(zipcodes).features.filter(function(zip){
 				return (
@@ -105,6 +113,7 @@ var isJurisdiction = async function isJurisdiction(doc, pu, cb) {
 		}
 	} else {
 		gtype = 'MultiPolygon';
+		if (!pu) return cb(null);
 		gcoords = pu.geometry.coordinates;
 	}
 	if (!gcoords || gcoords.length === 0) {
@@ -680,13 +689,19 @@ function getGeo(req, res, next) {
 		if (err) {
 			return next(err)
 		}
-		Content.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: {type: 'MultiPolygon', coordinates: doc.geometry.coordinates}}} }).lean().exec(async function(err, data){
+		Content.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: {type: doc.geometry.type, coordinates: doc.geometry.coordinates}}} }).lean().exec(async function(err, data){
 			if (err) {
 				return next(err)
 			}
+			var reqpos = (req.session && req.session.position ? req.session.position : null)
 			await data.filter(async function(doc){
-				const isJ = await isJurisdiction(doc, req.user, function(jd){
-					return jd;
+				const isJ = await isJurisdiction(reqpos, doc, req.user, function(jd){
+					if (jd === null) {
+						return false; 
+					} else {
+						return jd;
+					}
+					// return res.redirect('/user/getgeo');
 				});
 				return isJ;
 			})
@@ -2140,13 +2155,15 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 			}
 			if (req.isAuthenticated()) {
 				var l = '/publishers/esta/signatures/'+doc._id+'/'+req.user._id+'/img_'+doc._id+'_'+req.user._id+'.png';
-				var m = '/pu/getgeo/'+req.user._id+'';
+				var m = (req.isAuthenticated() ? '/pu/getgeo/'+req.user._id+'' : '/user/getgeo/');
 				Signature.findOne({image: l}, function(err, pud){
 					if (err) {
 						return next(err)
 					}
 					var pu = req.user;
-					isJurisdiction(doc, req.user, function(signable){
+					var reqpos = (req.session && req.session.position ? req.session.position : null)
+
+					isJurisdiction(reqpos, doc, req.user, function(signable){
 					// console.log('signable?')
 					// console.log(signable)
 						var csrftoken = req.csrfToken();
