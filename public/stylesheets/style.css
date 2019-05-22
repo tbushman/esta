@@ -612,6 +612,11 @@ em {
   background-color: #fff;
 }
 
+.submenu.drop.active > span {
+  color: #000;
+  color: var(--secondary);
+}
+
 .qty {
 	position: absolute;
 	font-size: 10px;
@@ -1037,6 +1042,11 @@ span.img > img {
 	-webkit-transform: translate(-50%,-50%);
 	transform: translate(-50%,-50%);
 }
+a.submenu.drop.active > div.ui > svg > path, a.submenu.drop.active > div.ui > svg > rect, a.submenu.drop.active > div.ui > svg > polygon, a.submenu.drop.active > div.ui > svg > circle, {
+  fill: #000;
+	fill: var(--secondary);
+}
+
 .flexcontainr {
 	display: -webkit-box;
   display: -moz-box;

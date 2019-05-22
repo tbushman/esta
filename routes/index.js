@@ -1108,6 +1108,7 @@ router.get('/home', getDat, ensureCurly, function(req, res, next){
 	//getDat(function(dat, distinct){
 	var newrefer = {url: url.parse(req.url).pathname, expired: req.session.refer ? req.session.refer.url : null, title: 'home'};
 	req.session.refer = newrefer;
+	req.session.menu = 'home'
 	if (!req.session.importgdrive) {
 		req.session.importgdrive = false;
 		Content.find({}).sort( { index: 1 } ).exec(function(err, data){

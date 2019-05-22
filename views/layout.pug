@@ -8,8 +8,6 @@ html
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
 		base(href="")
 		link(href="/stylesheets/gpo.css")
-		//- link(rel="stylesheet", href="/stylesheets/billres.xsl")
-		//- link(rel="stylesheet", href="/stylesheets/usctitle.css")
 		link(rel="stylesheet", href="/stylesheets/style.css?version=1")
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.draw.css")
@@ -27,8 +25,6 @@ html
 		script(type="text/javascript", src="/scripts/htmldiff.js")
 		script.
 			var module = {};
-		//- script(type="text/javascript", src="/scripts/xslt-processor.js")
-		//- script(src="https://unpkg.com/xth/xth.js")
 		script(type="text/javascript", src="/scripts/xth.js")
 
 		script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
@@ -223,14 +219,6 @@ html
 					}
 				},
 				components: {
-					//- xmlStylesheet: {
-					//- 	data(){
-					//- 		return {
-					//- 			url: '/stylesheets/billres.xsl'
-					//- 		}
-					//- 	},
-					//- 	template: '<?xml-stylesheet type="text/xsl" :href="url"?>'
-					//- },
 					canvasc: {
 						data: function() {
 							return {
@@ -299,18 +287,6 @@ html
 				},
 				updated: function(){
 					var self = this;
-					
-					
-					//- if (self.dindexes.length === 0) {
-					//- 	self.dindexes = (self.dat && self.dat !== '' ? self.dat.map(function(data){
-					//- 		return data.map(function(doc){
-					//- 			return doc.index;
-					//- 
-					//- 		})
-					//- 	}) : [[(!self.doc || self.doc === '' ? 0 : self.doc.index)]] );
-					//- 	self.dindexes.sort();
-					//- 
-					//- }
 				},
 				mounted: function(){
 					$(document).ready(function(){
@@ -451,16 +427,7 @@ html
 					},
 					getXML(){
 						var self = this;
-						//- self.xml = self.xml.replace(/href=(.)billres/gm, 'href=$1/billres');
-						//- var parser = new DOMParser();
-						//- var parsed = parser.parseFromString(self.xml, 'text/xml');
-						//- console.log(parsed)
-						//- return parsed
 						var xhr = new XMLHttpRequest();
-						//- var testTransform = document.implementation.createDocument("", "test", null);
-						// just an example to get a transform into a script as a DOM
-						// XMLDocument.load is asynchronous, so all processing happens in the 
-						// onload handler
 						xhr.addEventListener("load", self.selfOnload, false);
 						xhr.open('GET', xml, false);
 						xhr.send();
@@ -472,62 +439,9 @@ html
 					},
 					parseXML(xml){
 						console.log(xml)
-						//- return xml
-						//- xml.location = ''
 						var parser = new DOMParser();
 						var parsed = parser.parseFromString(xml, 'text/xml');
 						return parsed;
-						//- parsed.location = {};
-						//- var xhr = new XMLHttpRequest();
-						//- var processor = new XSLTProcessor();
-						//- //- var testTransform = document.implementation.createDocument("", "test", null);
-						//- // just an example to get a transform into a script as a DOM
-						//- // XMLDocument.load is asynchronous, so all processing happens in the 
-						//- // onload handler
-						//- xhr.addEventListener("load", self.onload, false);
-						//- xhr.open('GET', '/stylesheets/billres.xsl', false);
-						//- xhr.send();
-						//- function onload(e) {
-						//- 	console.log(e)
-						//- 	//- var xslparser = new DOMParser();
-						//- 	var parsedxsl = e.target.responseXML//xslparser.parseFromString(JSON.parse(e.target.response), 'text/xml')
-						//-   processor.importStylesheet(parsedxsl);
-						//- 	var newDocument = processor.transformToDocument(parsed);
-						//- 	console.log(newDocument)
-						//- 	return newDocument
-						//- }
-						//- return parsed;
-						//- console.log(xml)
-						//- var parser = new DOMParser();
-						//- //- xml.location = ''
-						//- var parsed = parser.parseFromString(xml, 'application/xml');
-						//- var xmlp = new XMLSerializer();
-						//- var serp = xmlp.serializeToString(parsed);
-						//- console.log(serp);
-						//- var xmls = 'data:application/xml,' + encodeURIComponent(xml);
-						//- var xslpath = $.get('/stylesheets/billres.xsl')
-						//- .then(function(xsl){
-						//- 	var xslp = new XMLSerializer();
-						//- 	var xsls = xslp.serializeToString(xsl);
-						//- 	console.log(xsls)
-						//- 	var xslps = 'data:text/xml,' + encodeURIComponent(xsls);
-						//- 	xth(xmls, '/stylesheets/billres.xsl', function(html){
-						//- 		console.log(html)
-						//- 		return html;
-						//- 
-						//- 	})
-						//- 	//- var outputXml = xsltProcess(
-						//- 	//-     xmlParse(serp),
-						//- 	//-     xmlParse(xsls)
-						//- 	//- )
-						//- 	//- var outputXml = xslt(serp, xsls, {fullDocument:true,cleanup:false})
-						//- })
-						//- .catch(function(err){
-						//- 	console.log(err)
-						//- });
-						//- return xslpath;
-						//- console.log(serp)
-			      //- return serp;
 					},
 					subDropdown(e) {
 						var self = this;
@@ -567,7 +481,6 @@ html
 						var self = this;
 						$.get(
 							'/api/gpo'
-							//- 'https://api.govinfo.gov/collections/BILLS/'+encodeURIComponent(moment().subtract('1', 'years').utc().format())+'?offset=0&pageSize=1000&api_key='+'#{process.env.GPOKEY}'
 						)
 						.then(function(data){
 							console.log(data)
@@ -648,9 +561,8 @@ html
 						} 
 						if (url[0]) {
 							url = url[0].url;
-							var type = //(
+							var type = 
 								e.target.value
-								// === 'State' ? : (e.target.value === '/json/us.json' ? 'Nation' : null));
 							$.getJSON(url).then(async function(json){
 								await console.log(json)
 								self.newDoc.placetype = type;
@@ -663,7 +575,6 @@ html
 							})
 							.catch((err)=>console.log(err))
 						}
-						//- e.target.value;
 						
 					},
 					changePlaceNew(e) {
@@ -689,7 +600,6 @@ html
 							self.modal.msg = 'geolocator didn\'t work. Please provide the zip code you vote from. ';
 							self.modal.id = 'zip'
 						} else if (geolocation) {
-							//http://localhost:8686/sig/getgeo/5ca8cd51aa87b56585bedbb4/40.666473599999996/-111.8096681/null/null
 							if (!pos || !pos.lat) {
 								
 							} else {
@@ -707,10 +617,6 @@ html
 							}
 						}
 					},
-					//- clickSlider(diff, doc){
-					//- 	//`<a v-bind:click="" >${diff.user.username}<img class="avatar" src="${diff.user.avatar}"></img></a>`
-					//- 	$('#diff'+doc.index).val(diff.ind)
-					//- },
 					changeDiff(e) {
 						var self = this;
 						console.log(e.target.value)
@@ -937,8 +843,8 @@ html
 						if (!mapActive) {
 							//- if (self.map) self.setView(self.map.getLatLng());
 							// TODO admin only for certain things?
-							console.log(self.dataLayer._latlngs.length)
-							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && self.dataLayer._latlngs.length < 2) {
+							console.log(self.dataLayer)
+							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && self.dataLayer._latlngs && self.dataLayer._latlngs.length < 2) {
 								//- console.log(self.dataLayer)
 								self.dataLayer.enableEdit();
 								self.mapEdit = !mapEdit;
@@ -1425,6 +1331,33 @@ html
 						
 						//- return L.GeoJSON.geometryToLayer(item, options.pointToLayer, null, options);
 						//- return L.GeoJSON.geometryToLayer(item, options.pointToLayer, options.coordsToLatLngs, options)
+						//- return L.GeoJSON.geometryToLayer(item, {
+						//- var pointToLayer = function(feature, latlng) {
+						//- 	//- console.log(feature, latlng);
+						//- 	var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type))
+						//- 		.on('click', function(){
+						//- 			return self.setView(feature, latlng)
+						//- 		});
+						//- 	//- console.log(circle)
+						//- 	//- L.GeoJSON.coordsToLatLng(feature.geometry.coordinates, false)
+						//- 
+						//- 	return circle;
+						//- }
+						//- var onEachFeature = function (feature, layer) {
+						//- 	console.log(feature, layer)
+						//- 	//- latlng.wrap()
+						//- 	layer.bindTooltip(feature.properties.label, {interactive:true});
+						//- 	layer.on('click', function(){
+						//- 		feature.openTooltip();
+						//- 	})
+						//- }
+						//- return L.GeoJSON.geometryToLayer(item, pointToLayer, null, null)
+						//- .onEachFeature(function(feature, layer){
+						//- 			layer.bindTooltip(feature.properties.label, {interactive:true});
+						//- 			layer.on('click', function(){
+						//- 				feature.openTooltip();
+						//- 			})
+						//- });
 						return L.GeoJSON.geometryToLayer(item, {
 							style: function(feature) {
 								return self.styleOf(feature, feature.geometry.type)
@@ -1437,16 +1370,19 @@ html
 									});
 								//- console.log(circle)
 								//- L.GeoJSON.coordsToLatLng(feature.geometry.coordinates, false)
-								
+						
 								return circle;
 							},
 							//- coordsToLatLng: self.coordsToLatLng(),
 							//- coordsToLatLngs: self.coordsToLatLngs(),
-
-							onEachFeature: function (feature, latlng) {
-								//console.log(feature)
-								latlng.wrap()
-								feature.bindPopup(feature.properties.label);
+						
+							onEachFeature: function (feature, layer) {
+								console.log(feature, layer)
+								//- latlng.wrap()
+								//- layer.bindTooltip(feature.properties.label)//, {interactive:true});
+								//- layer.on('click', function(){
+								//- 	feature.openTooltip();
+								//- })
 							}
 						})
 					},
@@ -1455,7 +1391,7 @@ html
 						var keys = Object.keys(dataLayer._layers)
 						self.latlngs = [keys.map(function(key){
 							if (dataLayer._layers[parseInt(key, 10)]._latlng) {
-								return L.latLng([dataLayer._layers[parseInt(key, 10)]._latlng.lat, dataLayer._layers[parseInt(key, 10)]._latlng.lng]).wrap();
+								return L.latLng([dataLayer._layers[parseInt(key, 10)]._latlng.lat, dataLayer._layers[parseInt(key, 10)]._latlng.lng])//.wrap();
 							} else {
 								console.log('bleh')
 								console.log(dataLayer._layers[parseInt(key, 10)]);
@@ -1508,10 +1444,10 @@ html
 							if (self.doc.properties.title.str !== 'Geography' && self.layers.length) {
 								self.dataLayer.disableEdit();
 								self.mapEdit = false;
-								self.layers.forEach(function(item, i){
+								self.layers.forEach(async function(item, i){
 									self.lyr[item._id] = self.loadLayer(item);
 									self.lyr[item._id].setStyle({color: colors[i]})
-									self.map.addLayer(self.lyr[item._id]);
+									await self.map.addLayer(self.lyr[item._id]);
 									self.lyr[item._id].remove()
 								})
 								//- var layer = self.map.getLayer(self.dataLayer)
@@ -1571,13 +1507,16 @@ html
 									if (self.dataLayer._layers) {
 										self.layerToDataLayer(self.dataLayer)
 									} else {
-										self.latlngs = L.CRS.wrapLatLng(self.dataLayer.getLatLngs())
+										self.latlngs = //L.CRS.wrapLatLng(
+											self.dataLayer.getLatLngs()
+										//)
 									}
 									//- latlng = L.latLng(self.latlngs)	
 								}
 								if (self.latlngs) {
 									latlng = //L.CRS.wrapLatLngBounds(
-										L.latLngBounds(self.latlngs[0])
+										(isNaN(parseInt(self.latlngs[0])) ? L.latLngBounds(self.latlngs[0]) : L.latLngBounds(self.latlngs)) 
+										
 									//)
 									.getCenter();
 								}

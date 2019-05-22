@@ -108,7 +108,7 @@ div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: n
 	table(width="100%", height="100%", v-if="doc && pu && pu.username === loggedin && type === 'draw'", style="position:fixed;top:0;background-color:var(--primary);")
 		tr
 			td
-				div.row(style="text-align:center;")
+				div.row(v-cloak, style="text-align:center;")
 					p.tb-10-m0 Sign Here 
 					
 				canvasc(

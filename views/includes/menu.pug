@@ -16,7 +16,7 @@ each mn, k in menus
 					span esta.bli.sh
 		div.dropdown(v-cloak, class= mn)
 			
-			a.submenu.drop(class= mn, href="/")
+			a.submenu.drop(class= mn, :class="((/home/gi).test(menu) ? 'active' : '')", href="/")
 				if (mn !== 'static')
 					.ui
 						svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
@@ -60,7 +60,7 @@ each mn, k in menus
 					option(v-for="(ct, l) in gpo.packages", v-text="ct.title", :value="l")
 				input(v-if="!gpo", type="text", id="chtitle", v-model="newDoc.chtitle")
 				a(role="button", title="Create", :href="'/api/new/'+newDoc.placetype+'/'+newDoc.place+'/'+newDoc.tiind+'/'+newDoc.chind+'/'+newDoc.secind+'/'+encodeURIComponent(newDoc.chtitle)+'/'+(!newDoc.xmlid ? undefined : newDoc.xmlid)+''", style="margin-bottom: 50px") Create
-			
+				p &nbsp
 			a.submenu.drop(v-if="loggedin && doc && pu && pu !== '' && pu.properties.admin", class= mn, title="Export", :href="'/api/exportword/'+doc._id+''")
 				if (mn !== 'static')
 					.ui
@@ -74,7 +74,7 @@ each mn, k in menus
 							path(d="M479,1V64H1V1H479m1-1H0V65H480V0Z")
 				span.tb-font-m Export
 
-			a.submenu.drop(class= mn, v-if="loggedin && loggedin !== ''", href="/sig/editprofile", title="View and edit your profile")
+			a.submenu.drop(class= mn, :class="((/profile/gi).test(menu) ? 'active' : '')", v-if="loggedin && loggedin !== ''", href="/sig/editprofile", title="View and edit your profile")
 				if (mn !== 'static')
 					.ui
 						svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
