@@ -212,7 +212,8 @@ html
 							
 						],
 						zfactor: (0.01 * (!this.map ? 6 : (18 - this.map.getZoom() ) )),
-						cZF: null
+						cZF: null,
+						viewerList: false
 							//(!this.map ? (6 * this.zfactor) : (this.map.getZoom() + this.zfactor))
 							//(!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
 						
@@ -285,6 +286,7 @@ html
 						}
 					}
 				},
+				
 				updated: function(){
 					var self = this;
 				},
@@ -397,6 +399,12 @@ html
 							self.latlng.lng = -111;
 							self.panZoom();
 						}
+						self.map.on('click', function(e){
+							self.viewerList = false;
+						});
+						//- self.map.on('zoomend', function(e){
+						//- 	self.viewerList = false;
+						//- })
 						if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {
 							var int = 8000;
 							self.sliderImg(int)
@@ -843,7 +851,7 @@ html
 						if (!mapActive) {
 							//- if (self.map) self.setView(self.map.getLatLng());
 							// TODO admin only for certain things?
-							console.log(self.dataLayer)
+							//- console.log(self.dataLayer)
 							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && self.dataLayer._latlngs && self.dataLayer._latlngs.length < 2) {
 								//- console.log(self.dataLayer)
 								self.dataLayer.enableEdit();
@@ -1193,11 +1201,13 @@ html
 						switch(type){
 							case 'MultiPoint':
 								style.radius = 10;
-								style.fillColor = 'blue';
+								style.color = '#fff';
+								style.fillColor = '#A6CC5A';
 								break;
 							case 'Point':
 								style.radius = 10;
-								style.fillColor = 'blue';
+								style.color = '#fff';
+								style.fillColor = '#A6CC5A';
 								break;
 							case 'Polygon':
 								break;
@@ -1289,7 +1299,12 @@ html
 										buf.remove()
 									} 
 								//- }, 1000)//- self.map.panTo(latlng);
-								self.lMarker.setLatLng(latlng)
+								self.lMarker.setLatLng(latlng);
+								if (self.geo.length > 0) {
+									self.viewerList = true;
+								} else {
+									self.viewerList = false;
+								}
 							}
 
 						})
@@ -1446,7 +1461,7 @@ html
 								self.mapEdit = false;
 								self.layers.forEach(async function(item, i){
 									self.lyr[item._id] = self.loadLayer(item);
-									self.lyr[item._id].setStyle({color: colors[i]})
+									self.lyr[item._id].setStyle({fillColor: colors[i]})
 									await self.map.addLayer(self.lyr[item._id]);
 									self.lyr[item._id].remove()
 								})

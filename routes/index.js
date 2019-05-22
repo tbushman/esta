@@ -2142,6 +2142,7 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 			})
 			.catch(function(err){
 				console.log(err)
+				return ''
 				// if (err) {
 				// 	return '<pre>'
 				// }
