@@ -23,6 +23,9 @@ html
 		script(type="text/javascript", src="/scripts/jszip.min.js")
 		script(type="text/javascript", src="/scripts/signaturePad.js")
 		script(type="text/javascript", src="/scripts/htmldiff.js")
+		//- script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-tilelayer-geojson/1.0.4/TileLayer.GeoJSON.min.js")
+		script(src="/scripts/TileLayer.GeoJSON.js")
+		//- script(src="/scripts/cr-leaflet.js")
 		script.
 			var module = {};
 		script(type="text/javascript", src="/scripts/xth.js")
@@ -48,6 +51,7 @@ html
 			Vue.prototype.$ = $;
 			Vue.prototype.htmldiff = htmldiff;
 			Vue.prototype.xth = xth;
+			//- Vue.prototype.CensusReporter = CensusReporter;
 			if (typeof tinymce === 'object') Vue.prototype.tinymce = tinymce;
 			new Vue({
 				el: '#vue',
@@ -213,7 +217,39 @@ html
 						],
 						zfactor: (0.01 * (!this.map ? 6 : (18 - this.map.getZoom() ) )),
 						cZF: null,
-						viewerList: false
+						viewerList: false,
+						boundary: null,
+						//https://gist.githubusercontent.com/wboykinm/ae69cce5f5b419c071bf/raw/83fc193556f94c32eacdd64747eee876e1e0f790/cr-leaflet.js
+						//from censusreporter
+						boundaries: [
+							{code: '020', name:'region'},
+							{code: '030', name:'division'},
+							{code: '040', name:'state'},
+							{code: '050', name:'county'},
+							{code: '060', name:'county subdivision'},
+							{code: '140', name:'census tract'},
+							{code: '150', name:'block group'},
+							{code: '160', name:'place'},
+							{code: '170', name:'consolidated city'},
+							{code: '230', name:'Alaska native regional corporation'},
+							{code: '250', name:'native area'},
+							{code: '251', name:'tribal subdivision'},
+							{code: '256', name:'tribal tract'},
+							{code: '310', name:'metro area (CBSA)'},
+							{code: '314', name:'metropolitan division'},
+							{code: '330', name:'combined statistical area'},
+							{code: '335', name:'combined NECTA'},
+							{code: '350', name:'NECTA'},
+							{code: '364', name:'NECTA division'},
+							{code: '400', name:'urban area'},
+							{code: '500', name:'congressional district'},
+							{code: '610', name:'state house (upper)'},
+							{code: '620', name:'state house (lower)'},
+							{code: '795', name:'PUMA'},
+							{code: '860', name:'ZIP code'},
+							{code: '950', name:'school district (elementary)'},
+							{code: '960', name:'school district (secondary)'},
+							{code: '970', name:'school district (unified)'}]
 							//(!this.map ? (6 * this.zfactor) : (this.map.getZoom() + this.zfactor))
 							//(!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
 						
@@ -405,6 +441,7 @@ html
 						//- self.map.on('zoomend', function(e){
 						//- 	self.viewerList = false;
 						//- })
+						//- new CensusReporter.SummaryLevelLayer('040').addTo(self.map);
 						if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {
 							var int = 8000;
 							self.sliderImg(int)
@@ -861,7 +898,7 @@ html
 						} else {
 							//- if (self.map) self.setView(self.map.getLatLng());
 							// TODO admin only for certain things?
-							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
+							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && typeof self.dataLayer.disableEdit === 'function') {
 								self.dataLayer.disableEdit();
 								self.mapEdit = !mapEdit;
 							}
@@ -1293,7 +1330,9 @@ html
 								})
 							}
 							if (self.geo) {
-								self.map.fitBounds(ll1);
+								if (ll1._southWest) {
+									self.map.fitBounds(ll1);
+								} 
 								//- setTimeout(function(){
 									if (buf && typeof buf.remove === 'function') {
 										buf.remove()
@@ -1342,7 +1381,50 @@ html
 					loadLayer(item) {
 						//- console.log(item)
 						var self = this;
-						//- var options = 
+						//- var options = ;
+						//- if (typeof L.GeoJSON.geometryToLayer(item).pointToLayer === 'function') {
+						//- 	return L.GeoJSON.geometryToLayer(item, {
+						//- 		style: function(feature) {
+						//- 			return self.styleOf(feature, feature.geometry.type)
+						//- 		},
+						//- 		pointToLayer: function(feature, latlng) {
+						//- 			//- console.log(feature, latlng);
+						//- 			var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type))
+						//- 				.on('click', function(){
+						//- 					return self.setView(feature, latlng)
+						//- 				});
+						//- 			//- console.log(circle)
+						//- 			//- L.GeoJSON.coordsToLatLng(feature.geometry.coordinates, false)
+						//- 
+						//- 			return circle;
+						//- 		}
+						//- 	})
+						//- } else {
+							return L.GeoJSON.geometryToLayer(item, {
+								style: function(feature) {
+									return self.styleOf(feature, feature.geometry.type)
+								},
+								pointToLayer: function(feature, latlng) {
+									//- console.log(feature, latlng);
+									var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type))
+										.on('click', function(){
+											return self.setView(feature, latlng)
+										});
+									//- console.log(circle)
+									//- L.GeoJSON.coordsToLatLng(feature.geometry.coordinates, false)
+							
+									return circle;
+								},
+								onEachFeature: function (feature, layer) {
+									console.log(feature, layer)
+									//- latlng.wrap()
+									layer.bindTooltip(feature.properties.label, {interactive:true});
+									layer.on('click', function(){
+										feature.openTooltip();
+									})
+								}
+							})
+						//- }
 						
 						//- return L.GeoJSON.geometryToLayer(item, options.pointToLayer, null, options);
 						//- return L.GeoJSON.geometryToLayer(item, options.pointToLayer, options.coordsToLatLngs, options)
@@ -1373,33 +1455,7 @@ html
 						//- 				feature.openTooltip();
 						//- 			})
 						//- });
-						return L.GeoJSON.geometryToLayer(item, {
-							style: function(feature) {
-								return self.styleOf(feature, feature.geometry.type)
-							},
-							pointToLayer: function(feature, latlng) {
-								//- console.log(feature, latlng);
-								var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type))
-									.on('click', function(){
-										return self.setView(feature, latlng)
-									});
-								//- console.log(circle)
-								//- L.GeoJSON.coordsToLatLng(feature.geometry.coordinates, false)
 						
-								return circle;
-							},
-							//- coordsToLatLng: self.coordsToLatLng(),
-							//- coordsToLatLngs: self.coordsToLatLngs(),
-						
-							onEachFeature: function (feature, layer) {
-								console.log(feature, layer)
-								//- latlng.wrap()
-								//- layer.bindTooltip(feature.properties.label)//, {interactive:true});
-								//- layer.on('click', function(){
-								//- 	feature.openTooltip();
-								//- })
-							}
-						})
 					},
 					layerToDataLayer(dataLayer) {
 						var self = this;
@@ -1413,6 +1469,116 @@ html
 
 							}
 						})]
+					},
+					onSwapImageLoad(e){
+						
+					},
+					changeCensus(e){
+						var self = this;
+						self.censusLayer.remove();
+						var code = e.target.value;
+						self.boundaries.forEach(function(bound){
+							if (self.lyr[bound.code]) {
+								self.map.removeLayer(self.lyr[bound.code])
+							}
+						})
+						if (!code) {
+							self.boundary = null;
+						}
+						else if (!self.lyr[code]) {
+							var style = {
+							"clickable": true,
+							"color": "#00D",
+							"fillColor": "#00D",
+							"weight": 1.0,
+							"opacity": 0.3,
+							"fillOpacity": 0.2
+							};
+							var hoverStyle = {
+							"fillOpacity": 0.5
+							};
+							var mapBounds = self.map.getBounds();
+							var crs = self.map.options.crs;
+							var nwLatLng = mapBounds.getNorthWest();
+							var seLatLng = mapBounds.getSouthEast();
+							var topLeft = self.map.latLngToLayerPoint(nwLatLng);
+							var bottomRight = self.map.latLngToLayerPoint(seLatLng);
+							self.censusLayer = L.tileLayer('https://embed.censusreporter.org/1.0/geo/tiger2013/tiles/'+code+'/{z}/{x}/{y}.geojson')
+							self.map.addLayer(self.censusLayer)
+							//- $.post('/census/'+code+'/'+self.map.getZoom()+'/'+bottomRight.x+'/'+bottomRight.y+'')
+							//- .then(function(result){
+							//- 	console.log(result.documentElement)
+							//- })
+							//- .catch(function(err){
+							//- 	console.log(err)
+							//- })							
+							//- var wmsParams = L.extend({}, {
+							//- 	service: 'WMS',
+							//- 	request: 'GetMap',
+							//- 	version: '1.1.1',
+							//- 	layers: '',
+							//- 	styles: '',
+							//- 	format: 'image/jpeg',
+							//- 	transparent: false
+							//- })
+							//- wmsParams.width = size.x;
+							//- wmsParams.height = size.y;
+							//- var imageSrc = url + L.Util.getParamString(this.wmsParams, url) + "&bbox=" + bbox;
+							//- var el = L.DomUtil.create('img', 'leaflet-image-layer');
+							//- L.Util.extend(el, {
+							//- 	galleryimg: 'no',
+							//- 	onselectstart: L.Util.falseFn,
+							//- 	onmousemove: L.Util.falseFn,
+							//- 	onload: L.Util.bind(self.onSwapImageLoad, this)
+							//- });
+							//- self.map._panes.overlayPane.appendChild(el);
+							//- el.style.visibility = '';
+							//- var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+							//- 	clipTiles: true,
+							//- 	unique: function (feature) {
+							//- 		return feature.id; 
+							//- 	}
+							//- }, {
+							//- 	style: style,
+							//- 	onEachFeature: function (feature, layer) {
+							//- 		if (feature.properties) {
+							//- 			var popupString = '<div class="popup">';
+							//- 			for (var k in feature.properties) {
+							//- 				var v = feature.properties[k];
+							//- 					popupString += k + ': ' + v + '<br />';
+							//- 				}
+							//- 			popupString += '</div>';
+							//- 			layer.bindPopup(popupString);
+							//- 		}
+							//- 		if (!(layer instanceof L.Point)) {
+							//- 			layer.on('mouseover', function () {
+							//- 				layer.setStyle(hoverStyle);
+							//- 			});
+							//- 			layer.on('mouseout', function () {
+							//- 				layer.setStyle(style);
+							//- 			});
+							//- 		}
+							//- 	}
+							//- });
+							//- self.map.addLayer(geojsonTileLayer);
+							//- $.post('/census/'+code).then(function(json){
+							//- 	self.lyr[code] = self.loadLayer(json);
+							//- 	await self.map.addLayer(self.lyr[code]);
+							//- 	//- self.lyr[code].remove();
+							//- 	self.boundary = code;
+							//- 	var bounds = self.lyr[code].getBounds();
+							//- 	self.map.fitBounds(bounds);
+							//- })
+							//- .catch(function(err){
+							//- 	console.log(err)
+							//- })
+						} else {
+							self.boundary = code;
+							self.map.addLayer(self.lyr[code]);
+							var bounds = self.lyr[code].getBounds();
+							self.map.fitBounds(bounds);
+						}
+						
 					}
 					 /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
 					loadMap(cb) {
@@ -1440,6 +1606,8 @@ html
 						}).addTo(map);
 						
 						
+						self.censusLayer = L.tileLayer('https://embed.censusreporter.org/1.0/geo/tiger2013/tiles/040/{z}/{x}/{y}.geojson').addTo(map)
+						self.censusLayer.bringToFront();
 						self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(map);
 						self.map = map;
 						self.cZF = (18 - self.map.getZoom() + self.zfactor)
@@ -1456,7 +1624,7 @@ html
 								self.layerToDataLayer(self.dataLayer)
 							}
 							var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
-							if (self.doc.properties.title.str !== 'Geography' && self.layers.length) {
+							if (self.doc.properties.title.str !== 'Geography' && self.layers.length && typeof self.dataLayer.disableEdit === 'function') {
 								self.dataLayer.disableEdit();
 								self.mapEdit = false;
 								self.layers.forEach(async function(item, i){
@@ -1468,6 +1636,16 @@ html
 								//- var layer = self.map.getLayer(self.dataLayer)
 								//- layer.setZIndex(0);
 							} 
+							//- if (self.doc.properties.title.str !== 'Geography' && self.boundary) {
+							//- 	$.post('/census/'+self.boundary).then(function(json){
+							//- 		self.lyr[self.boundary] = self.loadLayer(json);
+							//- 		await self.map.addLayer(self.lyr[self.boundary]);
+							//- 		self.lyr[self.boundary].remove()
+							//- 	})
+							//- 	.catch(function(err){
+							//- 		console.log(err)
+							//- 	})
+							//- }
 							//- self.dataLayer.on('dragend', function(e){
 							//- 	var latlngs = [];
 							//- 	console.log(e.target.getLatLngs())
@@ -1529,8 +1707,9 @@ html
 									//- latlng = L.latLng(self.latlngs)	
 								}
 								if (self.latlngs) {
+									console.log(self.latlngs)
 									latlng = //L.CRS.wrapLatLngBounds(
-										(isNaN(parseInt(self.latlngs[0])) ? L.latLngBounds(self.latlngs[0]) : L.latLngBounds(self.latlngs)) 
+										(!self.latlngs[0][0][0] || !self.latlngs[0][0][0].lat ? L.latLngBounds(self.latlngs) : L.latLngBounds(self.latlngs[0]) ) 
 										
 									//)
 									.getCenter();

@@ -1426,6 +1426,23 @@ router.get('/logout', function(req, res, next) {
 	})
 })*/
 
+router.post('/census/:code/:zoom/:x/:y', async function(req, res, next){
+	const censusData = await require('request-promise')({
+		uri: 'https://api.censusreporter.org/1.0/geo/tiger2016/tiles/'+req.params.code+'/'+req.params.zoom+'/'+req.params.x+'/'+req.params.y+'.geojson',
+		encoding: null
+	}).then(async function(response) {
+		console.log(response)
+	})
+	.catch(function(err){
+		console.log(err)
+	});
+	if (censusData && censusData.documentElement) {
+		return res.status(200).send(censusData)
+	} else {
+		return next(new Error('no data at that url'))
+	}
+})
+
 router.get('/profile/:username',  function(req, res, next) {
 	Content.find({}).sort({'properties.time.end': 1}).lean().exec(function(err, data){
 		if (err) {return next(err)}
