@@ -1427,7 +1427,7 @@ router.get('/logout', function(req, res, next) {
 })*/
 
 // router.post('/census/:code/:zoom/:x/:y', async function(req, res, next){
-router.post('/census/:code/:tableid/:state', async function(req, res, next){
+router.post('/census/:code'/*/:tableid/:state'*/, async function(req, res, next){
 	//ex. summarylevel
 	//https://api.censusreporter.org/1.0/geo/search?q=utah&sumlevs=010,020,030,040,050,060,160,250,310,500,610,620,860,950,960,970
 
@@ -1435,7 +1435,12 @@ router.post('/census/:code/:tableid/:state', async function(req, res, next){
 	// params : table_id, state
 	//https://api.censusreporter.org/1.0/data/show/latest?table_ids=B01001&geo_ids=050|04000US49
 	const censusData = await require('request-promise')({
-		uri: `https://api.censusreporter.org/1.0/data/show/latest?table_ids=${req.params.tableid}&geo_ids=${req.params.code}00US${req.params.state}`,
+		//codes: counties = https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/100
+		// states = https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/98
+		// zcta = https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/8
+		// glaciers = https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_PhysicalFeatures/MapServer/14
+		uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/100?f=pjson',
+		// `https://api.censusreporter.org/1.0/data/show/latest?table_ids=${req.params.tableid}&geo_ids=${req.params.code}00US${req.params.state}`,
 		// uri: 'https://api.censusreporter.org/1.0/geo/search?q=utah&sumlevs='+req.params.code+',050',
 		encoding: null
 

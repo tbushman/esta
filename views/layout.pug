@@ -1519,27 +1519,27 @@ html
 							var seLatLng = mapBounds.getSouthEast();
 							var topLeft = self.map.latLngToLayerPoint(nwLatLng);
 							var bottomRight = self.map.latLngToLayerPoint(seLatLng);
-							self.censusLayer = await L.mapboxGL({
-								accessToken: 'pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A',
-								//- style: 'mapbox://styles/mapbox/bright-v8',
-								center: [-111.8,42],
-								zoom:6,
-								//- ,
-								style: 'https://raw.githubusercontent.com/osm2vectortiles/mapbox-gl-styles/master/styles/bright-v9-cdn.json'
-								//- accessToken: 'no-token'
-							}).addTo(self.map)
-							//- self.censusLayer.addTo(self.map);
-							console.log(self.censusLayer)
-							await self.censusLayer._glMap.addSource("states", {
-								type: "vector",
-								url: "mapbox://mapbox.us_census_states_2015"
-							})
-							.then(function(doc){
-								console.log(doc)
-							})
-							.catch(function(err){
-								console.log(err)
-							})
+							//- self.censusLayer = await L.mapboxGL({
+							//- 	accessToken: 'pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A',
+							//- 	//- style: 'mapbox://styles/mapbox/bright-v8',
+							//- 	center: [-111.8,42],
+							//- 	zoom:6,
+							//- 	//- ,
+							//- 	style: 'https://raw.githubusercontent.com/osm2vectortiles/mapbox-gl-styles/master/styles/bright-v9-cdn.json'
+							//- 	//- accessToken: 'no-token'
+							//- }).addTo(self.map)
+							//- //- self.censusLayer.addTo(self.map);
+							//- console.log(self.censusLayer)
+							//- await self.censusLayer._glMap.addSource("states", {
+							//- 	type: "vector",
+							//- 	url: "mapbox://mapbox.us_census_states_2015"
+							//- })
+							//- .then(function(doc){
+							//- 	console.log(doc)
+							//- })
+							//- .catch(function(err){
+							//- 	console.log(err)
+							//- })
 							//ex. sex by age
 							//https://api.censusreporter.org/1.0/data/show/latest?table_ids=B01001&geo_ids=050|04000US53
 							//- self.censusLayer = 
@@ -1654,13 +1654,13 @@ html
 							//- self.map.addLayer(self.censusLayer)
 							//- var tableid = 'B01001';
 							//- var state = '49'
-							//- $.post('/census/'+code+'/'+tableid+'/'+state+'')
-							//- .then(function(result){
-							//- 	console.log(result)
-							//- })
-							//- .catch(function(err){
-							//- 	console.log(err)
-							//- })							
+							$.post('/census/'+code+'/')//+tableid+'/'+state+'')
+							.then(function(result){
+								console.log(result)
+							})
+							.catch(function(err){
+								console.log(err)
+							})							
 							//- var wmsParams = L.extend({}, {
 							//- 	service: 'WMS',
 							//- 	request: 'GetMap',
