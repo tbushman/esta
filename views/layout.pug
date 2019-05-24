@@ -11,6 +11,7 @@ html
 		link(rel="stylesheet", href="/stylesheets/style.css?version=1")
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.draw.css")
+		//- link(href="https://api.tiles.mapbox.com/mapbox.js/v2.1.6/mapbox.css")
 		script(type="text/javascript", src="/scripts/vue.js")
 		script(type="text/javascript", src="/scripts/jquery.min.js")
 		script(type="text/javascript", src="/scripts/jquery-ui.min.js")
@@ -23,8 +24,13 @@ html
 		script(type="text/javascript", src="/scripts/jszip.min.js")
 		script(type="text/javascript", src="/scripts/signaturePad.js")
 		script(type="text/javascript", src="/scripts/htmldiff.js")
+		link(href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.35.1/mapbox-gl.css")
+		script(src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.35.1/mapbox-gl.js")
+		script(src="https://unpkg.com/mapbox-gl-leaflet@0.0.3/leaflet-mapbox-gl.js")
+		//- script(type="text/javascript", src="https://unpkg.com/geojson-vt@3.2.0/geojson-vt.js")
+
 		//- script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-tilelayer-geojson/1.0.4/TileLayer.GeoJSON.min.js")
-		script(src="/scripts/TileLayer.GeoJSON.js")
+		//- script(src="/scripts/TileLayer.GeoJSON.js")
 		//- script(src="/scripts/cr-leaflet.js")
 		script.
 			var module = {};
@@ -51,6 +57,7 @@ html
 			Vue.prototype.$ = $;
 			Vue.prototype.htmldiff = htmldiff;
 			Vue.prototype.xth = xth;
+			Vue.prototype.L = L;
 			//- Vue.prototype.CensusReporter = CensusReporter;
 			if (typeof tinymce === 'object') Vue.prototype.tinymce = tinymce;
 			new Vue({
@@ -249,7 +256,8 @@ html
 							{code: '860', name:'ZIP code'},
 							{code: '950', name:'school district (elementary)'},
 							{code: '960', name:'school district (secondary)'},
-							{code: '970', name:'school district (unified)'}]
+							{code: '970', name:'school district (unified)'}],
+						censusVars: null
 							//(!this.map ? (6 * this.zfactor) : (this.map.getZoom() + this.zfactor))
 							//(!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
 						
@@ -424,7 +432,7 @@ html
 							selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | footnote'
 						});
 					}
-					self.loadMap(function(dataCoords){
+					self.loadMap(async function(dataCoords){
 						//- console.log(dataCoords)
 						if (dataCoords){
 							self.latlng.lng = dataCoords.lng;
@@ -446,6 +454,14 @@ html
 							var int = 8000;
 							self.sliderImg(int)
 						}
+						self.censusVars = await $.getJSON('https://api.census.gov/data/2010/dec/sf1/variables.json')
+						.then(function(data){
+							var variables = data.variables;
+							return variables;
+						})
+						.catch(function(err){
+							console.log(err)
+						})
 					})
 				},
 				beforeDestroy: function(){
@@ -1416,7 +1432,7 @@ html
 									return circle;
 								},
 								onEachFeature: function (feature, layer) {
-									console.log(feature, layer)
+									//- console.log(feature, layer)
 									//- latlng.wrap()
 									layer.bindTooltip(feature.properties.label, {interactive:true});
 									layer.on('click', function(){
@@ -1473,9 +1489,9 @@ html
 					onSwapImageLoad(e){
 						
 					},
-					changeCensus(e){
+					async changeCensus(e){
 						var self = this;
-						self.censusLayer.remove();
+						//- self.map.removeLayer(self.censusLayer);
 						var code = e.target.value;
 						self.boundaries.forEach(function(bound){
 							if (self.lyr[bound.code]) {
@@ -1503,11 +1519,144 @@ html
 							var seLatLng = mapBounds.getSouthEast();
 							var topLeft = self.map.latLngToLayerPoint(nwLatLng);
 							var bottomRight = self.map.latLngToLayerPoint(seLatLng);
-							self.censusLayer = L.tileLayer('https://embed.censusreporter.org/1.0/geo/tiger2013/tiles/'+code+'/{z}/{x}/{y}.geojson')
-							self.map.addLayer(self.censusLayer)
-							//- $.post('/census/'+code+'/'+self.map.getZoom()+'/'+bottomRight.x+'/'+bottomRight.y+'')
+							self.censusLayer = await L.mapboxGL({
+								accessToken: 'pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A',
+								//- style: 'mapbox://styles/mapbox/bright-v8',
+								center: [-111.8,42],
+								zoom:6,
+								//- ,
+								style: 'https://raw.githubusercontent.com/osm2vectortiles/mapbox-gl-styles/master/styles/bright-v9-cdn.json'
+								//- accessToken: 'no-token'
+							}).addTo(self.map)
+							//- self.censusLayer.addTo(self.map);
+							console.log(self.censusLayer)
+							await self.censusLayer._glMap.addSource("states", {
+								type: "vector",
+								url: "mapbox://mapbox.us_census_states_2015"
+							})
+							.then(function(doc){
+								console.log(doc)
+							})
+							.catch(function(err){
+								console.log(err)
+							})
+							//ex. sex by age
+							//https://api.censusreporter.org/1.0/data/show/latest?table_ids=B01001&geo_ids=050|04000US53
+							//- self.censusLayer = 
+							//- self.censusLayer = L.TileLayer.extend({
+							//- 	createTile: function(coords){
+							//- 		//- // create a <canvas> element for drawing
+							//- 		//- var tile = L.DomUtil.create('canvas', 'leaflet-tile');
+							//- 		//- // setup tile width and height according to the options
+							//- 		//- var size = this.getTileSize();
+							//- 		//- tile.width = size.x;
+							//- 		//- tile.height = size.y;
+							//- 		//- // get a canvas context and draw something on it using coords.x, coords.y and coords.z
+							//- 		//- var ctx = tile.getContext('2d');
+							//- 		//- // return the tile so it can be rendered on screen
+							//- 		//- return tile;
+							//- 		var tile = document.createElement('div');
+							//- 		tile.innerHTML = [coords.x, coords.y, coords.z].join(', ');
+							//- 		tile.style.outline = '1px solid red';
+							//- 		return tile;
+							//- 	},
+							//- 	getTileUrl: function(coords){
+							//- 		return 'https://api.censusreporter.org/1.0/geo/tiger2013/tiles/'+code+'/{z}/{x}/{y}.geojson'
+							//- 	}
+							//- })
+							//- var tileOptions = {
+							//- 	maxZoom: 20,  // max zoom to preserve detail on
+							//- 	tolerance: 5, // simplification tolerance (higher means simpler)
+							//- 	extent: 4096, // tile extent (both width and height)
+							//- 	buffer: 64,   // tile buffer on each side
+							//- 	debug: 0,  // logging level (0 to disable, 1 or 2)
+							//- 
+							//- 	indexMaxZoom: 0,  // max zoom in the initial tile index
+							//- 	indexMaxPoints: 100000, // max number of points per tile in the index
+							//- };
+							//- //-------------------------------------------------
+							//- function colorizeFeatures(data) {
+							//- var counter = 0;
+							//- for (var i = 0; i < data.features.length; i++) {
+							//- 	data.features[i].properties.color = 'hsl(' + 360 * Math.random() + ', 50%, 50%)';
+							//- 	counter += data.features[i].geometry.coordinates[0].length;
+							//- }
+							//- return counter;
+							//- }
+							//- var tileIndex = geojsonvt(data, tileOptions);
+							//- colorizeFeatures(data);
+							//- 
+							//- var tileLayer = L.canvasTiles()
+							//- 				.params({ debug: false, padding: 5 })
+							//- 				.drawing(drawingOnCanvas)
+							//- 
+							//- var pad = 0;
+							//- 
+							//- tileLayer.addTo(leafletMap);
+							//- 
+							//- 
+							//- function drawingOnCanvas(canvasOverlay, params) {
+							//- 
+							//- 		var bounds = params.bounds;
+							//- 		params.tilePoint.z = params.zoom;
+							//- 
+							//- 		var ctx = params.canvas.getContext('2d');
+							//- 		ctx.globalCompositeOperation = 'source-over';
+							//- 
+							//- 
+							//- 		console.log('getting tile z' + params.tilePoint.z + '-' + params.tilePoint.x + '-' + params.tilePoint.y);
+							//- 
+							//- 		var tile = tileIndex.getTile(params.tilePoint.z, params.tilePoint.x, params.tilePoint.y);
+							//- 		if (!tile) {
+							//- 				console.log('tile empty');
+							//- 				return;
+							//- 		}
+							//- 
+							//- 		ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+							//- 
+							//- 		var features = tile.features;
+							//- 
+							//- 		ctx.strokeStyle = 'grey';
+							//- 
+							//- 
+							//- 		for (var i = 0; i < features.length; i++) {
+							//- 				var feature = features[i],
+							//- 						type = feature.type;
+							//- 
+							//- 				ctx.fillStyle = feature.tags.color ? feature.tags.color : 'rgba(255,0,0,0.05)';
+							//- 				ctx.beginPath();
+							//- 
+							//- 				for (var j = 0; j < feature.geometry.length; j++) {
+							//- 						var geom = feature.geometry[j];
+							//- 
+							//- 						if (type === 1) {
+							//- 								ctx.arc(geom[0] * ratio + pad, geom[1] * ratio + pad, 2, 0, 2 * Math.PI, false);
+							//- 								continue;
+							//- 						}
+							//- 
+							//- 						for (var k = 0; k < geom.length; k++) {
+							//- 								var p = geom[k];
+							//- 								var extent = 4096;
+							//- 
+							//- 								var x = p[0] / extent * 256;
+							//- 								var y = p[1] / extent * 256;
+							//- 								if (k) ctx.lineTo(x  + pad, y   + pad);
+							//- 								else ctx.moveTo(x  + pad, y  + pad);
+							//- 						}
+							//- 				}
+							//- 
+							//- 				if (type === 3 || type === 1) ctx.fill('evenodd');
+							//- 				ctx.stroke();
+							//- 		}
+							//- 
+							//- };
+							//- self.censusLayer = L.tileLayer('https://embed.censusreporter.org/1.0/geo/tiger2013/tiles/'+code+'/{z}/{x}/{y}.geojson')
+							//- self.map.addLayer(self.censusLayer)
+							//- var tableid = 'B01001';
+							//- var state = '49'
+							//- $.post('/census/'+code+'/'+tableid+'/'+state+'')
 							//- .then(function(result){
-							//- 	console.log(result.documentElement)
+							//- 	console.log(result)
 							//- })
 							//- .catch(function(err){
 							//- 	console.log(err)
@@ -1605,9 +1754,8 @@ html
 							position:'topleft'
 						}).addTo(map);
 						
-						
-						self.censusLayer = L.tileLayer('https://embed.censusreporter.org/1.0/geo/tiger2013/tiles/040/{z}/{x}/{y}.geojson').addTo(map)
-						self.censusLayer.bringToFront();
+						//- self.censusLayer = L.tileLayer('https://api.censusreporter.org/1.0/geo/tiger2013/tiles/040/{z}/{x}/{y}.geojson').addTo(map)
+						//- self.censusLayer.bringToFront();
 						self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(map);
 						self.map = map;
 						self.cZF = (18 - self.map.getZoom() + self.zfactor)

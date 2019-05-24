@@ -1426,17 +1426,32 @@ router.get('/logout', function(req, res, next) {
 	})
 })*/
 
-router.post('/census/:code/:zoom/:x/:y', async function(req, res, next){
+// router.post('/census/:code/:zoom/:x/:y', async function(req, res, next){
+router.post('/census/:code/:tableid/:state', async function(req, res, next){
+	//ex. summarylevel
+	//https://api.censusreporter.org/1.0/geo/search?q=utah&sumlevs=010,020,030,040,050,060,160,250,310,500,610,620,860,950,960,970
+
+	//ex. sex by age in UT / Counties
+	// params : table_id, state
+	//https://api.censusreporter.org/1.0/data/show/latest?table_ids=B01001&geo_ids=050|04000US49
 	const censusData = await require('request-promise')({
-		uri: 'https://api.censusreporter.org/1.0/geo/tiger2016/tiles/'+req.params.code+'/'+req.params.zoom+'/'+req.params.x+'/'+req.params.y+'.geojson',
+		uri: `https://api.censusreporter.org/1.0/data/show/latest?table_ids=${req.params.tableid}&geo_ids=${req.params.code}00US${req.params.state}`,
+		// uri: 'https://api.censusreporter.org/1.0/geo/search?q=utah&sumlevs='+req.params.code+',050',
 		encoding: null
-	}).then(async function(response) {
-		console.log(response)
+
+	})
+	// const censusData = await require('request-promise')({
+	// 	uri: 'https://api.censusreporter.org/1.0/geo/tiger2016/tiles/'+req.params.code+'/'+req.params.zoom+'/'+req.params.x+'/'+req.params.y+'.geojson',
+	// 	encoding: null
+	// })
+	.then(async function(response) {
+		console.log(response.toString())
+		return response.toString();
 	})
 	.catch(function(err){
 		console.log(err)
 	});
-	if (censusData && censusData.documentElement) {
+	if (censusData) {
 		return res.status(200).send(censusData)
 	} else {
 		return next(new Error('no data at that url'))
