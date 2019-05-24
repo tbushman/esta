@@ -102,7 +102,10 @@ var isJurisdiction = async function isJurisdiction(reqpos, doc, pu, cb) {
 				[[[[lng,lat],[(lng+.00001),lat],[(lng+.00001),(lat+.00001)],[lng,(lat+.00001)],[lng,lat]]]]
 			
 		} else {
-			var ts = pu.sig[pu.sig.length-1].ts;
+			var ts = (!pu || !pu.sig ? null : pu.sig[pu.sig.length-1].ts);
+			if (!ts) {
+				return cb(null)
+			}
 			var pos = ts.split('G/')[0];
 			pos = pos.split(',');
 			pos.forEach(function(l){
@@ -114,7 +117,7 @@ var isJurisdiction = async function isJurisdiction(reqpos, doc, pu, cb) {
 		}
 	} else {
 		gtype = 'MultiPolygon';
-		if (!pu) return cb(null);
+		if (!pu || !pu.geometry) return cb(null);
 		gcoords = pu.geometry.coordinates;
 	}
 	if (!gcoords || gcoords.length === 0) {
@@ -1434,14 +1437,17 @@ router.post('/census/:code'/*/:tableid/:state'*/, async function(req, res, next)
 	//ex. sex by age in UT / Counties
 	// params : table_id, state
 	//https://api.censusreporter.org/1.0/data/show/latest?table_ids=B01001&geo_ids=050|04000US49
-	const datumTransformations = encodeURIComponent(JSON.stringify([{'wkid': 8901}, {'geoTransforms': [{'wkid': 8901}]}]))
+	const datumTransformations = //encodeURIComponent(JSON.stringify(
+		[{'wkid': 4326}, {'geoTransforms': [{'wkid': 4326}]}]
+	// ))
 	const censusData = await require('request-promise')({
 		//codes: counties = https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/100
 		// states = https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/98
 		// zcta = https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/8
 		// glaciers = https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_PhysicalFeatures/MapServer/14
-		uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/find?f=pjson&searchText=u&contains=true&searchFields=&sr=4326&returnGeometry=true&geometryPrecision=3&layers=1',
-		// uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/100?f=pjson',
+		// uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/find?f=pjson&searchText=utah&searchFields=&sr=4326&datumTransformations='+datumTransformations+'&returnGeometry=true&layers=1,2',
+		uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/find?searchText=Ut&contains=true&searchFields=&sr=4262&layers=1,2&layerDefs=&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&dynamicLayers=&returnZ=false&returnM=false&gdbVersion=&f=json',
+		// uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/100?f=pjson&returnGeometry=true',
 		// `https://api.censusreporter.org/1.0/data/show/latest?table_ids=${req.params.tableid}&geo_ids=${req.params.code}00US${req.params.state}`,
 		// uri: 'https://api.censusreporter.org/1.0/geo/search?q=utah&sumlevs='+req.params.code+',050',
 		encoding: null
@@ -1452,7 +1458,7 @@ router.post('/census/:code'/*/:tableid/:state'*/, async function(req, res, next)
 	// 	encoding: null
 	// })
 	.then(async function(response) {
-		console.log(response.toString())
+		// console.log(response.toString())
 		return response.toString();
 	})
 	.catch(function(err){
@@ -2499,7 +2505,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 				
 			} else {
 				places = usstates;
-				var doc = await Content.findOne({'properties.chapter.str': 'Jurisdiction: '+ places[placeind].properties.name}).then(function(doc){return doc}).catch(function(err){return console.log(err)});
+				var doc = Content.findOne({'properties.chapter.str': 'Jurisdiction: '+ places[placeind].properties.name}).then(function(doc){return doc}).catch(function(err){return console.log(err)});
 					
 				if (isNaN(chind) || !arr[tiind].chapter[chind]) {
 					chnd = (!doc ? 0 : doc.properties.chapter.ind);
@@ -2604,7 +2610,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	}
 	asynk.waterfall([
 		function(next){
-			var publishersDir = (process.env.NODE_ENV === 'production' ? process.env.PD.toString() : process.env.DEVPD.toString());
+			var publishersDir = (process.env.NODE_ENV === 'production' ? process.env.PD.toString() : (!process.env.DEVPD ? null : process.env.DEVPD.toString()));
 
 			Content.findOne({_id: req.params.id}, async function(err, doc) {
 				if (err) {

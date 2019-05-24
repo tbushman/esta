@@ -1656,7 +1656,22 @@ html
 							//- var state = '49'
 							$.post('/census/'+code+'/')//+tableid+'/'+state+'')
 							.then(function(result){
-								console.log(result)
+								//- console.log(JSON.parse(result))
+								self.censusData = JSON.parse(result).results;
+								self.censusData.forEach(async function(item, i){
+									console.log(item)
+									var it = {geometry: {}, properties:{}};
+									it.geometry.coordinates = item.geometry.rings;
+									it.geometry.type = 'MultiPolygon';
+									it.properties = item.attributes;
+									it.properties.name = item.attributes.name;
+									it.type = 'Feature';
+									console.log(it)
+									self.lyr[item.attributes.OBJECTID] = self.loadLayer(it);
+									self.lyr[item.attributes.OBJECTID].setStyle({fillColor: colors[i]})
+									await self.map.addLayer(self.lyr[item.attributes.OBJECTID]);
+									self.lyr[item.attributes.OBJECTID].remove()
+								})
 							})
 							.catch(function(err){
 								console.log(err)
