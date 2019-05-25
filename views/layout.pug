@@ -1572,6 +1572,8 @@ html
 										self.lyr[code] = self.loadLayer(it);
 										self.lyr[code].setStyle(style)
 										await self.map.addLayer(self.lyr[code]);
+										var bounds = self.lyr[code].getBounds();
+										self.map.fitBounds(bounds);
 										//- self.lyr[item.attributes.OBJECTID].remove()
 									}
 								})
