@@ -12,9 +12,19 @@ fieldset.lcontrol(style="padding:0;border:none;")
 		input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers")
 		
 	legend(style="font-size: 11px;") census
-	select(@change="changeCensus($event)")
-		option(value="null", v-text="'None'", v-bind:selected="!boundary")
-		option(v-for="(bound, r) in boundaries", v-text="bound.name", :value="bound.code")
+	//- include menu/jurisdiction.pug
+	label(for="placetype") Type of jurisdiction
+	select#placetype(style="pointer-events: all;", name="placetype",@change="changeCensusJurisdiction($event)")
+		option(value="null", v-text="'None'", v-bind:selected="!censusLoad.placetype")
+		option(v-for="(pl, p) in placetypes", v-text="pl.name", :value="p")
+	label(for="placetype", v-if="censusLoad.cats && censusLoad.cats.length") Data category
+	select#place( v-if="censusLoad.cats && censusLoad.cats.length", style="pointer-events: all;", @change="changeCensusData($event)", v-model="censusLoad.cat")
+		option(value="null", v-text="'None'", v-bind:selected="!censusLoad.cat")
+		option(v-if="censusLoad.cats.length", v-for="(cat, i) in censusLoad.cats", v-text="cat", :value="i", :selected="censusLoad.cat === i")
+
+	//- select(@change="changeCensus($event)")
+	//- 	option(value="null", v-text="'None'", v-bind:selected="!boundary")
+	//- 	option(v-for="(bound, r) in boundaries", v-text="bound.name", :value="bound.code")
 	//- a.drop(v-for="(bound, r) in boundaries", style="display:flex;")
 	//- 	.ui(style="pointer-events: none;min-width:45px;min-width:var(--thumbw);margin:0;")
 	//- 		img(src="/images/publish_logo_sq.svg", style="pointer-events:none;")

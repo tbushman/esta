@@ -1,0 +1,8 @@
+label(for="placetype") Type of jurisdiction
+select#placetype(style="pointer-events: all;", name="placetype",@change="changePlaceType($event)")
+	option(value="null", v-text="'None'", v-bind:selected="!newDoc.placetype")
+	option(v-for="(pl, p) in placetypes", v-text="pl.name", :value="pl.name")
+label(for="placetype") Jurisdiction
+select#place(style="pointer-events: all;", @change="changePlaceNew($event)", name="place", v-model="newDoc.place")
+	option(value="null", v-text="'None'", v-bind:selected="!newDoc.place")
+	option(v-if="newDoc.tempGeo.length", v-for="(geo, i) in newDoc.tempGeo", v-text="geo.properties.name", :value="i", :selected="newDoc.place === i")

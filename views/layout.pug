@@ -112,15 +112,19 @@ html
 						ff: this.parseObj(!{JSON.stringify(ff)}),
 						newDoc: {tempGeo:[],placetype:'',place:null,tiind:null,xmlid:'',chind:null,chtitle:''},						
 						placemenu: false,
+						
 						placetypes: [{
+							ind: 0,
 							name: 'Nation',
 							url: '/json/usstates.json'
 						},
 						{
+							ind: 1,
 							name: 'State',
 							url: '/json/usstates.json'
 						},
 						{
+							ind: 2,
 							name: 'County',
 							url: '/json/uscounties.json'
 						}],
@@ -225,39 +229,40 @@ html
 						zfactor: (0.01 * (!this.map ? 6 : (18 - this.map.getZoom() ) )),
 						cZF: null,
 						viewerList: false,
-						boundary: null,
-						//https://gist.githubusercontent.com/wboykinm/ae69cce5f5b419c071bf/raw/83fc193556f94c32eacdd64747eee876e1e0f790/cr-leaflet.js
-						//from censusreporter
-						boundaries: [
-							{code: '020', name:'region'},
-							{code: '030', name:'division'},
-							{code: '040', name:'state'},
-							{code: '050', name:'county'},
-							{code: '060', name:'county subdivision'},
-							{code: '140', name:'census tract'},
-							{code: '150', name:'block group'},
-							{code: '160', name:'place'},
-							{code: '170', name:'consolidated city'},
-							{code: '230', name:'Alaska native regional corporation'},
-							{code: '250', name:'native area'},
-							{code: '251', name:'tribal subdivision'},
-							{code: '256', name:'tribal tract'},
-							{code: '310', name:'metro area (CBSA)'},
-							{code: '314', name:'metropolitan division'},
-							{code: '330', name:'combined statistical area'},
-							{code: '335', name:'combined NECTA'},
-							{code: '350', name:'NECTA'},
-							{code: '364', name:'NECTA division'},
-							{code: '400', name:'urban area'},
-							{code: '500', name:'congressional district'},
-							{code: '610', name:'state house (upper)'},
-							{code: '620', name:'state house (lower)'},
-							{code: '795', name:'PUMA'},
-							{code: '860', name:'ZIP code'},
-							{code: '950', name:'school district (elementary)'},
-							{code: '960', name:'school district (secondary)'},
-							{code: '970', name:'school district (unified)'}],
-						censusVars: null
+						censusVars: null,
+						censusLoad: {tempGeo:[],placetype:'',cats:null,cat:null} 
+						//- boundary: null,
+						//- //https://gist.githubusercontent.com/wboykinm/ae69cce5f5b419c071bf/raw/83fc193556f94c32eacdd64747eee876e1e0f790/cr-leaflet.js
+						//- //from censusreporter
+						//- boundaries: [
+						//- 	{code: '020', name:'region'},
+						//- 	{code: '030', name:'division'},
+						//- 	{code: '040', name:'state'},
+						//- 	{code: '050', name:'county'},
+						//- 	{code: '060', name:'county subdivision'},
+						//- 	{code: '140', name:'census tract'},
+						//- 	{code: '150', name:'block group'},
+						//- 	{code: '160', name:'place'},
+						//- 	{code: '170', name:'consolidated city'},
+						//- 	{code: '230', name:'Alaska native regional corporation'},
+						//- 	{code: '250', name:'native area'},
+						//- 	{code: '251', name:'tribal subdivision'},
+						//- 	{code: '256', name:'tribal tract'},
+						//- 	{code: '310', name:'metro area (CBSA)'},
+						//- 	{code: '314', name:'metropolitan division'},
+						//- 	{code: '330', name:'combined statistical area'},
+						//- 	{code: '335', name:'combined NECTA'},
+						//- 	{code: '350', name:'NECTA'},
+						//- 	{code: '364', name:'NECTA division'},
+						//- 	{code: '400', name:'urban area'},
+						//- 	{code: '500', name:'congressional district'},
+						//- 	{code: '610', name:'state house (upper)'},
+						//- 	{code: '620', name:'state house (lower)'},
+						//- 	{code: '795', name:'PUMA'},
+						//- 	{code: '860', name:'ZIP code'},
+						//- 	{code: '950', name:'school district (elementary)'},
+						//- 	{code: '960', name:'school district (secondary)'},
+						//- 	{code: '970', name:'school district (unified)'}],
 							//(!this.map ? (6 * this.zfactor) : (this.map.getZoom() + this.zfactor))
 							//(!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
 						
@@ -569,7 +574,7 @@ html
 							self.map.fitBounds(bounds);
 						} else {
 							self.doc.properties.layers.splice(self.doc.properties.layers.indexOf(id), 1);
-							if (self.doc.properties.layers.length === 0) {
+							if (self.doc.properties.layers && self.doc.properties.layers.length === 0) {
 								var bounds = self.dataLayer.getBounds();
 								self.map.fitBounds(bounds)
 							}
@@ -594,7 +599,7 @@ html
 							return new RegExp(e.target.value).test(g.title)
 						})
 						console.log(gpo)
-						if (gpo.length > 0) {
+						if (gpo && gpo.length > 0) {
 							self.gpo.packages = gpo;
 						}
 					},
@@ -610,7 +615,7 @@ html
 						e.preventDefault()
 						var self = this;
 						var url;
-						if (self.placetypes.length > 0) {
+						if (self.placetypes && self.placetypes.length > 0) {
 							url = self.placetypes.filter(function(pt){
 								if (pt && pt.name) {
 									return pt.name === e.target.value;
@@ -720,8 +725,11 @@ html
 								self.accordions[n].sort();
 							} else {
 								var sac = self.accordions;
-								while(sac[n].length > 0) {sac[n].pop();}
-								self.accordions = sac;
+								if (sac) {
+									while(sac[n].length > 0) {sac[n].pop();}
+									self.accordions = sac;
+								}
+								
 							}
 						} else {
 							if (self.accordions[n].indexOf(ind) === -1) {
@@ -1489,6 +1497,95 @@ html
 					onSwapImageLoad(e){
 						
 					},
+					async changeCensusJurisdiction(e){
+						var self = this;
+						if (self.censusLoad) {
+							self.censusLoad.placetype = e.target.value;
+							$.post('/censusload/'+self.censusLoad.placetype)
+							.then(function(result){
+								self.censusLoad.cats = Object.keys(JSON.parse(result).variables)
+								//- JSON.parse(result).fields.map(function(fd){
+								//- 	return fd.name;
+								//- })
+							})
+							.catch(function(err){
+								console.log(err)
+							})
+						}
+					},
+					async changeCensusData(e){
+						var self = this;
+						//- self.map.removeLayer(self.censusLayer);
+						var code = e.target.value;
+						var keys = Object.keys(self.lyr);
+						var filterkeys = keys.filter(function(lr){
+							return !isNaN(parseInt(lr, 10))
+						})
+						filterkeys.forEach(function(lr){
+							return self.map.removeLayer(self.lyr[lr])
+						})
+						self.placetypes.forEach(function(bound){
+							if (self.lyr[bound.ind]) {
+								self.map.removeLayer(self.lyr[bound.ind])
+							}
+						})
+						if (!code) {
+							self.censusLoad.placetype = null;
+						}
+						else if (!self.lyr[code]) {
+							
+							var hoverStyle = {
+							"fillOpacity": 0.5
+							};
+							var mapBounds = self.map.getBounds();
+							//- var crs = self.map.options.crs;
+							//- var nwLatLng = mapBounds.getNorthWest();
+							//- var seLatLng = mapBounds.getSouthEast();
+							//- var topLeft = self.map.latLngToLayerPoint(nwLatLng);
+							//- var bottomRight = self.map.latLngToLayerPoint(seLatLng);
+							//- $.post('/censusload/'+)
+							$.post('/census/'+self.censusLoad.placetype+'/'+self.censusLoad.cat+'/')//+tableid+'/'+state+'')
+							.then(function(result){
+								console.log(JSON.parse(result))
+								self.censusData = JSON.parse(result).results;
+								var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
+								
+								self.censusData.forEach(async function(item, i){
+									var style = {
+									"clickable": true,
+									"color": "#00D",
+									"fillColor": colors[i],
+									"weight": 1.0,
+									"opacity": 0.3,
+									"fillOpacity": 0.2
+									};
+									console.log(item)
+									var it = {geometry: {}, properties:{}};
+									it.geometry.coordinates = [item.geometry.rings];
+									it.geometry.type = 'MultiPolygon';
+									it.properties = item.attributes;
+									it.properties.name = item.attributes.name;
+									it.type = 'Feature';
+									console.log(it)
+									if (it.geometry.coordinates) {
+										
+										self.lyr[code] = self.loadLayer(it);
+										self.lyr[code].setStyle(style)
+										await self.map.addLayer(self.lyr[code]);
+										//- self.lyr[item.attributes.OBJECTID].remove()
+									}
+								})
+							})
+							.catch(function(err){
+								console.log(err)
+							})							
+						} else {
+							self.boundary = code;
+							self.map.addLayer(self.lyr[code]);
+							var bounds = self.lyr[code].getBounds();
+							self.map.fitBounds(bounds);
+						}
+					},
 					async changeCensus(e){
 						var self = this;
 						//- self.map.removeLayer(self.censusLayer);
@@ -1604,7 +1701,7 @@ html
 								self.layerToDataLayer(self.dataLayer)
 							}
 							var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
-							if (self.doc.properties.title.str !== 'Geography' && self.layers.length && typeof self.dataLayer.disableEdit === 'function') {
+							if (self.doc.properties.title.str !== 'Geography' && self.layers && self.layers.length && typeof self.dataLayer.disableEdit === 'function') {
 								self.dataLayer.disableEdit();
 								self.mapEdit = false;
 								self.layers.forEach(async function(item, i){
