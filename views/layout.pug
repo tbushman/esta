@@ -1503,12 +1503,20 @@ html
 							self.censusLoad.placetype = e.target.value;
 							$.post('/censusload/'+self.censusLoad.placetype)
 							.then(async function(result){
-								console.log(JSON.parse(result).layers[0].fields)
-								self.censusLoad.cats = await JSON.parse(result).layers[0].fields.map(function(field){
-									return field.name;
-								})//Object.keys(JSON.parse(result).layers[0].fields)
-								//- JSON.parse(result).fields.map(function(fd){
-								//- 	return fd.name;
+								//- console.log(JSON.parse(result).layers[0].fields)
+								console.log(result)
+								var variables = JSON.parse(result).variables
+								var keys = Object.keys(variables)
+								self.censusLoad.cats = 
+								//- await JSON.parse(result).layers[0].fields.map(function(field){
+								//- 	return field.name;
+								//- })
+								keys//- keys.map(function(k){
+								//- 	return variables[k].concept
+								//- })
+								//- Object.keys(JSON.parse(result).layers[0].fields)
+								//- JSON.parse(result).variables.map(function(fd){
+								//- 	return fd.concept;
 								//- })
 							})
 							.catch(function(err){
@@ -1547,7 +1555,7 @@ html
 							//- var topLeft = self.map.latLngToLayerPoint(nwLatLng);
 							//- var bottomRight = self.map.latLngToLayerPoint(seLatLng);
 							//- $.post('/censusload/'+)
-							$.post('/census/'+self.censusLoad.placetype+'/'+self.censusLoad.cat+'')//+tableid+'/'+state+'')
+							$.post('/census/'+self.censusLoad.placetype+'/'+encodeURIComponent(self.censusLoad.cat)+'')//+tableid+'/'+state+'')
 							.then(function(result){
 								console.log(JSON.parse(result))
 								self.censusData = JSON.parse(result).features;

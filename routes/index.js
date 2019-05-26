@@ -1448,7 +1448,7 @@ router.post('/censusload/:code', async function(req, res, next){
 	}
 	
 	const censusData = await require('request-promise')({
-		uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/layers?f=json',//'https://api.census.gov/data/2010/dec/sf1/variables.json',//'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/'+code+'?f=json',
+		uri: 'https://api.census.gov/data/2010/dec/sf1/variables.json',//'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/layers?f=json',//,//'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/'+code+'?f=json',
 		encoding: null
 	})
 	.then(async function(result){
@@ -1469,7 +1469,8 @@ router.post('/censusload/:code', async function(req, res, next){
 // router.post('/census/:code/:zoom/:x/:y', async function(req, res, next){
 router.post('/census/:code/:field'/*/:tableid/:state'*/, async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
-	console.log(outputPath)
+	console.log(outputPath);
+	var field = decodeURIComponent(req.params.field);
 	var code, service;
 	switch (parseInt(req.params.code, 10)) {
 		case 0:
@@ -1499,8 +1500,17 @@ router.post('/census/:code/:field'/*/:tableid/:state'*/, async function(req, res
 	const datumTransformations = //encodeURIComponent(JSON.stringify(
 		[{'wkid': 4326}, {'geoTransforms': [{'wkid': 4326}]}]
 	// ))
-	const query = 'STATE = '+49
-	var uri = 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/'+service+'/MapServer/'+code+'/query?where='+encodeURIComponent(query)+'&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=8&outSR=4326&having=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&historicMoment=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentOnly=false&datumTransformation=&parameterValues=&rangeValues=&quantizationParameters=&f=json';
+	const query = 'STATE = '+49;
+	const stats =
+	// = 
+		[
+		encodeURIComponent(JSON.stringify({statisticType:'min',onStatisticField:encodeURIComponent(field),outStatisticFieldName:'low'},{statisticType:'max',onStatisticField:encodeURIComponent(field),outStatisticFieldName:'high'}))
+		]
+	// );
+	var uri = 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/'+service+'/MapServer/'+code+'/query?where='+encodeURIComponent(query)+'&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=8&outSR=4326&having=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=COUNTY&outStatistics='+
+	stats
+	+'&returnZ=false&returnM=false&gdbVersion=&historicMoment=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentOnly=false&datumTransformation=&parameterValues=&rangeValues=&quantizationParameters=&f=json';
+	
 	// uri += ''
 	// 'query?where="'STATE' = 49"&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=8&outSR=4326&having=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&historicMoment=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentOnly=false&datumTransformation=&parameterValues=&rangeValues=&quantizationParameters=&f=json';
 	console.log(uri.toString())
@@ -1517,17 +1527,7 @@ router.post('/census/:code/:field'/*/:tableid/:state'*/, async function(req, res
 		// &outStatistics=
 		// 	`,
 		// 
-			// ${encodeURIComponent(`[
-			// 	{ 
-			// 		statisticType : sum ,
-			// 		onStatisticField : pop2007 ,
-			// 		outStatisticFieldName : Population_2007 
-			// 	},{
-			// 		statisticType : avg ,
-			// 		onStatisticField : AVE_FAM_SZ ,
-			// 		outStatisticFieldName : Average_Family_Size 
-			// 	}
-			// ]`)}
+			// ${}
 
 		// uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/'+req.params.code+'/?returnGeometry=true&f=json',
 		// uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/find?searchText=ut&contains=true&searchFields=&sr=4262&layers=1,2&layerDefs=&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&dynamicLayers=&returnZ=false&returnM=false&gdbVersion=&f=json',
