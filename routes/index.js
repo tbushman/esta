@@ -1430,23 +1430,25 @@ router.get('/logout', function(req, res, next) {
 })*/
 
 router.post('/censusload/:code', async function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
 	var code;
 	switch (parseInt(req.params.code, 10)) {
 		case 0:
 			code = null;
 			break;
 		case 1:
-			code = 98
+			code = 3
 			break;
 		case 2:
-			code = 100
+			code = 2
 			break;
 		default:
-			code = 100
+			code = 3
 	}
 	
 	const censusData = await require('request-promise')({
-		uri: 'https://api.census.gov/data/2010/dec/sf1/variables.json',//'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/'+code+'?f=json',
+		uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/layers?f=json',//'https://api.census.gov/data/2010/dec/sf1/variables.json',//'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/'+code+'?f=json',
 		encoding: null
 	})
 	.then(async function(result){
@@ -1465,7 +1467,24 @@ router.post('/censusload/:code', async function(req, res, next){
 
 
 // router.post('/census/:code/:zoom/:x/:y', async function(req, res, next){
-router.post('/census/:code/:type'/*/:tableid/:state'*/, async function(req, res, next){
+router.post('/census/:code/:field'/*/:tableid/:state'*/, async function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+	var code;
+	switch (parseInt(req.params.code, 10)) {
+		case 0:
+			code = null;
+			break;
+		case 1:
+			code = 98
+			break;
+		case 2:
+			code = 100
+			break;
+		default:
+			code = 3
+	}
+	
 	//ex. summarylevel
 	//https://api.censusreporter.org/1.0/geo/search?q=utah&sumlevs=010,020,030,040,050,060,160,250,310,500,610,620,860,950,960,970
 
@@ -1476,13 +1495,57 @@ router.post('/census/:code/:type'/*/:tableid/:state'*/, async function(req, res,
 	const datumTransformations = //encodeURIComponent(JSON.stringify(
 		[{'wkid': 4326}, {'geoTransforms': [{'wkid': 4326}]}]
 	// ))
+	const uri = 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/'+code+'/query?where=&text=Utah&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=8&outSR=4262&having=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&historicMoment=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentOnly=false&datumTransformation=&parameterValues=&rangeValues=&quantizationParameters=&f=json';
+	console.log(uri.toString())
 	const censusData = await require('request-promise')({
 		//codes: counties = https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/100
 		// states = https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/98
 		// zcta = https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/8
 		// glaciers = https://tigerweb.geo.census.gov/arcgis/rest/services/Census2010/tigerWMS_PhysicalFeatures/MapServer/14
 		// uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/find?f=pjson&searchText=utah&searchFields=&sr=4326&datumTransformations='+datumTransformations+'&returnGeometry=true&layers=1,2',
-		uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/find?searchText='+req.params.type+'&contains=true&searchFields=&sr=4262&layers='+parseInt(req.params.code, 10)+'&layerDefs=&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&dynamicLayers=&returnZ=false&returnM=false&gdbVersion=&f=json',
+		/*+req.params.type+*/
+		/*'+parseInt(req.params.code, 10)+'*/
+		// http://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer/3/query?where=&f=pjson&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&maxAllowableOffset=&outSR=4262&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=
+		uri: uri,
+		// `http://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer/3/query?
+		// where=
+		// &f=geojson
+		// &text=
+		// &objectIds=
+		// &time=
+		// &geometry=
+		// &geometryType=
+		// esriGeometryEnvelope&inSR=
+		// &spatialRel=
+		// esriSpatialRelIntersects&relationParam=
+		// &outFields=*
+		// &returnGeometry=true
+		// &maxAllowableOffset=
+		// &outSR=4262
+		// &returnIdsOnly=false
+		// &returnCountOnly=true
+		// &orderByFields=
+		// &groupByFieldsForStatistics=
+		// &outStatistics=
+		// 	&returnZ=false
+		// 	&returnM=false
+		// 	&gdbVersion=
+		// 	`,
+		// 
+			// ${encodeURIComponent(`[
+			// 	{ 
+			// 		statisticType : sum ,
+			// 		onStatisticField : pop2007 ,
+			// 		outStatisticFieldName : Population_2007 
+			// 	},{
+			// 		statisticType : avg ,
+			// 		onStatisticField : AVE_FAM_SZ ,
+			// 		outStatisticFieldName : Average_Family_Size 
+			// 	}
+			// ]`)}
+
+		// uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/'+req.params.code+'/?returnGeometry=true&f=json',
+		// uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/find?searchText=ut&contains=true&searchFields=&sr=4262&layers=1,2&layerDefs=&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&dynamicLayers=&returnZ=false&returnM=false&gdbVersion=&f=json',
 		// uri: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/100?f=pjson&returnGeometry=true',
 		// `https://api.censusreporter.org/1.0/data/show/latest?table_ids=${req.params.tableid}&geo_ids=${req.params.code}00US${req.params.state}`,
 		// uri: 'https://api.censusreporter.org/1.0/geo/search?q=utah&sumlevs='+req.params.code+',050',

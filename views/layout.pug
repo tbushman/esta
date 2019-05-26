@@ -1502,8 +1502,11 @@ html
 						if (self.censusLoad) {
 							self.censusLoad.placetype = e.target.value;
 							$.post('/censusload/'+self.censusLoad.placetype)
-							.then(function(result){
-								self.censusLoad.cats = Object.keys(JSON.parse(result).variables)
+							.then(async function(result){
+								console.log(JSON.parse(result).layers[0].fields)
+								self.censusLoad.cats = await JSON.parse(result).layers[0].fields.map(function(field){
+									return field.name;
+								})//Object.keys(JSON.parse(result).layers[0].fields)
 								//- JSON.parse(result).fields.map(function(fd){
 								//- 	return fd.name;
 								//- })
@@ -1544,10 +1547,10 @@ html
 							//- var topLeft = self.map.latLngToLayerPoint(nwLatLng);
 							//- var bottomRight = self.map.latLngToLayerPoint(seLatLng);
 							//- $.post('/censusload/'+)
-							$.post('/census/'+self.censusLoad.placetype+'/'+self.censusLoad.cat+'/')//+tableid+'/'+state+'')
+							$.post('/census/'+self.censusLoad.placetype+'/'+self.censusLoad.cat+'')//+tableid+'/'+state+'')
 							.then(function(result){
 								console.log(JSON.parse(result))
-								self.censusData = JSON.parse(result).results;
+								self.censusData = JSON.parse(result).features;
 								var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
 								
 								self.censusData.forEach(async function(item, i){

@@ -20,7 +20,7 @@ fieldset.lcontrol(style="padding:0;border:none;")
 	label(for="placetype", v-if="censusLoad.cats && censusLoad.cats.length") Data category
 	select#place( v-if="censusLoad.cats && censusLoad.cats.length", style="pointer-events: all;", @change="changeCensusData($event)", v-model="censusLoad.cat")
 		option(value="null", v-text="'None'", v-bind:selected="!censusLoad.cat")
-		option(v-if="censusLoad.cats.length", v-for="(cat, i) in censusLoad.cats", v-text="cat", :value="i", :selected="censusLoad.cat === i")
+		option(v-if="censusLoad.cats.length", v-for="(cat, i) in censusLoad.cats", v-text="cat", :value="cat", :selected="censusLoad.cat === cat")
 
 	//- select(@change="changeCensus($event)")
 	//- 	option(value="null", v-text="'None'", v-bind:selected="!boundary")
