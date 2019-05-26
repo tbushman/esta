@@ -1470,32 +1470,39 @@ router.post('/censusload/:code', async function(req, res, next){
 router.post('/census/:code/:field'/*/:tableid/:state'*/, async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
-	var code;
+	var code, service;
 	switch (parseInt(req.params.code, 10)) {
 		case 0:
 			code = null;
+			service = null;
 			break;
 		case 1:
-			code = 98
+			code = 98;
+			service = 'tigerWMS_Census2010'
 			break;
 		case 2:
-			code = 100
+			code = 100;
+			service = 'tigerWMS_Census2010'
+			break;
+		case 3:
+			//blocks
+			code = 12;
+			service = 'tigerWMS_Current'
 			break;
 		default:
 			code = 3
 	}
-	
-	//ex. summarylevel
-	//https://api.censusreporter.org/1.0/geo/search?q=utah&sumlevs=010,020,030,040,050,060,160,250,310,500,610,620,860,950,960,970
-
-	//ex. sex by age in UT / Counties
-	// params : table_id, state
-	//https://api.censusreporter.org/1.0/data/show/latest?table_ids=B01001&geo_ids=050|04000US49
+	// tracts: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/14
+	// block groups: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/16
+	// blocks: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Current/MapServer/12
 	console.log(req.params.code)
 	const datumTransformations = //encodeURIComponent(JSON.stringify(
 		[{'wkid': 4326}, {'geoTransforms': [{'wkid': 4326}]}]
 	// ))
-	const uri = 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/'+code+'/query?where=&text=Utah&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=8&outSR=4262&having=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&historicMoment=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentOnly=false&datumTransformation=&parameterValues=&rangeValues=&quantizationParameters=&f=json';
+	const query = 'STATE = '+49
+	var uri = 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/'+service+'/MapServer/'+code+'/query?where='+encodeURIComponent(query)+'&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=8&outSR=4326&having=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&historicMoment=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentOnly=false&datumTransformation=&parameterValues=&rangeValues=&quantizationParameters=&f=json';
+	// uri += ''
+	// 'query?where="'STATE' = 49"&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=8&outSR=4326&having=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&historicMoment=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentOnly=false&datumTransformation=&parameterValues=&rangeValues=&quantizationParameters=&f=json';
 	console.log(uri.toString())
 	const censusData = await require('request-promise')({
 		//codes: counties = https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/100
@@ -1507,29 +1514,7 @@ router.post('/census/:code/:field'/*/:tableid/:state'*/, async function(req, res
 		/*'+parseInt(req.params.code, 10)+'*/
 		// http://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer/3/query?where=&f=pjson&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&maxAllowableOffset=&outSR=4262&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=
 		uri: uri,
-		// `http://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer/3/query?
-		// where=
-		// &f=geojson
-		// &text=
-		// &objectIds=
-		// &time=
-		// &geometry=
-		// &geometryType=
-		// esriGeometryEnvelope&inSR=
-		// &spatialRel=
-		// esriSpatialRelIntersects&relationParam=
-		// &outFields=*
-		// &returnGeometry=true
-		// &maxAllowableOffset=
-		// &outSR=4262
-		// &returnIdsOnly=false
-		// &returnCountOnly=true
-		// &orderByFields=
-		// &groupByFieldsForStatistics=
 		// &outStatistics=
-		// 	&returnZ=false
-		// 	&returnM=false
-		// 	&gdbVersion=
 		// 	`,
 		// 
 			// ${encodeURIComponent(`[
@@ -1552,10 +1537,7 @@ router.post('/census/:code/:field'/*/:tableid/:state'*/, async function(req, res
 		encoding: null
 
 	})
-	// const censusData = await require('request-promise')({
-	// 	uri: 'https://api.censusreporter.org/1.0/geo/tiger2016/tiles/'+req.params.code+'/'+req.params.zoom+'/'+req.params.x+'/'+req.params.y+'.geojson',
-	// 	encoding: null
-	// })
+
 	.then(async function(response) {
 		// console.log(response.toString())
 		return response.toString();
