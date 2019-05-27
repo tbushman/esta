@@ -64,6 +64,7 @@ html
 				el: '#vue',
 				data: function data(){
 					return {
+						c: ['#39B54A', '#D9E021', '#FBB03B', '#FC644D', '#ED1C24'],
 						lvl: 'h',
 						btn: { x: (this.wWidth / 2), 
 							y: (this.wHeight/ 2),
@@ -1559,13 +1560,29 @@ html
 							.then(function(result){
 								console.log(JSON.parse(result))
 								self.censusData = JSON.parse(result).features;
-								var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
+								var colors = self.c;//['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
 								
 								self.censusData.forEach(async function(item, i){
+									var pop = item.attributes.POP100;
+									var color = (
+										pop < 5000 ? colors[0] :
+										(
+											pop >= 5000 && pop < 10000 ? colors[1] :
+											(
+												pop >= 10000 && pop < 25000 ? colors[2] :
+												(
+													pop >= 25000 && pop < 50000 ? colors[3] :
+													(
+														pop >= 50000 ? colors[4] : '#ffffff'
+													)
+												)
+											)
+										)
+									);
 									var style = {
 									"clickable": true,
 									"color": "#00D",
-									"fillColor": colors[i],
+									"fillColor": color,//colors[i],
 									"weight": 1.0,
 									"opacity": 0.3,
 									"fillOpacity": 0.2
@@ -1640,7 +1657,7 @@ html
 							.then(function(result){
 								//- console.log(JSON.parse(result))
 								self.censusData = JSON.parse(result).results;
-								var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
+								var colors = self.c;//['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
 
 								self.censusData.forEach(async function(item, i){
 									console.log(item)
