@@ -1736,8 +1736,13 @@ html
 								self.mapEdit = false;
 								self.layers.forEach(async function(item, i){
 									self.lyr[item._id] = self.loadLayer(item);
-									self.lyr[item._id].setStyle({fillColor: colors[i]})
+									self.lyr[item._id].setStyle({fillColor: colors[i]});
+									self.lyr[item._id].bindTooltip(item.properties.label, {interactive:true});
+									self.lyr[item._id].on('click', function(){
+										self.lyr[item._id].openTooltip();
+									})
 									await self.map.addLayer(self.lyr[item._id]);
+									
 									self.lyr[item._id].remove()
 								})
 								//- var layer = self.map.getLayer(self.dataLayer)
