@@ -2482,10 +2482,31 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 		}
 		var json = JSON.parse(content);
 		var multiPolygon;
-		var type = 'MultiPolygon'
+		var type = 'MultiPolygon';
 		if (json.features && json.features.length) {
+			console.log(json.features[0].geometry)
+			
+			// await json.features.forEach(function(feat, i){
+			// 	console.log(feat)
+			// 	var ft = {
+			// 		type: 
+			// 	}
+			// 	await Content.findOneAndUpdate({_id: req.params.id}, {$set:{features: json.features }}, {safe: true, new:true}, function(err, doc){
+			// 		if (err) {
+			// 			return next(err)
+			// 		}
+			// 
+			// 	})
+			// // })
+			// Content.findOneAndUpdate({_id: req.params.id}, {$set: {geometry: {type: doc.geometry.type, geometry:[] }}}, {safe:true, new:true}, async function(err, doc){
+			// 	if (err) {
+			// 		return next(err)
+			// 	}
+			// 	return res.status(200).send(doc)
+			// })
+			
 			// console.log(json.features)
-			if (!Array.isArray(json.features[0].geometry.coordinates[0])) {
+			if (json.features[0] && json.features[0].geometry.type === 'Point') {
 				type = 'MultiPoint'
 			}
 			console.log(type)
@@ -2496,16 +2517,18 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 					return ft.geometry.coordinates[0];
 				}
 			})
-		} else if (json[0].geometry) {
-			multiPolygon = json[0].geometry.coordinates;
-		} else if (json.geometry) {
-			multiPolygon = json.geometry.coordinates
-		}
-		// console.log(multiPolygon)
+		} else {
+			if (json[0].geometry) {
+				multiPolygon = json[0].geometry.coordinates;
+			} else if (json.geometry) {
+				multiPolygon = json.geometry.coordinates
+			}
+		} 
 		var geo = {
 			type: type,
 			coordinates: multiPolygon
 		}
+		// console.log(multiPolygon)
 		Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
 			if (err) {
 				return next(err)

@@ -1293,37 +1293,41 @@ html
 						}
 						return latlngs;
 					},
+					//- arrayEqArray(arr1, arr2)
 					setView(feature, latlng){
 						var self = this;
-						console.log(self.cZF)
+						console.log(self.cZF, latlng)
 						self.cZF = (18 - self.map.getZoom() + self.zfactor)
 						var buf = L.circle(latlng, { radius: (140 * self.cZF) }).addTo(self.map);
-						console.log(buf)
+						//- console.log(buf)
 						var ll1 = buf.getBounds();
 						var ll2 = latlng;
 						buf.remove();
 						//- console.log(feature)
 						var keys;
 						var vals;
-						if (!self.dataLayer._layers) {
+						//- console.log(self.dataLayer)
+						if (!self.dataLayer._layers && self.lyr[feature._id]) {
 							if (!self.lyr[feature._id]._layers) {
 								keys = []
 							} else {
 								vals = self.lyr[feature._id];
-								console.log(vals)
+								//- console.log(vals)
 								keys = Object.keys(vals._layers)
 							}
 						} else {
 							vals = self.dataLayer;
-							keys = Object.keys(vals._layers);
+							keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
+							//- console.log(keys)
 						}
 						$.get('/publishers/esta/json/json_'+feature._id+'.json')
 						.then(async function(json){
 							//- console.log(json)
+							//- console.log(keys)
 							if (json.features){
 								self.geo = await keys.map(function(key){
 									var match;
-									if (vals._layers[key]._latlng) {
+									if (vals._layers && vals._layers[key]._latlng) {
 										//- console.log(json.features[0].geometry.coordinates)
 										for (var j = 0; j < json.features.length; j++) {
 											var jf = json.features[j];
@@ -1336,14 +1340,124 @@ html
 										}
 										//- json.features.forEach(function(jf){
 										//- })
+									} else {
+										//- console.log(vals)
+										for (var j = 0; j < json.features.length; j++) {
+												var jf = json.features[j];
+												if (key === j) {
+													//- console.log(jf)
+													//- console.log(vals._latlngs[key], f)
+													match = jf //vals._latlngs[key]
+												}
+										}
+										//- json.features.forEach(function(f, j){
+										//- 	var jf = f;
+										//- 	if (key === j) {
+										//- 		console.log(vals._latlngs[key], f)
+										//- 		match = f
+										//- 	}
+										//- 	//- if (vals._latlngs && vals._latlngs[j].length === jf.geometry.coordinates.length -1 
+										//- 	//- 	//- &&
+										//- 	//- 	//- vals._latlngs[j][0].lat === jf.geometry.coordinates[0][1]
+										//- 	//- ) {
+										//- 	//- 	match = jf
+										//- 	//- } else {
+										//- 	//- 	console.log(vals._latlngs[j], jf.geometry.coordinates[0][1])
+										//- 	//- }
+										//- })
+										//- for (var j = 0; j < json.features.length; j++) {
+										//- 	var jf = json.features[j];
+										//- 
+										//- 	if (vals._latlngs && j === key && vals._latlngs[key].length === jf.geometry.coordinates.length) {
+										//- 		match = jf
+										//- 		//- match = await self._latlngs[key].filter(function(ll, i){
+										//- 		//- 	return ll.map(function(l, j){
+										//- 		//- 		if jf.geometry.coordinates[key][i][j]
+										//- 		//- 	})
+										//- 		//- 	.filter(function(l){
+										//- 		//- 		return l.lat === jf.geometry.coordinates[key][1] && l.lng === jf.geometry.coordinates[key][0]
+										//- 		//- 	})//- .map(function(l){
+										//- 		//- 	//- 	return [l.lng,l.lat]
+										//- 		//- 	//- })
+										//- 		//- 
+										//- 		//- })[0]
+										//- 		//- 	if (self._latlngs[key][0].lat === jf.geometry.coordinates[0][1]){
+										//- 		//- 		match = jf
+										//- 		//- 	} else {
+										//- 		//- 	}
+										//- 			//- console.log(vals._layers[key]._latlng.lat, jf.geometry.coordinates[1])
+										//- 	} else {
+										//- 		//- console.log(self.latlngsToArr(vals._latlngs[key], latlng), jf.geometry.coordinates)
+										//- 	}
+										//- }
 									}
-									if (match) return match;
+									//- if (match) {
+										//- console.log(vals)
+
+										return match;
+									//- } else {
+									//- 	return null
+									//- }
 								})
-								.filter(function(ft){
+								.filter(function(ft, j){
 									//- console.log(ft)
-									var rx = ft.geometry.coordinates.reverse()
-									var center = L.latLng(rx);
-									latlng = center;
+									if (ft && ft.geometry) {
+										//- if (JSON.stringify(vals._latlngs[j]) !== JSON.stringify(ft.geometry.coordinates[0])) {
+										//- 	return false
+										//- }
+										if (!Array.isArray(ft.geometry.coordinates[0])) {
+											console.log(ft.geometry.coordinates)
+											//TODO: Add as layer, then get bounds, then get center
+											if (ft.geometry.coordinates.length === 2 && !isNaN(parseInt(ft.geometry.coordinates[0], 10))) {
+												var rx = ft.geometry.coordinates.reverse();
+												
+												var center = L.latLng(rx) 
+												latlng = center;
+												return ll1.contains(center)
+											} else {
+												// geometry contains ll1
+											}
+										} else {
+											var bf = L.geoJSON(ft, {
+												style: function (feature) {
+													return {color: 'tomato'};
+												}
+											}).addTo(self.map);
+											//- console.log('polygon: ')
+											//- console.log(bf)
+											var l1 = bf.getBounds();
+											//- console.log('bounds: ')
+											//- console.log(l1)
+											//- console.log(l1.contains(latlng), l1.contains(ll1))
+											//- bf.remove()
+											//- console.log(l1, ll1, l1.contains(ll1))
+											if (l1.contains(latlng)) {
+												ll1 = l1
+											} else {
+												bf.remove()
+											}
+											return l1.contains(latlng)
+											//- console.log(ft.geometry.coordinates[0])
+											//- if (ft && ft.geometry.coordinates && ft.geometry.coordinates[0] && ft.geometry.coordinates[0][0]) {
+												//- console.log(vals._latlngs[j], ll1, vals._latlngs[j].contains(ll1))
+												//- return vals._latlngs[j].contains(ll1)
+												//- return (ll1.contains(L.latLng(ft.geometry.coordinates[0][0].reverse())))
+											//- } else {
+											//- 	return false;
+											//- }
+										}
+										 
+										
+									} else {
+										return false;
+									}
+									//- else {
+									//- 	var bf = L.polygon(ft.geometry.coordinates).addTo(self.map);
+									//- 	//- console.log(buf)
+									//- 	var l1 = bf.getBounds();
+									//- 	console.log(l1, ll1, l1.contains(ll1))
+									//- 	return l1.contains(latlng)
+									//- }
 									//- console.log(center)
 									//- if (ft._latlng) {
 									//- 	center = ft._latlng;
@@ -1351,10 +1465,9 @@ html
 										//- center = L.latLngBounds(ft.geometry.coordinates);
 									//- }
 									//- console.log(ll1.contains(center))
-									return ll1.contains(center)
 								})
 							}
-							if (self.geo) {
+							if (self.geo && self.geo.length > 0) {
 								if (ll1._southWest) {
 									self.map.fitBounds(ll1);
 								} 
@@ -1443,10 +1556,10 @@ html
 								onEachFeature: function (feature, layer) {
 									//- console.log(feature, layer)
 									//- latlng.wrap()
-									layer.bindTooltip(feature.properties.label, {interactive:true});
-									layer.on('click', function(){
-										feature.openTooltip();
-									})
+									//- layer.bindTooltip(feature.properties.label, {interactive:true});
+									//- layer.on('click', function(){
+									//- 	feature.openTooltip();
+									//- })
 								}
 							})
 						//- }
@@ -1723,6 +1836,14 @@ html
 							var myRenderer = L.canvas({ padding: 0.5 });
 							self.dataLayer = self.loadLayer(self.doc);
 							self.dataLayer.bringToBack();
+							self.dataLayer.on('click', function(e){
+								console.log(e)
+								self.setView(self.doc, e.latlng)
+							})
+							self.dataLayer.bindTooltip(self.doc.properties.label, {interactive:true});
+							//- self.dataLayer.on('click', function(){
+							//- 	self.dataLayer.openTooltip();
+							//- })
 							self.map.addLayer(self.dataLayer);
 							if (self.dataLayer._bounds) {
 								//- console.log(self.dataLayer._latlngs)
@@ -1738,7 +1859,8 @@ html
 									self.lyr[item._id] = self.loadLayer(item);
 									self.lyr[item._id].setStyle({fillColor: colors[i]});
 									self.lyr[item._id].bindTooltip(item.properties.label, {interactive:true});
-									self.lyr[item._id].on('click', function(){
+									self.lyr[item._id].on('click', function(e){
+										self.setView(item, e.latlng)
 										self.lyr[item._id].openTooltip();
 									})
 									await self.map.addLayer(self.lyr[item._id]);
@@ -1836,7 +1958,7 @@ html
 							//- }
 							self.lMarker = L.marker(latlng, {draggable: true}).addTo(self.map);
 							self.map.panTo(latlng);
-							
+							//- self.setView()
 							cb(latlng)
 
 						} else {

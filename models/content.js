@@ -1,5 +1,5 @@
 var mongoose = require('mongoose'),
-    Schema = mongoose.Schema,
+		Schema = mongoose.Schema,
 		Content = require('mongoose-geojson-schema'),
 		Diffs = require('./diffs.js');
 		// ,
@@ -50,6 +50,14 @@ var schema = new Schema({
 		diffs: [Diffs],
 		footnotes: [ ]
 	},
+	// features: [Schema.Types.GeoJSON],
+  // // [
+	// 	{
+	// 		type: String,
+	// 		properties: {},
+	// 		geometry: Schema.Types.GoJSON
+	// 	}
+	// ],
 	geometry: Schema.Types.GeoJSON
 }, 
 //{pluralize: false}
