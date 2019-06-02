@@ -83,8 +83,7 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 		path(style="pointer-events: all; overflow-y: scroll;", v-bind:d="'M0,0v'+(wHeight)+'h'+wWidth+'V0H0L0,0z'", fill="var(--primary)")
 
 div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: none;")
-	
-	div.viewerlist(v-if="geo.length && viewerList", :style="{'pointer-events':'all',left: (wWidth / 2) + 'px',bottom:(wHeight / 2) + 'px'}")
+	div.module.viewerlist(v-if="geo.length && viewerList", :style="{'pointer-events':'all',left: (wWidth / 2) + 'px',bottom:(wHeight / 2) + 'px'}")
 		p(v-text="(geo.length)+' nearby:'")
 		ul
 			//, @click="accordion(g, null, $event)"

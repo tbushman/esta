@@ -115,6 +115,25 @@ padding-inline-end: 0;
 	border: 1px dotted #fff;
 	pointer-events: auto;
 }
+.module {
+	width: auto;
+	width: 100%;
+	width: var(--panelwper);
+	height: calc(50% + 36px + 8px);
+	height: calc(var(--panelhper) + var(--thumbw) + 8px);
+	top: 0;
+	right: 0;
+	position: fixed;
+	background-color: #211e23;
+	background-color: var(--secondary);
+	background-image: none;
+	background-attachment: fixed;
+	overflow-y: scroll;
+	overflow-x: hidden;
+	z-index: 4;
+	pointer-events: all;
+}
+
 /*#vue {
 	pointer-events: all;
 }*/
