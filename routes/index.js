@@ -2640,15 +2640,15 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 				
 			} else {
 				places = usstates;
-				var doc = Content.findOne({'properties.chapter.str': 'Jurisdiction: '+ places[placeind].properties.name}).then(function(doc){return doc}).catch(function(err){return console.log(err)});
-					
+				var chk = await Content.find({'properties.chapter.str': 'Jurisdiction: '+ places[placeind].properties.name}).then(function(doc){return doc}).catch(function(err){return console.log(err)});
+				console.log(chk)
 				if (isNaN(chind) || !arr[tiind].chapter[chind]) {
-					chnd = (!doc ? 0 : doc.properties.chapter.ind);
+					chnd = (!chk || chk.length ===  0 ? 0 : chk[0].properties.chapter.ind);
 				} else {
 					chnd = chind;
 				}
 				chtitle = 'Jurisdiction: '+ places[placeind].properties.name;
-				snd = (isNaN(secind) ? (chunk[chunk.length-1].properties.section.ind + 1) : secind);
+				snd = (isNaN(secind) ? (chk[chk.length-1].properties.section.ind + 1) : secind);
 				stitle = decodeURIComponent(req.params.stitle);
 			
 				
