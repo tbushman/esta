@@ -439,7 +439,7 @@ html
 						});
 					}
 					self.loadMap(async function(dataCoords){
-						//- console.log(dataCoords)
+						console.log(dataCoords)
 						if (dataCoords){
 							self.latlng.lng = dataCoords.lng;
 							self.latlng.lat = dataCoords.lat;
@@ -1295,53 +1295,42 @@ html
 					},
 					isPointCoords(ll) {
 						if (ll.length === 2 && !isNaN(parseInt(ll[0], 10))) {
+							console.log('l 1')
 							return true
+						} else /*{
 						} else if (ll[0][0] && ll[0].length === 2 && !isNaN(parseInt(ll[0][0], 10))) {
+							console.log(ll)
+							console.log('l 2')
 							return true
 						} else if (ll[0][0][0] && ll[0][0].length === 2 && !isNaN(parseInt(ll[0][0][0], 10))) {
+							console.log('l 3')
 							return true
 						} else {
 							return false;
+						}*/
+						{
+							return false
 						}
 					},
 					isPointLatlng(ll) {
 						if (!isNaN(parseInt(ll.lat, 10))) {
 							return true
-						} else if (ll[0] && !isNaN(parseInt(ll[0].lat, 10))) {
-							return true
-						} else if (ll[0][0] && !isNaN(parseInt(ll[0][0].lat, 10))) {
-							return true
 						} else {
-							return false;
-						}
+							return false
+						} 
+						//- if (ll[0] && !isNaN(parseInt(ll[0].lat, 10))) {
+						//- 	return true
+						//- } else if (ll[0][0] && !isNaN(parseInt(ll[0][0].lat, 10))) {
+						//- 	return true
+						//- } else {
+						//- 	return false;
+						//- }
 					},
-					//- arrayEqArray(arr1, arr2)
-					setView(feature, latlng){
+					filterViewerList(ll1, ll2, feature, keys, vals) {
 						var self = this;
-						console.log(self.cZF, latlng)
 						self.cZF = (18 - self.map.getZoom() + self.zfactor)
+						var latlng = ll2;
 						var buf = L.circle(latlng, { radius: (140 * self.cZF) }).addTo(self.map);
-						//- console.log(buf)
-						var ll1 = buf.getBounds();
-						var ll2 = latlng;
-						buf.remove();
-						//- console.log(feature)
-						var keys;
-						var vals;
-						//- console.log(self.dataLayer)
-						if (!self.dataLayer._layers && self.lyr[feature._id]) {
-							if (!self.lyr[feature._id]._layers) {
-								keys = []
-							} else {
-								vals = self.lyr[feature._id];
-								//- console.log(vals)
-								keys = Object.keys(vals._layers)
-							}
-						} else {
-							vals = self.dataLayer;
-							keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
-							//- console.log(keys)
-						}
 						$.get('/publishers/esta/json/json_'+feature._id+'.json')
 						.then(async function(json){
 							//- console.log(json)
@@ -1382,6 +1371,7 @@ html
 										//- }
 										if (self.isPointCoords(ft.geometry.coordinates)) {
 											//TODO: Add as layer, then get bounds, then get center
+											console.log('ispoint')
 											if (ft.geometry.coordinates.length === 2 && !isNaN(parseInt(ft.geometry.coordinates[0], 10))) {
 												var rx = ft.geometry.coordinates.reverse();
 												
@@ -1432,6 +1422,36 @@ html
 						.catch(function(err){
 							console.log(err)
 						})
+					},
+					//- arrayEqArray(arr1, arr2)
+					setView(feature, latlng){
+						var self = this;
+						console.log(self.cZF, latlng)
+						self.cZF = (18 - self.map.getZoom() + self.zfactor)
+						var buf = L.circle(latlng, { radius: (140 * self.cZF) }).addTo(self.map);
+						//- console.log(buf)
+						var ll1 = buf.getBounds();
+						var ll2 = latlng;
+						buf.remove();
+						//- console.log(feature)
+						var keys;
+						var vals;
+						//- console.log(self.dataLayer)
+						if (!self.dataLayer._layers && self.lyr[feature._id]) {
+							if (!self.lyr[feature._id]._layers) {
+								keys = []
+							} else {
+								vals = self.lyr[feature._id];
+								//- console.log(vals)
+								keys = Object.keys(vals._layers)
+							}
+						} else {
+							vals = self.dataLayer;
+							keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
+							//- console.log(keys)
+						}
+						self.filterViewerList(ll1, ll2, feature, keys, vals)
+						
 						
 					},
 					//- /* get features contained within a given map Polygon and time range*/
@@ -1464,6 +1484,7 @@ html
 						//- console.log(item)
 						var self = this;
 						if (self.isPointCoords(item.geometry.coordinates)) {
+							console.log('ispoint')
 							return L.GeoJSON.geometryToLayer(item, {
 								style: function(feature) {
 									return self.styleOf(feature, feature.geometry.type)
@@ -1482,30 +1503,32 @@ html
 							})
 						} else {
 							console.log(item)
-							return L.geoJSON(item, {
+							return L.GeoJSON.geometryToLayer(item, {
+							//- return L.geoJSON(item, {
 								style: function(feature) {
 									return self.styleOf(feature, feature.geometry.type)
 								},
-								onEachFeature: function (feature, layer) {
-									var tt = L.control({position: 'topleft'});
-									
-									var div = L.DomUtil.create('div', 'tt', 'tt');//L.Draggable();
-									
-									div.innerHTML = 
-									`<div class="row module">
-										<div class="tb-10-m0">
-											<p>${(!feature.properties.SITENAME ? feature.properties.STUDYAREA : feature.properties.SITENAME)}</p>
-											<p>${(!feature.properties.PROJDESC ? (!feature.properties.SITEDESC ? feature.properties.ZONE : feature.properties.SITEDESC) : feature.properties.PROJDESC)}</p>
-										</div>
-									</div>
-									`;
-									var center = layer.getBounds().getCenter();
-									L.DomUtil.setPosition(div, center);
-									//- tt.onAdd = function(map) {
+								onEachFeature: function(feature, layer){
+									console.log(feature,layer)
+									//- var tt = L.control({position: 'topleft'});
+									//- console.log(tt)
+									//- var div = L.DomUtil.create('div', 'tt', 'tt');//L.Draggable();
 									//- 
-									//- }
-									console.log(tt)
-									tt.addTo(self.map)
+									//- div.innerHTML = 
+									//- `<div class="row module">
+									//- 	<div class="tb-10-m0">
+									//- 		<p>${(!feature.properties.SITENAME ? feature.properties.STUDYAREA : feature.properties.SITENAME)}</p>
+									//- 		<p>${(!feature.properties.PROJDESC ? (!feature.properties.SITEDESC ? feature.properties.ZONE : feature.properties.SITEDESC) : feature.properties.PROJDESC)}</p>
+									//- 	</div>
+									//- </div>
+									//- `;
+									//- var center = layer.getBounds().getCenter();
+									//- L.DomUtil.setPosition(div, center);
+									//- //- tt.onAdd = function(map) {
+									//- //- 
+									//- //- }
+									//- console.log(tt)
+									//- //- tt.addTo(layer);
 								}
 							})
 						}
@@ -1851,6 +1874,7 @@ html
 							// generate geographic points from data
 							var myRenderer = L.canvas({ padding: 0.5 });
 							self.dataLayer = self.loadLayer(self.doc);
+							
 							self.dataLayer.bringToBack();
 							self.dataLayer.on('click', function(e){
 								//- console.log(e)
@@ -1959,8 +1983,9 @@ html
 									latlng = L.latLngBounds(self.latlngs).getCenter()
 									//- latlng = L.latLng(self.latlngs)	
 								}
+								//- console.log(self.dataLayer.getLatLngs())
 								if (self.latlngs && self.latlngs[0] && self.latlngs[0][0]) {
-									console.log(self.latlngs)
+									//- console.log(self.latlngs)
 									//- console.log(self.latlngs)
 									latlng = //L.CRS.wrapLatLngBounds(
 										(!self.latlngs[0][0][0] || !self.latlngs[0][0][0].lat ? L.latLngBounds(self.latlngs) : L.latLngBounds(self.latlngs[0]) ).getCenter() 
@@ -1968,6 +1993,13 @@ html
 										
 									//)
 									
+								} else if (typeof self.dataLayer.getLatLngs === 'function'){
+									self.latlngs = self.dataLayer.getLatLngs()
+									latlng = L.latLngBounds(self.latlngs).getCenter()
+								} else if (self.latlng && self.latlng !== '') {
+									latlng = self.latlng
+								} else {
+									console.log(self.latlng)
 								}
 							//- }
 							var mapEdit = self.mapEdit;
