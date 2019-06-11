@@ -1294,7 +1294,7 @@ html
 						return latlngs;
 					},
 					isPointCoords(ll) {
-						if (ll.length === 2 && !isNaN(parseInt(ll[0], 10))) {
+						if (ll.length === 2 && !Number.isNaN(parseInt(ll[0], 10))) {
 							console.log('l 1')
 							return true
 						} else /*{
@@ -1313,7 +1313,7 @@ html
 						}
 					},
 					isPointLatlng(ll) {
-						if (!isNaN(parseInt(ll.lat, 10))) {
+						if (!Number.isNaN(parseInt(ll.lat, 10))) {
 							return true
 						} else {
 							return false
@@ -1502,35 +1502,46 @@ html
 								}
 							})
 						} else {
+							console.log('is not point')
 							console.log(item)
 							return L.GeoJSON.geometryToLayer(item, {
-							//- return L.geoJSON(item, {
+							//- var geojson = await L.GeoJSON.geometryToLayer(item, {
+							//- var geojson = L.GeoJSON(item, {
 								style: function(feature) {
 									return self.styleOf(feature, feature.geometry.type)
-								},
+								}
+								,
 								onEachFeature: function(feature, layer){
 									console.log(feature,layer)
 									//- var tt = L.control({position: 'topleft'});
 									//- console.log(tt)
 									//- var div = L.DomUtil.create('div', 'tt', 'tt');//L.Draggable();
-									//- 
+									var div =
 									//- div.innerHTML = 
-									//- `<div class="row module">
-									//- 	<div class="tb-10-m0">
-									//- 		<p>${(!feature.properties.SITENAME ? feature.properties.STUDYAREA : feature.properties.SITENAME)}</p>
-									//- 		<p>${(!feature.properties.PROJDESC ? (!feature.properties.SITEDESC ? feature.properties.ZONE : feature.properties.SITEDESC) : feature.properties.PROJDESC)}</p>
-									//- 	</div>
-									//- </div>
-									//- `;
-									//- var center = layer.getBounds().getCenter();
+									`<div class="row module">
+										<div class="tb-10-m0">
+											<p>${(!feature.properties.SITENAME ? feature.properties.STUDYAREA : feature.properties.SITENAME)}</p>
+											<p>${(!feature.properties.PROJDESC ? (!feature.properties.SITEDESC ? feature.properties.ZONE : feature.properties.SITEDESC) : feature.properties.PROJDESC)}</p>
+										</div>
+									</div>
+									`;
+									var center = layer.getBounds().getCenter();
+									console.log(center)
 									//- L.DomUtil.setPosition(div, center);
-									//- //- tt.onAdd = function(map) {
-									//- //- 
-									//- //- }
+									//- tt.onAdd = function(map) {
+									//- 
+									//- }
 									//- console.log(tt)
-									//- //- tt.addTo(layer);
+									//- tt.addTo(layer);
+									//- var popup = L.popup()
+									//- 		.setLatLng(center)
+									//- 		.setContent(div)
+									//- 		.openOn(self.map);
+									layer.bindPopup(div)
 								}
-							})
+								
+							});
+							//- return geojson;
 						}
 						//- var options = ;
 						//- if (typeof L.GeoJSON.geometryToLayer(item).pointToLayer === 'function') {

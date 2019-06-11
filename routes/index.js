@@ -2648,7 +2648,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 					chnd = chind;
 				}
 				chtitle = 'Jurisdiction: '+ places[placeind].properties.name;
-				snd = (isNaN(secind) ? (chk[chk.length-1].properties.section.ind + 1) : secind);
+				snd = (isNaN(secind) ? (!chk || chk.length == 0 ? 0 : (chk[chk.length-1].properties.section.ind + 1)) : secind);
 				stitle = decodeURIComponent(req.params.stitle);
 			
 				
