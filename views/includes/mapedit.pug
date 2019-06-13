@@ -1,7 +1,7 @@
 fieldset.lcontrol(style="padding:0;border:none;")
 	legend(style="font-size: 11px;") layers
 	a.drop(v-for="(lyr, o) in layers", style="display: flex;")
-		.ui(style="pointer-events: none;min-width:45px;min-width:var(--thumbw);margin:0;")
+		.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
 			//- (style="position:absolute;")
 			//- label(:for="lyr._id", v-text="lyr.properties.label", style="font-size: 7px;line-height:7px;height:7px;pointer-events:none;position:absolute;background-color:var(--primary);") 
 

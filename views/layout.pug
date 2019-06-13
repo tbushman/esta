@@ -1370,7 +1370,7 @@ html
 									}
 									return match;
 								})
-								.filter(function(ft, j){
+								.filter(async function(ft, j){
 									if (ft && ft.geometry) {
 										//- if (JSON.stringify(vals._latlngs[j]) !== JSON.stringify(ft.geometry.coordinates[0])) {
 										//- 	return false
@@ -1393,12 +1393,14 @@ html
 												}
 											}).addTo(self.map);
 											var l1 = bf.getBounds();
-											if (l1.contains(latlng)) {
+											//- console.log(l1, latlng)
+											var contains = await (l1.contains(latlng));
+											if (contains) {
 												ll1 = l1
 											} else {
 												bf.remove()
 											}
-											return l1.contains(latlng)
+											return contains;
 										}
 										 
 										

@@ -624,7 +624,7 @@ em {
 .submenu.drop span {
   display: inline-block;
 }
-.drop:hover span {
+.drop > .ui:hover ~span {
   display: inline-block;
   color: #000;
   color: var(--secondary);
