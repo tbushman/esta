@@ -571,6 +571,12 @@ html
 						if (e.target.checked) {
 							self.doc.properties.layers.push(id);
 							self.map.addLayer(self.lyr[id]);
+							self.lyr[id].options.interactive = true;
+							//- self.layers.forEach(function(layer, i){
+							//- 	if (layer._id !== id) {
+							//- 		self.layers[layer._id].options.interactive = false;
+							//- 	}
+							//- })
 							var bounds = self.lyr[id].getBounds();
 							self.map.fitBounds(bounds);
 						} else {
@@ -1295,7 +1301,7 @@ html
 					},
 					isPointCoords(ll) {
 						if (ll.length === 2 && !Number.isNaN(parseInt(ll[0], 10))) {
-							console.log('l 1')
+							//- console.log('l 1')
 							return true
 						} else /*{
 						} else if (ll[0][0] && ll[0].length === 2 && !isNaN(parseInt(ll[0][0], 10))) {
@@ -1371,7 +1377,7 @@ html
 										//- }
 										if (self.isPointCoords(ft.geometry.coordinates)) {
 											//TODO: Add as layer, then get bounds, then get center
-											console.log('ispoint')
+											//- console.log('ispoint')
 											if (ft.geometry.coordinates.length === 2 && !isNaN(parseInt(ft.geometry.coordinates[0], 10))) {
 												var rx = ft.geometry.coordinates.reverse();
 												
@@ -1426,7 +1432,7 @@ html
 					//- arrayEqArray(arr1, arr2)
 					setView(feature, latlng){
 						var self = this;
-						console.log(self.cZF, latlng)
+						//- console.log(self.cZF, latlng)
 						self.cZF = (18 - self.map.getZoom() + self.zfactor)
 						var buf = L.circle(latlng, { radius: (140 * self.cZF) }).addTo(self.map);
 						//- console.log(buf)
@@ -1438,13 +1444,15 @@ html
 						var vals;
 						//- console.log(self.dataLayer)
 						if (!self.dataLayer._layers && self.lyr[feature._id]) {
+							//- console.log('is layer')
+							//- console.log(self.lyr[feature._id])
 							if (!self.lyr[feature._id]._layers) {
-								keys = []
+								keys = Array.from(Array(self.lyr[feature._id]._latlngs.length).keys())
 							} else {
-								vals = self.lyr[feature._id];
 								//- console.log(vals)
-								keys = Object.keys(vals._layers)
+								keys = Object.keys(self.lyr[feature._id]._layers)
 							}
+							vals = self.lyr[feature._id];
 						} else {
 							vals = self.dataLayer;
 							keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
@@ -1484,7 +1492,7 @@ html
 						//- console.log(item)
 						var self = this;
 						if (self.isPointCoords(item.geometry.coordinates)) {
-							console.log('ispoint')
+							//- console.log('ispoint')
 							return L.GeoJSON.geometryToLayer(item, {
 								style: function(feature) {
 									return self.styleOf(feature, feature.geometry.type)
@@ -1502,8 +1510,8 @@ html
 								}
 							})
 						} else {
-							console.log('is not point')
-							console.log(item)
+							//- console.log('is not point')
+							//- console.log(item)
 							return L.GeoJSON.geometryToLayer(item, {
 							//- var geojson = await L.GeoJSON.geometryToLayer(item, {
 							//- var geojson = L.GeoJSON(item, {
@@ -1512,7 +1520,7 @@ html
 								}
 								,
 								onEachFeature: function(feature, layer){
-									console.log(feature,layer)
+									//- console.log(feature,layer)
 									//- var tt = L.control({position: 'topleft'});
 									//- console.log(tt)
 									//- var div = L.DomUtil.create('div', 'tt', 'tt');//L.Draggable();
@@ -1526,7 +1534,7 @@ html
 									</div>
 									`;
 									var center = layer.getBounds().getCenter();
-									console.log(center)
+									//- console.log(center)
 									//- L.DomUtil.setPosition(div, center);
 									//- tt.onAdd = function(map) {
 									//- 
@@ -1905,12 +1913,18 @@ html
 							var colors = ['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
 							if (self.doc.properties.title.str !== 'Geography' && self.layers && self.layers.length && typeof self.dataLayer.disableEdit === 'function') {
 								self.dataLayer.disableEdit();
+								self.dataLayer.options.interactive = false;
 								self.mapEdit = false;
 								self.layers.forEach(async function(item, i){
 									self.lyr[item._id] = self.loadLayer(item);
 									self.lyr[item._id].setStyle({fillColor: colors[i]});
 									self.lyr[item._id].bindTooltip(item.properties.label, {interactive:true});
 									self.lyr[item._id].on('click', function(e){
+										self.layers.forEach(async function(it, j){
+											if (it._id !== item._id) {
+												self.lyr[it._id].options.interactive = false
+											}
+										})
 										self.setView(item, e.latlng)
 										self.lyr[item._id].openTooltip();
 									})
