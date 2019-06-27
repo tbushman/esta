@@ -17,4 +17,4 @@ var Diffs = new Schema({
 	// }],
 	str: String
 });
-module.exports = Diffs;//mongoose.model('Diffs', Diffs)
+module.exports = Diffs;

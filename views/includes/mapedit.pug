@@ -10,10 +10,14 @@ fieldset.lcontrol(style="padding:0;border:none;")
 		span.tb-font-m(v-text="lyr.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
 		input(type="checkbox", :value="lyr._id", :id="'lyr_'+o", name="layers[]", v-text="lyr.properties.label", style="position:absolute;", @click="changeLayers(lyr._id, $event)")
 		input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers")
-		
+	
+	//- legend(style="font-size:11px;") eviction-lab
+	//- a.drop(style="display:flex;")
+	//- 	.ui(style="pointer-events: none;min-width:45px;min-width:var(--thumbw);margin:0;")
+	//- 		img(src="/images/base_0.jpg", style="pointer-events: none;")
 	legend(style="font-size: 11px;") census
 	//- include menu/jurisdiction.pug
-	label(for="placetype") Type of jurisdiction
+	label(for="placetype") Population Data
 	select#placetype(style="pointer-events: all;", name="placetype",@change="changeCensusJurisdiction($event)")
 		option(value="null", v-text="'None'", v-bind:selected="!censusLoad.placetype")
 		option(v-for="(pl, p) in placetypes", v-text="pl.name", :value="p")

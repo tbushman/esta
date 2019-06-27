@@ -17,10 +17,11 @@ var marked = require('marked');
 var pug = require('pug');
 // var jsts = require('jsts');
 var csrf = require('csurf');
-var Publisher = require('../models/publishers.js');
-var Content = require('../models/content.js');
-var Diffs = require('../models/diffs.js');
-var Signature = require('../models/signatures.js');
+const { Publisher, Content, Signature, PublisherTest, ContentTest, SignatureTest } = require('../models/index.js');
+// var Publisher = require('../models/publishers.js');
+// var Content = require('../models/content.js');
+// var Diffs = require('../models/diffs.js');
+// var Signature = require('../models/signatures.js');
 var HtmlDocx = require('html-docx-js');
 var HtmlDiffer = require('html-differ').HtmlDiffer;
 var csrfProtection = csrf({ cookie: true });
@@ -29,6 +30,11 @@ var htmlDiffer = new HtmlDiffer({
 	ignoreAttributes: ['id', 'for', 'class', 'href', 'style']
 });
 var {google} = require('googleapis');
+const config = require('../config/index.js');
+const testenv = config.testenv;
+const PublisherDB = (!testenv ? Publisher : PublisherTest);
+const ContentDB = (!testenv ? Content : ContentTest);
+const SignatureDB = (!testenv ? Signature : SignatureTest);
 dotenv.load();
 var upload = multer({fieldSize: 25 * 1024 * 1024});
 marked.setOptions({
@@ -57,7 +63,7 @@ var isJurisdiction = async function isJurisdiction(reqpos, doc, pu, cb) {
 		}
 	}
 	//  else {
-	// 	pu = await Publisher.findOne({_id: pu._id}).lean().exec(async function(err, pubr){
+	// 	pu = await PublisherDB.findOne({_id: pu._id}).lean().exec(async function(err, pubr){
 	// 		if (err) {
 	// 			return cb(err)
 	// 		}
@@ -125,7 +131,7 @@ var isJurisdiction = async function isJurisdiction(reqpos, doc, pu, cb) {
 		cb(null)
 	} else {
 	// console.log(gcoords)
-		Content.findOne({_id: doc._id, geometry: {$geoIntersects: {$geometry: {type: gtype, coordinates: gcoords}}}}).lean().exec(function(err, doc){
+		ContentDB.findOne({_id: doc._id, geometry: {$geoIntersects: {$geometry: {type: gtype, coordinates: gcoords}}}}).lean().exec(function(err, doc){
 			if (err) {
 				console.log(err)
 				cb(null)
@@ -379,7 +385,7 @@ var curly = function(str){
 }
 
 // function ensureCorrectAbsPath(req, res, next){
-// 	Content.update({''})
+// 	ContentDB.update({''})
 // }
 
 async function ifExistsReturn(req, res, next) {
@@ -392,23 +398,23 @@ async function ifExistsReturn(req, res, next) {
 }
 
 function ensureSequentialSectionInd(req, res, next){
-	Content.find({}).lean().sort({'properties.section.ind':1}).exec(async function(err, data){
+	ContentDB.find({}).lean().sort({'properties.section.ind':1}).exec(async function(err, data){
 		if (err){
 			console.log('no data')
 		}
 		var count = -1
 		await data.forEach(async function(doc, i){
-			const dc = await Content.findOne({_id:doc._id, 'properties.title.str': 'Geography', 'properties.chapter.str': 'Jurisdiction: Utah'}).then(function(d){return d}).catch(function(err){console.log(err)});
+			const dc = await ContentDB.findOne({_id:doc._id, 'properties.title.str': 'Geography', 'properties.chapter.str': 'Jurisdiction: Utah'}).then(function(d){return d}).catch(function(err){console.log(err)});
 			if (dc) {
 				count++;
-				await Content.findOneAndUpdate({_id:dc._id}, {$set:{'properties.section.ind': count, 'properties.chapter.ind': 0}}, {safe:true, upsert:false, new:true}).then(function(d){
+				await ContentDB.findOneAndUpdate({_id:dc._id}, {$set:{'properties.section.ind': count, 'properties.chapter.ind': 0}}, {safe:true, upsert:false, new:true}).then(function(d){
 					console.log('ok')
 				})
 				.catch(function(err){
 					console.log(err);
 				})
 			}
-			// Content.findOneAndUpdate({_id:doc._id, 'properties.chapter.str': 'Jurisdiction: Utah'}, {$set:{'properties.section.ind': count}}, {safe:true, upsert:false, new:true}, function(err, dc){
+			// ContentDB.findOneAndUpdate({_id:doc._id, 'properties.chapter.str': 'Jurisdiction: Utah'}, {$set:{'properties.section.ind': count}}, {safe:true, upsert:false, new:true}, function(err, dc){
 			// 	if (err){
 			// 		console.log('')
 			// 	}
@@ -422,7 +428,7 @@ function ensureSequentialSectionInd(req, res, next){
 }
 
 function ensureLocation(req, res, next) {
-	Publisher.findOne({_id: req.user._id}).lean().exec(async function(err, pu){
+	PublisherDB.findOne({_id: req.user._id}).lean().exec(async function(err, pu){
 		if (err) {
 			return next(err)
 		}
@@ -448,7 +454,7 @@ function ensureLocation(req, res, next) {
 			// 	coordinates: [[[[lng,lat],[(lng+.00001),lat],[(lng+.00001),(lat+.00001)],[lng,(lat+.00001)],[lng,lat]]]]
 			// }
 			// console.log(geometry)
-			// Publisher.findOneAndUpdate({_id: req.user._id}, {$set:{geometry:geometry}}, {new:true, safe:true}, function(err, pu){
+			// PublisherDB.findOneAndUpdate({_id: req.user._id}, {$set:{geometry:geometry}}, {new:true, safe:true}, function(err, pu){
 			// 	if (err) {
 			// 		return next(err)
 			// 	} else {
@@ -584,7 +590,7 @@ function renameEachImgDir(data, direction, indexes, oldInd, next) {
 		},
 		function(qs, cb) {
 			asynk.eachSeries(qs, function(q, nxt){
-				Content.findOne(q.query, function(err, doc){
+				ContentDB.findOne(q.query, function(err, doc){
 					if (err) {
 						nxt(err)
 					}
@@ -637,7 +643,7 @@ function emptyDirs(index, next) {
 
 
 function ensureCurly(req, res, next) {
-	Content.find({}, function(err, data) {
+	ContentDB.find({}, function(err, data) {
 		if (err){
 			return next(err)
 		}
@@ -662,7 +668,7 @@ function ensureCurly(req, res, next) {
 }
 
 function ensureContent(req, res, next) {
-	Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+	ContentDB.find({}).sort( { index: 1 } ).exec(function(err, data){
 		if (err) {
 			return next(err)
 		}
@@ -675,13 +681,13 @@ function ensureContent(req, res, next) {
 }
 
 function getLayers(req, res, next) {
-	Content.findOne({_id:req.params.id}).lean().exec(async function(err, doc){
+	ContentDB.findOne({_id:req.params.id}).lean().exec(async function(err, doc){
 		if (err) {
 			return next(err)
 		}
 		var layerids = doc.properties.layers || [];
 		const layers = await layerids.map(function(id){
-			return Content.findOne({_id:id}).then((doc) =>doc).catch((err)=>next(err));
+			return ContentDB.findOne({_id:id}).then((doc) =>doc).catch((err)=>next(err));
 		})
 		req.layers = layers;
 		return next();
@@ -689,11 +695,11 @@ function getLayers(req, res, next) {
 }
 
 function getGeo(req, res, next) {
-	Content.findOne({_id:req.params.id}).lean().exec(async function(err, doc){
+	ContentDB.findOne({_id:req.params.id}).lean().exec(async function(err, doc){
 		if (err) {
 			return next(err)
 		}
-		Content.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: {type: doc.geometry.type, coordinates: doc.geometry.coordinates}}} }).lean().exec(async function(err, data){
+		ContentDB.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: {type: doc.geometry.type, coordinates: doc.geometry.coordinates}}} }).lean().exec(async function(err, data){
 			if (err) {
 				return next(err)
 			}
@@ -718,7 +724,7 @@ function getGeo(req, res, next) {
 function getDat(req, res, next){
 	asynk.waterfall([
 		function(cb){
-			Content.distinct('properties.title.ind', function(err, tdistinct){
+			ContentDB.distinct('properties.title.ind', function(err, tdistinct){
 				if (err) {
 					cb(err)
 				}
@@ -731,7 +737,7 @@ function getDat(req, res, next){
 					}
 				}
 				tdistinct.forEach(function(td, i){
-					Content.find({'properties.title.ind': parseInt(td,10)}).lean().exec(function(err, distinct){
+					ContentDB.find({'properties.title.ind': parseInt(td,10)}).lean().exec(function(err, distinct){
 						if (err) {
 							return cb(err)
 						}
@@ -758,12 +764,12 @@ function getDat64(next){
 	asynk.waterfall([
 		function(cb){
 			var dat = []
-			Content.distinct('properties.chapter.ind', function(err, distinct){
+			ContentDB.distinct('properties.chapter.ind', function(err, distinct){
 				if (err) {
 					return next(err)
 				}
 				if (distinct.length === 0) {
-					Content.find({}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
+					ContentDB.find({}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
 						if (err) {
 							return next(err)
 						}
@@ -793,7 +799,7 @@ function getDat64(next){
 					asynk.forEach(
 						distinct,
 						function(key, callback){
-							Content.find({'properties.chapter.ind':key}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
+							ContentDB.find({'properties.chapter.ind':key}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
 								if (err) {
 									console.log(err)
 								}
@@ -866,7 +872,7 @@ function ensureAdmin(req, res, next) {
 		return res.redirect('/login')
 	}
 	//req.session.userId = req.user._id;
-	Publisher.findOne({_id: req.session.userId}, function(err, pu){
+	PublisherDB.findOne({_id: req.session.userId}, function(err, pu){
 		if (err) {
 			return next(err)
 		}
@@ -903,7 +909,7 @@ function ensureApiTokens(req, res, next){
 	/*if (!req.user) {
 		return res.redirect('/login')
 	}*/
-	Publisher.findOne({_id: req.session.userId}, function(err, pu){
+	PublisherDB.findOne({_id: req.session.userId}, function(err, pu){
 		if (err) {
 			return next(err)
 		}
@@ -924,7 +930,7 @@ function ensureApiTokens(req, res, next){
 				return res.redirect('/login');
   		}
 			var tokens = response.tokens || response.credentials;
-			Publisher.findOneAndUpdate({_id: req.user._id}, {$set:{garefresh:tokens.refresh_token, gaaccess:tokens.access_token}}, {safe:true,new:true}, function(err, pub){
+			PublisherDB.findOneAndUpdate({_id: req.user._id}, {$set:{garefresh:tokens.refresh_token, gaaccess:tokens.access_token}}, {safe:true,new:true}, function(err, pub){
 				if (err) {
 					return next(err)
 				}
@@ -992,7 +998,7 @@ router.get('/runtests', function(req, res, next){
 		test = webdriver.testing;
 	var driver = new webdriver.Builder().
 		withCapabilities(webdriver.Capabilities.chrome()).build();
-	//Content.remove
+	//ContentDB.remove
 		/*driver.get('http://'+process.env.DEVAPPURL+'');
 		driver.wait(
 	  	until.elementLocated(webdriver.By.css('#description')),
@@ -1022,7 +1028,7 @@ router.get('/runtests', function(req, res, next){
 		).then(function(el){
 			//console.log(el.getAttribute('innerHTML'))
 			var captures;
-			/*Content.find({}, function(err, data) {
+			/*ContentDB.find({}, function(err, data) {
 				if (err) {
 					return next(err)
 				}
@@ -1114,7 +1120,7 @@ router.get('/home', getDat, ensureCurly, function(req, res, next){
 	req.session.menu = 'home'
 	if (!req.session.importgdrive) {
 		req.session.importgdrive = false;
-		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+		ContentDB.find({}).sort( { index: 1 } ).exec(function(err, data){
 			if (err) {
 				return next(err)
 			}
@@ -1148,7 +1154,7 @@ router.get('/home', getDat, ensureCurly, function(req, res, next){
 			if (err) {
 				return next(err)
 			}
-			Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+			ContentDB.find({}).sort( { index: 1 } ).exec(function(err, data){
 				if (err) {
 					return next(err)
 				}
@@ -1209,7 +1215,7 @@ router.post('/register', function(req, res, next) {
 			//upload.array() has not yet been fs-ed.
 			return res.render('register', {info: 'You must provide your full name for the digital signature. No punctuation allowed. Example: "Firstname Lastname"', languages: langs})
 		}
-		Publisher.find({}, function(err, data){
+		PublisherDB.find({}, function(err, data){
 			if (err) {
 				return next(err)
 			}
@@ -1219,7 +1225,7 @@ router.post('/register', function(req, res, next) {
 			} else {
 				admin = false;
 			}
-			Publisher.register(new Publisher(
+			PublisherDB.register(new PublisherDB(
 				{ username : req.body.username, 
 					/*language: req.body.languages,*/ 
 					email: req.body.email, 
@@ -1246,7 +1252,7 @@ router.post('/register', function(req, res, next) {
 				}
 				req.session.username = req.body.username;
 				passport.authenticate('local')(req, res, function () {
-					Publisher.findOne({username: req.body.username}, function(error, doc){
+					PublisherDB.findOne({username: req.body.username}, function(error, doc){
 						if (error) {
 							return next(error)
 						}
@@ -1362,7 +1368,7 @@ router.get('/logout', function(req, res, next) {
 		var dest = ''+publishers+'/pu/publishers/esta/txt/'+now+'.txt'
 		
 		var OAuth2 = google.auth.OAuth2;
-		Publisher.findOne({_id: req.session.userId}, function(err, pu){
+		PublisherDB.findOne({_id: req.session.userId}, function(err, pu){
 			if (err) {
 				return next(err)
 			}
@@ -1394,7 +1400,7 @@ router.get('/logout', function(req, res, next) {
 		//(publishers + '/esta/tmp/'+now+'.txt').toString()//);
 	var p = ''+publishers+'/pu/publishers/esta/tmp';
 	var OAuth2 = google.auth.OAuth2;
-	Publisher.findOne({_id: req.session.userId}, function(err, pu){
+	PublisherDB.findOne({_id: req.session.userId}, function(err, pu){
 		if (err) {
 			return next(err)
 		}
@@ -1584,9 +1590,9 @@ router.post('/census/:code/:field'/*/:tableid/:state'*/, async function(req, res
 })
 
 router.get('/profile/:username',  function(req, res, next) {
-	Content.find({}).sort({'properties.time.end': 1}).lean().exec(function(err, data){
+	ContentDB.find({}).sort({'properties.time.end': 1}).lean().exec(function(err, data){
 		if (err) {return next(err)}
-		Publisher.findOne({_id: req.session.userId}, function(err, pu){
+		PublisherDB.findOne({_id: req.session.userId}, function(err, pu){
 			if (err) {
 				return next(err)
 			}
@@ -1613,7 +1619,7 @@ router.get('/sig/admin', function(req, res, next) {
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	if (process.env.ADMIN.split(',').indexOf(req.user.username) !== -1) {
-		Publisher.findOneAndUpdate({_id: req.session.userId}, {$set:{admin: true}}, function(err, pu){
+		PublisherDB.findOneAndUpdate({_id: req.session.userId}, {$set:{admin: true}}, function(err, pu){
 			if (err) {
 				return next(err)
 			}
@@ -1627,7 +1633,7 @@ router.get('/sig/admin', function(req, res, next) {
 router.get('/pu/getgeo/:puid', function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
-	Publisher.findOne({_id: req.params.puid}, function(err, pu){
+	PublisherDB.findOne({_id: req.params.puid}, function(err, pu){
 		if (err){
 			return next(err)
 		}
@@ -1699,7 +1705,7 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 	var lat = parseFloat(req.params.lat);
 	var lng = parseFloat(req.params.lng);
 	var puid = ''+req.user._id+'';
-	Publisher.findOne({_id: puid}).lean().exec(async function(err, pu){
+	PublisherDB.findOne({_id: puid}).lean().exec(async function(err, pu){
 		if (err) {
 			return next(err)
 		}
@@ -1738,11 +1744,11 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 		var key2 = 'properties.lnglat';
 		set2.$set[key2] = lnglat;
 		// console.log(lnglat)
-		Publisher.findOneAndUpdate({_id: req.user._id}, set1, {new:true, safe:true}, function(err, pu){
+		PublisherDB.findOneAndUpdate({_id: req.user._id}, set1, {new:true, safe:true}, function(err, pu){
 			if (err) {
 				return next(err)
 			}
-			Publisher.findOneAndUpdate({_id: req.user._id}, set2, {new:true, safe:true}, function(err, pu){
+			PublisherDB.findOneAndUpdate({_id: req.user._id}, set2, {new:true, safe:true}, function(err, pu){
 				if (err) {
 					return next(err)
 				} else if (pu) {
@@ -1759,20 +1765,20 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 // router.get('/sig/getgeo/:did/:puid', function(req, res, next){
 // 	var outputPath = url.parse(req.url).pathname;
 // 	console.log(outputPath)
-// 	Publisher.findOne({_id: req.params.puid}, function(err, pu){
+// 	PublisherDB.findOne({_id: req.params.puid}, function(err, pu){
 // 		if (err){
 // 			return next(err)
 // 		}
 // 		console.log('user mismatch?')
 // 		console.log(!new RegExp(req.params.puid).test(req.session.userId))
 // 		if (!new RegExp(req.params.puid).test(req.session.userId)) return res.redirect('/login');
-// 		Content.findOne({_id: req.params.did}, function(err, doc){
+// 		ContentDB.findOne({_id: req.params.did}, function(err, doc){
 // 			if (err) {
 // 				return next(err)
 // 			}
 // 			console.log('blrgh');
 // 			var l = '/publishers/esta/signatures/'+doc._id+'/'+pu._id+'/img_'+doc._id+'_'+pu._id+'.png';
-// 			Signature.findOne({image: l}, function(err, pud){
+// 			SignatureDB.findOne({image: l}, function(err, pud){
 // 				if (err) {
 // 					return next(err)
 // 				}
@@ -1821,7 +1827,7 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 // 		coordinates: [[[[lng,lat],[(lng+.00001),lat],[(lng+.00001),(lat+.00001)],[lng,(lat+.00001)],[lng,lat]]]]
 // 	}
 // 	console.log(geometry)
-// 	Publisher.findOneAndUpdate({_id: req.user._id}, {$set:{geometry:geometry}}, {new:true, safe:true}, function(err, pu){
+// 	PublisherDB.findOneAndUpdate({_id: req.user._id}, {$set:{geometry:geometry}}, {new:true, safe:true}, function(err, pu){
 // 		if (err) {
 // 			return next(err)
 // 		} else {
@@ -1837,12 +1843,12 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 // 
 // router.get('/sig/geo/:did/:puid/:ts', function(req, res, next){
 // 	console.log('huzzah')
-// 	Publisher.findOne({_id: req.params.puid}, function(err, pu){
+// 	PublisherDB.findOne({_id: req.params.puid}, function(err, pu){
 // 		if (err){
 // 			return next(err)
 // 		}
 // 		if (!new RegExp(req.params.puid).test(req.session.userId)) return res.redirect('/login');
-// 		Content.findOne({_id: req.params.did}, function(err, doc){
+// 		ContentDB.findOne({_id: req.params.did}, function(err, doc){
 // 			if (err) {
 // 				return next(err)
 // 			}
@@ -1865,7 +1871,7 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 // 	var puid = ''+req.user._id+'';
 // 	var did = req.params.did;
 // 	console.log(puid)
-// 	Publisher.findOne({_id: puid}).lean().exec(async function(err, pu){
+// 	PublisherDB.findOne({_id: puid}).lean().exec(async function(err, pu){
 // 		if (err) {
 // 			return next(err)
 // 		}
@@ -1890,7 +1896,7 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 // 		if (!lat) {
 // 
 // 		}
-// 		var signature = new Signature({
+// 		var signature = new SignatureDB({
 // 			ts: ''+lat+','+lng+'G/'+pu.properties.givenName+'/'+req.params.ts+'',//new Date(),
 // 			puid: puid,
 // 			uname: pu.username,
@@ -1907,7 +1913,7 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 // 				if (err.code === 11000) req.session.info = 'Unable to save signature.'
 // 				else return next(err)
 // 			} 
-// 			Publisher.findOneAndUpdate({_id: pu._id}, push, {safe: true, new:true}, function(err, pu){
+// 			PublisherDB.findOneAndUpdate({_id: pu._id}, push, {safe: true, new:true}, function(err, pu){
 // 				if (err){
 // 					return next(err)
 // 				}
@@ -1947,11 +1953,11 @@ var puPosition = function(pu){
 router.post('/sig/uploadsignature/:did/:puid', ifExistsReturn, uploadmedia.single('img'), csrfProtection, function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath, req.file)
-	Content.findOne({_id: req.params.did}, function(err, doc){
+	ContentDB.findOne({_id: req.params.did}, function(err, doc){
 		if (err) {
 			return next(err)
 		}
-		Publisher.findOne({_id: req.params.puid}, function(err, pu){
+		PublisherDB.findOne({_id: req.params.puid}, function(err, pu){
 			if (err){
 				return next(err)
 			}
@@ -1962,7 +1968,7 @@ router.post('/sig/uploadsignature/:did/:puid', ifExistsReturn, uploadmedia.singl
 			// console.log(pu)
 			} else {
 				position = {lat:pu.properties.lnglat[1], lng:pu.properties.lnglat[0]}
-				var signature = new Signature({
+				var signature = new SignatureDB({
 					ts: ''+position.lat+','+position.lng+'G'+req.body.ts+'',//new Date(),
 					puid: pu._id,
 					username: pu.username,
@@ -1979,7 +1985,7 @@ router.post('/sig/uploadsignature/:did/:puid', ifExistsReturn, uploadmedia.singl
 						if (err.code === 11000) req.session.info = 'You have already signed this document.'
 						else return next(err)
 					} 
-					Publisher.findOneAndUpdate({_id: pu._id}, push, {safe: true, new:true}, function(err, pu){
+					PublisherDB.findOneAndUpdate({_id: pu._id}, push, {safe: true, new:true}, function(err, pu){
 						if (err){
 							return next(err)
 						}
@@ -1995,9 +2001,9 @@ router.post('/sig/uploadsignature/:did/:puid', ifExistsReturn, uploadmedia.singl
 
 router.get('/sig/editprofile', function(req, res, next){
 // console.log('bleh')
-	Content.find({}).lean().sort({'properties.time.end': 1}).exec(function(err, data){
+	ContentDB.find({}).lean().sort({'properties.time.end': 1}).exec(function(err, data){
 		if (err) {return next(err)}
-		Publisher.findOne({_id: req.session.userId}, async function(err, pu){
+		PublisherDB.findOne({_id: req.session.userId}, async function(err, pu){
 			if (err) {
 				return next(err)
 			}
@@ -2033,7 +2039,7 @@ router.post('/sig/editprofile', function(req, res, next){
 	asynk.waterfall([
 		function(next) {
 		// console.log(req.user._id)
-			Publisher.findOne({_id: req.user._id}).lean().exec(function(err, pu){
+			PublisherDB.findOne({_id: req.user._id}).lean().exec(function(err, pu){
 				if (err) {
 					return next(err)
 				}
@@ -2063,13 +2069,13 @@ router.post('/sig/editprofile', function(req, res, next){
 		},
 		function(imgurl, body, reqUser, next) {
 			
-			Publisher.findOne({_id: reqUser._id}).lean().exec(async function(err, pu){
+			PublisherDB.findOne({_id: reqUser._id}).lean().exec(async function(err, pu){
 				if (err) {
 					return next(err)
 				}
 				var keys = Object.keys(body);
 				keys.splice(Object.keys(body).indexOf('avatar'), 1);
-				var puKeys = Object.keys(Publisher.schema.paths);
+				var puKeys = Object.keys(PublisherDB.schema.paths);
 				// console.log(keys, puKeys)
 				for (var j in puKeys) {
 					var set = {$set:{}};
@@ -2091,7 +2097,7 @@ router.post('/sig/editprofile', function(req, res, next){
 						}
 					}
 					if (key) {
-						await Publisher.findOneAndUpdate({_id: pu._id}, set, {safe: true, upsert:false, new:true}).then((pu)=>{}).catch((err)=>{
+						await PublisherDB.findOneAndUpdate({_id: pu._id}, set, {safe: true, upsert:false, new:true}).then((pu)=>{}).catch((err)=>{
 							console.log('mongoerr')
 							console.log(err)
 						});
@@ -2111,11 +2117,11 @@ router.post('/sig/editprofile', function(req, res, next){
 })
 
 router.get('/api/exportword/:id', async function(req, res, next){
-	Content.findOne({_id: req.params.id}, async function(err, doc){
+	ContentDB.findOne({_id: req.params.id}, async function(err, doc){
 		if (err) {
 			return next(err)
 		}
-		Signature.find({documentId: doc._id}, async function(err, sig){
+		SignatureDB.find({documentId: doc._id}, async function(err, sig){
 			if (err) {
 				return next(err)
 			}
@@ -2181,7 +2187,7 @@ router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
 });
 
 router.post('/check/:givenName', function(req, res, next){
-	Publisher.find({'properties.givenName': decodeURIComponent(req.params.givenName)}, function(error, pages){
+	PublisherDB.find({'properties.givenName': decodeURIComponent(req.params.givenName)}, function(error, pages){
 		if (error) {
 			return next(error)
 		}
@@ -2198,7 +2204,7 @@ router.post('/check/:givenName', function(req, res, next){
 })
 
 router.post('/checkchaptername/:name', function(req, res, next){
-	Content.findOne({'properties.chapter.str': {$regex:RegExp(''+req.params.name +'\.?$'), $options: 'im'}}, function(err, doc){
+	ContentDB.findOne({'properties.chapter.str': {$regex:RegExp(''+req.params.name +'\.?$'), $options: 'im'}}, function(err, doc){
 		if (err) {
 			return next(err)
 		}
@@ -2214,7 +2220,7 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	req.session.importgdrive = false;
-	Content.findOne({_id: req.params.id}, async function(err, doc){
+	ContentDB.findOne({_id: req.params.id}, async function(err, doc){
 		if (err) {
 			return next(err)
 		}
@@ -2309,14 +2315,14 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 		}
 		
 		//console.log(result.body.toString())
-		Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+		ContentDB.find({}).sort( { index: 1 } ).exec(function(err, data){
 			if (err) {
 				return next(err)
 			}
 			if (req.isAuthenticated()) {
 				var l = '/publishers/esta/signatures/'+doc._id+'/'+req.user._id+'/img_'+doc._id+'_'+req.user._id+'.png';
 				var m = (req.isAuthenticated() ? '/pu/getgeo/'+req.user._id+'' : '/user/getgeo/');
-				Signature.findOne({image: l}, function(err, pud){
+				SignatureDB.findOne({image: l}, function(err, pud){
 					if (err) {
 						return next(err)
 					}
@@ -2412,7 +2418,7 @@ router.get('/menu/:tiind/:chiind', function(req, res, next){
 	/*if (key2) {
 		find[key2] = val2;
 	}*/
-	Content.find(find).sort( { index: 1 } ).lean().exec(async function(err, data){
+	ContentDB.find(find).sort( { index: 1 } ).lean().exec(async function(err, data){
 		if (err) {
 			return next(err)
 		}
@@ -2459,11 +2465,11 @@ router.get('/api/gpo', function(req, res, next){
 })
 
 router.get('/api/geointersect/:id', function(req, res, next){
-	Content.findOne({_id:req.params.id}).lean().exec(function(err, doc){
+	ContentDB.findOne({_id:req.params.id}).lean().exec(function(err, doc){
 		if (err) {
 			return next(err)
 		}
-		Content.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: doc.geometry}}}).lean().exec(function(err, data){
+		ContentDB.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: doc.geometry}}}).lean().exec(function(err, data){
 			if (err) {
 				return next(err)
 			}
@@ -2491,14 +2497,14 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 			// 	var ft = {
 			// 		type: 
 			// 	}
-			// 	await Content.findOneAndUpdate({_id: req.params.id}, {$set:{features: json.features }}, {safe: true, new:true}, function(err, doc){
+			// 	await ContentDB.findOneAndUpdate({_id: req.params.id}, {$set:{features: json.features }}, {safe: true, new:true}, function(err, doc){
 			// 		if (err) {
 			// 			return next(err)
 			// 		}
 			// 
 			// 	})
 			// // })
-			// Content.findOneAndUpdate({_id: req.params.id}, {$set: {geometry: {type: doc.geometry.type, geometry:[] }}}, {safe:true, new:true}, async function(err, doc){
+			// ContentDB.findOneAndUpdate({_id: req.params.id}, {$set: {geometry: {type: doc.geometry.type, geometry:[] }}}, {safe:true, new:true}, async function(err, doc){
 			// 	if (err) {
 			// 		return next(err)
 			// 	}
@@ -2529,7 +2535,7 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 			coordinates: multiPolygon
 		}
 		// console.log(multiPolygon)
-		Content.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
+		ContentDB.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
 			if (err) {
 				return next(err)
 			}
@@ -2557,7 +2563,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 	var places,query;
 	var placeind = parseInt(req.params.place, 10)
 	//console.log(places[placeind])
-	Content.find({}).sort( { index: 1 } ).exec(async function(err, data){
+	ContentDB.find({}).sort( { index: 1 } ).exec(async function(err, data){
 		if (err) {
 			return next(err)
 		}
@@ -2583,7 +2589,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 			}
 			query = {'properties.title.ind': tiind, 'properties.chapter.ind': chind}
 		}
-		Content.find(query, async function(err, chunk){
+		ContentDB.find(query, async function(err, chunk){
 			if (err) {
 				return next(err)
 			}
@@ -2640,7 +2646,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 				
 			} else {
 				places = usstates;
-				var chk = await Content.find({'properties.chapter.str': 'Jurisdiction: '+ places[placeind].properties.name}).then(function(doc){return doc}).catch(function(err){return console.log(err)});
+				var chk = await ContentDB.find({'properties.chapter.str': 'Jurisdiction: '+ places[placeind].properties.name}).then(function(doc){return doc}).catch(function(err){return console.log(err)});
 				console.log(chk)
 				if (isNaN(chind) || !arr[tiind].chapter[chind]) {
 					chnd = (!chk || chk.length ===  0 ? 0 : chk[0].properties.chapter.ind);
@@ -2661,7 +2667,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 			
 			var multipolygon = JSON.parse(JSON.stringify(places[placeind].geometry.coordinates));
 
-			var content = new Content({
+			var content = new ContentDB({
 				type: 'Feature',
 				index: data.length,
 				properties: {
@@ -2712,7 +2718,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 				if (err) {
 					console.log(err)
 				}
-				Content.find({}).sort( { index: 1 } ).exec(function(err, data){
+				ContentDB.find({}).sort( { index: 1 } ).exec(function(err, data){
 					if (err) {
 						return next(err)
 					}
@@ -2747,7 +2753,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 		function(next){
 			var publishersDir = (process.env.NODE_ENV === 'production' ? process.env.PD.toString() : (!process.env.DEVPD ? null : process.env.DEVPD.toString()));
 
-			Content.findOne({_id: req.params.id}, async function(err, doc) {
+			ContentDB.findOne({_id: req.params.id}, async function(err, doc) {
 				if (err) {
 					return next(err)
 				}
@@ -2962,26 +2968,26 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			// set5.$set[key5] = entry.properties.section.str;
 
 			var options = {safe: true, new: true, upsert: false};
-			Content.findOneAndUpdate({_id: id}, set1, options, function(err, docc) {
+			ContentDB.findOneAndUpdate({_id: id}, set1, options, function(err, docc) {
 				if (err) {
 					return next(err) 
 				}
-				Content.findOneAndUpdate({_id: id}, set2, options, function(errr, doc) {
+				ContentDB.findOneAndUpdate({_id: id}, set2, options, function(errr, doc) {
 					if (errr) {
 						return next(errr)
 					}
-					Content.findOneAndUpdate({_id: id}, set3, options, function(errr, doc) {
+					ContentDB.findOneAndUpdate({_id: id}, set3, options, function(errr, doc) {
 						if (errr) {
 							return next(errr)
 						}
-						// Content.findOneAndUpdate({_id: id}, set5, options, function(errr, doc) {
+						// ContentDB.findOneAndUpdate({_id: id}, set5, options, function(errr, doc) {
 						// 	if (err) {
 						// 		return next(err)
 						// 	}
 							if (!newdiff) {
 								next(null, doc)
 							} else {
-								Content.findOneAndUpdate({_id: id}, set4, options, function(errr, doc) {
+								ContentDB.findOneAndUpdate({_id: id}, set4, options, function(errr, doc) {
 									if (errr) {
 										next(errr)
 									} else {
@@ -3011,7 +3017,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 // })
 
 router.post('/api/newmap/:id/:index', uploadmedia.single('img'), function(req, res, next) {
-	Content.findOne({_id: req.params.id}, function(err, doc){
+	ContentDB.findOne({_id: req.params.id}, function(err, doc){
 		if (err) {
 			return next(err) 
 		}
@@ -3028,7 +3034,7 @@ router.post('/api/newmap/:id/:index', uploadmedia.single('img'), function(req, r
 			postscript: '',
 			featured: false
 		}
-		Content.findOneAndUpdate({_id: req.params.id}, {$push:{'properties.media': media}}, {safe:true, new:true}, function(err, doc){
+		ContentDB.findOneAndUpdate({_id: req.params.id}, {$push:{'properties.media': media}}, {safe:true, new:true}, function(err, doc){
 			if (err) {
 				return next(err)
 			}
@@ -3038,7 +3044,7 @@ router.post('/api/newmap/:id/:index', uploadmedia.single('img'), function(req, r
 })
 
 router.post('/api/newmedia/:id/:index', function(req, res, next) {
-	Content.findOne({_id: req.params.id}, function(err, doc){
+	ContentDB.findOne({_id: req.params.id}, function(err, doc){
 		if (err) {
 			return next(err) 
 		}
@@ -3057,7 +3063,7 @@ router.post('/api/newmedia/:id/:index', function(req, res, next) {
 			postscript: '',
 			featured: false
 		}
-		Content.findOneAndUpdate({_id: req.params.id}, {$push:{'properties.media': media}}, {safe:true, new:true}, function(err, doc){
+		ContentDB.findOneAndUpdate({_id: req.params.id}, {$push:{'properties.media': media}}, {safe:true, new:true}, function(err, doc){
 			if (err) {
 				return next(err)
 			}
@@ -3072,10 +3078,10 @@ router.post('/api/deleteentry/:id', async function(req, res, next) {
 	console.log(outputPath)
 	var id = req.params.id;
 	// var index = parseInt(req.params.index, 10);
-	var dc = await Content.findOne({_id: id}).then(function(doc){return doc}).catch(function(err){return next(err)});
+	var dc = await ContentDB.findOne({_id: id}).then(function(doc){return doc}).catch(function(err){return next(err)});
 	var med = dc.properties.media[0].thumb;
 	var index = med.split('thumbs/')[1].split('/')[0];
-	Content.remove({_id: id}, function(err, data) {
+	ContentDB.remove({_id: id}, function(err, data) {
 		if (err) {
 			return next(err); 
 		}
@@ -3083,7 +3089,7 @@ router.post('/api/deleteentry/:id', async function(req, res, next) {
 			if (err) {
 				return next(err)
 			}
-			Content.find({index:{$gt:index}}).sort( { index: 1 } ).exec(function(err, dat){
+			ContentDB.find({index:{$gt:index}}).sort( { index: 1 } ).exec(function(err, dat){
 				if (err) {
 					return next(err)
 				}
@@ -3096,7 +3102,7 @@ router.post('/api/deleteentry/:id', async function(req, res, next) {
 					if (err) {
 						console.log(err)
 					}
-					Content.update({index: {$gt: index}}, {$inc: {index: -1}}, { multi: true }, function(err, data) {
+					ContentDB.update({index: {$gt: index}}, {$inc: {index: -1}}, { multi: true }, function(err, data) {
 						if (err) {
 							return next(err)
 						}
@@ -3113,11 +3119,11 @@ router.post('/api/deleteentry/:id', async function(req, res, next) {
 router.post('/api/deletemedia/:id/:index', function(req, res, next) {
 	var id = req.params.id;
 	var index = parseInt(req.params.index, 10);
-	Content.findOne({_id: id}, function(err, thisdoc){
+	ContentDB.findOne({_id: id}, function(err, thisdoc){
 		if (err) {
 			return next(err)
 		}
-		Content.findOneAndUpdate({_id: id}, {$pull: {'properties.media': {index: index}}}, {multi: false, new: true}, async function(err, doc) {
+		ContentDB.findOneAndUpdate({_id: id}, {$pull: {'properties.media': {index: index}}}, {multi: false, new: true}, async function(err, doc) {
 			if (err) {
 				return next(err) 
 			}
@@ -3148,13 +3154,13 @@ router.post('/api/deletemedia/:id/:index', function(req, res, next) {
 					media[i].index -= 1;
 				}
 			}
-			Content.findOneAndUpdate({_id: id}, {$set:{'properties.media': media}}, function(err, doc){
+			ContentDB.findOneAndUpdate({_id: id}, {$set:{'properties.media': media}}, function(err, doc){
 				if (err) {
 					return next(err)
 				}
 				// if deleted media was featured, assign featured value to first media
 				if (thisdoc.properties.media[index] && thisdoc.properties.media[index].featured) {
-					Content.findOneAndUpdate({_id: id, 'properties.media.index': 0}, {$set: {'properties.media.$.featured': true}}, function(err, doc) {
+					ContentDB.findOneAndUpdate({_id: id, 'properties.media.index': 0}, {$set: {'properties.media.$.featured': true}}, function(err, doc) {
 						if (err) {
 							return next(err)
 						}

@@ -2,3 +2,7 @@ estadb
 .env
 node_modules
 test/setup.js
+__nock-fixtures__/
+__snapshots__/
+test/__nock-fixtures__/*
+test/__snapshots__/*
