@@ -1,4 +1,4 @@
-fieldset.lcontrol(style="padding:0;border:none;")
+fieldset.lcontrol(style="padding:0;border:none;", v-cloak)
 	legend(style="font-size: 11px;") layers
 	a.drop(v-for="(lyr, o) in layers", style="display: flex;")
 		.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
@@ -17,7 +17,7 @@ fieldset.lcontrol(style="padding:0;border:none;")
 	//- 		img(src="/images/base_0.jpg", style="pointer-events: none;")
 	legend(style="font-size: 11px;") census
 	//- include menu/jurisdiction.pug
-	label(for="placetype") Population Data
+	label(for="placetype", style="width: 45px;") Population Data
 	select#placetype(style="pointer-events: all;", name="placetype",@change="changeCensusJurisdiction($event)")
 		option(value="null", v-text="'None'", v-bind:selected="!censusLoad.placetype")
 		option(v-for="(pl, p) in placetypes", v-text="pl.name", :value="p")
@@ -34,6 +34,13 @@ fieldset.lcontrol(style="padding:0;border:none;")
 	//- 		img(src="/images/publish_logo_sq.svg", style="pointer-events:none;")
 	//- 	span.tb-font-m(v-text="bound.name")
 	//- 	input(type="checkbox", :value="bound.code", v-text="bound.name", style="position:absolute;", @click="changeCensus(bound.code, $event)")
+	legend(style="font-size: 11px;") eviction
+	a.drop(style="display:flex;", @click="getEvictionLab")
+		.ui(style="pointer-events: none;min-width:45px;min-width:var(--thumbw);margin:0;")
+			img(src="/images/publish_logo_sq.svg")
+		span.tb-font-m(v-text="'evictionlab'", style="width:auto; padding-right: 15px; padding-left: 8px;")
+
+	
 	legend(style="font-size: 11px;") base
 	a.drop(style="display: flex;")
 		.ui(style="pointer-events: none;min-width:45px;min-width:var(--thumbw);margin:0;")

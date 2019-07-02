@@ -89,8 +89,13 @@ div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: n
 			//, @click="accordion(g, null, $event)"
 			//v-if="accordions[g]", 
 			li(v-for="(go, g) in geo")
-				p.tb-font-m(v-text="(!go.properties.SITENAME ? go.properties.STUDYAREA : go.properties.SITENAME)")
-				p.tb-font-s(v-if="geo.length < 6", v-text="(!go.properties.PROJDESC ? (!go.properties.SITEDESC ? go.properties.ZONE : go.properties.SITEDESC) : go.properties.PROJDESC)")
+				p.tb-font-xxxs(v-for="(p, j) in Object.keys(go.properties)")
+					strong(v-text="p+ ': '")
+					span(v-text="go.properties[p]")
+				//- 
+				//- 
+				//- p.tb-font-m(v-text="(!go.properties.SITENAME ? go.properties.STUDYAREA : go.properties.SITENAME)")
+				//- p.tb-font-s(v-if="geo.length < 6", v-text="(!go.properties.PROJDESC ? (!go.properties.SITEDESC ? go.properties.ZONE : go.properties.SITEDESC) : go.properties.PROJDESC)")
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px",
 		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
 		, 

@@ -1435,6 +1435,28 @@ router.get('/logout', function(req, res, next) {
 	})
 })*/
 
+router.post('/evictionlabload', async function(req, res, next){
+	const AWS = require('aws-sdk');
+	AWS.config.logger = console;
+	AWS.config.update({credentials:{
+		accessKeyId: config.accessKeyId,
+		secretAccessKey: config.secretAccessKey
+	}});
+	const s3 = new AWS.S3();
+	await getObject({
+    Bucket: "eviction-lab-data-downloads",
+		Key: "UT/block-groups.geojson"
+  }).then( (result) => {
+    console.log('Retrieved object from S3');
+    return res.status(200).send(result.Body.toString())//res.Body.toString();
+  })
+	.catch((err)=>console.log(err))
+ 
+	async function getObject(params){
+	  return await s3.getObject(params).promise();
+	}
+})
+
 router.post('/censusload/:code', async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)

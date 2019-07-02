@@ -21,7 +21,11 @@ var SlackStrategy = require('passport-slack').Strategy;
 // var GoogleStrategy = require('passport-google-oauth2').Strategy;
 // var Publisher = require('./models/publishers');
 // var Content = require('./models/content');
-const { Publisher, Content, Diffs, Signature } = require('./models/index.js');
+// const { Publisher, Content, Diffs, Signature } = require('./models/index.js');
+const { Publisher, PublisherTest } = require('./models/index.js');
+const config = require('./config/index.js');
+const testenv = config.testenv;
+const PublisherDB = (!testenv ? Publisher : PublisherTest);
 var publishers = path.join(__dirname, '/../..');
 var spawn = require('child_process').exec;
 var routes = require('./routes/index');
@@ -59,7 +63,7 @@ if (app.get('env') === 'production') {
 	
 }
 
-passport.use(new LocalStrategy(Publisher.authenticate()));
+passport.use(new LocalStrategy(PublisherDB.authenticate()));
 passport.use(new SlackStrategy({
 	clientID: process.env.SLACK_CLIENT_ID,
 	clientSecret: process.env.SLACK_CLIENT_SECRET
@@ -69,11 +73,11 @@ passport.use(new SlackStrategy({
 },
 function(accessToken, refreshToken, profile, done) {
 	// console.log(accessToken, refreshToken, profile)
-	Publisher.find({}, function(err, data){
+	PublisherDB.find({}, function(err, data){
 		if (err) {
 			return done(err)
 		}
-		Publisher.findOne({ 'slack.oauthID': profile.user.id }, function(err, user) {
+		PublisherDB.findOne({ 'slack.oauthID': profile.user.id }, function(err, user) {
 			if(err) {
 				console.log(err);  // handle errors!
 			}
@@ -81,12 +85,12 @@ function(accessToken, refreshToken, profile, done) {
 			if (!err && user !== null) {
 				done(null, user);
 			} else {
-				Publisher.findOne({'properties.givenName': profile.user.name, email: profile.user.email}, function(err, user) {
+				PublisherDB.findOne({'properties.givenName': profile.user.name, email: profile.user.email}, function(err, user) {
 					if (err) {
 						console.log(err);
 					}
 					if (!err && user !== null) {
-						Publisher.findOneAndUpdate({_id: user._id}, {$set:{'slack.oauthID': profile.user.id}}, {new:true,safe:true}, function(err, pu){
+						PublisherDB.findOneAndUpdate({_id: user._id}, {$set:{'slack.oauthID': profile.user.id}}, {new:true,safe:true}, function(err, pu){
 							if (err) {
 								console.log(err)
 							}
@@ -94,7 +98,7 @@ function(accessToken, refreshToken, profile, done) {
 						})
 						
 					} else {
-						user = new Publisher({
+						user = new PublisherDB({
 							sig: [],
 							username: profile.displayName.replace(/\s/g, '_'),
 							email: profile.user.email,
@@ -152,11 +156,11 @@ app.locals.md = marked;
 // 	},
 // 	function(accessToken, refreshToken, profile, done) {
 // 		console.log(accessToken, refreshToken, profile)
-// 		Publisher.find({}, function(err, data){
+// 		PublisherDB.find({}, function(err, data){
 // 			if (err) {
 // 				return done(err)
 // 			}
-// 			Publisher.findOne({ 'google.oauthID': profile.id }, function(err, user) {
+// 			PublisherDB.findOne({ 'google.oauthID': profile.id }, function(err, user) {
 // 				if(err) {
 // 					console.log(err);  // handle errors!
 // 				}
@@ -164,13 +168,13 @@ app.locals.md = marked;
 // 				if (!err && user !== null) {
 // 					done(null, user);
 // 				} else {
-// 					/*Publisher.findOne({_id: req.session.userId}, function(err, pu){
+// 					/*PublisherDB.findOne({_id: req.session.userId}, function(err, pu){
 // 						if (err) {
 // 							console.log(err)
 // 						}
 // 						if (!pu) {*/
 // 							//console.log(accessToken, refreshToken)
-// 							user = new Publisher({
+// 							user = new PublisherDB({
 // 								userindex: data.length,
 // 								username: profile.name.givenName,
 // 								email: profile.emails[0].value,
@@ -193,7 +197,7 @@ app.locals.md = marked;
 // 								}
 // 							});
 // 						/*} else {
-// 							Publisher.findOneAndUpdate({_id: req.session.userId}, {$set:{gaaccess: accessToken, garefresh: refreshToken, 'google.oauthID': profile.id, 'google.name': profile.displayName, 'google.created': Date.now()}}, {safe:true, new:true}, function(err, pu){
+// 							PublisherDB.findOneAndUpdate({_id: req.session.userId}, {$set:{gaaccess: accessToken, garefresh: refreshToken, 'google.oauthID': profile.id, 'google.name': profile.displayName, 'google.created': Date.now()}}, {safe:true, new:true}, function(err, pu){
 // 								if (err) {
 // 									console.log(err)
 // 								}
@@ -255,7 +259,7 @@ passport.serializeUser(function(user, done) {
   done(null, user._id);
 });
 passport.deserializeUser(function(id, done) {
-	Publisher.findOne({_id: id}, function(err, user){
+	PublisherDB.findOne({_id: id}, function(err, user){
 
 		if(!err) {
 			done(null, user);

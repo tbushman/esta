@@ -15,6 +15,8 @@ const envVarsSchema = Joi.object({
 	DEVPD: Joi.string(),
 	GPOKEY: Joi.string(),
 	DEVPD: Joi.string(),
+	AWS_KEY_ID: Joi.string(),
+	AWS_SECRET: Joi.string(),
 	SLACK_CLIENT_ID: Joi.string(),
 	SLACK_CLIENT_SECRET: Joi.string(),
 	SLACK_SIGNING_SECRET: Joi.string(),
@@ -42,7 +44,9 @@ if (error) {
 const config = {
   env: envVars.NODE_ENV,
 	testenv: envVars.TEST_ENV,
-	recordenv: envVars.RECORD_ENV
+	recordenv: envVars.RECORD_ENV,
+	accessKeyId: envVars.AWS_KEY_ID,
+	secretAccessKey: envVars.AWS_SECRET
 };
 
 module.exports = config;

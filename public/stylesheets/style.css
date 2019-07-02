@@ -165,17 +165,7 @@ ul {
 ol {
 	list-style-type: decimal;
 }
-.lcontrol {
-	z-index: 99999;
-	position: fixed;
-	left: 0;
-	right: auto;
-	top: calc(var(--thumbw) * 1.2);
-	bottom: auto;
-	width: var(--thumbw);
-	display: flex;
-	flex-direction: column;
-}
+
 #maincanvas {
 	display: block;
 	background-color: rgb(238, 244, 222);
@@ -609,8 +599,7 @@ em {
 
 .drop span {
 	display: none;
-	width: calc(100% - 72px);
-	width: calc(100% - calc(var(--thumbw) * 2));
+	/* width: 0!important; */
 	padding: 0 0 0 0;
 	line-height: 45px;
 	line-height: var(--thumbw);
@@ -624,12 +613,65 @@ em {
 .submenu.drop span {
   display: inline-block;
 }
-.drop > .ui:hover ~span {
+.drop:hover span {
   display: inline-block;
   color: #000;
   color: var(--secondary);
   background-color: #fff;
+  /* width: calc(100% - (45px * 2));
+  width: calc(100% - (calc(var(--thumbw) * 2))); */
 }
+
+/* fieldset {
+  width: 45px!important;
+  width: var(--thumbw)!important;
+}
+
+fieldset:hover {
+  width: calc(50% - (45px * 2));
+  width: calc(50% - (calc(var(--thumbw) * 2)));
+  
+} */
+
+/* fieldset select {
+  width: 45px;
+  width: var(--thumbw);
+}
+
+fieldset select:hover {
+} */
+
+.lcontrol {
+	z-index: 99999;
+	position: fixed;
+	left: 0;
+	right: auto;
+	top: calc(var(--thumbw) * 1.2);
+	bottom: auto;
+	width: var(--thumbw);
+	display: flex;
+	flex-direction: column;
+}
+
+.lcontrol:hover {
+  width: calc(50% - (45px * 2));
+  width: calc(50% - (calc(var(--thumbw) * 2)));
+}
+
+.lcontrol select {
+  width: auto!important;
+} 
+/* .lcontrol select option {
+  width: 45px;
+  width: var(--thumbw);
+}
+
+/* .lcontrol:hover select,  */
+/*.lcontrol:hover select option {
+  width: calc(50% - (45px * 2));
+  width: calc(50% - (calc(var(--thumbw) * 2)));
+
+} */
 
 .submenu.drop.active > span {
   color: #000;
