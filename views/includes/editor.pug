@@ -28,8 +28,8 @@ p
 	div(v-if="doc.properties.title.str === 'Geography'")
 		label.tb-10-m0(for="geojson") Replace geometry (geoJSON)
 		input.block.spacer.success.tb-07-m0#geojson(v-bind:id="'lyr_'+doc._id", @change="handleGeoJson($event)", type="file", style="padding: 18px;color:#fff;")
-	div(v-else-if="doc.properties.title.str !== 'Geography' && mapActive")
-		include mapedit.pug
+	//- div(v-else-if="doc.properties.title.str !== 'Geography' && mapActive")
+	//- 	include mapedit.pug
 
 hr
 div(style="visibility: hidden;")

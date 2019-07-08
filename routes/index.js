@@ -681,16 +681,25 @@ function ensureContent(req, res, next) {
 }
 
 function getLayers(req, res, next) {
-	ContentDB.findOne({_id:req.params.id}).lean().exec(async function(err, doc){
+	ContentDB.findOne({_id:req.params.id}).lean().exec(function(err, doc){
 		if (err) {
 			return next(err)
 		}
 		var layerids = doc.properties.layers || [];
-		const layers = await layerids.map(function(id){
-			return ContentDB.findOne({_id:id}).then((doc) =>doc).catch((err)=>next(err));
+		ContentDB.find({_id: {$in:layerids}}).lean().exec(function(err, data){
+			if (err) {
+				return next(err)
+			}
+			req.layers = data;
+			return next();
+
 		})
-		req.layers = layers;
-		return next();
+		// const layers = layerids.map(async function(id){
+		// 	const d = await ContentDB.findOne({_id:id}).lean().then((doc) =>doc).catch((err)=>next(err));
+		// 	return d;
+		// });
+		// console.log(layers)
+		// req.layers = layers;
 	})
 }
 
@@ -715,7 +724,7 @@ function getGeo(req, res, next) {
 				});
 				return isJ;
 			})
-			req.layers = data;
+			req.availablelayers = data;
 			return next()
 		})
 	})
@@ -1434,6 +1443,40 @@ router.get('/logout', function(req, res, next) {
 		
 	})
 })*/
+
+router.post('/utahcourts', async function(req, res, next){
+	// const fetch = require('node-fetch');
+	// const courtData = await require('d3').csv('https://www.utcourts.gov/records/weeklyreports/current/filings/Week_27-Filing_Report-2019.csv', function(csv){
+	// 	console.log(csv);
+	// 	return csv.toString()
+	// })
+	const courtData = await require('request-promise')({
+		uri: 'https://www.utcourts.gov/records/weeklyreports/current/filings/Week_27-Filing_Report-2019.csv',//'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/layers?f=json',//,//'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/'+code+'?f=json',
+		encoding: 'utf8'
+	})
+	.then(async function(result){
+		const courtData = await require('d3').csvParse(result/*.toString()*/, function(d){
+			console.log(Object.keys(d.toString()))
+			var keys = Object.keys(d);
+			keys.forEach(function(key){
+				console.log(JSON.parse(d.toString()))
+				// console.log(d.toString[key])
+			})
+			return d.toString()
+			// return keys
+		})
+		return courtData
+	})
+	.catch(function(err){
+		console.log(err)
+	});
+	if (courtData) {
+		// console.log(censusData.toString())
+		return res.status(200).send(courtData)
+	} else {
+		return next(new Error('no data at that url'))
+	}
+})
 
 router.post('/evictionlabload', async function(req, res, next){
 	const AWS = require('aws-sdk');
@@ -2238,18 +2281,17 @@ router.post('/checkchaptername/:name', function(req, res, next){
 	})
 })
 
-router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, next){
+router.get('/list/:id/:index', getLayers, getGeo, async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
-	console.log(outputPath)
+	// console.log(outputPath)
 	req.session.importgdrive = false;
 	ContentDB.findOne({_id: req.params.id}, async function(err, doc){
 		if (err) {
 			return next(err)
 		}
-		// console.log(doc.properties.xmlurl)
 		var xml;
 		if (doc && doc.properties.xmlurl) {
-			console.log(doc.properties.xmlurl);
+			// console.log(doc.properties.xmlurl);
 			var xmlpath = ''+publishers+'/pu/publishers/esta/xml/';
 			var xmlfolder = await fs.existsSync(xmlpath);
 			if (!xmlfolder) {
@@ -2263,20 +2305,9 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 				uri: (doc.properties.xmlurl.replace('/htm', '/xml') +'?api_key='+process.env.GPOKEY),
 				encoding: null
 			}).then(async function(response) {
-				// console.log(response)
-				// if (!response) {
-				// 	return '<pre>';
-				// } else {
-					console.log('ok!');
-					// var xslt = require('xslt');
-					// var inputXml = await pug.renderFile(path.join(__dirname, '../views/includes/gpo/xml.pug'), {
-					// 	xml: response.toString().replace(/href=(.)billres/gm, 'href=$1/billres'),
-					// 	doctype: 'xml'
-					// })
-					// console.log(inputXml)
+					// console.log('ok!');
 					var rp = ''+publishers+'/pu/publishers/esta/xml/' + doc._id + '.png';
 					var rq = ''+publishers+'/pu/publishers/esta/xml/bill.dtd';
-					//console.log(imgp, thumbp)
 					var options = {nonull:true,nodir:true}
 					var p = glob.sync(rp, options)[0];
 					await fs.pathExists(p, async function(err, exists){
@@ -2318,19 +2349,10 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 					})
 					
 					return '/publishers/esta/xml/'+doc._id+'.xml'
-					
-					// var inputXml = response.toString().replace(/href=(.)billres/gm, 'href=$1/billres')
-					// var resp = xmljs(response.toString())
-					// return inputXml
-					// return response.toString().replace(/([`][`])/g,"'").replace(/([']['])/g,"'").replace(/\r/g,'\n').replace(/\s{3,700}/g,'  ').replace(/\s{0,1}\n\n\s{1,4}[(](\d{1,4})[)]/g,'  \n1. ').replace(/\s{2}[(](\w{1})[)]/g,'  \n  * \($1\) ').replace(/\n\s\s(\([i,v]{1,4}\))/g,'    $1');
-				// }
 			})
 			.catch(function(err){
 				console.log(err)
 				return ''
-				// if (err) {
-				// 	return '<pre>'
-				// }
 			})
 		} else {
 			xml = ''
@@ -2364,6 +2386,7 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 								menu: !req.session.menu ? 'view' : req.session.menu,
 								//data: data,
 								layers: req.layers,
+								availablelayers: req.availablelayers,
 								loggedin: req.session.loggedin,
 								doc: doc,
 								unsigned: (!pud ? true : false),
@@ -2378,6 +2401,7 @@ router.get('/list/:id/:index', /*getLayers,*/ getGeo, async function(req, res, n
 								unsigned: (!pud ? true : false),
 								loggedin: req.session.loggedin,
 								layers: req.layers,
+								availablelayers: req.availablelayers,
 								signable: signable,
 								doc: doc,
 								pu: pu,
@@ -2889,6 +2913,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			if (!Array.isArray(JSON.parse(body.latlng)[0][0])) {
 				type = 'MultiPoint'
 			}
+			console.log(JSON.parse(body.layers))
 			var entry = {
 				_id: id,
 				type: "Feature",
@@ -2920,7 +2945,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					// (!doc.properties.media || doc.properties.media.length === 0 ? [] : doc.properties.media),
 					diffs: doc.properties.diffs,
 					footnotes: footnotes,
-					layers: body.layers
+					layers: JSON.parse(body.layers)
 				},
 				geometry: {
 					type: type,
@@ -2933,20 +2958,6 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			var entrymedia = []
 			var thumbs = thumburls;
 			var count = 0;
-			// var ix = entry.properties.media.length;
-			// media = {
-			// 	index: count,
-			// 	name: (body['img'+ix+'_name'] ? curly(body['img'+ix+'_name']) : ''),
-			// 	image: imgs[i],
-			// 	image_abs: path.join(publishers, '/pu'+imgs[i]),
-			// 	iframe: (!body['iframe'+ix+''] ? null : body['iframe'+ix+'']),
-			// 	thumb: thumbs[i],
-			// 	thumb_abs: path.join(publishers, '/pu'+thumbs[i]),
-			// 	caption: (body['img'+ix+'_caption'] ? curly(body['img'+ix+'_caption']) : ''),
-			// 	postscript: (body['img'+ix+'_postscript'] ? curly(body['img'+ix+'_postscript']) : ''),
-			// 	featured: body['img'+ix+'_featured'],
-			// 	orientation: orientations[i]
-			// }
 			if (thumbs.length > 0) {
 				for (var i = 0; i < thumbs.length; i++) {
 					var media;
@@ -2985,10 +2996,6 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			var key4 = 'properties.diffs'
 			set4.$push[key4] = newdiff;
 			
-			// var set5 = {$set:{}}
-			// var key5 = 'properties.section.str'
-			// set5.$set[key5] = entry.properties.section.str;
-
 			var options = {safe: true, new: true, upsert: false};
 			ContentDB.findOneAndUpdate({_id: id}, set1, options, function(err, docc) {
 				if (err) {
@@ -3002,24 +3009,17 @@ router.post('/api/editcontent/:id', function(req, res, next){
 						if (errr) {
 							return next(errr)
 						}
-						// ContentDB.findOneAndUpdate({_id: id}, set5, options, function(errr, doc) {
-						// 	if (err) {
-						// 		return next(err)
-						// 	}
-							if (!newdiff) {
-								next(null, doc)
-							} else {
-								ContentDB.findOneAndUpdate({_id: id}, set4, options, function(errr, doc) {
-									if (errr) {
-										next(errr)
-									} else {
-										next(null, doc)
-									}
-								})
-							}
-						// })
-						
-						
+						if (!newdiff) {
+							next(null, doc)
+						} else {
+							ContentDB.findOneAndUpdate({_id: id}, set4, options, function(errr, doc) {
+								if (errr) {
+									next(errr)
+								} else {
+									next(null, doc)
+								}
+							})
+						}
 					})
 				})
 			})

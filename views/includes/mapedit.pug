@@ -1,30 +1,36 @@
 fieldset.lcontrol(style="padding:0;border:none;", v-cloak)
+	input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers[]")
 	legend(style="font-size: 11px;") layers
-	a.drop(v-for="(lyr, o) in layers", style="display: flex;")
+	a.drop(v-for="(layer, o) in layers", style="display: flex;")
 		.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
-			//- (style="position:absolute;")
-			//- label(:for="lyr._id", v-text="lyr.properties.label", style="font-size: 7px;line-height:7px;height:7px;pointer-events:none;position:absolute;background-color:var(--primary);") 
 
-			img(:src="!lyr.properties.media[lyr.properties.media.length - 1] || !lyr.properties.media[lyr.properties.media.length - 1].thumb || lyr.properties.media[lyr.properties.media.length - 1].thumb === '' ? lyr.properties.media[0].thumb : lyr.properties.media[lyr.properties.media.length - 1].thumb ", style="pointer-events: none;")
+			img(:src="!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? layer.properties.media[0].thumb : layer.properties.media[layer.properties.media.length - 1].thumb ", style="pointer-events: none;")
 		
-		span.tb-font-m(v-text="lyr.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
-		input(type="checkbox", :value="lyr._id", :id="'lyr_'+o", name="layers[]", v-text="lyr.properties.label", style="position:absolute;", @click="changeLayers(lyr._id, $event)")
-		input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers")
+		span.tb-font-m(v-text="layer.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
+		input(type="checkbox", :value="layer._id", :id="'layer_'+o", v-text="layer.properties.label", style="position:absolute;", @click="changeLayers(layer._id, $event)", :checked="(doc.properties.layers.indexOf(layer._id) !== -1)")
+	legend(style="font-size: 11px;", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0") Available layers
+	a.drop(style="display: flex;", @click="subDropdown($event)", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0")
+		.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;pointer-events:none;")
+			img(src="/images/icons/add.svg", style="pointer-events: none;")
 	
-	//- legend(style="font-size:11px;") eviction-lab
-	//- a.drop(style="display:flex;")
-	//- 	.ui(style="pointer-events: none;min-width:45px;min-width:var(--thumbw);margin:0;")
-	//- 		img(src="/images/base_0.jpg", style="pointer-events: none;")
-	legend(style="font-size: 11px;") census
-	//- include menu/jurisdiction.pug
-	label(for="placetype", style="width: 45px;") Population Data
-	select#placetype(style="pointer-events: all;", name="placetype",@change="changeCensusJurisdiction($event)")
-		option(value="null", v-text="'None'", v-bind:selected="!censusLoad.placetype")
-		option(v-for="(pl, p) in placetypes", v-text="pl.name", :value="p")
-	label(for="placetype", v-if="censusLoad.cats && censusLoad.cats.length") Data category
-	select#place( v-if="censusLoad.cats && censusLoad.cats.length", style="pointer-events: all;", @change="changeCensusData($event)", v-model="censusLoad.cat")
-		option(value="null", v-text="'None'", v-bind:selected="!censusLoad.cat")
-		option(v-if="censusLoad.cats.length", v-for="(cat, i) in censusLoad.cats", v-text="cat", :value="cat", :selected="censusLoad.cat === cat")
+		span.tb-font-m(v-html="'Available layers'", style="width:auto; padding-right: 15px; padding-left: 8px;")
+
+	div.slidedown
+		a.drop(v-for="(alayer, p) in availablelayers", v-if="(doc.properties.layers.indexOf(alayer._id) === -1)" style="display: flex;")
+			.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
+				img(:src="!alayer.properties.media[alayer.properties.media.length - 1] || !alayer.properties.media[alayer.properties.media.length - 1].thumb || alayer.properties.media[alayer.properties.media.length - 1].thumb === '' ? alayer.properties.media[0].thumb : alayer.properties.media[alayer.properties.media.length - 1].thumb ", style="pointer-events: none;")
+			
+			span.tb-font-m(v-text="alayer.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
+			input(type="checkbox", :value="alayer._id", :id="'alayer_'+p", v-text="alayer.properties.label", style="position:absolute;", @click="changeLayers(alayer._id, $event)", :checked="(doc.properties.layers.indexOf(alayer._id) !== -1)")
+	//- legend(style="font-size: 11px;") census
+	//- label(for="placetype", style="width: 45px;") Population Data
+	//- select#placetype(style="pointer-events: all;", name="placetype",@change="changeCensusJurisdiction($event)")
+	//- 	option(value="null", v-text="'None'", v-bind:selected="!censusLoad.placetype")
+	//- 	option(v-for="(pl, p) in placetypes", v-text="pl.name", :value="p")
+	//- label(for="placetype", v-if="censusLoad.cats && censusLoad.cats.length") Data category
+	//- select#place( v-if="censusLoad.cats && censusLoad.cats.length", style="pointer-events: all;", @change="changeCensusData($event)", v-model="censusLoad.cat")
+	//- 	option(value="null", v-text="'None'", v-bind:selected="!censusLoad.cat")
+	//- 	option(v-if="censusLoad.cats.length", v-for="(cat, i) in censusLoad.cats", v-text="cat", :value="cat", :selected="censusLoad.cat === cat")
 
 	//- select(@change="changeCensus($event)")
 	//- 	option(value="null", v-text="'None'", v-bind:selected="!boundary")
@@ -34,11 +40,12 @@ fieldset.lcontrol(style="padding:0;border:none;", v-cloak)
 	//- 		img(src="/images/publish_logo_sq.svg", style="pointer-events:none;")
 	//- 	span.tb-font-m(v-text="bound.name")
 	//- 	input(type="checkbox", :value="bound.code", v-text="bound.name", style="position:absolute;", @click="changeCensus(bound.code, $event)")
-	legend(style="font-size: 11px;") eviction
-	a.drop(style="display:flex;", @click="getEvictionLab")
-		.ui(style="pointer-events: none;min-width:45px;min-width:var(--thumbw);margin:0;")
-			img(src="/images/publish_logo_sq.svg")
-		span.tb-font-m(v-text="'evictionlab'", style="width:auto; padding-right: 15px; padding-left: 8px;")
+
+	//- legend(style="font-size: 11px;") eviction
+	//- a.drop(style="display:flex;", @click="getEvictionLab")
+	//- 	.ui(style="pointer-events: none;min-width:45px;min-width:var(--thumbw);margin:0;")
+	//- 		img(src="/images/publish_logo_sq.svg")
+	//- 	span.tb-font-m(v-text="'evictionlab'", style="width:auto; padding-right: 15px; padding-left: 8px;")
 
 	
 	legend(style="font-size: 11px;") base
