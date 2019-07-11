@@ -342,7 +342,7 @@ html
 				mounted: function(){
 					$(document).ready(function(){
 						document.addEventListener('keydown', function(event) {
-						  var keyName = event.key;
+							var keyName = event.key;
 							if (keyName === 'Enter') event.preventDefault()
 						});
 					})
@@ -1528,9 +1528,9 @@ html
 								pointToLayer: function(feature, latlng) {
 									//- console.log(feature, latlng);
 									var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type))
-										//- .on('click', function(){
-										//- 	return self.setView(feature, latlng)
-										//- });
+										.on('click', function(){
+											return self.setView(feature, latlng)
+										});
 									//- console.log(circle)
 									//- L.GeoJSON.coordsToLatLng(feature.geometry.coordinates, false)
 							
@@ -2052,3 +2052,5 @@ html
 
 				}
 			});
+
+			

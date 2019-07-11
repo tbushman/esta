@@ -387,6 +387,15 @@ var curly = function(str){
 // function ensureCorrectAbsPath(req, res, next){
 // 	ContentDB.update({''})
 // }
+async function getBundle(req, res, next) {
+	req.vuefile = null;
+	var vuepath = path.join(__dirname, '../public/scripts/main.js');
+	var exists = await fs.existsSync(vuepath);
+	if (exists) {
+		req.vuefile = await require(vuepath)
+	}
+	return next();
+}
 
 async function ifExistsReturn(req, res, next) {
 	var path = ''+publishers+'/pu/publishers/esta/signatures/'+req.params.did+'/'+req.params.puid+'/img_'+req.params.did+'_'+req.params.puid+'.png';
