@@ -29,9 +29,9 @@ html
 		script.
 			var module = {};
 		//- script(type="text/javascript", src="/scripts/xth.js")
-		script(type="text/javascript", src="/scripts/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
+		//- script(type="text/javascript", src="/scripts/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
 
-		//- script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
+		script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
 	body
 		block page
 		block header
@@ -213,7 +213,7 @@ html
 						sliderOpacity: 1,
 						gpo: null,
 						latlng: {lat: 40, lng: -111.8},
-						lyrs: [],
+						//- lyrs: [],
 						base: 0,
 						baseMaps: [
 							{
@@ -556,28 +556,36 @@ html
 						}
 
 					},
-					addLayer(id, e) {
+					async addLayer(id, e) {
 						var self = this;
 						if (self.doc.properties.layers.indexOf(id) === -1) {
 							self.doc.properties.layers.push(id);
-							var thisLayer = self.availablelayers.filter(function(item, i){
+							var thisAvailableLayer = await self.availablelayers.filter(function(item, i){
 								if (item._id === id) {
 									ind = i;
 								} 
 								return item._id === id
 							})[0];
-							self.layers.push(thisLayer);
+							var thisLayer = await self.layers.filter(function(item, i){
+								return item._id === id
+							})[0];
+							if (!thisLayer) {
+								self.layers.push(thisAvailableLayer);
+							}
 							if (ind) {
 								self.availablelayers.splice(ind, 1);
-								if (!self.lyr[id]) {
-									self.lyr[id] = self.loadLayer(thisLayer);
-								}
+							}
+							
+							if (!self.lyr[id]) {
+								self.lyr[id] = self.loadLayer(thisAvailableLayer);
+								self.lyr[id].options.interactive = true;
 							}
 						}
-						self.map.addLayer(self.lyr[id]);
-						self.lyr[id].options.interactive = true;
-						var bounds = self.lyr[id].getBounds();
-						self.map.fitBounds(bounds);
+						if (self.lyr[id]) {
+							self.map.addLayer(self.lyr[id]);
+							var bounds = self.lyr[id].getBounds();
+							self.map.fitBounds(bounds);
+						}
 
 					},
 					removeLayer(id, e) {
@@ -590,19 +598,28 @@ html
 							} 
 							return item._id === id
 						})[0];
+						console.log(thisLayer, ind)
 						var thisAvailableLayer = self.availablelayers.filter(function(item, i){
 							return item._id === id;
 						})[0]
 						if (ind) {
 							self.layers.splice(ind, 1);
+						} else {
+							console.log('wtaf')
 						}
-						if (thisLayer && !thisAvailableLayer) self.availablelayers.push(thisLayer);
+						if (thisLayer && !thisAvailableLayer) {
+							self.availablelayers.push(thisLayer);
+						//- } else if (!thisLayer && thisAvailableLayer) {
+						} else {
+							console.log(thisAvailableLayer)
+							//- console.log('wtaf')
+						}
 
 						if (self.doc.properties.layers && self.doc.properties.layers.length === 0) {
 							var bounds = self.dataLayer.getBounds();
 							self.map.fitBounds(bounds)
 						}
-						self.map.removeLayer(self.lyr[id])
+						self.lyr[id].remove()
 					},
 					changeLayers(id, e) {
 						var self = this;
@@ -946,7 +963,7 @@ html
 							//- console.log(self.dataLayer)
 							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && self.dataLayer._latlngs && self.dataLayer._latlngs.length < 2) {
 								//- console.log(self.dataLayer)
-								self.dataLayer.enableEdit();
+								//- self.dataLayer.enableEdit();
 								self.mapEdit = !mapEdit;
 							}
 							document.getElementById('viewer').scrollIntoView();
@@ -1503,6 +1520,7 @@ html
 					loadLayer(item) {
 						var self = this;
 						if (self.isPointCoords(item.geometry.coordinates)) {
+							console.log('is point')
 							return L.GeoJSON.geometryToLayer(item, {
 								style: function(feature) {
 									return self.styleOf(feature, feature.geometry.type)
@@ -1852,20 +1870,22 @@ html
 									})
 									await self.map.addLayer(self.lyr[item._id]);
 									// removed from map, but stored as variable to enable again
-									self.lyr[item._id].remove()
+									//- self.lyr[item._id].remove()
 								})
 								if (self.availablelayers && self.availablelayers.length > 0) {
 									await self.availablelayers.forEach(async function(item, i){
-										self.lyr[item._id] = self.loadLayer(item);
-										self.lyr[item._id].setStyle({fillColor: self.c[i]});
-										self.lyr[item._id].bindTooltip(item.properties.label, {interactive:true});
-										self.lyr[item._id].on('click', function(e){
-											self.setView(item, e.latlng)
-											self.lyr[item._id].openTooltip();
-										})
-										await self.map.addLayer(self.lyr[item._id]);
-										// removed from map, but stored as variable to enable again
-										self.lyr[item._id].remove()
+										if (self.doc.properties.layers.indexOf(item._id) === -1) {
+											self.lyr[item._id] = self.loadLayer(item);
+											self.lyr[item._id].setStyle({fillColor: self.c[i]});
+											self.lyr[item._id].bindTooltip(item.properties.label, {interactive:true});
+											self.lyr[item._id].on('click', function(e){
+												self.setView(item, e.latlng)
+												self.lyr[item._id].openTooltip();
+											})
+											await self.map.addLayer(self.lyr[item._id]);
+											// removed from map, but stored as variable to enable again
+											self.lyr[item._id].remove()
+										}
 									})
 								}
 							} 
@@ -1986,48 +2006,48 @@ html
 					},
 					sliderImg(int){
 						var self = this;
-						if ($('#slider')[0]) {
-							var starttime;
-							self.sliderInterval = setInterval(function(){
-								self.sliderOpacity = 0;
-								self.sliderTimeout1 = setTimeout(function(){
-									if (self.sliderIndex > 3) {
-										self.sliderIndex = 1;
-									} else {
-										self.sliderIndex += 1;
-									}
-									self.sliderTimeout2 = setTimeout(function(){
-										self.sliderOpacity = 1;
-									},(int/5))
-								},(int/5))
-							}, int)
-								//- requestAnimationFrame(function(ts){
-								//- 	var duration = int;
-								//- 	if (!starttime) {
-								//- 		starttime = ts;
-								//- 	}
-								//- 	var timestamp = ts || new Date().getTime()
-								//- 	var runtime = timestamp - starttime;
-								//- 	if (runtime >= duration) {
-								//- 		self.sliderOpacity = 0;
-								//- 		self.sliderTimeout1 = setTimeout(function(){
-								//- 			if (self.sliderIndex > 3) {
-								//- 				self.sliderIndex = 1;
-								//- 			} else {
-								//- 				self.sliderIndex += 1;
-								//- 			}
-								//- 			self.sliderTimeout2 = setTimeout(function(){
-								//- 				self.sliderOpacity = 1;
-								//- 			},(int/5))
-								//- 
-								//- 		},(int/5))
-								//- 	}
-								//- 
-								/**/
-							//- }) //10000
-						} else {
-							console.log('no slider')
-						}
+						//- if ($('#slider')[0]) {
+						//- 	var starttime;
+						//- 	self.sliderInterval = setInterval(function(){
+						//- 		self.sliderOpacity = 0;
+						//- 		self.sliderTimeout1 = setTimeout(function(){
+						//- 			if (self.sliderIndex > 3) {
+						//- 				self.sliderIndex = 1;
+						//- 			} else {
+						//- 				self.sliderIndex += 1;
+						//- 			}
+						//- 			self.sliderTimeout2 = setTimeout(function(){
+						//- 				self.sliderOpacity = 1;
+						//- 			},(int/5))
+						//- 		},(int/5))
+						//- 	}, int)
+						//- 		//- requestAnimationFrame(function(ts){
+						//- 		//- 	var duration = int;
+						//- 		//- 	if (!starttime) {
+						//- 		//- 		starttime = ts;
+						//- 		//- 	}
+						//- 		//- 	var timestamp = ts || new Date().getTime()
+						//- 		//- 	var runtime = timestamp - starttime;
+						//- 		//- 	if (runtime >= duration) {
+						//- 		//- 		self.sliderOpacity = 0;
+						//- 		//- 		self.sliderTimeout1 = setTimeout(function(){
+						//- 		//- 			if (self.sliderIndex > 3) {
+						//- 		//- 				self.sliderIndex = 1;
+						//- 		//- 			} else {
+						//- 		//- 				self.sliderIndex += 1;
+						//- 		//- 			}
+						//- 		//- 			self.sliderTimeout2 = setTimeout(function(){
+						//- 		//- 				self.sliderOpacity = 1;
+						//- 		//- 			},(int/5))
+						//- 		//- 
+						//- 		//- 		},(int/5))
+						//- 		//- 	}
+						//- 		//- 
+						//- 		/**/
+						//- 	//- }) //10000
+						//- } else {
+						//- 	console.log('no slider')
+						//- }
 					}
 
 				}

@@ -713,16 +713,20 @@ function getGeo(req, res, next) {
 				return next(err)
 			}
 			var reqpos = (req.session && req.session.position ? req.session.position : null)
-			await data.filter(async function(doc){
-				const isJ = await isJurisdiction(reqpos, doc, req.user, function(jd){
-					if (jd === null) {
-						return false; 
-					} else {
-						return jd;
-					}
-					// return res.redirect('/user/getgeo');
-				});
-				return isJ;
+			await data.filter(async function(dc){
+				if (doc.properties.layers.indexOf(dc._id) === -1) {
+					return false;
+				} else {
+					const isJ = await isJurisdiction(reqpos, dc, req.user, function(jd){
+						if (jd === null) {
+							return false; 
+						} else {
+							return jd;
+						}
+						// return res.redirect('/user/getgeo');
+					});
+					return isJ;
+				}
 			})
 			req.availablelayers = data;
 			return next()
