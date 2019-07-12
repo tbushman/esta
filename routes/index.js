@@ -1463,6 +1463,8 @@ router.post('/utahcourts', async function(req, res, next){
 	// 	console.log(csv);
 	// 	return csv.toString()
 	// })
+	// Week 27 = 7/1/2019
+	// Week 28 = 7/8/2019
 	const courtData = await require('request-promise')({
 		uri: 'https://www.utcourts.gov/records/weeklyreports/current/filings/Week_27-Filing_Report-2019.csv',//'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/layers?f=json',//,//'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/'+code+'?f=json',
 		encoding: 'utf8'
