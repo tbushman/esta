@@ -1,12 +1,17 @@
 include mapedit.pug
 div#viewer(style="position:absolute;pointer-events: none;")
+	p(:style="{position:'absolute',left:(wWidth/2)+'px',padding:'calc(var(--thumbw) * 0.8) 0 0 calc(var(--thumbw) * 0.9)',width:'50vw','background-color':'var(--primary)','z-index':9999}", v-if="geo.length && viewerList", v-text="(geo.length)+' nearby:'")
+
 	div.module.viewerlist(v-if="geo.length && viewerList", :style="{'pointer-events':'all',left: (wWidth / 2) + 'px',bottom:(wHeight / 2) + 'px'}")
-		p(v-text="(geo.length)+' nearby:'")
 		ul
-			li(v-for="(go, g) in geo")
-				p.tb-font-xxxs(v-for="(p, j) in Object.keys(go.properties)")
-					strong(v-text="p+ ': '")
-					span(v-text="go.properties[p]")
+			li(v-for="(go, g) in geo", style="background-color:rgba(255,255,255,0.5);border-bottom:1px solid #999;padding-bottom:8px;")
+				table
+					tr(v-for="(p, j) in Object.keys(go.properties)", v-if="go.properties[p] && go.properties[p] !== ''")
+						td
+							p.tb-font-xxxs
+								strong(v-text="p+ ': '")
+						td
+							p.tb-font-xxxs(v-text="go.properties[p]")
 
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px",
 		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"

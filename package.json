@@ -20,9 +20,9 @@
   "homepage": "https://github.com/tbushman/esta#readme",
   "dependencies": {
     "@tinymce/tinymce-vue": "^1.1.2",
-    "async": "^2.6.2",
+    "async": "^2.6.3",
     "async-indesign-script": "^1.0.4",
-    "aws-sdk": "^2.492.0",
+    "aws-sdk": "^2.493.0",
     "body-parser": "^1.19.0",
     "connect-mongo": "^2.0.3",
     "connect-mongodb-session": "^1.4.0",
