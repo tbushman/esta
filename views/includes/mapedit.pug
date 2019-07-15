@@ -1,13 +1,29 @@
 fieldset.lcontrol(style="padding:0;border:none;", v-cloak)
 	input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers[]")
+	
 	legend(style="font-size: 11px;") layers
-	a.drop(v-for="(layer, o) in layers", style="display: flex;")
-		.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
+	div(v-for="(layer, o) in layers")
+		a.drop(style="display: flex;", @click="subDropdown($event)")
+			.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
 
-			img(:src="!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? layer.properties.media[0].thumb : layer.properties.media[layer.properties.media.length - 1].thumb ", style="pointer-events: none;")
+				img(:src="!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? layer.properties.media[0].thumb : layer.properties.media[layer.properties.media.length - 1].thumb ", style="pointer-events: none;")
+			
+			span.tb-font-m(v-text="layer.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
+			input(type="checkbox", :value="layer._id", :id="'layer_'+o", v-text="layer.properties.label", style="position:absolute;", @click="changeLayers(layer._id, $event)", :checked="(doc.properties.layers.map(function(item){return item.lid}).indexOf(layer._id) !== -1)")
+		div.slidedown(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id")
+			legend(style="font-size: 11px;") style
+			select(@change="changeAttribute(layer._id, $event)")
+				option(v-for="(item,l) in layer.properties.keys", v-text="item", :value="item", :selected="item === style.key")
+
+			//- a.drop(v-for="(p, j) in Object.keys(style)")
+			//- 
+			//- 	.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
+			//- 		img(src="/images/icons/add.svg", style="pointer-events: none;")
+			//- 
+			//- 	span.tb-font-m(v-text="p", style="width:auto; padding-right: 15px; padding-left: 8px;")
+			//- 	input(type="radio", :value="p", :id="'attribute_'+p", v-text="p", style="position:absolute;", @click="", :checked="(style.key === p)")
 		
-		span.tb-font-m(v-text="layer.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
-		input(type="checkbox", :value="layer._id", :id="'layer_'+o", v-text="layer.properties.label", style="position:absolute;", @click="changeLayers(layer._id, $event)", :checked="(doc.properties.layers.indexOf(layer._id) !== -1)")
+
 	legend(style="font-size: 11px;", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0") Available layers
 	a.drop(style="display: flex;", @click="subDropdown($event)", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0")
 		.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;pointer-events:none;")
@@ -16,12 +32,12 @@ fieldset.lcontrol(style="padding:0;border:none;", v-cloak)
 		span.tb-font-m(v-html="'Available layers'", style="width:auto; padding-right: 15px; padding-left: 8px;")
 
 	div.slidedown
-		a.drop(v-for="(alayer, p) in availablelayers", v-if="(doc.properties.layers.indexOf(alayer._id) === -1)" style="display: flex;")
+		a.drop(v-for="(alayer, p) in availablelayers", v-if="(doc.properties.layers.map(function(item){return item.lid}).indexOf(alayer._id) === -1)" style="display: flex;")
 			.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
 				img(:src="!alayer.properties.media[alayer.properties.media.length - 1] || !alayer.properties.media[alayer.properties.media.length - 1].thumb || alayer.properties.media[alayer.properties.media.length - 1].thumb === '' ? alayer.properties.media[0].thumb : alayer.properties.media[alayer.properties.media.length - 1].thumb ", style="pointer-events: none;")
 			
 			span.tb-font-m(v-text="alayer.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
-			input(type="checkbox", :value="alayer._id", :id="'alayer_'+p", v-text="alayer.properties.label", style="position:absolute;", @click="changeLayers(alayer._id, $event)", :checked="(doc.properties.layers.indexOf(alayer._id) !== -1)")
+			input(type="checkbox", :value="alayer._id", :id="'alayer_'+p", v-text="alayer.properties.label", style="position:absolute;", @click="changeLayers(alayer._id, $event)", :checked="(doc.properties.layers.map(function(item){return item.lid}).indexOf(alayer._id) !== -1)")
 	//- legend(style="font-size: 11px;") census
 	//- label(for="placetype", style="width: 45px;") Population Data
 	//- select#placetype(style="pointer-events: all;", name="placetype",@change="changeCensusJurisdiction($event)")

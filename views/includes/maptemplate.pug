@@ -1,0 +1,19 @@
+include mapedit.pug
+div#viewer(style="position:absolute;pointer-events: none;")
+	div.module.viewerlist(v-if="geo.length && viewerList", :style="{'pointer-events':'all',left: (wWidth / 2) + 'px',bottom:(wHeight / 2) + 'px'}")
+		p(v-text="(geo.length)+' nearby:'")
+		ul
+			li(v-for="(go, g) in geo")
+				p.tb-font-xxxs(v-for="(p, j) in Object.keys(go.properties)")
+					strong(v-text="p+ ': '")
+					span(v-text="go.properties[p]")
+
+	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px",
+		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
+		, 
+		v-bind:width="wWidth +'px'",
+		v-bind:height="wHeight+'px'",
+		style="pointer-events: none;"
+		)
+
+		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")

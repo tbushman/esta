@@ -24,8 +24,6 @@ html
 		//- script(type="text/javascript", src="/scripts/jszip.min.js")
 		script(type="text/javascript", src="/scripts/signaturePad.js")
 		script(type="text/javascript", src="/scripts/htmldiff.js")
-		//- script(type="text/javascript", src="/scripts/d3-color.min.js")
-		//- script(type="text/javascript", src="/scripts/d3-scale-chromatic.min.js")
 		script.
 			var module = {};
 		//- script(type="text/javascript", src="/scripts/xth.js")
@@ -60,7 +58,9 @@ html
 				el: '#vue',
 				data: function data(){
 					return {
-						buf: null,
+						buf: [],
+						attribute: null,
+						attributes: [],
 						availablelayers: this.ifNullThenArr(!{JSON.stringify(availablelayers)}),
 						c: ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928","#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"],
 						//['#39B54A', '#D9E021', '#FBB03B', '#FC644D', '#ED1C24'],
@@ -88,13 +88,13 @@ html
 						edit: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)}).index),
 						chindexes: [],
 						chindex: 0,
-						dindexes: [],
-						dindex: (this.parseObj(!{JSON.stringify(doc)}) === '' ? 0 : this.parseObj(!{JSON.stringify(doc)}).index),
+						//- dindexes: [],
+						did: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)})._id),
 						cursor: null,
 						input: '',
 						fixedPug: '',
 						map: '',
-						mapActive: false,
+						mapActive: (this.parseBool(!{JSON.stringify(mapActive)})),
 						mapEdit: false,
 						mapEditable: false,
 						dataLayer: '',
@@ -265,6 +265,7 @@ html
 						//- 	{code: '970', name:'school district (unified)'}],
 							//(!this.map ? (6 * this.zfactor) : (this.map.getZoom() + this.zfactor))
 							//(!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
+							,json: {}
 						
 					}
 				},
@@ -350,12 +351,11 @@ html
 					$(document).on('click', '.href', function(e){
 						e.stopPropagation();
 					});
-					//- $('.submenu.drop').slideToggle(100);
-					//- $('.slidedown').slideToggle(100);
 					$('.submenu.drop').slideUp(100);
 					$('.slidedown').slideUp(100);
 					var modal = document.getElementById('modal');
 					if (self.type === 'geo') {
+						// prompt geolocation
 						var pos = null;
 						if (navigator.geolocation) {
 							var options = {
@@ -378,13 +378,7 @@ html
 							self.handleLocationOutcome(false, pos);
 						}
 					
-					} else {
-						self.dindexes = (!self.dat || self.dat === '' ? [[(!self.doc || self.doc === '' ? 0 : self.doc.index)]]
-						:
-						self.dat.map(function(data){
-							return data.map(function(doc){return doc.index});
-						}) );
-						self.dindexes.sort();
+					} else if (!self.mapActive) {
 
 						if (!self.doc || self.doc === '') {
 							if (!self.dat || self.dat === '') {
@@ -393,21 +387,15 @@ html
 								self.accordions = self.dat.map(function(data){
 									return []
 								});
-								//- 
-
-								
 							}
 						} else {
 							if (!self.dat || self.dat === '') {
 								self.accordions = [[self.doc.index]];
 							} else {
-								//- self.lyrs = 
-								
 								self.accordions = self.dat.map(function(data){return data.map(function(doc){return doc.index})});
 							}
-							self.edit = self.doc.index;
-							self.dindex = 0;
-							//- console.log(self.pu, self.ts.length, !self.unsigned)
+							self.edit = self.doc._id;
+							self.did = self.edit;
 							
 						}
 					}
@@ -453,22 +441,33 @@ html
 						self.map.on('click', function(e){
 							self.viewerList = false;
 						});
-						//- self.map.on('zoomend', function(e){
-						//- 	self.viewerList = false;
-						//- })
+						self.map.on('dragend', function(e){
+							self.viewerList = false;
+						})
 						//- new CensusReporter.SummaryLevelLayer('040').addTo(self.map);
+						//- self.censusVars = await $.getJSON('https://api.census.gov/data/2010/dec/sf1/variables.json')
+						//- .then(function(data){
+						//- 	var variables = data.variables;
+						//- 	return variables;
+						//- })
+						//- .catch(function(err){
+						//- 	console.log(err)
+						//- })
+						var keys = self.doc.properties.layers.map(function(item){return item.lid});
+						keys.forEach(function(key){
+							$.get('/publishers/esta/json/json_'+key+'.json')
+							.then(function(result){
+								self.json[key] = result;
+							})
+							.catch(function(err){
+								console.log(err)
+							})
+						})
 						if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {
 							var int = 8000;
 							self.sliderImg(int)
 						}
-						self.censusVars = await $.getJSON('https://api.census.gov/data/2010/dec/sf1/variables.json')
-						.then(function(data){
-							var variables = data.variables;
-							return variables;
-						})
-						.catch(function(err){
-							console.log(err)
-						})
+
 					})
 				},
 				beforeDestroy: function(){
@@ -558,8 +557,14 @@ html
 					},
 					async addLayer(id, e) {
 						var self = this;
-						if (self.doc.properties.layers.indexOf(id) === -1) {
-							self.doc.properties.layers.push(id);
+						var tlrs = self.doc.properties.layers.map(function(item){if (item && typeof item !== 'string') return item.lid})
+						if (tlrs.indexOf(id) === -1) {
+							self.doc.properties.layers.push({
+								lid: id,
+								buckets: 1,
+								colors: [self.c[0]],
+								key: ''
+							});
 							var thisAvailableLayer = await self.availablelayers.filter(function(item, i){
 								if (item._id === id) {
 									ind = i;
@@ -590,7 +595,8 @@ html
 					},
 					removeLayer(id, e) {
 						var self = this;
-						self.doc.properties.layers.splice(self.doc.properties.layers.indexOf(id), 1);
+						var keys = self.doc.properties.layers.map(function(item){return item.lid})
+						self.doc.properties.layers.splice(keys.indexOf(id), 1);
 						var ind = null;
 						var thisLayer = self.layers.filter(function(item, i){
 							if (item._id === id) {
@@ -598,7 +604,6 @@ html
 							} 
 							return item._id === id
 						})[0];
-						console.log(thisLayer, ind)
 						var thisAvailableLayer = self.availablelayers.filter(function(item, i){
 							return item._id === id;
 						})[0]
@@ -611,7 +616,7 @@ html
 							self.availablelayers.push(thisLayer);
 						//- } else if (!thisLayer && thisAvailableLayer) {
 						} else {
-							console.log(thisAvailableLayer)
+							//- console.log(thisAvailableLayer)
 							//- console.log('wtaf')
 						}
 
@@ -628,6 +633,21 @@ html
 						} else {
 							self.removeLayer(id, e)
 						}
+					},
+					changeAttribute(id, e) {
+						var self = this;
+						var ind = null;
+						var key = e.target.value;
+						var thisLayer = self.doc.properties.layers.forEach(function(item, i){
+							if (ind) return;
+							console.log(item.lid , id)
+							if (item.lid === id) {
+								ind = i;
+								self.doc.properties.layers[ind].key = key
+							} 
+						});
+						
+						
 					},
 					setXmlId(e){
 						var self = this;
@@ -844,20 +864,22 @@ html
 							var fd = new FormData();
 
 							fd.append("csv", file);
+							if (self.doc && self.doc !== '') {
+								var uploadurl = '/api/importcsv/'+(self.doc._id )+'/csv';
+								$.ajax({
+									url: uploadurl,
+									type: 'POST',
+									data: fd,
+									processData: false,
+									contentType: false,
+									success: function(response) { 
+										self.doc = response;
+										window.location.reload(true)
+									}
+									
+								})
+							}
 							
-							var uploadurl = '/api/importcsv/'+(!self.doc || self.doc === '' ? self.data[self.dindex]._id : self.doc._id )+'/csv';
-							$.ajax({
-								url: uploadurl,
-								type: 'POST',
-								data: fd,
-								processData: false,
-								contentType: false,
-								success: function(response) { 
-									self.doc = response;
-									window.location.reload(true)
-								}
-								
-							})
 						}
 						reader.readAsDataURL(file)
 						
@@ -958,18 +980,12 @@ html
 						var mapActive = self.mapActive;
 						var mapEdit = self.mapEdit;
 						if (!mapActive) {
-							//- if (self.map) self.setView(self.map.getLatLng());
-							// TODO admin only for certain things?
-							//- console.log(self.dataLayer)
 							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && self.dataLayer._latlngs && self.dataLayer._latlngs.length < 2) {
-								//- console.log(self.dataLayer)
 								//- self.dataLayer.enableEdit();
 								self.mapEdit = !mapEdit;
 							}
 							document.getElementById('viewer').scrollIntoView();
 						} else {
-							//- if (self.map) self.setView(self.map.getLatLng());
-							// TODO admin only for certain things?
 							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && typeof self.dataLayer.disableEdit === 'function') {
 								self.dataLayer.disableEdit();
 								self.mapEdit = !mapEdit;
@@ -1030,9 +1046,9 @@ html
 							cb()
 						})
 					},
-					handleFile: function(dindex, index) {
+					handleFile: function(did, index) {
 						var self = this;
-						self.dindex = dindex;
+						self.did = did;
 						self.file = document.getElementById('media_'+index).files[0];
 						self.processImage(index);
 					},
@@ -1301,7 +1317,8 @@ html
 					},
 					styleOf(feature, type) {
 						var self = this;
-						var cind = self.doc.properties.layers.indexOf(feature._id);
+						var keys = self.doc.properties.layers.map(function(item){return item.lid})
+						var cind = keys.indexOf(feature._id);
 						var c = (!self.c[cind] ? 'var(--highlight)' : self.c[cind]);
 						var style = {
 												fillColor: c,
@@ -1375,78 +1392,52 @@ html
 						//- 	return false;
 						//- }
 					},
-					filterViewerList(ll1, ll2, feature, keys, vals, buf) {
+					async filterViewerList(ll1, ll2, feature, keys, vals, buf) {
 						var self = this;
-						//- self.cZF = (self.map.getZoom() + self.zfactor)
 						var latlng = ll2;
-						//- var buf = L.circle(latlng, { radius: (140 * self.cZF) }).addTo(self.map);
-						$.get('/publishers/esta/json/json_'+feature._id+'.json')
-						.then(async function(json){
-							if (json.features){
-								self.geo = await keys.map(function(key){
-									var match = null;
-									if (vals._layers && vals._layers[key]._latlng) {
-										for (var j = 0; j < json.features.length; j++) {
-											if (match) break;
-											var jf = json.features[j];
-											if (vals._layers[key]._latlng.lat === jf.geometry.coordinates[1] && vals._layers[key]._latlng.lng === jf.geometry.coordinates[0]) {
-													match = jf
-											} else {
-											}
+						//- $.get('/publishers/esta/json/json_'+feature._id+'.json')
+						//- .then(async function(json){
+						//- 	if (json.features){
+						if (self.json[feature._id]) {
+							var counter = 0;
+							self.geo = await self.json[feature._id].features
+							.filter(function(ft, j){
+								if (self.isPointCoords(ft.geometry.coordinates)) {
+									//TODO: Add as layer, then get bounds, then get center
+									var rx = ft.geometry.coordinates.reverse();
+									var center = L.latLng(rx) 
+									latlng = center;
+									return ll1.contains(center);
+								} else {
+									var bf = L.geoJSON(ft, {
+										style: function (feature) {
+											return {color: 'tomato'};
 										}
+									}).addTo(self.map);
+									var l1 = bf.getBounds();
+									var contains = (l1.contains(latlng));
+									if (contains) {
+										ll1 = l1
+										self.buf[counter] = bf;
+										counter++
 									} else {
-										//- console.log('oops')
-										//- console.log(vals)
-										//- console.log(json)
-										if (vals._latlngs && vals._latlngs[key]) {
-											for (var j = 0; j < json.features.length; j++) {
-												if (match) break;
-												var jf = json.features[j];
-												if (key === j) {
-													match = jf //vals._latlngs[key]
-												}
-											}
-										}
-										
+										bf.remove()
 									}
-									if (match) return match;
-								})
-								.filter(function(ft, j){
-									//- console.log(ft)
-									if (self.isPointCoords(ft.geometry.coordinates)) {
-										//TODO: Add as layer, then get bounds, then get center
-										var rx = ft.geometry.coordinates.reverse();
-										var center = L.latLng(rx) 
-										latlng = center;
-										return ll1.contains(center);
-									} else {
-										var bf = L.geoJSON(ft, {
-											style: function (feature) {
-												return {color: 'tomato'};
-											}
-										}).addTo(self.map);
-										var l1 = bf.getBounds();
-										var contains = (l1.contains(latlng));
-										if (contains) {
-											ll1 = l1
-											self.buf = bf;
-										} else {
-											bf.remove()
-
-											//- console.log(latlng)
-										}
-										return contains;
-									}
-								})
-							}
+									return contains;
+								}
+							})
 							if (self.geo && self.geo.length > 0) {
 								//- console.log(self.geo)
 								if (ll1._southWest) {
 									self.map.fitBounds(ll1);
-								} 
-								//- self.map.panTo(latlng);
-								self.lMarker.setLatLng(latlng);
-								self.map.panTo(latlng);
+									var mark = L.latLngBounds(ll1).getCenter();
+									self.map.panTo(mark);
+									self.lMarker.setLatLng(mark);
+								} else {
+									self.map.panTo(latlng);
+									self.lMarker.setLatLng(latlng);
+								}
+								//- 
 								if (self.geo.length > 0) {
 									self.viewerList = true;
 								} else {
@@ -1457,19 +1448,43 @@ html
 								//- buf.remove();
 
 							}
-							buf.remove();
+						}
+						
+						buf.remove();
 
-						})
-						.catch(function(err){
-							console.log(err)
+						//- })
+						//- .catch(function(err){
+						//- 	console.log(err)
+						//- })
+					},
+					getAttributes(feature) {
+						var self = this;
+						var vals = self.lyr[feature._id]
+						$.get('/publishers/esta/json/json_'+feature._id+'.json')
+						.then(async function(json){
+							if (json.features){
+								return Object.keys(json.features[0])
+							}
 						})
 					},
 					//- arrayEqArray(arr1, arr2)
 					setView(feature, latlng){
 						var self = this;
-						if (self.buf) self.buf.remove();
-						self.cZF = (self.map.getZoom() + self.zfactor)
-						var buf = L.circle(latlng, { radius: (140 * self.cZF) }).addTo(self.map);
+						if (self.buf && self.buf.length > 0) {
+							self.buf.forEach(function(item){
+								item.remove();
+							})
+						}
+						self.cZF = (self.map.getZoom() + self.zfactor);
+						var cp = self.map.latLngToLayerPoint(latlng);
+						var x1 = cp.x-10;
+						var y1 = cp.y-10;
+						var x2 = cp.x+10;
+						var y2 = cp.y+10;
+						var p1 = self.map.layerPointToLatLng(L.point(x1,y1));
+						var p2 = self.map.layerPointToLatLng(L.point(x2, y2));
+						
+						var buf = L.featureGroup([L.circle(p1), L.circle(p2)]).addTo(self.map);
 						var ll1 = buf.getBounds();
 						var ll2 = latlng;
 						var keys;
@@ -1491,32 +1506,6 @@ html
 						
 						
 					},
-					//- /* get features contained within a given map Polygon and time range*/
-					//- containArr(mod, fts) {
-					//- 	var self = this, features;
-					//- 	var g1 = (!coords[0] || !Array.isArray(coords[0]))
-					//- 	return self.data.sort( /* ensure data sorted by time range */
-					//- 		function(a,b){return a.properties.time.end < b.properties.time.end}
-					//- 	).filter(function(feature){ /*ret documents with overlapping geotime*/
-					//- 		var g2 = self.rxArr(feature.geometry.coordinates);
-					//- 		return (self.containGeo(g1, g2)); 
-					//- 	});
-					//- }/*end get features contained within a map polygon and time range */,
-					//- /*begin map geometry contains-checker*/
-					//- containGeo(cd1, cd2) { /* does cd1 contain cd2 ? Boolean */
-					//- 	var self = this, cZF = (self.position.zoom + self.zfactor), center;
-					//- 	if (!self.map) return;
-					//- 	if (!isNaN(cd1[0])) {
-					//- 		center = L.latLng(cd1);
-					//- 	} else {
-					//- 		center = L.latLngBounds(cd1).getCenter();
-					//- 	}
-					//- 	var buf = L.circle(center, { radius: 1400 * cZF }).addTo(self.map);
-					//- 	var ll1 = buf.getBounds(),
-					//- 	ll2 = (!isNaN(cd2[0]) ? /*Point*/cd2 : /*Polygon*/L.latLngBounds(cd2) ); 
-					//- 	buf.remove();
-					//- 	return ll1.contains(ll2); 
-					//- }/*end does cd1 contain cd2 Bool*/,
 					loadLayer(item) {
 						var self = this;
 						if (self.isPointCoords(item.geometry.coordinates)) {
@@ -1526,65 +1515,18 @@ html
 									return self.styleOf(feature, feature.geometry.type)
 								},
 								pointToLayer: function(feature, latlng) {
-									//- console.log(feature, latlng);
 									var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type))
 										.on('click', function(){
 											return self.setView(feature, latlng)
 										});
-									//- console.log(circle)
-									//- L.GeoJSON.coordsToLatLng(feature.geometry.coordinates, false)
-							
 									return circle;
 								}
 							})
 						} else {
-							//- console.log('is not point')
-							//- console.log(item)
-							//- return L.GeoJSON.geometryToLayer(item, {
 							var ljson = L.GeoJSON.geometryToLayer(item)
-							//- , {
-							//- //- var geojson = L.GeoJSON(item, {
-							//- //- return L.geoJson(item, {
-							//- 	//- style: function(feature) {
-							//- 	//- 	console.log(self.styleOf(feature, feature.geometry.type))
-							//- 	//- 	return self.styleOf(feature, feature.geometry.type)
-							//- 	//- }
-							//- 	//- ,
-							//- 	onEachFeature: function(feature, layer){
-							//- 		//- console.log(feature,layer)
-							//- 		//- var tt = L.control({position: 'topleft'});
-							//- 		//- console.log(tt)
-							//- 		//- var div = L.DomUtil.create('div', 'tt', 'tt');//L.Draggable();
-							//- 		//- var keys = Object.keys(feature.properties);
-							//- 		//- var row = '';
-							//- 		//- for (var i in keys) {
-							//- 		//- 	var div = `<p><strong>${keys[i]}: </strong>${feature.properties[keys[i]]}</p>`
-							//- 		//- 	//- div.innerHTML = 
-							//- 		//- 	row += div;
-							//- 		//- 
-							//- 		//- }
-							//- 		//- var text = `<div class="row module">
-							//- 		//- 	<div class="tb-10-m0">
-							//- 		//- 		${row}
-							//- 		//- 	</div>
-							//- 		//- </div>
-							//- 		//- `;
-							//- 		//- var center = layer.getBounds().getCenter();
-							//- 		//- //- console.log(center)
-							//- 		//- //- L.DomUtil.setPosition(div, center);
-							//- 		//- //- tt.onAdd = function(map) {
-							//- 		//- //- 
-							//- 		//- //- }
-							//- 		//- //- console.log(tt)
-							//- 		//- //- tt.addTo(layer);
-							//- 		//- //- var popup = L.popup()
-							//- 		//- //- 		.setLatLng(center)
-							//- 		//- //- 		.setContent(div)
-							//- 		//- //- 		.openOn(self.map);
-							//- 		//- layer.bindPopup(text)
-							//- 	}
-							//- 
-							//- });
+							ljson.on('click', function(e){
+								self.setView(item, e.latlng)
+							})
 							ljson.setStyle(self.styleOf(item, item.geometry.type))
 							return ljson;
 						}
@@ -1839,18 +1781,10 @@ html
 							self.dataLayer = self.loadLayer(self.doc);
 							
 							self.dataLayer.bringToBack();
-							self.dataLayer.setStyle({fillColor: 'var(--highlight)'})
-							self.dataLayer.on('click', function(e){
-								//- console.log(e)
-								self.setView(self.doc, e.latlng)
-							})
-							self.dataLayer.bindTooltip(self.doc.properties.label, {interactive:true});
-							//- self.dataLayer.on('click', function(){
-							//- 	self.dataLayer.openTooltip();
-							//- })
+							//bounding layer is see-thru
+							self.dataLayer.setStyle({fillColor: 'rgba(255,255,255,0)'})
 							self.map.addLayer(self.dataLayer);
 							if (self.dataLayer._bounds) {
-								//- console.log(self.dataLayer._latlngs)
 								self.latlngs = self.dataLayer.getLatLngs();
 							} else if (self.dataLayer._layers) {
 								self.layerToDataLayer(self.dataLayer)
@@ -1862,26 +1796,14 @@ html
 								self.mapEdit = false;
 								await self.layers.forEach(async function(item, i){
 									self.lyr[item._id] = self.loadLayer(item);
-									self.lyr[item._id].setStyle({fillColor: self.c[i]});
-									self.lyr[item._id].bindTooltip(item.properties.label, {interactive:true});
-									self.lyr[item._id].on('click', function(e){
-										self.setView(item, e.latlng)
-										self.lyr[item._id].openTooltip();
-									})
 									await self.map.addLayer(self.lyr[item._id]);
-									// removed from map, but stored as variable to enable again
-									//- self.lyr[item._id].remove()
 								})
 								if (self.availablelayers && self.availablelayers.length > 0) {
 									await self.availablelayers.forEach(async function(item, i){
-										if (self.doc.properties.layers.indexOf(item._id) === -1) {
+										var keys = self.doc.properties.layers.map(function(item){return item.lid})
+
+										if (keys.indexOf(item._id) === -1) {
 											self.lyr[item._id] = self.loadLayer(item);
-											self.lyr[item._id].setStyle({fillColor: self.c[i]});
-											self.lyr[item._id].bindTooltip(item.properties.label, {interactive:true});
-											self.lyr[item._id].on('click', function(e){
-												self.setView(item, e.latlng)
-												self.lyr[item._id].openTooltip();
-											})
 											await self.map.addLayer(self.lyr[item._id]);
 											// removed from map, but stored as variable to enable again
 											self.lyr[item._id].remove()
@@ -1889,31 +1811,6 @@ html
 									})
 								}
 							} 
-							//- if (self.doc.properties.title.str !== 'Geography' && self.boundary) {
-							//- 	$.post('/census/'+self.boundary).then(function(json){
-							//- 		self.lyr[self.boundary] = self.loadLayer(json);
-							//- 		await self.map.addLayer(self.lyr[self.boundary]);
-							//- 		self.lyr[self.boundary].remove()
-							//- 	})
-							//- 	.catch(function(err){
-							//- 		console.log(err)
-							//- 	})
-							//- }
-							//- self.dataLayer.on('dragend', function(e){
-							//- 	var latlngs = [];
-							//- 	console.log(e.target.getLatLngs())
-							//- 	e.target.getLatLngs().forEach(function(latlng){
-							//- 		console.log(latlng)
-							//- 		if (latlng) {
-							//- 			latlng.forEach(function(ll){
-							//- 				console.log(ll)
-							//- 				latlngs.push([ll.lng,ll.lat])
-							//- 			})
-							//- 			latlngs.push([latlng[0].lng, latlng[0].lat])
-							//- 		}
-							//- 	})
-							//- 	self.doc.geometry.coordinates = latlngs
-							//- })
 							self.map.on('editable:vertex:rawclick', function(e){
 								self.layers.forEach(function(item, i){
 									if (item._id !== e.layer._id) {
@@ -1992,10 +1889,10 @@ html
 						if (self.btn) {// make central clipping svg d value reactive
 						var wW = ( !self.wWidth ? window.innerWidth : self.wWidth ), 
 						wH = ( !self.wHeight ? window.innerHeight : self.wHeight ), 
-						pW = ( !self.pWidth ? ( wW * (self.res?0.75:0.5) ) : self.pWidth ), 
-						pH = ( !self.pHeight ? (wH * (self.res?0.75:0.5) ) : self.pHeight ), 
+						pW = ( !self.pWidth ? ( wW * (self.res?0.5:0.5) ) : self.pWidth ), 
+						pH = ( !self.pHeight ? (wH * (self.res?0.5:0.5) ) : self.pHeight ), 
 						r = self.btn.r, cRc = (r * 0.5523), cRr = 0.81, 
-						sY = (isNaN(self.btn.y)?(wH*(self.res?0.75:0.5)):self.btn.y);
+						sY = (isNaN(self.btn.y)?(wH*(self.res?0.5:0.5)):self.btn.y);
 						var str =`M${wW},${wH}H0V0h${wW}V${wH}z 
 						M${(wW - pW) + r},${sY}c0-${cRc}-${(cRc * cRr)}-${r}-${r}-${r}
 							c-${cRc},0-${r},${(cRc * cRr)}-${r},${r} 

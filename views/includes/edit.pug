@@ -18,19 +18,14 @@ div.maintitle(style="display: block; background-color: #fff; background-color: v
 
 			div.tb-10-m0(v-if="doc && doc !== '' && edit === doc.index")
 				
-				form.tb-10-m0.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+				form.tb-10-m0.form.headrule(v-bind:id="'form_'+doc.index", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)
 					label(for="title") Edit Section Title
 					input#title(name="title", v-bind:value="doc.propeties.title")
 					include editor.pug
 				
 
-			//-
-				form.tb-10-m0.form(v-for="doc in data", v-if="edit === dindexes.indexOf(doc.index)", v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
-					input(type="hidden", name="_csrf", value= csrfToken)
-					include editor.pug
-
-div(v-if="edit === dindexes.indexOf(doc.index)", style="position:absolute;")
+div(style="position:absolute;")
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
 		,
 		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto'}", xml:space="preserve"

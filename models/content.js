@@ -4,11 +4,21 @@ var mongoose = require('mongoose'),
 		Diffs = require('./diffs.js');
 		// ,
 		// Media = require('./media.js');
+var Layer = new Schema({
+	lid: String,
+	buckets: Number,
+	colors: [String],
+	key: String,
+	low: Number,
+	high: Number,
+	log: Boolean
+})
 
 var schema = new Schema({
 	type: String,
 	index: Number,
 	properties: {
+		keys: [String],
 		title: {
 			ind: Number,
 			str: String 
@@ -46,18 +56,10 @@ var schema = new Schema({
 				layers: [String]
 			}
 		],
-		layers: [String],
+		layers: [Layer],
 		diffs: [Diffs],
 		footnotes: [ ]
 	},
-	// features: [Schema.Types.GeoJSON],
-  // // [
-	// 	{
-	// 		type: String,
-	// 		properties: {},
-	// 		geometry: Schema.Types.GoJSON
-	// 	}
-	// ],
 	geometry: Schema.Types.GeoJSON
 }, 
 //{pluralize: false}

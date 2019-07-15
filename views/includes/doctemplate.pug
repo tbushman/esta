@@ -58,8 +58,8 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 				include gpo/xml.pug
 				
 
-			div.row(v-if="edit === doc.index && loggedin && loggedin !=='' && pu && pu.properties.admin", style="padding-top:20px;")
-				form.row.form.headrule(v-bind:id="'form_'+dindexes.indexOf(doc.index)", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+			div.row(v-if="loggedin && loggedin !=='' && pu && pu.properties.admin", style="padding-top:20px;")
+				form.row.form.headrule(v-bind:id="'form_'+doc.index", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)
 					div(v-if="doc.properties.title.str !== 'Geography'", :style="{display: (mapActive ? 'block' : 'none')}")
 						include mapedit.pug
@@ -83,7 +83,7 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 				use(clip-path="url(#myPath)", xlink:href="#path")
 		path(style="pointer-events: all; overflow-y: scroll;", v-bind:d="'M0,0v'+(wHeight)+'h'+wWidth+'V0H0L0,0z'", fill="var(--primary)")
 
-div#viewer(v-if="edit === doc.index", style="position:absolute;pointer-events: none;")
+div#viewer(style="position:absolute;pointer-events: none;")
 	div.module.viewerlist(v-if="geo.length && viewerList", :style="{'pointer-events':'all',left: (wWidth / 2) + 'px',bottom:(wHeight / 2) + 'px'}")
 		p(v-text="(geo.length)+' nearby:'")
 		ul

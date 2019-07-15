@@ -1,4 +1,4 @@
-div.tb-10-m0(v-if="edit === doc.index")
+div.tb-10-m0
 	//div(style="visibility: hidden;")
 	input(v-bind:id="'inputthumb'+img.index", v-bind:name="'thumb'+img.index", v-bind:value="img.thumb", type="hidden")
 	input(v-bind:id="'inputimg'+img.index", v-bind:name="'img'+img.index", v-bind:value="img.image", type="hidden")
@@ -31,7 +31,7 @@ div.tb-10-m0(v-if="edit === doc.index")
 			div.row
 				//- div.tb-10-m0
 				label.block(for="media") Switch out image:
-				input.block.spacer.success(v-bind:id="'media_'+img.index", v-on:change="handleFile(dindexes.indexOf(doc.index),img.index)", v-bind:class="'editmedia@'+img.index", type="file", style="padding: 18px;color:#fff;")
+				input.block.spacer.success(v-bind:id="'media_'+img.index", v-on:change="handleFile(doc._id,img.index)", v-bind:class="'editmedia@'+img.index", type="file", style="padding: 18px;color:#fff;")
 				//- div.tb-10-m0
 				label.block(v-bind:for="'deletemedia_'+img.index")
 				a.danger.block.spacer(role="button", v-on:click="deleteMedia(img.index)", v-bind:id="'deletemedia_'+img.index")

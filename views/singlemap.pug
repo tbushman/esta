@@ -1,0 +1,28 @@
+extends layout
+block page
+	- var menu = 'map'
+block content
+
+	div#vue
+		svg(version="1.1", xmlns="http://www.w3.org/2000/svg" 
+			v-if="!isNaN(wWidth) && mapActive" xmlns:xlink="http://www.w3.org/1999/xlink" x="0"
+			y="0" :width="(!wWidth ? 0:wWidth)" :height="(!wHeight ? 0:wHeight)" 
+			:viewBox="'0 0 '+ wWidth +' '+ wHeight + ''" 
+			style="position:absolute;" xml:space="preserve" 
+			:style="{'enable-background':'new 0 0 '+ wWidth +' '+ wHeight}")
+			defs
+				clipPath(id="clipPath")
+					path(v-if="btn && !isNaN(wWidth)" 
+						:d="getClip()")
+		
+		// User Interface Button-->
+		div.skittle(v-if="btn.vis === 'block' && !isNaN(wWidth)" 
+		:style="{'top': btn.y+'px', 'left': btn.x+'px'}")
+		div.skittle.vis(v-if="btn.vis === 'block'" 
+		:style="{'top': btn.y +'px', 'left': btn.x +'px'}" 
+		@mousedown="clickSkittle" @mouseleave="unclickSkittle"
+		@mouseup="unclickSkittle" @touchstart="touchHandler" 
+		@touchend="touchStart" @touchmove="touchEnd")
+		div.centerallwrap(:style="{'clip-path': (!isNaN(wWidth) && mapActive ? 'url(#clipPath)' : 'none'), 'pointer-events':(mapActive ? 'none' : 'auto'), 'overflow-y': (mapActive ? 'hidden' : 'scroll'), top:'0',position:'absolute'}")
+
+			!= str

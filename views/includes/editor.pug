@@ -4,10 +4,10 @@ div.row.tb-font-m
 	div#title(v-text="doc.properties.section.str")
 
 p(style="margin-top:20px;")
-	label.tb-10-m0(v-if="edit === doc.index", for="label") Document label:
+	label.tb-10-m0(for="label") Document label:
 	input#label.tb-font-s(type="text", name="label", :value="doc.properties.label")
 p
-	label.tb-10-m0(v-if="edit === doc.index", for="description") Document description:
+	label.tb-10-m0(for="description") Document description:
 	div.description.tb-10-m0#description(v-html="doc.properties.description", style="border-bottom: 1px solid #e1e1e1;")
 p(v-if="doc.properties.footnotes", v-for="(foot, k) in doc.properties.footnotes")
 	label(v-bind:for="'footnote'+k+''", v-text="'Footnote #'+ (k+1)")
@@ -39,7 +39,7 @@ div.row
 		span Delete entry
 	a.block.spacer.tb-10-m0.tb-01-m2(v-bind:href="'/'", role="button", style="float:right; border:2px solid #000; margin-left: 20px;")
 		span Cancel
-	button.block.success.spacer.tb-10-m0.tb-03-m2(v-if="edit === doc.index", role="submit", v-bind:id="'submit_'+dindex", style="float:right;")
+	button.block.success.spacer.tb-10-m0.tb-03-m2(role="submit", v-bind:id="'submit_'+doc.index", style="float:right;")
 		span Finished editing
 
 //- p

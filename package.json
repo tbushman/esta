@@ -4,7 +4,6 @@
   "description": "web-to-indesign engine",
   "main": "./bin/www",
   "scripts": {
-    "build": "steal-tools",
     "test": "cross-env TEST_ENV=true RECORD_ENV=true jest --updateSnapshot --forceExit --detectOpenHandles",
     "test-lock": "cross-env TEST_ENV=true RECORD_ENV=false jest --forceExit --detectOpenHandles",
     "start": "cross-env TEST_ENV=false nodemon"
@@ -65,6 +64,7 @@
     "promise": "^8.0.3",
     "pug": "^2.0.4",
     "pug-runtime": "^2.0.5",
+    "randomcolor": "^0.5.4",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
     "scriptjs": "^2.5.9",
@@ -83,6 +83,5 @@
     "nodemon": "^1.19.1",
     "selenium-webdriver": "^3.6.0",
     "supertest": "^4.0.2"
-  },
-  "steal": {}
+  }
 }

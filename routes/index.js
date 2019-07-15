@@ -676,6 +676,90 @@ function ensureCurly(req, res, next) {
 	})
 }
 
+async function resetLayers(req, res, next) {
+	Content.update({}, {$set:{'properties.layers':[]}}, {multi:true}).exec(async function(err, data){
+		if (err) {
+			return next(err)
+		}
+		var set1 = {$set:{}};
+		var set2 = {$set:{}};
+		var set3 = {$set:{}};
+		var key1 = 'properties.layers';
+		set1.$set[key1] = ["5ccb69789ee39e92a59cf784","5ccb7c371c1f45935f9d79fa","5ccfde4c20005f195e68ff67"];
+		set2.$set[key1] = ["5d0b271f42c7bc8c6e755d0b"];
+		set3.$set[key1] = ["5ccfde4c20005f195e68ff67","5d0b271f42c7bc8c6e755d0b"];
+		Content.findOneAndUpdate({_id: '5cf989b465bd382260a16722'}, set1).exec((err,doc)=>{
+			if (err){return next(err)}
+			Content.findOneAndUpdate({_id: '5d2904a7b4aef770a18a2b24'}, set2).exec((err,doc)=>{
+				if (err){return next(err)}
+				console.log('ok')
+				Content.findOneAndUpdate({_id: '5ccb694f9ee39e92a59cf782'}, set3).exec((err,doc)=>{
+					if (err){return next(err)}
+					return next()
+				
+				})
+			})
+			
+		})
+	})
+}
+
+function ensureStyle(req, res, next) {
+	Content.find({}).lean().exec(function(err, data){
+		if (err) {
+			return next(err)
+		}
+		var color = require('randomcolor');
+		data.forEach(async function(doc){
+			var durl = ''+publishers+'/pu/publishers/esta/json/json_'+doc._id+'.json';
+			var dexist = await fs.existsSync(durl);
+			// var djson = null;
+			if (dexist) {
+				const djson = await fs.readFileSync(durl, 'utf8');
+				if (djson) {
+					var keys = Object.keys(JSON.parse(djson).features[0].properties)
+					Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.keys': keys}}).then((doc)=>console.log('ok')).catch((err)=>next(err));
+				}
+			}
+			if (doc.properties.layers.length > 0 && typeof doc.properties.layers[0] === 'string') {
+				
+				
+				const arr = (doc.properties.layers.length > 0 ? 
+					doc.properties.layers.map(function(layer){
+						var lurl = ''+publishers+'/pu/publishers/esta/json/json_'+layer+'.json';
+						var lexist = fs.existsSync(lurl);
+						// var ljson = null;
+						if (lexist) {
+							const ljson = fs.readFileSync(lurl, 'utf8');
+							if (ljson) {
+								var keys = Object.keys(JSON.parse(ljson).features[0].properties)
+								return {
+									lid: layer,
+									buckets: 1,
+									colors: [color()],
+									key: keys[0]
+								}
+							}
+							
+						}
+					}) : []
+				);
+				// const arr = //JSON.parse(JSON.stringify(
+				// 	layers
+				//))
+				// doc.properties.layers = layers;
+				Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.layers':arr}}).then((doc)=>console.log('ok')).catch((err)=>next(err));
+				// doc.save(function(err){
+				// 	if (err){
+				// 		return next(err)
+				// 	}
+				// })
+			}
+		});
+		return next();
+	})
+}
+
 function ensureContent(req, res, next) {
 	ContentDB.find({}).sort( { index: 1 } ).exec(function(err, data){
 		if (err) {
@@ -694,7 +778,7 @@ function getLayers(req, res, next) {
 		if (err) {
 			return next(err)
 		}
-		var layerids = doc.properties.layers || [];
+		var layerids = doc.properties.layers.map(function(layer){return layer.lid}) || [];
 		ContentDB.find({_id: {$in:layerids}}).lean().exec(function(err, data){
 			if (err) {
 				return next(err)
@@ -723,7 +807,9 @@ function getGeo(req, res, next) {
 			}
 			var reqpos = (req.session && req.session.position ? req.session.position : null)
 			await data.filter(async function(dc){
-				if (doc.properties.layers.indexOf(dc._id) === -1) {
+				var keys = doc.properties.layers.map(function(item){return item.lid})
+
+				if (keys.indexOf(dc._id) === -1) {
 					return false;
 				} else {
 					const isJ = await isJurisdiction(reqpos, dc, req.user, function(jd){
@@ -1008,6 +1094,9 @@ function getDocxBlob(now, doc, sig, cb){
   cb(docx)
 }
 
+router.get('/style', /*resetLayers/*,*/ ensureStyle/**/, function(req, res, next){
+	return res.redirect('/')
+})
 
 router.get('/runtests', function(req, res, next){
 	req.session.importgdrive = false;
@@ -1456,6 +1545,36 @@ router.get('/logout', function(req, res, next) {
 		
 	})
 })*/
+
+router.get('/viewmap/:id', getLayers, async function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	// console.log(outputPath)
+	ContentDB.findOne({_id: req.params.id}, async function(err, doc){
+		if (err) {
+			return next(err)
+		}
+
+		//console.log(result.body.toString())
+		ContentDB.find({}).sort( { index: 1 } ).exec(function(err, data){
+			if (err) {
+				return next(err)
+			}
+			var str = pug.renderFile(path.join(__dirname, '../views/includes/maptemplate.pug'), {
+				layers: req.layers,
+				doc: doc,
+				appURL: req.app.locals.appURL,
+				info: req.session.info,
+				mapActive: true
+			});
+			return res.render('singlemap', {
+				layers: req.layers,
+				doc: doc,
+				str: str,
+				mapActive: true
+			})
+		})
+	})
+})
 
 router.post('/utahcourts', async function(req, res, next){
 	// const fetch = require('node-fetch');

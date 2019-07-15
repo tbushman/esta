@@ -1023,6 +1023,8 @@ breadcrumbs a {
 .leaflet-right {
 	right: 48px!important;
 	right: calc(var(--thumbw) * 1.1 )!important;
+	left: 48px!important;
+	left: calc(var(--thumbw) * 1.1 )!important;
 }
 
 .leaflet-bottom {
