@@ -778,15 +778,19 @@ function getLayers(req, res, next) {
 		if (err) {
 			return next(err)
 		}
-		var layerids = doc.properties.layers.map(function(layer){return layer.lid}) || [];
-		ContentDB.find({_id: {$in:layerids}}).lean().exec(function(err, data){
-			if (err) {
-				return next(err)
-			}
-			req.layers = data;
-			return next();
+		if (doc.properties.layers) {
+			var layerids = doc.properties.layers.map(function(layer){return layer.lid}) || [];
+			ContentDB.find({_id: {$in:layerids}}).lean().exec(function(err, data){
+				if (err) {
+					return next(err)
+				}
+				req.layers = data;
+				return next();
 
-		})
+			})
+		} else {
+			return next()
+		}
 		// const layers = layerids.map(async function(id){
 		// 	const d = await ContentDB.findOne({_id:id}).lean().then((doc) =>doc).catch((err)=>next(err));
 		// 	return d;
@@ -807,7 +811,7 @@ function getGeo(req, res, next) {
 			}
 			var reqpos = (req.session && req.session.position ? req.session.position : null)
 			await data.filter(async function(dc){
-				var keys = doc.properties.layers.map(function(item){return item.lid})
+				var keys = (!doc.properties.layers ? [] : doc.properties.layers.map(function(item){return item.lid}))
 
 				if (keys.indexOf(dc._id) === -1) {
 					return false;
@@ -2419,7 +2423,7 @@ router.get('/list/:id/:index', getLayers, getGeo, async function(req, res, next)
 	var outputPath = url.parse(req.url).pathname;
 	// console.log(outputPath)
 	req.session.importgdrive = false;
-	ContentDB.findOne({_id: req.params.id}, async function(err, doc){
+	ContentDB.findOne({_id: req.params.id}/*, {properties:1}*/, async function(err, doc){
 		if (err) {
 			return next(err)
 		}
@@ -3047,7 +3051,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			if (!Array.isArray(JSON.parse(body.latlng)[0][0])) {
 				type = 'MultiPoint'
 			}
-			console.log(JSON.parse(body.layers))
+			// console.log(JSON.parse(body.layers))
 			var entry = {
 				_id: id,
 				type: "Feature",
@@ -3079,7 +3083,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					// (!doc.properties.media || doc.properties.media.length === 0 ? [] : doc.properties.media),
 					diffs: doc.properties.diffs,
 					footnotes: footnotes,
-					layers: JSON.parse(body.layers)
+					layers: body.layers
 				},
 				geometry: {
 					type: type,

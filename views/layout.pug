@@ -58,7 +58,7 @@ html
 				el: '#vue',
 				data: function data(){
 					return {
-						buf: [],
+						buf: null,
 						attribute: null,
 						attributes: [],
 						availablelayers: this.ifNullThenArr(!{JSON.stringify(availablelayers)}),
@@ -453,16 +453,6 @@ html
 						//- .catch(function(err){
 						//- 	console.log(err)
 						//- })
-						var keys = self.doc.properties.layers.map(function(item){return item.lid});
-						keys.forEach(function(key){
-							$.get('/publishers/esta/json/json_'+key+'.json')
-							.then(function(result){
-								self.json[key] = result;
-							})
-							.catch(function(err){
-								console.log(err)
-							})
-						})
 						if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {
 							var int = 8000;
 							self.sliderImg(int)
@@ -620,7 +610,7 @@ html
 							//- console.log('wtaf')
 						}
 
-						if (self.doc.properties.layers && self.doc.properties.layers.length === 0) {
+						if (self.doc.properties.layers && self.doc.properties.layers.length === 0 && typeof self.dataLayer.getBounds === 'function') {
 							var bounds = self.dataLayer.getBounds();
 							self.map.fitBounds(bounds)
 						}
@@ -1400,7 +1390,7 @@ html
 						//- 	if (json.features){
 						if (self.json[feature._id]) {
 							var counter = 0;
-							self.geo = await self.json[feature._id].features
+							self.geo = (!self.json[feature._id].features ? [self.json[feature._id]] : await self.json[feature._id].features
 							.filter(function(ft, j){
 								if (self.isPointCoords(ft.geometry.coordinates)) {
 									//TODO: Add as layer, then get bounds, then get center
@@ -1425,7 +1415,7 @@ html
 									}
 									return contains;
 								}
-							})
+							}))
 							if (self.geo && self.geo.length > 0) {
 								//- console.log(self.geo)
 								if (ll1._southWest) {
@@ -1470,66 +1460,143 @@ html
 					//- arrayEqArray(arr1, arr2)
 					setView(feature, latlng){
 						var self = this;
-						if (self.buf && self.buf.length > 0) {
-							self.buf.forEach(function(item){
-								item.remove();
-							})
-						}
-						self.cZF = (self.map.getZoom() + self.zfactor);
-						var cp = self.map.latLngToLayerPoint(latlng);
-						var x1 = cp.x-10;
-						var y1 = cp.y-10;
-						var x2 = cp.x+10;
-						var y2 = cp.y+10;
-						var p1 = self.map.layerPointToLatLng(L.point(x1,y1));
-						var p2 = self.map.layerPointToLatLng(L.point(x2, y2));
-						
-						var buf = L.featureGroup([L.circle(p1), L.circle(p2)]).addTo(self.map);
-						var ll1 = buf.getBounds();
-						var ll2 = latlng;
-						var keys;
-						var vals;
-						if (!self.dataLayer._layers && self.lyr[feature._id]) {
-							if (!self.lyr[feature._id]._layers) {
-								keys = Array.from(Array(self.lyr[feature._id]._latlngs.length).keys())
-							} else {
-								keys = Object.keys(self.lyr[feature._id]._layers)
+						if (self.buf) self.buf.remove()
+						self.geo = [feature]
+						self.viewerList = true;
+						self.buf = L.geoJSON(feature, {
+							style: function (feature) {
+								return {color: 'tomato'};
 							}
-							vals = self.lyr[feature._id];
-							//- console.log(feature, vals)
-						} else {
-							vals = self.dataLayer;
-							keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
-							//- console.log(keys)
-						}
-						self.filterViewerList(ll1, ll2, feature, keys, vals, buf)
+						}).addTo(self.map);
+						var l1 = self.buf.getBounds();
+						self.map.fitBounds(l1)
+						//- if (self.buf && self.buf.length > 0) {
+						//- 	self.buf.forEach(function(item){
+						//- 		item.remove();
+						//- 	})
+						//- }
+						//- self.cZF = (self.map.getZoom() + self.zfactor);
+						//- var cp = self.map.latLngToLayerPoint(latlng);
+						//- var x1 = cp.x-10;
+						//- var y1 = cp.y-10;
+						//- var x2 = cp.x+10;
+						//- var y2 = cp.y+10;
+						//- var p1 = self.map.layerPointToLatLng(L.point(x1,y1));
+						//- var p2 = self.map.layerPointToLatLng(L.point(x2, y2));
+						//- 
+						//- var buf = L.featureGroup([L.circle(p1), L.circle(p2)]).addTo(self.map);
+						//- var ll1 = buf.getBounds();
+						//- var ll2 = latlng;
+						//- var keys;
+						//- var vals;
+						//- if (!self.dataLayer._layers && self.lyr[feature._id]) {
+						//- 	if (!self.lyr[feature._id]._layers) {
+						//- 		keys = Array.from(Array(self.lyr[feature._id]._latlngs.length).keys())
+						//- 	} else {
+						//- 		keys = Object.keys(self.lyr[feature._id]._layers)
+						//- 	}
+						//- 	vals = self.lyr[feature._id];
+						//- 	//- console.log(feature, vals)
+						//- } else {
+						//- 	vals = self.dataLayer;
+						//- 	keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
+						//- 	//- console.log(keys)
+						//- }
+						//- self.filterViewerList(ll1, ll2, feature, keys, vals, buf)
 						
 						
 					},
 					loadLayer(item) {
 						var self = this;
-						if (self.isPointCoords(item.geometry.coordinates)) {
-							console.log('is point')
-							return L.GeoJSON.geometryToLayer(item, {
-								style: function(feature) {
-									return self.styleOf(feature, feature.geometry.type)
-								},
-								pointToLayer: function(feature, latlng) {
-									var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type))
-										.on('click', function(){
-											return self.setView(feature, latlng)
+						var ljson;
+						if (item.features) {
+							
+						
+							var colors = ['red','yellow','blue'];
+							var theseKeys = Object.keys(item.features[0].properties).filter(function(it){return !isNaN(parseInt(item.features[0].properties[it], 10))})
+							var thisKey = theseKeys[theseKeys.length-1];
+							var vals = item.features.map(function(feature){return parseFloat(feature.properties[thisKey])})
+							var min = Math.min.apply(null,vals);
+							var max = Math.max.apply(null,vals);
+							var range = max - min;
+							var inc = range / colors.length;
+							ljson = L.geoJson().addTo(self.map);
+							console.log(theseKeys,thisKey,vals,min,max,range,inc)
+							var isPointCoords = (!item.features ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
+							if (isPointCoords) {
+								console.log('is point')
+								var ojson = L.geoJson(item, {
+									onEachFeature:function(feature,layer){
+										var thisLayer = L.GeoJSON.geometryToLayer(feature, {
+											pointToLayer: function(ft, latlng) {
+												var circle = new L.CircleMarker(latlng)//, self.styleOf(ft, ft.geometry.type))
+													.on('click', function(){
+														return self.setView(ft, latlng)
+													});
+												return circle;
+											}
+
 										});
-									return circle;
-								}
-							})
+										colors.forEach(function(color, i){
+											var mi = inc * i;
+											var ma = (!colors[i+1] ? max : (inc * i+1));
+											//- console.log(feature.properties[thisKey], mi, ma)
+											if (feature.properties[thisKey] >= mi && feature.properties[thisKey] < ma) {
+												thisLayer.setStyle({fillColor:color, color:color})
+											}
+										})
+										thisLayer.on('click', function(e){
+											self.setView(feature, e.latlng)
+										})
+										ljson.addLayer(thisLayer)
+									}
+								})
+							} else {
+								//- console.log(item)
+
+								var ojson = L.geoJson(item, {
+									onEachFeature:function(feature,layer){
+										var thisLayer = L.GeoJSON.geometryToLayer(feature);
+										colors.forEach(function(color, i){
+											var mi = inc * i;
+											var ma = (!colors[i+1] ? max : (inc * i+1));
+											//- console.log(feature.properties[thisKey], mi, ma)
+											if (feature.properties[thisKey] >= mi && feature.properties[thisKey] < ma) {
+												thisLayer.setStyle({fillColor:color, color:color})
+											}
+										})
+										thisLayer.on('click', function(e){
+											self.setView(feature, e.latlng)
+										})
+										ljson.addLayer(thisLayer)
+									}
+								})
+							}
 						} else {
-							var ljson = L.GeoJSON.geometryToLayer(item)
-							ljson.on('click', function(e){
-								self.setView(item, e.latlng)
-							})
-							ljson.setStyle(self.styleOf(item, item.geometry.type))
-							return ljson;
+							var isPointCoords = (!item.features ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
+							if (isPointCoords) {
+								ljson = L.GeoJSON.geometryToLayer(item, {
+									style: function(feature) {
+										return self.styleOf(feature, feature.geometry.type)
+									},
+									pointToLayer: function(feature, latlng) {
+										var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type))
+											.on('click', function(){
+												return self.setView(feature, latlng)
+											});
+										return circle;
+									}
+								})
+								
+							} else {
+								ljson = L.GeoJSON.geometryToLayer(item)
+							}
+
 						}
+						var bounds = ljson.getBounds();
+						self.map.fitBounds(bounds);
+						//- ljson.setStyle(self.styleOf(item, item.geometry.type))
+						return ljson;
 						
 					},
 					layerToDataLayer(dataLayer) {
@@ -1581,6 +1648,66 @@ html
 								console.log(err)
 							})
 						}
+					},
+					canChoropleth(item, key) {
+						return !Number.isNaN(parseInt(item.properties[key], 10))
+					},
+					choropleth(item, key, colors) {
+						// item is a doc
+						var self = this;
+						var vals = features.map(function(feature){return parseFloat(feature.properties[key])})
+						var min = Math.min(vals);
+						var max = Math.max(vals);
+						var range = max - min;
+						var inc = range / colors.length;
+						colors.forEach(function(color, i){
+							var mi = inc * i;
+							var ma = (!colors[i+1] ? max : (inc * i+1));
+							
+						})
+						features.forEach(async function(item, i){
+							var pop = item.attributes.POP100;
+							var color = (
+								pop < 5000 ? colors[0] :
+								(
+									pop >= 5000 && pop < 10000 ? colors[1] :
+									(
+										pop >= 10000 && pop < 25000 ? colors[2] :
+										(
+											pop >= 25000 && pop < 50000 ? colors[3] :
+											(
+												pop >= 50000 ? colors[4] : '#ffffff'
+											)
+										)
+									)
+								)
+							);
+							var style = {
+							"clickable": true,
+							"color": "#00D",
+							"fillColor": color,//colors[i],
+							"weight": 1.0,
+							"opacity": 0.3,
+							"fillOpacity": 0.2
+							};
+							//- console.log(item)
+							var it = {geometry: {}, properties:{}};
+							it.geometry.coordinates = [item.geometry.rings];
+							it.geometry.type = 'MultiPolygon';
+							it.properties = item.attributes;
+							it.properties.name = item.attributes.name;
+							it.type = 'Feature';
+							//- console.log(it)
+							if (it.geometry.coordinates) {
+								
+								self.lyr[code] = self.loadLayer(it);
+								self.lyr[code].setStyle(style)
+								await self.map.addLayer(self.lyr[code]);
+								var bounds = self.lyr[code].getBounds();
+								self.map.fitBounds(bounds);
+								//- self.lyr[item.attributes.OBJECTID].remove()
+							}
+						})
 					},
 					async changeCensusData(e){
 						var self = this;
@@ -1774,115 +1901,130 @@ html
 						//- self.censusLayer.bringToFront();
 						self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(map);
 						self.map = map;
-						self.cZF = (18 - self.map.getZoom() + self.zfactor)
-						if (!self.dataLayer && self.doc && self.doc !== '') {
+						//- self.cZF = (18 - self.map.getZoom() + self.zfactor)
+						
+						var myRenderer = L.canvas({ padding: 0.5 });
+						var latlng;
+						if (self.doc && self.doc !== '') {
 							// generate geographic points from data
-							var myRenderer = L.canvas({ padding: 0.5 });
-							self.dataLayer = self.loadLayer(self.doc);
-							
-							self.dataLayer.bringToBack();
-							//bounding layer is see-thru
-							self.dataLayer.setStyle({fillColor: 'rgba(255,255,255,0)'})
-							self.map.addLayer(self.dataLayer);
-							if (self.dataLayer._bounds) {
-								self.latlngs = self.dataLayer.getLatLngs();
-							} else if (self.dataLayer._layers) {
-								self.layerToDataLayer(self.dataLayer)
-							}
-							var colors = self.c;//['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
-							if (self.doc.properties.title.str !== 'Geography' && self.layers && self.layers.length && typeof self.dataLayer.disableEdit === 'function') {
-								self.dataLayer.disableEdit();
-								self.dataLayer.options.interactive = false;
+							var key = self.doc._id;
+							$.get('/publishers/esta/json/json_'+key+'.json').then(async function(result){
+								if (result) {
+									self.json[key] = result;
+									self.dataLayer = await self.loadLayer(result);
+									self.map.addLayer(self.dataLayer)
+									if (!latlng) {
+										latlng = self.dataLayer.getBounds().getCenter();
+									}
+								}
+							})
+							.catch(function(err){
+								console.log(err)
+								//- self.json[key] = self.doc;
+								self.dataLayer = self.loadLayer(self.doc);
+								self.map.addLayer(self.dataLayer);
+								if (!latlng) {
+									latlng = self.dataLayer.getBounds().getCenter();
+								}
+							})
+						}
+						if (self.doc.properties.title.str !== 'Geography') {
+							var keys = self.doc.properties.layers.map(function(item){return item.lid})
+							if (self.layers && self.layers.length > 0) {
+								//- self.dataLayer.disableEdit();
+								//- self.dataLayer.options.interactive = false;
 								self.mapEdit = false;
-								await self.layers.forEach(async function(item, i){
-									self.lyr[item._id] = self.loadLayer(item);
-									await self.map.addLayer(self.lyr[item._id]);
-								})
-								if (self.availablelayers && self.availablelayers.length > 0) {
-									await self.availablelayers.forEach(async function(item, i){
-										var keys = self.doc.properties.layers.map(function(item){return item.lid})
-
-										if (keys.indexOf(item._id) === -1) {
-											self.lyr[item._id] = self.loadLayer(item);
-											await self.map.addLayer(self.lyr[item._id]);
-											// removed from map, but stored as variable to enable again
-											self.lyr[item._id].remove()
+								self.layers.forEach(function(item){
+									var key = item._id;
+									var style = self.doc.properties.layers.filter(function(item, i){
+										return item.lid === key
+									})[0];
+									var thisKey = style.key;
+									var colors = style.colors;
+									$.get('/publishers/esta/json/json_'+key+'.json').then(function(result){
+										if (result) {
+											self.json[key] = result;
+											self.lyr[key] = self.loadLayer(result);
+											self.map.addLayer(self.lyr[key])
+											if (!latlng) {
+												latlng = self.lyr[key].getBounds().getCenter();
+											}
 										}
 									})
-								}
-							} 
-							self.map.on('editable:vertex:rawclick', function(e){
-								self.layers.forEach(function(item, i){
-									if (item._id !== e.layer._id) {
-										//- item.disableEdit();
-									} else {
-										//- item.enableEdit();
-										//- self.mapEdit = true;
-									}
+									.catch(function(err){
+										console.log(err)
+										self.json[key] = item;
+										self.lyr[key] = self.loadLayer(item);
+										self.map.addLayer(self.lyr[key]);
+										if (!latlng) {
+											latlng = self.lyr[key].getBounds().getCenter();
+										}
+									})
 								})
-							})
-							self.map.on('editable:editing', function (e) {
-								e.layer.setStyle({color: 'DarkRed'});
-							});
-							self.map.on('editable:vertex:dragstart', async function(e){
-								var cll = e.vertex.latlng.__vertex.latlng;
-								var dll = self.dataLayer.getLatLngs();
-								var lvl = 0;
-								var p = 0;
-								var dl;
-								var lll = self.dataLayer.getLatLngs();
-								self.latlngs = lll;
-							})
-							self.map.on('editable:vertex:dragend', function(e){
-								console.log(e)
-								var cll = e.vertex.latlng.__vertex.latlng;
-								var dll = self.dataLayer.getLatLngs();
-								var lvl = 0;
-								var p = 0;
-								var dl;
-								self.latlngs = dll;
-								self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
-							})
-							var coords;
-							if (!self.latlngs && self.isPointLatlng(self.latlngs)) {
-								if (self.dataLayer._layers) {
-									self.layerToDataLayer(self.dataLayer)
-								} else {
-									self.latlngs = //L.CRS.wrapLatLng(
-										self.dataLayer.getLatLngs()
-									//)
-									
-								}
-								latlng = L.latLngBounds(self.latlngs).getCenter()
 							}
-							if (self.latlngs && self.latlngs[0] && self.latlngs[0][0]) {
-								latlng = //L.CRS.wrapLatLngBounds(
-									(!self.latlngs[0][0][0] || !self.latlngs[0][0][0].lat ? L.latLngBounds(self.latlngs) : L.latLngBounds(self.latlngs[0]) ).getCenter() 
-								//)
-							} else if (typeof self.dataLayer.getLatLngs === 'function'){
-								self.latlngs = self.dataLayer.getLatLngs()
-								latlng = L.latLngBounds(self.latlngs).getCenter()
-							} else if (self.latlng && self.latlng !== '') {
-								latlng = self.latlng
-							} else {
-								console.log(self.latlng)
+							if (self.availablelayers && self.availablelayers.length > 0) {
+								self.availablelayers.forEach(function(item, i){
+									var key = item._id;
+									$.get('/publishers/esta/json/json_'+key+'.json').then(function(result){
+										if (result) {
+											self.json[key] = result;
+											self.lyr[key] = self.loadLayer(item)
+											self.map.addLayer(self.lyr[key])
+											if (!latlng) {
+												latlng = self.lyr[key].getBounds().getCenter();
+											}
+										}
+									})
+									.catch(function(err){
+										console.log(err)
+										self.json[key] = item;
+										self.lyr[key] = self.loadLayer(item);
+										self.map.addLayer(self.lyr[key]);
+										if (!latlng) {
+											latlng = self.lyr[key].getBounds().getCenter();
+										}
+									})
+								})
 							}
-							var mapEdit = self.mapEdit;
-							//- if (self.map) self.setView(self.map.getLatLng());
-							// TODO admin only for certain things?
-							//- if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && self.dataLayer._latlngs.length < 2) {
-							//- 	self.dataLayer.enableEdit();
-							//- 	self.mapEdit = true;
-							//- }
+						} 
+						if (latlng) {
 							self.lMarker = L.marker(latlng, {draggable: true}).addTo(self.map);
-							self.map.panTo(latlng);
-							//- self.setView()
+							self.map.panTo(latlng)
 							cb(latlng)
-
-						} else {
-							cb(null)
-						// console.log('when?')
 						}
+
+							//- self.map.on('editable:vertex:rawclick', function(e){
+							//- 	self.layers.forEach(function(item, i){
+							//- 		if (item._id !== e.layer._id) {
+							//- 			//- item.disableEdit();
+							//- 		} else {
+							//- 			//- item.enableEdit();
+							//- 			//- self.mapEdit = true;
+							//- 		}
+							//- 	})
+							//- })
+							//- self.map.on('editable:editing', function (e) {
+							//- 	e.layer.setStyle({color: 'DarkRed'});
+							//- });
+							//- self.map.on('editable:vertex:dragstart', async function(e){
+							//- 	var cll = e.vertex.latlng.__vertex.latlng;
+							//- 	var dll = self.dataLayer.getLatLngs();
+							//- 	var lvl = 0;
+							//- 	var p = 0;
+							//- 	var dl;
+							//- 	var lll = self.dataLayer.getLatLngs();
+							//- 	self.latlngs = lll;
+							//- })
+							//- self.map.on('editable:vertex:dragend', function(e){
+							//- 	console.log(e)
+							//- 	var cll = e.vertex.latlng.__vertex.latlng;
+							//- 	var dll = self.dataLayer.getLatLngs();
+							//- 	var lvl = 0;
+							//- 	var p = 0;
+							//- 	var dl;
+							//- 	self.latlngs = dll;
+							//- 	self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
+							//- })
 					},
 					getClip() { 
 						var self = this;
