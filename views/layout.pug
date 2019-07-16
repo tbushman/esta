@@ -28,8 +28,9 @@ html
 			var module = {};
 		//- script(type="text/javascript", src="/scripts/xth.js")
 		//- script(type="text/javascript", src="/scripts/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
+		script(src="https://cdn.tiny.cloud/1/yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7/tinymce/5/tinymce.min.js" referrerpolicy="origin")
 
-		script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
+		//- script(type="text/javascript", src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=yb2pwtctf7qznwdoo61w3kyj127j61gch5uhhzneop9mfkg7")
 	body
 		block page
 		block header
@@ -1506,13 +1507,44 @@ html
 						
 						
 					},
-					loadLayer(item) {
+					onEachFeaturePoly(id,feature,layer){
+						
+					},
+					onEachFeaturePoint(id, feature,layer){
+						//- var thisLayer = L.GeoJSON.geometryToLayer(feature, {
+						//- 	pointToLayer: function(ft, latlng) {
+						//- 		var circle = new L.CircleMarker(latlng)//, self.styleOf(ft, ft.geometry.type))
+						//- 			.on('click', function(){
+						//- 				return self.setView(ft, latlng)
+						//- 			});
+						//- 		return circle;
+						//- 	}
+						//- 
+						//- });
+						//- colors.forEach(function(color, i){
+						//- 	var mi = inc * i;
+						//- 	var ma = (!colors[i+1] ? max : (inc * i+1));
+						//- 	//- console.log(feature.properties[thisKey], mi, ma)
+						//- 	if (feature.properties[thisKey] >= mi && feature.properties[thisKey] < ma) {
+						//- 		thisLayer.setStyle({fillColor:color, color:color})
+						//- 	}
+						//- })
+						//- thisLayer.on('click', function(e){
+						//- 	self.setView(feature, e.latlng)
+						//- })
+						//- ljson.addLayer(thisLayer)
+					},
+					loadLayer(item, id) {
 						var self = this;
 						var ljson;
-						if (item.features) {
+						var style = (!id ? {buckets:1,colors:['rgba(255,255,255,0.2)']} : self.doc.properties.layers.filter(function(item, i){
+							return item.lid === id
+						})[0]);
+						if (item.features && item.features[0]) {
 							
 						
-							var colors = ['red','yellow','blue'];
+							//- var colors = ['red','yellow','blue'];
+							var colors = style.colors;
 							var theseKeys = Object.keys(item.features[0].properties).filter(function(it){return !isNaN(parseInt(item.features[0].properties[it], 10))})
 							var thisKey = theseKeys[theseKeys.length-1];
 							var vals = item.features.map(function(feature){return parseFloat(feature.properties[thisKey])})
@@ -1521,7 +1553,7 @@ html
 							var range = max - min;
 							var inc = range / colors.length;
 							ljson = L.geoJson().addTo(self.map);
-							console.log(theseKeys,thisKey,vals,min,max,range,inc)
+							console.log(thisKey,min,max,inc)
 							var isPointCoords = (!item.features ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
 							if (isPointCoords) {
 								console.log('is point')
@@ -1538,11 +1570,11 @@ html
 
 										});
 										colors.forEach(function(color, i){
-											var mi = inc * i;
+											var mi = min;
 											var ma = (!colors[i+1] ? max : (inc * i+1));
 											//- console.log(feature.properties[thisKey], mi, ma)
 											if (feature.properties[thisKey] >= mi && feature.properties[thisKey] < ma) {
-												thisLayer.setStyle({fillColor:color, color:color})
+												thisLayer.setStyle({fillColor:color, color:color, stroke:2})
 											}
 										})
 										thisLayer.on('click', function(e){
@@ -1562,7 +1594,7 @@ html
 											var ma = (!colors[i+1] ? max : (inc * i+1));
 											//- console.log(feature.properties[thisKey], mi, ma)
 											if (feature.properties[thisKey] >= mi && feature.properties[thisKey] < ma) {
-												thisLayer.setStyle({fillColor:color, color:color})
+												thisLayer.setStyle({fillColor:color, color:color, stroke:1})
 											}
 										})
 										thisLayer.on('click', function(e){
@@ -1573,7 +1605,7 @@ html
 								})
 							}
 						} else {
-							var isPointCoords = (!item.features ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
+							var isPointCoords = (!item.features || !item.features[0] ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
 							if (isPointCoords) {
 								ljson = L.GeoJSON.geometryToLayer(item, {
 									style: function(feature) {
@@ -1648,66 +1680,6 @@ html
 								console.log(err)
 							})
 						}
-					},
-					canChoropleth(item, key) {
-						return !Number.isNaN(parseInt(item.properties[key], 10))
-					},
-					choropleth(item, key, colors) {
-						// item is a doc
-						var self = this;
-						var vals = features.map(function(feature){return parseFloat(feature.properties[key])})
-						var min = Math.min(vals);
-						var max = Math.max(vals);
-						var range = max - min;
-						var inc = range / colors.length;
-						colors.forEach(function(color, i){
-							var mi = inc * i;
-							var ma = (!colors[i+1] ? max : (inc * i+1));
-							
-						})
-						features.forEach(async function(item, i){
-							var pop = item.attributes.POP100;
-							var color = (
-								pop < 5000 ? colors[0] :
-								(
-									pop >= 5000 && pop < 10000 ? colors[1] :
-									(
-										pop >= 10000 && pop < 25000 ? colors[2] :
-										(
-											pop >= 25000 && pop < 50000 ? colors[3] :
-											(
-												pop >= 50000 ? colors[4] : '#ffffff'
-											)
-										)
-									)
-								)
-							);
-							var style = {
-							"clickable": true,
-							"color": "#00D",
-							"fillColor": color,//colors[i],
-							"weight": 1.0,
-							"opacity": 0.3,
-							"fillOpacity": 0.2
-							};
-							//- console.log(item)
-							var it = {geometry: {}, properties:{}};
-							it.geometry.coordinates = [item.geometry.rings];
-							it.geometry.type = 'MultiPolygon';
-							it.properties = item.attributes;
-							it.properties.name = item.attributes.name;
-							it.type = 'Feature';
-							//- console.log(it)
-							if (it.geometry.coordinates) {
-								
-								self.lyr[code] = self.loadLayer(it);
-								self.lyr[code].setStyle(style)
-								await self.map.addLayer(self.lyr[code]);
-								var bounds = self.lyr[code].getBounds();
-								self.map.fitBounds(bounds);
-								//- self.lyr[item.attributes.OBJECTID].remove()
-							}
-						})
 					},
 					async changeCensusData(e){
 						var self = this;
@@ -1871,6 +1843,37 @@ html
 							self.map.fitBounds(bounds);
 						}
 						
+					},
+					numberColorBucket(lid, e) {
+						var self = this;
+						var length = parseInt(e.target.value,10);
+						self.doc.properties.layers.forEach(function(item, j){
+							if (item.lid === lid) {
+								console.log(self.doc.properties.layers[j].colors.length, length)
+								if (self.doc.properties.layers[j].colors.length < length) {
+									var diff = length - self.doc.properties.layers[j].colors.length;
+									for (var i = 0; i < diff; i++) {
+										self.doc.properties.layers[j].colors.push('')
+									}
+								} else {
+									var diff = self.doc.properties.layers[j].colors.length - length;
+									self.doc.properties.layers[j].colors.splice(length-1, diff)
+								}
+								self.lyr[lid] = self.loadLayer(self.json[lid], lid)
+								//- self.doc.properties.layers[j].colors[index] = e.target.value
+							}
+						});
+					},
+					changeColorBucket(lid, index, e) {
+						var self = this;
+						self.doc.properties.layers.forEach(function(item, j){
+							if (item.lid === lid) {
+								self.doc.properties.layers[j].colors[index] = e.target.value;
+								self.lyr[lid] = self.loadLayer(self.json[lid], lid)
+
+							}
+						});
+						
 					}
 					 /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
 					async loadMap(cb) {
@@ -1936,11 +1939,7 @@ html
 								self.mapEdit = false;
 								self.layers.forEach(function(item){
 									var key = item._id;
-									var style = self.doc.properties.layers.filter(function(item, i){
-										return item.lid === key
-									})[0];
-									var thisKey = style.key;
-									var colors = style.colors;
+									
 									$.get('/publishers/esta/json/json_'+key+'.json').then(function(result){
 										if (result) {
 											self.json[key] = result;
@@ -1970,9 +1969,7 @@ html
 											self.json[key] = result;
 											self.lyr[key] = self.loadLayer(item)
 											self.map.addLayer(self.lyr[key])
-											if (!latlng) {
-												latlng = self.lyr[key].getBounds().getCenter();
-											}
+											self.lyr[key].remove()
 										}
 									})
 									.catch(function(err){
@@ -1980,9 +1977,7 @@ html
 										self.json[key] = item;
 										self.lyr[key] = self.loadLayer(item);
 										self.map.addLayer(self.lyr[key]);
-										if (!latlng) {
-											latlng = self.lyr[key].getBounds().getCenter();
-										}
+										self.lyr[key].remove()
 									})
 								})
 							}

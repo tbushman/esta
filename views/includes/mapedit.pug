@@ -4,17 +4,23 @@ fieldset.lcontrol(style="padding:0;border:none;", v-cloak)
 	legend(style="font-size: 11px;") layers
 	div(v-for="(layer, o) in layers")
 		a.drop(style="display: flex;", @click="subDropdown($event)")
-			.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
+			.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;pointer-events:none;")
 
 				img(:src="!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? layer.properties.media[0].thumb : layer.properties.media[layer.properties.media.length - 1].thumb ", style="pointer-events: none;")
 			
 			span.tb-font-m(v-text="layer.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
 			input(type="checkbox", :value="layer._id", :id="'layer_'+o", v-text="layer.properties.label", style="position:absolute;", @click="changeLayers(layer._id, $event)", :checked="(doc.properties.layers.map(function(item){return item.lid}).indexOf(layer._id) !== -1)")
 		div.slidedown(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id")
-			legend(style="font-size: 11px;") style
-			select(@change="changeAttribute(layer._id, $event)")
+			legend.block(style="font-size: 11px;") style
+			label.block(style="font-size: 9px;margin-top:10px;", for="key") Key
+			select#key.block(@change="changeAttribute(layer._id, $event)", style="margin-top:0;")
 				option(v-for="(item,l) in layer.properties.keys", v-text="item", :value="item", :selected="item === style.key")
-
+			label.block(style="font-size: 9px;", for="buckets") # Buckets
+			input.block(type="number", min="1", max="4", v-model="style.buckets", style="margin-top:0;", @change="numberColorBucket(style.lid, $event)")
+			legend.block(style="font-size: 11px;") Color
+			div.row(v-for="(c,j) in style.colors")
+				label.block(style="font-size: 9px;", :for="'color+'+j")
+				input.block(type="color", v-model="style.colors[j]", @change="changeColorBucket(style.lid, j, $event)")
 			//- a.drop(v-for="(p, j) in Object.keys(style)")
 			//- 
 			//- 	.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
@@ -24,7 +30,7 @@ fieldset.lcontrol(style="padding:0;border:none;", v-cloak)
 			//- 	input(type="radio", :value="p", :id="'attribute_'+p", v-text="p", style="position:absolute;", @click="", :checked="(style.key === p)")
 		
 
-	legend(style="font-size: 11px;", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0") Available layers
+	legend.block(style="font-size: 11px; margin-top:10px;", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0") more
 	a.drop(style="display: flex;", @click="subDropdown($event)", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0")
 		.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;pointer-events:none;")
 			img(src="/images/icons/add.svg", style="pointer-events: none;")

@@ -718,7 +718,7 @@ function ensureStyle(req, res, next) {
 				const djson = await fs.readFileSync(durl, 'utf8');
 				if (djson) {
 					var keys = Object.keys(JSON.parse(djson).features[0].properties)
-					Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.keys': keys}}).then((doc)=>console.log('ok')).catch((err)=>next(err));
+					await Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.keys': keys}}).then((doc)=>console.log('ok')).catch((err)=>next(err));
 				}
 			}
 			if (doc.properties.layers.length > 0 && typeof doc.properties.layers[0] === 'string') {
@@ -774,12 +774,12 @@ function ensureContent(req, res, next) {
 }
 
 function getLayers(req, res, next) {
-	ContentDB.findOne({_id:req.params.id}).lean().exec(function(err, doc){
+	ContentDB.findOne({_id:req.params.id}).lean().exec(async function(err, doc){
 		if (err) {
 			return next(err)
 		}
 		if (doc.properties.layers) {
-			var layerids = doc.properties.layers.map(function(layer){return layer.lid}) || [];
+			var layerids = await doc.properties.layers.map(function(layer){return layer.lid}) || [];
 			ContentDB.find({_id: {$in:layerids}}).lean().exec(function(err, data){
 				if (err) {
 					return next(err)

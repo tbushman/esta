@@ -251,11 +251,11 @@ blockquote
 	float: right;
 }
 .block {
-	width: auto;
+	width: 100%;
 	left: 0;
 	right: 0;
 	display: block;
-	text-align: center;
+	/* text-align: center; */
 }
 
 .sticky {
@@ -645,7 +645,7 @@ fieldset select:hover {
 	z-index: 99999;
 	position: fixed;
 	left: 0;
-	right: auto;
+	right: var(--thumbw);
 	top: calc(var(--thumbw) * 1.2);
 	bottom: auto;
 	width: var(--thumbw);
@@ -659,7 +659,7 @@ fieldset select:hover {
 }
 
 .lcontrol select {
-  width: auto!important;
+  width: 100%!important;
 } 
 /* .lcontrol select option {
   width: 45px;
