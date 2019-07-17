@@ -584,7 +584,7 @@ html
 							}
 						}
 						if (self.lyr[id]) {
-							self.map.addLayer(self.lyr[id]);
+							//- self.map.addLayer(self.lyr[id]);
 							var bounds = self.lyr[id].getBounds();
 							self.map.fitBounds(bounds);
 						}
@@ -2002,7 +2002,7 @@ html
 										if (result) {
 											self.json[key] = result;
 											self.lyr[key] = self.loadLayer(result, key);
-											self.map.addLayer(self.lyr[key])
+											//- self.map.addLayer(self.lyr[key])
 											if (!latlng) {
 												latlng = self.lyr[key].getBounds().getCenter();
 												self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
@@ -2015,7 +2015,7 @@ html
 										console.log(err)
 										self.json[key] = item;
 										self.lyr[key] = self.loadLayer(item, key);
-										self.map.addLayer(self.lyr[key]);
+										//- self.map.addLayer(self.lyr[key]);
 										if (!latlng) {
 											latlng = self.lyr[key].getBounds().getCenter();
 											self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
@@ -2032,7 +2032,7 @@ html
 										if (result) {
 											self.json[key] = result;
 											self.lyr[key] = self.loadLayer(item, key)
-											self.map.addLayer(self.lyr[key])
+											//- self.map.addLayer(self.lyr[key])
 											self.lyr[key].remove()
 										}
 									})
@@ -2040,7 +2040,7 @@ html
 										console.log(err)
 										self.json[key] = item;
 										self.lyr[key] = self.loadLayer(item, key);
-										self.map.addLayer(self.lyr[key]);
+										//- self.map.addLayer(self.lyr[key]);
 										self.lyr[key].remove()
 									})
 								})
