@@ -3083,7 +3083,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					// (!doc.properties.media || doc.properties.media.length === 0 ? [] : doc.properties.media),
 					diffs: doc.properties.diffs,
 					footnotes: footnotes,
-					layers: body.layers
+					layers: (!body.layers ? [] : JSON.parse(body.layers))
 				},
 				geometry: {
 					type: type,

@@ -59,6 +59,7 @@ html
 				el: '#vue',
 				data: function data(){
 					return {
+						colorTimeout: null,
 						buf: null,
 						attribute: null,
 						attributes: [],
@@ -68,7 +69,7 @@ html
 						lvl: 'h',
 						btn: { x: (this.wWidth / 2), 
 							y: (this.wHeight/ 2),
-							r: 42,
+							r: 21,
 							vis: (!this.mapActive || !this.mapEdit ? null : 'block')
 						},
 						h: 0,
@@ -340,6 +341,11 @@ html
 				
 				updated: function(){
 					var self = this;
+					if (self.colorTimeout) clearTimeout(self.colorTimeout);
+				},
+				beforeDestroy: function(){
+					var self = this;
+					if (self.colorTimeout) clearTimeout(self.colorTimeout);
 				},
 				mounted: function(){
 					$(document).ready(function(){
@@ -412,7 +418,7 @@ html
 							plugins: 'lists',
 							valid_elements: '*[*]',
 							setup: function (editor) {
-								editor.addButton('footnote', {
+								editor.ui.registry.addButton('footnote', {
 									text: 'Add footnote',
 									icon: 'link',
 									onclick: function(){
@@ -573,7 +579,7 @@ html
 							}
 							
 							if (!self.lyr[id]) {
-								self.lyr[id] = self.loadLayer(thisAvailableLayer);
+								self.lyr[id] = self.loadLayer(thisAvailableLayer, id);
 								self.lyr[id].options.interactive = true;
 							}
 						}
@@ -976,6 +982,7 @@ html
 								self.mapEdit = !mapEdit;
 							}
 							document.getElementById('viewer').scrollIntoView();
+							//- tinymce.get('description').hide();
 						} else {
 							if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && typeof self.dataLayer.disableEdit === 'function') {
 								self.dataLayer.disableEdit();
@@ -983,6 +990,8 @@ html
 							}
 
 							document.getElementById('inputs').scrollIntoView();
+							//- tinymce.get('description').show();
+
 						}
 						self.mapActive = !mapActive;
 						if (self.mapActive) {
@@ -1354,11 +1363,12 @@ html
 						return latlngs;
 					},
 					isPointCoords(ll) {
-						if (ll.length === 2 && !Array.isArray(ll[0])) {
+						if (ll.length === 2 || ll.length === 3 && !Array.isArray(ll[0])) {
 							//- console.log('l 1')
 							return true
 						//- } else {
-						} else if (ll[0][0] && ll[0].length === 2 && !Array.isArray(ll[0][0])) {
+						} else 
+						if (ll[0][0] && ll[0].length === 2 && !Array.isArray(ll[0][0])) {
 							//- console.log(ll)
 							//- console.log('l 2')
 							return true
@@ -1470,7 +1480,11 @@ html
 							}
 						}).addTo(self.map);
 						var l1 = self.buf.getBounds();
+						var c = l1.getCenter();
 						self.map.fitBounds(l1)
+						self.lMarker.setLatLng(c);
+						self.lMarker.setOpacity(1);
+						
 						//- if (self.buf && self.buf.length > 0) {
 						//- 	self.buf.forEach(function(item){
 						//- 		item.remove();
@@ -1537,7 +1551,10 @@ html
 					loadLayer(item, id) {
 						var self = this;
 						var ljson;
-						var style = (!id ? {buckets:1,colors:['rgba(255,255,255,0.2)']} : self.doc.properties.layers.filter(function(item, i){
+						if (self.lyr[id] && typeof self.lyr[id].clearLayers === 'function') {
+							self.lyr[id].clearLayers();
+						}
+						var style = (!id ? {buckets:1,colors:['#fff']} : self.doc.properties.layers.filter(function(item, i){
 							return item.lid === id
 						})[0]);
 						if (item.features && item.features[0]) {
@@ -1546,8 +1563,11 @@ html
 							//- var colors = ['red','yellow','blue'];
 							var colors = style.colors;
 							var theseKeys = Object.keys(item.features[0].properties).filter(function(it){return !isNaN(parseInt(item.features[0].properties[it], 10))})
-							var thisKey = theseKeys[theseKeys.length-1];
-							var vals = item.features.map(function(feature){return parseFloat(feature.properties[thisKey])})
+							var thisKey = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
+							var vals = item.features.map(function(feature){
+								return (!isNaN(parseInt(feature.properties[thisKey],10)) ? feature.properties[thisKey] : null) 
+								//- return parseFloat(feature.properties[thisKey]
+								})
 							var min = Math.min.apply(null,vals);
 							var max = Math.max.apply(null,vals);
 							var range = max - min;
@@ -1558,10 +1578,25 @@ html
 							if (isPointCoords) {
 								console.log('is point')
 								var ojson = L.geoJson(item, {
+									
 									onEachFeature:function(feature,layer){
 										var thisLayer = L.GeoJSON.geometryToLayer(feature, {
+											//- style: function(feature){
+											//- 	return {fillColor:'#fff',color:'#fff'}
+											//- },
 											pointToLayer: function(ft, latlng) {
-												var circle = new L.CircleMarker(latlng)//, self.styleOf(ft, ft.geometry.type))
+												var thisVal = ft.properties[thisKey]//parseFloat(feature.properties[thisKey])
+												var cl = colors.filter(function(color,i){
+													var mi = min;
+													var ma = (!colors[i+1] ? max : (inc * i+1));
+													return (thisVal >= mi && thisVal <= ma)
+													//- if (thisVal >= mi && thisVal <= ma) {
+													//- 	console.log(ft.properties[thisKey], mi, ma, color)
+													//- 	return {fillColor:color, color:color, opacity: 0.8, fillOpacity: 0.6}
+													//- }
+												})[0]
+												var style = {fillColor:cl, color:cl, opacity: 0.8, fillOpacity: 0.6, radius: 8}
+												var circle = new L.CircleMarker(latlng, style)//, self.styleOf(ft, ft.geometry.type))
 													.on('click', function(){
 														return self.setView(ft, latlng)
 													});
@@ -1569,14 +1604,8 @@ html
 											}
 
 										});
-										colors.forEach(function(color, i){
-											var mi = min;
-											var ma = (!colors[i+1] ? max : (inc * i+1));
-											//- console.log(feature.properties[thisKey], mi, ma)
-											if (feature.properties[thisKey] >= mi && feature.properties[thisKey] < ma) {
-												thisLayer.setStyle({fillColor:color, color:color, stroke:2})
-											}
-										})
+										//- thisLayer.setStyle({fillColor:'#fff',color:'#fff', weight:2, opacity: 0.3, fillOpacity: 0.2})
+										
 										thisLayer.on('click', function(e){
 											self.setView(feature, e.latlng)
 										})
@@ -1587,14 +1616,22 @@ html
 								//- console.log(item)
 
 								var ojson = L.geoJson(item, {
+									
 									onEachFeature:function(feature,layer){
-										var thisLayer = L.GeoJSON.geometryToLayer(feature);
+										var thisLayer = L.GeoJSON.geometryToLayer(feature
+											//- , {style: function(feature){
+											//- 			return {fillColor:'#fff',color:'#fff'}
+											//- 		}
+											//- 	}
+										);
+										thisLayer.setStyle({fillColor:'#fff',color:'#fff', weight:1, opacity: 0.3, fillOpacity: 0.2})
 										colors.forEach(function(color, i){
 											var mi = inc * i;
 											var ma = (!colors[i+1] ? max : (inc * i+1));
+											var thisVal = parseFloat(feature.properties[thisKey])
 											//- console.log(feature.properties[thisKey], mi, ma)
-											if (feature.properties[thisKey] >= mi && feature.properties[thisKey] < ma) {
-												thisLayer.setStyle({fillColor:color, color:color, stroke:1})
+											if (thisVal >= mi && thisVal < ma) {
+												thisLayer.setStyle({fillColor:color, color:color, opacity: 0.8, fillOpacity: 0.6})
 											}
 										})
 										thisLayer.on('click', function(e){
@@ -1604,7 +1641,8 @@ html
 									}
 								})
 							}
-						} else {
+						} 
+						else {
 							var isPointCoords = (!item.features || !item.features[0] ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
 							if (isPointCoords) {
 								ljson = L.GeoJSON.geometryToLayer(item, {
@@ -1619,14 +1657,15 @@ html
 										return circle;
 									}
 								})
-								
+						
 							} else {
+								console.log('wtaff?')
 								ljson = L.GeoJSON.geometryToLayer(item)
 							}
-
+						
 						}
-						var bounds = ljson.getBounds();
-						self.map.fitBounds(bounds);
+						//- var bounds = ljson.getBounds();
+						//- self.map.fitBounds(bounds);
 						//- ljson.setStyle(self.styleOf(item, item.geometry.type))
 						return ljson;
 						
@@ -1755,7 +1794,7 @@ html
 										
 										self.lyr[code] = self.loadLayer(it);
 										self.lyr[code].setStyle(style)
-										await self.map.addLayer(self.lyr[code]);
+										//- await self.map.addLayer(self.lyr[code]);
 										var bounds = self.lyr[code].getBounds();
 										self.map.fitBounds(bounds);
 										//- self.lyr[item.attributes.OBJECTID].remove()
@@ -1828,7 +1867,7 @@ html
 										
 										self.lyr[item.attributes.OBJECTID] = self.loadLayer(it);
 										self.lyr[item.attributes.OBJECTID].setStyle({fillColor: self.c[i]})
-										await self.map.addLayer(self.lyr[item.attributes.OBJECTID]);
+										//- await self.map.addLayer(self.lyr[item.attributes.OBJECTID]);
 										//- self.lyr[item.attributes.OBJECTID].remove()
 									}
 								})
@@ -1846,33 +1885,42 @@ html
 					},
 					numberColorBucket(lid, e) {
 						var self = this;
-						var length = parseInt(e.target.value,10);
-						self.doc.properties.layers.forEach(function(item, j){
-							if (item.lid === lid) {
-								console.log(self.doc.properties.layers[j].colors.length, length)
-								if (self.doc.properties.layers[j].colors.length < length) {
-									var diff = length - self.doc.properties.layers[j].colors.length;
-									for (var i = 0; i < diff; i++) {
-										self.doc.properties.layers[j].colors.push('')
+						if (self.colorTimeout) clearTimeout(self.colorTimeout);
+						self.colorTimeout = setTimeout(function(){
+							var length = parseInt(e.target.value,10);
+							self.doc.properties.layers.forEach(function(item, j){
+								if (item.lid === lid) {
+									console.log(self.doc.properties.layers[j].colors.length, length)
+									if (self.doc.properties.layers[j].colors.length < length) {
+										var diff = length - self.doc.properties.layers[j].colors.length;
+										for (var i = 0; i < diff; i++) {
+											self.doc.properties.layers[j].colors.push('#000000')
+										}
+									} else {
+										var diff = self.doc.properties.layers[j].colors.length - length;
+										self.doc.properties.layers[j].colors.splice(length-1, diff)
 									}
-								} else {
-									var diff = self.doc.properties.layers[j].colors.length - length;
-									self.doc.properties.layers[j].colors.splice(length-1, diff)
+									self.lyr[lid] = self.loadLayer(self.json[lid], lid)
+									//- self.doc.properties.layers[j].colors[index] = e.target.value
 								}
-								self.lyr[lid] = self.loadLayer(self.json[lid], lid)
-								//- self.doc.properties.layers[j].colors[index] = e.target.value
-							}
-						});
+							});
+						},500)
+						
 					},
 					changeColorBucket(lid, index, e) {
 						var self = this;
-						self.doc.properties.layers.forEach(function(item, j){
-							if (item.lid === lid) {
-								self.doc.properties.layers[j].colors[index] = e.target.value;
-								self.lyr[lid] = self.loadLayer(self.json[lid], lid)
+						if (self.colorTimeout) clearTimeout(self.colorTimeout);
 
-							}
-						});
+						self.colorTimeout = setTimeout(function(){
+							self.doc.properties.layers.forEach(function(item, j){
+								if (item.lid === lid) {
+									self.doc.properties.layers[j].colors[index] = e.target.value;
+									self.lyr[lid] = self.loadLayer(self.json[lid], lid)
+
+								}
+							});
+						},500)
+						
 						
 					}
 					 /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
@@ -1908,6 +1956,10 @@ html
 						
 						var myRenderer = L.canvas({ padding: 0.5 });
 						var latlng;
+						var customIcon = L.icon({
+							iconUrl: '/images/buttonmarker.svg',
+							iconSize: [33, 33]
+						});
 						if (self.doc && self.doc !== '') {
 							// generate geographic points from data
 							var key = self.doc._id;
@@ -1918,6 +1970,9 @@ html
 									self.map.addLayer(self.dataLayer)
 									if (!latlng) {
 										latlng = self.dataLayer.getBounds().getCenter();
+										self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+										self.map.panTo(latlng)
+
 									}
 								}
 							})
@@ -1928,6 +1983,9 @@ html
 								self.map.addLayer(self.dataLayer);
 								if (!latlng) {
 									latlng = self.dataLayer.getBounds().getCenter();
+									self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+									self.map.panTo(latlng)
+
 								}
 							})
 						}
@@ -1943,20 +2001,26 @@ html
 									$.get('/publishers/esta/json/json_'+key+'.json').then(function(result){
 										if (result) {
 											self.json[key] = result;
-											self.lyr[key] = self.loadLayer(result);
+											self.lyr[key] = self.loadLayer(result, key);
 											self.map.addLayer(self.lyr[key])
 											if (!latlng) {
 												latlng = self.lyr[key].getBounds().getCenter();
+												self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+												self.map.panTo(latlng)
+
 											}
 										}
 									})
 									.catch(function(err){
 										console.log(err)
 										self.json[key] = item;
-										self.lyr[key] = self.loadLayer(item);
+										self.lyr[key] = self.loadLayer(item, key);
 										self.map.addLayer(self.lyr[key]);
 										if (!latlng) {
 											latlng = self.lyr[key].getBounds().getCenter();
+											self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+											self.map.panTo(latlng)
+
 										}
 									})
 								})
@@ -1967,7 +2031,7 @@ html
 									$.get('/publishers/esta/json/json_'+key+'.json').then(function(result){
 										if (result) {
 											self.json[key] = result;
-											self.lyr[key] = self.loadLayer(item)
+											self.lyr[key] = self.loadLayer(item, key)
 											self.map.addLayer(self.lyr[key])
 											self.lyr[key].remove()
 										}
@@ -1975,7 +2039,7 @@ html
 									.catch(function(err){
 										console.log(err)
 										self.json[key] = item;
-										self.lyr[key] = self.loadLayer(item);
+										self.lyr[key] = self.loadLayer(item, key);
 										self.map.addLayer(self.lyr[key]);
 										self.lyr[key].remove()
 									})
@@ -1983,8 +2047,6 @@ html
 							}
 						} 
 						if (latlng) {
-							self.lMarker = L.marker(latlng, {draggable: true}).addTo(self.map);
-							self.map.panTo(latlng)
 							cb(latlng)
 						}
 

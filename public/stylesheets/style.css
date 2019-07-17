@@ -654,8 +654,10 @@ fieldset select:hover {
 }
 
 .lcontrol:hover {
-  width: calc(50% - (45px * 2));
-  width: calc(50% - (calc(var(--thumbw) * 2)));
+  /* width: calc(50% - (45px * 2)); */
+  /* width: calc(50% - (calc(var(--thumbw) * 2))); */
+	width: calc(45px * 2);
+	width: calc(var(--thumbw) * 2);
 }
 
 .lcontrol select {

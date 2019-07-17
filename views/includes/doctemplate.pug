@@ -90,7 +90,7 @@ div#viewer(style="position:absolute;pointer-events: none;")
 		ul
 			li(v-for="(go, g) in geo", style="background-color:rgba(255,255,255,0.5);border-bottom:1px solid #999;padding-bottom:8px;")
 				table
-					tr(v-for="(p, j) in Object.keys(go.properties)", v-if="go.properties[p] && go.properties[p] !== ''")
+					tr(v-for="(p, j) in Object.keys(go.properties)", v-if="go.properties[p] && go.properties[p] !== '' && ['STATEFP10','COUNTYFP10','BLKGRPCE10','INTPTLON10','INTPTLAT10','TRACTCE10','GEOID10'].indexOf(p) === -1")
 						td
 							p.tb-font-xxxs
 								strong(v-text="p+ ': '")
