@@ -555,7 +555,13 @@ html
 					},
 					async addLayer(id, e) {
 						var self = this;
-						var tlrs = self.doc.properties.layers.map(function(item){if (item && typeof item !== 'string') return item.lid})
+						var tlrs = self.doc.properties.layers.map(function(item){
+							if (item && typeof item !== 'string') {
+								return item
+							} else {
+								return item.lid
+							}
+						})
 						if (tlrs.indexOf(id) === -1) {
 							self.doc.properties.layers.push({
 								lid: id,
@@ -582,10 +588,13 @@ html
 							if (!self.lyr[id]) {
 								self.lyr[id] = self.loadLayer(thisAvailableLayer, id);
 								self.lyr[id].options.interactive = true;
+							} else if (typeof self.lyr[id].clearLayers === 'function') {
+								self.lyr[id].clearLayers();
+								self.lyr[id] = self.loadLayer(thisAvailableLayer, id);
 							}
 						}
 						if (self.lyr[id]) {
-							//- self.map.addLayer(self.lyr[id]);
+							self.map.addLayer(self.lyr[id]);
 							var bounds = self.lyr[id].getBounds();
 							self.map.fitBounds(bounds);
 						}
@@ -1606,7 +1615,6 @@ html
 
 										});
 										//- thisLayer.setStyle({fillColor:'#fff',color:'#fff', weight:2, opacity: 0.3, fillOpacity: 0.2})
-										
 										thisLayer.on('click', function(e){
 											self.setView(feature, e.latlng)
 										})
@@ -1665,6 +1673,7 @@ html
 							}
 						
 						}
+						//- if (isPointCoords) ljson.bringToFront()
 						//- var bounds = ljson.getBounds();
 						//- self.map.fitBounds(bounds);
 						//- ljson.setStyle(self.styleOf(item, item.geometry.type))
@@ -1916,6 +1925,9 @@ html
 							self.doc.properties.layers.forEach(function(item, j){
 								if (item.lid === lid) {
 									self.doc.properties.layers[j].colors[index] = e.target.value;
+									if (typeof self.lyr[id].clearLayers === 'function') {
+										self.lyr[id].clearLayers()
+									}
 									self.lyr[lid] = self.loadLayer(self.json[lid], lid)
 
 								}
@@ -1968,7 +1980,9 @@ html
 								if (result) {
 									self.json[key] = result;
 									self.dataLayer = await self.loadLayer(result);
-									self.map.addLayer(self.dataLayer)
+									self.map.addLayer(self.dataLayer);
+									self.dataLayer.bringToBack()
+
 									if (!latlng) {
 										latlng = self.dataLayer.getBounds().getCenter();
 										self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
@@ -1982,6 +1996,7 @@ html
 								//- self.json[key] = self.doc;
 								self.dataLayer = self.loadLayer(self.doc);
 								self.map.addLayer(self.dataLayer);
+								self.dataLayer.bringToBack()
 								if (!latlng) {
 									latlng = self.dataLayer.getBounds().getCenter();
 									self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
@@ -2001,8 +2016,15 @@ html
 									
 									$.get('/publishers/esta/json/json_'+key+'.json').then(function(result){
 										if (result) {
+											var isPointCoords = (!result.features ? self.isPointCoords(result.geometry.coordinates) : self.isPointCoords(result.features[0].geometry.coordinates))
+
 											self.json[key] = result;
 											self.lyr[key] = self.loadLayer(result, key);
+											if (isPointCoords) {
+												self.lyr[key].bringToFront()
+											} else {
+												self.lyr[key].bringToBack()
+											}
 											//- self.map.addLayer(self.lyr[key])
 											if (!latlng) {
 												latlng = self.lyr[key].getBounds().getCenter();
