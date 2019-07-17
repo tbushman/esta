@@ -418,7 +418,8 @@ html
 							plugins: 'lists',
 							valid_elements: '*[*]',
 							setup: function (editor) {
-								editor.ui.registry.addButton('footnote', {
+								//- editor.ui.registry.addButton('footnote', {
+								editor.addButton('footnote', {
 									text: 'Add footnote',
 									icon: 'link',
 									onclick: function(){
