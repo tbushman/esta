@@ -1982,7 +1982,8 @@ html
 									self.json[key] = result;
 									self.dataLayer = await self.loadLayer(result);
 									self.map.addLayer(self.dataLayer);
-									self.dataLayer.bringToBack()
+									if (self.datLayer && typeof self.datLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+									//- self.tileLayer.bringToBack()
 
 									if (!latlng) {
 										latlng = self.dataLayer.getBounds().getCenter();
@@ -1997,7 +1998,8 @@ html
 								//- self.json[key] = self.doc;
 								self.dataLayer = self.loadLayer(self.doc);
 								self.map.addLayer(self.dataLayer);
-								self.dataLayer.bringToBack()
+								if (self.datLayer && typeof self.datLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+								//- self.tileLayer.bringToBack()
 								if (!latlng) {
 									latlng = self.dataLayer.getBounds().getCenter();
 									self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
@@ -2027,8 +2029,9 @@ html
 											if (isPointCoords) {
 												self.lyr[key].bringToFront()
 											} else {
-												//- self.lyr[key].bringToBack()
-												self.dataLayer.bringToBack()
+												self.lyr[key].bringToBack()
+												if (self.datLayer && typeof self.datLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+												//- self.tileLayer.bringToBack()
 											}
 											//- self.map.addLayer(self.lyr[key])
 											if (!latlng) {
