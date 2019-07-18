@@ -447,12 +447,6 @@ html
 							self.latlng.lng = -111;
 							self.panZoom();
 						}
-						self.map.on('click', function(e){
-							self.viewerList = false;
-						});
-						self.map.on('dragend', function(e){
-							self.viewerList = false;
-						})
 						//- new CensusReporter.SummaryLevelLayer('040').addTo(self.map);
 						//- self.censusVars = await $.getJSON('https://api.census.gov/data/2010/dec/sf1/variables.json')
 						//- .then(function(data){
@@ -1982,7 +1976,7 @@ html
 									self.json[key] = result;
 									self.dataLayer = await self.loadLayer(result);
 									self.map.addLayer(self.dataLayer);
-									if (self.datLayer && typeof self.datLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+									if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
 									//- self.tileLayer.bringToBack()
 
 									if (!latlng) {
@@ -1998,7 +1992,7 @@ html
 								//- self.json[key] = self.doc;
 								self.dataLayer = self.loadLayer(self.doc);
 								self.map.addLayer(self.dataLayer);
-								if (self.datLayer && typeof self.datLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+								if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
 								//- self.tileLayer.bringToBack()
 								if (!latlng) {
 									latlng = self.dataLayer.getBounds().getCenter();
@@ -2030,7 +2024,7 @@ html
 												self.lyr[key].bringToFront()
 											} else {
 												self.lyr[key].bringToBack()
-												if (self.datLayer && typeof self.datLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+												if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
 												//- self.tileLayer.bringToBack()
 											}
 											//- self.map.addLayer(self.lyr[key])
@@ -2047,6 +2041,7 @@ html
 										self.json[key] = item;
 										self.lyr[key] = self.loadLayer(item, key);
 										if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+										if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
 										//- self.map.addLayer(self.lyr[key]);
 										if (!latlng) {
 											latlng = self.lyr[key].getBounds().getCenter();
@@ -2082,6 +2077,17 @@ html
 								})
 							}
 						} 
+						//- self.map.on('click', function(e){
+						//- 	self.viewerList = false;
+						//- });
+						self.map.on('dragstart', function(e){
+							self.viewerList = false;
+						})
+						//- self.map.on('zoomstart', function(e){
+						//- 	console.log(e)
+						//- 	self.viewerList = false;
+						//- })
+
 						if (latlng) {
 							cb(latlng)
 						}

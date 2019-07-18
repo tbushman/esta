@@ -194,7 +194,7 @@ ol {
 		
 }
 .viewerlist {
-height:auto;width:auto;right:0;top:0;
+height:auto;width:auto;right:auto;top:auto;
 position:absolute;
 display: inline-block;
 z-index: 999;	
