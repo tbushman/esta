@@ -59,6 +59,7 @@ html
 				el: '#vue',
 				data: function data(){
 					return {
+						tempstyles: [],
 						colorTimeout: null,
 						buf: null,
 						attribute: null,
@@ -587,7 +588,7 @@ html
 							
 							if (!self.lyr[id]) {
 								self.lyr[id] = self.loadLayer(thisAvailableLayer, id);
-								self.lyr[id].options.interactive = true;
+								if (self.lyr[id].options) self.lyr[id].options.interactive = true;
 							} else if (typeof self.lyr[id].clearLayers === 'function') {
 								self.lyr[id].clearLayers();
 								self.lyr[id] = self.loadLayer(thisAvailableLayer, id);
@@ -2009,7 +2010,8 @@ html
 							var keys = self.doc.properties.layers.map(function(item){return item.lid})
 							if (self.layers && self.layers.length > 0) {
 								//- self.dataLayer.disableEdit();
-								//- self.dataLayer.options.interactive = false;
+								if (self.dataLayer.options) self.dataLayer.options.interactive = false;
+								
 								self.mapEdit = false;
 								self.layers.forEach(function(item){
 									var key = item._id;
@@ -2020,10 +2022,13 @@ html
 
 											self.json[key] = result;
 											self.lyr[key] = self.loadLayer(result, key);
+											if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+
 											if (isPointCoords) {
 												self.lyr[key].bringToFront()
 											} else {
 												self.lyr[key].bringToBack()
+												self.dataLayer.bringToBack()
 											}
 											//- self.map.addLayer(self.lyr[key])
 											if (!latlng) {
@@ -2038,6 +2043,7 @@ html
 										console.log(err)
 										self.json[key] = item;
 										self.lyr[key] = self.loadLayer(item, key);
+										if (self.lyr[key].options) self.lyr[key].options.interactive = false;
 										//- self.map.addLayer(self.lyr[key]);
 										if (!latlng) {
 											latlng = self.lyr[key].getBounds().getCenter();
@@ -2055,6 +2061,8 @@ html
 										if (result) {
 											self.json[key] = result;
 											self.lyr[key] = self.loadLayer(item, key)
+											if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+
 											//- self.map.addLayer(self.lyr[key])
 											self.lyr[key].remove()
 										}
@@ -2063,6 +2071,8 @@ html
 										console.log(err)
 										self.json[key] = item;
 										self.lyr[key] = self.loadLayer(item, key);
+										if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+
 										//- self.map.addLayer(self.lyr[key]);
 										self.lyr[key].remove()
 									})
