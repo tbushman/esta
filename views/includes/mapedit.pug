@@ -6,7 +6,7 @@ fieldset.lcontrol(style="padding:0;border:none;", v-cloak, v-if="mapReady")
 		a.drop(style="display: flex;", @click="subDropdown($event)")
 			.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;pointer-events:none;")
 
-				img(:src="!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? (!layer.properties.media[0] ? '/images/publish_logo_sq.svg' : layer.properties.media[0].thumb) : layer.properties.media[layer.properties.media.length - 1].thumb ", style="pointer-events: none;")
+				img(:src="(!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? (!layer.properties.media[0] ? '/images/publish_logo_sq.svg' : layer.properties.media[0].thumb) : layer.properties.media[layer.properties.media.length - 1].thumb)+'?version='+Math.random()", style="pointer-events: none;")
 			
 			span.tb-font-m(v-text="layer.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
 			input(type="checkbox", :value="layer._id", :id="'layer_'+o", v-text="layer.properties.label", style="position:absolute;", @click="changeLayers(layer._id, $event)", :checked="(doc.properties.layers.map(function(item){return item.lid}).indexOf(layer._id) !== -1)")
@@ -34,7 +34,7 @@ fieldset.lcontrol(style="padding:0;border:none;", v-cloak, v-if="mapReady")
 	div.slidedown
 		a.drop(v-for="(alayer, p) in availablelayers", v-if="(doc.properties.layers.map(function(item){return item.lid}).indexOf(alayer._id) === -1)" style="display: flex;")
 			.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
-				img(:src="!alayer.properties.media[alayer.properties.media.length - 1] || !alayer.properties.media[alayer.properties.media.length - 1].thumb || alayer.properties.media[alayer.properties.media.length - 1].thumb === '' ? (!alayer.properties.media[0] ? '/images/publish_logo_sq.svg' : alayer.properties.media[0].thumb) : alayer.properties.media[alayer.properties.media.length - 1].thumb ", style="pointer-events: none;")
+				img(:src="(!alayer.properties.media[alayer.properties.media.length - 1] || !alayer.properties.media[alayer.properties.media.length - 1].thumb || alayer.properties.media[alayer.properties.media.length - 1].thumb === '' ? (!alayer.properties.media[0] ? '/images/publish_logo_sq.svg' : alayer.properties.media[0].thumb) : alayer.properties.media[alayer.properties.media.length - 1].thumb)+'?version='+Math.random()", style="pointer-events: none;")
 			
 			span.tb-font-m(v-text="alayer.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
 			input(type="checkbox", :value="alayer._id", :id="'alayer_'+p", v-text="alayer.properties.label", style="position:absolute;", @click="changeLayers(alayer._id, $event)", :checked="(doc.properties.layers.map(function(item){return item.lid}).indexOf(alayer._id) !== -1)")
