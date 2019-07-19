@@ -1913,7 +1913,7 @@ html
 
 									if (!latlng) {
 										latlng = self.dataLayer.getBounds().getCenter();
-										self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+										self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
 										self.map.panTo(latlng)
 
 									}
@@ -1931,7 +1931,7 @@ html
 									}
 									if (!latlng) {
 										latlng = self.lyr[key].getBounds().getCenter();
-										self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+										self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
 										self.map.panTo(latlng)
 
 									}
@@ -1947,7 +1947,7 @@ html
 								if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
 								if (!latlng) {
 									latlng = self.dataLayer.getBounds().getCenter();
-									self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+									self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
 									self.map.panTo(latlng)
 
 								}
@@ -1960,7 +1960,7 @@ html
 
 								if (!latlng) {
 									latlng = self.lyr[key].getBounds().getCenter();
-									self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+									self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
 									self.map.panTo(latlng)
 
 								}
