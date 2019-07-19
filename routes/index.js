@@ -2951,7 +2951,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				await keys.forEach(function(key, i){
 					var thiskey = 'thumb'+count+'';
 					if (key === thiskey) {
-						// console.log(thiskey, body[thiskey])
+						console.log(thiskey, body[thiskey])
 						var thisbody = body[thiskey];
 						if (thisbody && typeof thisbody.split === 'function' && thisbody.split('').length > 100) {
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
@@ -2994,7 +2994,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					count++;
 				}
 			}
-			//console.log(imgs)
+			console.log(imgs)
 			next(null, doc, thumburls, imgs, orientations, body, keys, pu, id)
 		},
 		function(doc, thumburls, imgs, orientations, body, keys, pu, id, next) {
@@ -3051,7 +3051,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			if (!Array.isArray(JSON.parse(body.latlng)[0][0])) {
 				type = 'MultiPoint'
 			}
-			// console.log(JSON.parse(body.layers))
+			console.log(body.layers)
 			var entry = {
 				_id: id,
 				type: "Feature",
