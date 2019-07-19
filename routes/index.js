@@ -2673,9 +2673,10 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 		var json = JSON.parse(content);
 		var multiPolygon;
 		var type = 'MultiPolygon';
+		var keys;
 		if (json.features && json.features.length) {
-			console.log(json.features[0].geometry)
-			
+			// console.log(json.features[0].geometry)
+			keys = Object.keys(json.features[0].properties);
 			// await json.features.forEach(function(feat, i){
 			// 	console.log(feat)
 			// 	var ft = {
@@ -2699,7 +2700,7 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 			if (json.features[0] && json.features[0].geometry.type === 'Point') {
 				type = 'MultiPoint'
 			}
-			console.log(type)
+			// console.log(type)
 			multiPolygon = await json.features.map(function(ft){
 				if (!Array.isArray(ft.geometry.coordinates[0])) {
 					return [ft.geometry.coordinates[0], ft.geometry.coordinates[1]];
@@ -2709,8 +2710,10 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 			})
 		} else {
 			if (json[0].geometry) {
+				keys = Object.keys(json[0].properties)
 				multiPolygon = json[0].geometry.coordinates;
 			} else if (json.geometry) {
+				keys = Object.keys(json.properties)
 				multiPolygon = json.geometry.coordinates
 			}
 		} 
@@ -2719,7 +2722,12 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtect
 			coordinates: multiPolygon
 		}
 		// console.log(multiPolygon)
-		ContentDB.findOneAndUpdate({_id: req.params.id}, {$set:{geometry: geo }}, {safe: true, new:true}, function(err, doc){
+		var set = {$set:{}};
+		var key1 = 'geometry';
+		var key2 = 'properties.keys'
+		set.$set[key1] = geo;
+		set.$set[key2] = keys;
+		ContentDB.findOneAndUpdate({_id: req.params.id}, set, {safe: true, new:true}, function(err, doc){
 			if (err) {
 				return next(err)
 			}
@@ -3083,7 +3091,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					// (!doc.properties.media || doc.properties.media.length === 0 ? [] : doc.properties.media),
 					diffs: doc.properties.diffs,
 					footnotes: footnotes,
-					layers: (!body.layers ? [] : JSON.parse(body.layers))
+					layers: (!body.layers ? [] : JSON.parse(body.layers)),
+					keys: (!body.keys ? [] : JSON.parse(body.keys))
 				},
 				geometry: {
 					type: type,
