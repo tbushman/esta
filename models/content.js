@@ -18,6 +18,7 @@ var schema = new Schema({
 	type: String,
 	index: Number,
 	properties: {
+		credit: String,
 		keys: [String],
 		title: {
 			ind: Number,

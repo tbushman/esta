@@ -439,7 +439,7 @@ html
 					}
 					const tempstyles = (!self.doc || self.doc.properties.layers.length === 0 ? [] : self.doc.properties.layers)
 					self.tempstyles = JSON.parse(JSON.stringify(tempstyles));
-					self.loadMap(async function(dataCoords){
+					self.loadMap(function(dataCoords){
 						console.log(dataCoords)
 						//- if (dataCoords){
 						//- 	self.latlng.lng = dataCoords.lng;
@@ -1998,6 +1998,12 @@ html
 						self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(map);
 						self.map = map;
 						//- self.cZF = (18 - self.map.getZoom() + self.zfactor)
+						self.map.on('dragstart', function(e){
+							self.viewerList = false;
+						});
+						self.map.on('viewreset', function(e){
+							self.viewerList = false;
+						})
 						
 						var myRenderer = L.canvas({ padding: 0.5 });
 						var latlng;
@@ -2042,28 +2048,21 @@ html
 											})
 										})
 									}
-								} 
+								} else {
+									self.mapReady = true;
+								}
 							})
 						}
 
 						//- self.map.on('click', function(e){
 						//- 	self.viewerList = false;
 						//- });
-						self.map.on('dragstart', function(e){
-							self.viewerList = false;
-						});
-						self.map.on('viewreset', function(e){
-							self.viewerList = false;
-						})
 
 						//- self.map.on('zoomstart', function(e){
 						//- 	console.log(e)
 						//- 	self.viewerList = false;
 						//- })
 
-						if (latlng) {
-							cb(latlng)
-						}
 
 							//- self.map.on('editable:vertex:rawclick', function(e){
 							//- 	self.layers.forEach(function(item, i){

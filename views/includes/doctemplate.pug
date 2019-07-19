@@ -51,8 +51,8 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 							span(v-text="doc.properties.chapter.str")
 			div.row(v-if="(!loggedin || loggedin === '') || (!pu || !pu.properties.admin)")
 				include header.pug
-				div(v-if="mapActive && doc.properties.title.str !== 'Geography'")
-					include mapedit.pug
+				//- div(v-if="mapActive && doc.properties.title.str !== 'Geography'")
+				include mapedit.pug
 				include bodysingle.pug
 				p.tb-font-m(v-text="'External document'")
 				include gpo/xml.pug
@@ -61,7 +61,8 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 			div.row(v-if="loggedin && loggedin !=='' && pu && pu.properties.admin", style="padding-top:20px;")
 				form.row.form.headrule(v-bind:id="'form_'+doc.index", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)
-					div(v-if="doc.properties.title.str !== 'Geography'", :style="{display: (mapActive ? 'block' : 'none')}")
+					//v-if="doc.properties.title.str !== 'Geography'", 
+					div(:style="{display: (mapActive ? 'block' : 'none')}")
 						include mapedit.pug
 					include editor.pug
 					p.tb-font-m(v-text="'External document'")
