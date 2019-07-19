@@ -68,6 +68,8 @@ html
 						c: ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928","#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"],
 						//['#39B54A', '#D9E021', '#FBB03B', '#FC644D', '#ED1C24'],
 						lvl: 'h',
+						wWidth: window.innerWidth,
+						wHeight: window.innerHeight,
 						btn: { x: (this.wWidth / 2), 
 							y: (this.wHeight/ 2),
 							r: 21,
@@ -98,13 +100,12 @@ html
 						fixedPug: '',
 						map: '',
 						mapActive: (this.parseBool(!{JSON.stringify(mapActive)})),
+						mapReady: false,
 						mapEdit: false,
 						mapEditable: false,
 						dataLayer: '',
 						lMarker: '',
 						thickness: 45,
-						wWidth: window.innerWidth,
-						wHeight: window.innerHeight,
 						res: (window.innerWidth < 600),
 						dPath: this.dPathAttr(),
 						tinymce: '',
@@ -342,7 +343,7 @@ html
 				
 				updated: function(){
 					var self = this;
-					if (self.colorTimeout) clearTimeout(self.colorTimeout);
+					//- if (self.colorTimeout) clearTimeout(self.colorTimeout);
 				},
 				beforeDestroy: function(){
 					var self = this;
@@ -409,7 +410,7 @@ html
 					}
 
 					if (self.tinymce === ''  && $('#description')[0] && typeof tinymce === 'object') {
-						console.log($('#description')[0])
+						//- console.log($('#description')[0])
 						self.tinymce = tinymce.init({
 							menubar: false,
 							statusbar: false,
@@ -436,26 +437,19 @@ html
 							selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | footnote'
 						});
 					}
+					const tempstyles = (!self.doc || self.doc.properties.layers.length === 0 ? [] : self.doc.properties.layers)
+					self.tempstyles = JSON.parse(JSON.stringify(tempstyles));
 					self.loadMap(async function(dataCoords){
 						console.log(dataCoords)
-						if (dataCoords){
-							self.latlng.lng = dataCoords.lng;
-							self.latlng.lat = dataCoords.lat;
-							self.panZoom();
-						} else {
-							self.latlng.lat = 40;
-							self.latlng.lng = -111;
-							self.panZoom();
-						}
-						//- new CensusReporter.SummaryLevelLayer('040').addTo(self.map);
-						//- self.censusVars = await $.getJSON('https://api.census.gov/data/2010/dec/sf1/variables.json')
-						//- .then(function(data){
-						//- 	var variables = data.variables;
-						//- 	return variables;
-						//- })
-						//- .catch(function(err){
-						//- 	console.log(err)
-						//- })
+						//- if (dataCoords){
+						//- 	self.latlng.lng = dataCoords.lng;
+						//- 	self.latlng.lat = dataCoords.lat;
+						//- 	self.panZoom();
+						//- } else {
+						//- 	self.latlng.lat = 40;
+						//- 	self.latlng.lng = -111;
+						//- 	self.panZoom();
+						//- }
 						if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {
 							var int = 8000;
 							self.sliderImg(int)
@@ -498,7 +492,7 @@ html
 						self.xmlnode = e.target.responseXML;
 					},
 					parseXML(xml){
-						console.log(xml)
+						//- console.log(xml)
 						var parser = new DOMParser();
 						var parsed = parser.parseFromString(xml, 'text/xml');
 						return parsed;
@@ -510,8 +504,8 @@ html
 							return;
 						} else {
 							var sub = $(e.target).next('.slidedown')[0];
-							console.log(e.target.nextSibling)
-							console.log(sub)
+							//- console.log(e.target.nextSibling)
+							//- console.log(sub)
 							$('.drop').not($(e.target)).removeClass('active');
 							$(sub).slideToggle(100);
 							$(e.target).toggleClass('active');
@@ -532,7 +526,7 @@ html
 							'/api/gpo'
 						)
 						.then(function(data){
-							console.log(data)
+							//- console.log(data)
 							self.gpo = JSON.parse(data);
 						})
 						.catch(function(err){
@@ -548,59 +542,54 @@ html
 						}
 
 					},
+					layerAdd(id) {
+						var self = this;
+						if (self.json[id]) self.lyr[id] = self.loadLayer(self.json[id], id);
+						if (self.lyr[id].options) self.lyr[id].options.interactive = true;
+						//- self.map.addLayer(self.lyr[id]);
+						var bounds = self.lyr[id].getBounds();
+						self.map.fitBounds(bounds);
+					},
 					async addLayer(id, e) {
 						var self = this;
-						var tlrs = self.doc.properties.layers.map(function(item){
-							if (item && typeof item !== 'string') {
-								return item
-							} else {
-								return item.lid
-							}
-						})
-						if (tlrs.indexOf(id) === -1) {
-							self.doc.properties.layers.push({
+						var tlrs = self.tempstyles.filter(function(item){
+							return item.lid === id
+						})[0];
+						var style;
+						if (!tlrs) { 
+							style = {
 								lid: id,
 								buckets: 1,
 								colors: [self.c[0]],
 								key: ''
-							});
-							var thisAvailableLayer = await self.availablelayers.filter(function(item, i){
-								if (item._id === id) {
-									ind = i;
-								} 
-								return item._id === id
-							})[0];
-							var thisLayer = await self.layers.filter(function(item, i){
-								return item._id === id
-							})[0];
-							if (!thisLayer) {
-								self.layers.push(thisAvailableLayer);
-							}
-							if (ind) {
+							};
+						} else { 
+							style = tlrs;
+						}
+						var ind = null;
+						var thisAvailableLayer = await self.availablelayers.filter(function(item, i){
+							if (item._id === id) {
+								ind = i;
+							} 
+							return item._id === id
+						})[0];
+						var thisLayer = await self.layers.filter(function(item, i){
+							return item._id === id
+						})[0];
+						if (!thisLayer && thisAvailableLayer) {
+							if (ind !== null && self.json[id]) {
 								self.availablelayers.splice(ind, 1);
-							}
-							
-							if (!self.lyr[id]) {
-								self.lyr[id] = self.loadLayer(thisAvailableLayer, id);
-								if (self.lyr[id].options) self.lyr[id].options.interactive = true;
-							} else if (typeof self.lyr[id].clearLayers === 'function') {
-								self.lyr[id].clearLayers();
-								self.lyr[id] = self.loadLayer(thisAvailableLayer, id);
+								self.layers.push(thisAvailableLayer);
+								await self.doc.properties.layers.push(style);
+								self.layerAdd(id)
 							}
 						}
-						if (self.lyr[id]) {
-							self.map.addLayer(self.lyr[id]);
-							var bounds = self.lyr[id].getBounds();
-							self.map.fitBounds(bounds);
-						}
-
 					},
-					removeLayer(id, e) {
+					async removeLayer(id, e) {
 						var self = this;
 						var keys = self.doc.properties.layers.map(function(item){return item.lid})
-						self.doc.properties.layers.splice(keys.indexOf(id), 1);
 						var ind = null;
-						var thisLayer = self.layers.filter(function(item, i){
+						var thisLayer = await self.layers.filter(function(item, i){
 							if (item._id === id) {
 								ind = i;
 							} 
@@ -609,19 +598,13 @@ html
 						var thisAvailableLayer = self.availablelayers.filter(function(item, i){
 							return item._id === id;
 						})[0]
-						if (ind) {
-							self.layers.splice(ind, 1);
-						} else {
-							console.log('wtaf')
-						}
 						if (thisLayer && !thisAvailableLayer) {
+							if (ind > -1) {
+								self.layers.splice(ind, 1);
+								self.doc.properties.layers.splice(keys.indexOf(id), 1);
+							}
 							self.availablelayers.push(thisLayer);
-						//- } else if (!thisLayer && thisAvailableLayer) {
-						} else {
-							//- console.log(thisAvailableLayer)
-							//- console.log('wtaf')
 						}
-
 						if (self.doc.properties.layers && self.doc.properties.layers.length === 0 && typeof self.dataLayer.getBounds === 'function') {
 							var bounds = self.dataLayer.getBounds();
 							self.map.fitBounds(bounds)
@@ -642,7 +625,6 @@ html
 						var key = e.target.value;
 						var thisLayer = self.doc.properties.layers.forEach(function(item, i){
 							if (ind) return;
-							console.log(item.lid , id)
 							if (item.lid === id) {
 								ind = i;
 								self.doc.properties.layers[ind].key = key
@@ -657,7 +639,7 @@ html
 						self.newDoc.xmlid = self.gpo.packages[ind].packageId;
 						self.newDoc.chind = (parseInt(self.gpo.packages[ind].congress, 10) - 1);
 						self.newDoc.chtitle = self.gpo.packages[ind].title;
-						console.log(self.newDoc)
+						//- console.log(self.newDoc)
 					},
 					filterGpo(e) {
 						var self = this;
@@ -668,7 +650,7 @@ html
 						gpo = gpo.filter(function(g){
 							return new RegExp(e.target.value).test(g.title)
 						})
-						console.log(gpo)
+						//- console.log(gpo)
 						if (gpo && gpo.length > 0) {
 							self.gpo.packages = gpo;
 						}
@@ -677,7 +659,7 @@ html
 						e.preventDefault()
 						
 						var self = this;
-						console.log(e.target.value)
+						//- console.log(e.target.value)
 						var ind = parseInt(e.target.value, 10);
 						self.newDoc.tiind = ind;
 					},
@@ -716,9 +698,9 @@ html
 					changePlaceNew(e) {
 						e.preventDefault()
 						var self = this;
-						console.log(e.target.value)
+						//- console.log(e.target.value)
 						var ind = parseInt(e.target.value, 10);
-						console.log(ind)
+						//- console.log(ind)
 						self.newDoc.place = (isNaN(ind) || !self.newDoc.tempGeo[ind] ? (!self.newDoc.tempGeo[self.newDoc.tempGeo.length-1] ? null : self.newDoc.tempGeo.length-1) : ind )
 					},
 					submitZip(e) {
@@ -730,7 +712,7 @@ html
 					},
 					handleLocationOutcome(geolocation, pos) {
 						var self = this;
-						console.log(geolocation)
+						//- console.log(geolocation)
 						var modal = document.getElementById('modal');
 						if (!geolocation && modal) {
 							self.modal.msg = 'geolocator didn\'t work. Please provide the zip code you vote from. ';
@@ -755,7 +737,7 @@ html
 					},
 					changeDiff(e) {
 						var self = this;
-						console.log(e.target.value)
+						//- console.log(e.target.value)
 						self.dfi = (!isNaN(parseInt(e.target.value, 10)) ? parseInt(e.target.value, 10) : null);
 					},
 					navigateTo: function(url){
@@ -763,9 +745,9 @@ html
 					},
 					deleteEntry(doc, e) {
 						e.preventDefault()
-						console.log(doc)
+						//- console.log(doc)
 						$.post('/api/deleteentry/'+doc._id+'').then(function(res){
-							console.log(res)
+							//- console.log(res)
 							window.location.href = '/menu/'+doc.properties.title.ind+'/'+doc.properties.chapter.ind+'';
 						})
 						.catch(function(err){
@@ -911,7 +893,7 @@ html
 						if (check !== '' && type === 'givenName') {
 							var url = check.replace(' ', '_');
 							$.post('/check/'+check).done(function(result, res){
-								console.log(result, res)
+								//- console.log(result, res)
 								self.avail = (result === 'Available')
 							})
 						}
@@ -926,7 +908,7 @@ html
 						var self = this;
 						
 						Vue.set(self.can, parseInt(i,10), can)
-						console.log(self.ts, ts)
+						//- console.log(self.ts, ts)
 						if (!Array.isArray(self.ts)) {
 							self.ts = [];
 						}
@@ -1062,14 +1044,14 @@ html
 						var dataurl = null;
 						var file = self.file;
 						if (!file) return;
-						console.log(file)
+						//- console.log(file)
 						// TODO validate json type somehow before upload
 						var reader = new FileReader();
 						reader.onloadend = function(e) {
 						//- reader.addEventListener("load", function () {
 							var fd = new FormData();
 							var blob = this.result;
-							console.log(blob)
+							//- console.log(blob)
 							fd.append("json", file);
 							fd.append('_csrf', '#{csrfToken}');
 
@@ -1578,29 +1560,25 @@ html
 							var range = max - min;
 							var inc = range / colors.length;
 							ljson = L.geoJson().addTo(self.map);
-							console.log(thisKey,min,max,inc)
+							//- console.log(thisKey,min,max,inc,colors)
 							var isPointCoords = (!item.features ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
 							if (isPointCoords) {
-								console.log('is point')
+								//- console.log('is point')
 								var ojson = L.geoJson(item, {
 									
 									onEachFeature:function(feature,layer){
 										var thisLayer = L.GeoJSON.geometryToLayer(feature, {
-											//- style: function(feature){
-											//- 	return {fillColor:'#fff',color:'#fff'}
-											//- },
 											pointToLayer: function(ft, latlng) {
 												var thisVal = ft.properties[thisKey]//parseFloat(feature.properties[thisKey])
-												var cl = colors.filter(function(color,i){
+												var cls = []
+												var cl = colors.forEach(function(color,i){
 													var mi = min;
 													var ma = (!colors[i+1] ? max : (inc * i+1));
-													return (thisVal >= mi && thisVal <= ma)
-													//- if (thisVal >= mi && thisVal <= ma) {
-													//- 	console.log(ft.properties[thisKey], mi, ma, color)
-													//- 	return {fillColor:color, color:color, opacity: 0.8, fillOpacity: 0.6}
-													//- }
-												})[0]
-												var style = {fillColor:cl, color:cl, opacity: 0.8, fillOpacity: 0.6, radius: 8}
+													if (thisVal >= mi && thisVal <= ma) {
+														cls.push(color)
+													}
+												})
+												var style = {fillColor:cls[0], color:cls[0], opacity: 0.8, fillOpacity: 0.6, radius: 8}
 												var circle = new L.CircleMarker(latlng, style)//, self.styleOf(ft, ft.geometry.type))
 													.on('click', function(){
 														return self.setView(ft, latlng)
@@ -1609,7 +1587,6 @@ html
 											}
 
 										});
-										//- thisLayer.setStyle({fillColor:'#fff',color:'#fff', weight:2, opacity: 0.3, fillOpacity: 0.2})
 										thisLayer.on('click', function(e){
 											self.setView(feature, e.latlng)
 										})
@@ -1617,23 +1594,16 @@ html
 									}
 								})
 							} else {
-								//- console.log(item)
 
 								var ojson = L.geoJson(item, {
 									
 									onEachFeature:function(feature,layer){
-										var thisLayer = L.GeoJSON.geometryToLayer(feature
-											//- , {style: function(feature){
-											//- 			return {fillColor:'#fff',color:'#fff'}
-											//- 		}
-											//- 	}
-										);
+										var thisLayer = L.GeoJSON.geometryToLayer(feature);
 										thisLayer.setStyle({fillColor:'#fff',color:'#fff', weight:1, opacity: 0.3, fillOpacity: 0.2})
 										colors.forEach(function(color, i){
 											var mi = inc * i;
 											var ma = (!colors[i+1] ? max : (inc * i+1));
 											var thisVal = parseFloat(feature.properties[thisKey])
-											//- console.log(feature.properties[thisKey], mi, ma)
 											if (thisVal >= mi && thisVal < ma) {
 												thisLayer.setStyle({fillColor:color, color:color, opacity: 0.8, fillOpacity: 0.6})
 											}
@@ -1663,15 +1633,11 @@ html
 								})
 						
 							} else {
-								console.log('wtaff?')
+								//- console.log('wtaff?')
 								ljson = L.GeoJSON.geometryToLayer(item)
 							}
 						
 						}
-						//- if (isPointCoords) ljson.bringToFront()
-						//- var bounds = ljson.getBounds();
-						//- self.map.fitBounds(bounds);
-						//- ljson.setStyle(self.styleOf(item, item.geometry.type))
 						return ljson;
 						
 					},
@@ -1682,8 +1648,8 @@ html
 							if (dataLayer._layers[parseInt(key, 10)]._latlng) {
 								return L.latLng([dataLayer._layers[parseInt(key, 10)]._latlng.lat, dataLayer._layers[parseInt(key, 10)]._latlng.lng])//.wrap();
 							} else {
-								console.log('bleh')
-								console.log(dataLayer._layers[parseInt(key, 10)]);
+								//- console.log('bleh')
+								//- console.log(dataLayer._layers[parseInt(key, 10)]);
 
 							}
 						})]
@@ -1895,7 +1861,7 @@ html
 							var length = parseInt(e.target.value,10);
 							self.doc.properties.layers.forEach(function(item, j){
 								if (item.lid === lid) {
-									console.log(self.doc.properties.layers[j].colors.length, length)
+									//- console.log(self.doc.properties.layers[j].colors.length, length)
 									if (self.doc.properties.layers[j].colors.length < length) {
 										var diff = length - self.doc.properties.layers[j].colors.length;
 										for (var i = 0; i < diff; i++) {
@@ -1915,14 +1881,13 @@ html
 					changeColorBucket(lid, index, e) {
 						var self = this;
 						if (self.colorTimeout) clearTimeout(self.colorTimeout);
-
 						self.colorTimeout = setTimeout(function(){
+							//- console.log('ok')
 							self.doc.properties.layers.forEach(function(item, j){
+								//- console.log(item, lid, index, e.target.value)
 								if (item.lid === lid) {
+									//- console.log(lid, index, e)
 									self.doc.properties.layers[j].colors[index] = e.target.value;
-									if (typeof self.lyr[id].clearLayers === 'function') {
-										self.lyr[id].clearLayers()
-									}
 									self.lyr[lid] = self.loadLayer(self.json[lid], lid)
 
 								}
@@ -1930,6 +1895,78 @@ html
 						},500)
 						
 						
+					},
+					serverJson(isDataLayer, key, cb) {
+						var self = this;
+						var latlng;
+						var customIcon = L.icon({
+							iconUrl: '/images/buttonmarker.svg',
+							iconSize: [33, 33]
+						});
+						$.get('/publishers/esta/json/json_'+key+'.json').then(async function(result){
+							if (result) {
+								var isPointCoords = (!result.features ? self.isPointCoords(result.geometry.coordinates) : self.isPointCoords(result.features[0].geometry.coordinates))
+								if (isDataLayer) {
+									self.dataLayer = await self.loadLayer(result);
+									self.map.addLayer(self.dataLayer);
+									if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+
+									if (!latlng) {
+										latlng = self.dataLayer.getBounds().getCenter();
+										self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+										self.map.panTo(latlng)
+
+									}
+
+								} else {
+									self.json[key] = result;
+									self.lyr[key] = self.loadLayer(result, key);
+									if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+
+									if (isPointCoords) {
+										self.lyr[key].bringToFront()
+									} else {
+										self.lyr[key].bringToBack()
+										if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+									}
+									if (!latlng) {
+										latlng = self.lyr[key].getBounds().getCenter();
+										self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+										self.map.panTo(latlng)
+
+									}
+
+								}
+								cb()
+							}
+						})
+						.catch(function(err){
+							if (isDataLayer) {
+								self.dataLayer = self.loadLayer(self.doc);
+								self.map.addLayer(self.dataLayer);
+								if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+								if (!latlng) {
+									latlng = self.dataLayer.getBounds().getCenter();
+									self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+									self.map.panTo(latlng)
+
+								}
+
+							} else {
+								self.json[key] = item;
+								self.lyr[key] = self.loadLayer(item, key);
+								if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+								if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+
+								if (!latlng) {
+									latlng = self.lyr[key].getBounds().getCenter();
+									self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
+									self.map.panTo(latlng)
+
+								}
+							}
+							cb()
+						})
 					}
 					 /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
 					async loadMap(cb) {
@@ -1964,125 +2001,61 @@ html
 						
 						var myRenderer = L.canvas({ padding: 0.5 });
 						var latlng;
-						var customIcon = L.icon({
-							iconUrl: '/images/buttonmarker.svg',
-							iconSize: [33, 33]
-						});
 						if (self.doc && self.doc !== '') {
 							// generate geographic points from data
 							var key = self.doc._id;
-							$.get('/publishers/esta/json/json_'+key+'.json').then(async function(result){
-								if (result) {
-									self.json[key] = result;
-									self.dataLayer = await self.loadLayer(result);
-									self.map.addLayer(self.dataLayer);
-									if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
-									//- self.tileLayer.bringToBack()
-
-									if (!latlng) {
-										latlng = self.dataLayer.getBounds().getCenter();
-										self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
-										self.map.panTo(latlng)
-
+							self.serverJson(true, key, async function(){
+								if (self.doc.properties && self.doc.properties.title.str !== 'Geography') {
+									var keys = self.doc.properties.layers.map(async function(item){return item.lid})
+									if (self.layers && self.layers.length > 0) {
+										if (self.dataLayer.options) self.dataLayer.options.interactive = false;
+										self.mapEdit = false;
+										await self.layers.forEach(function(item){
+											var key = item._id;
+											self.serverJson(false, key, function(){
+												if (Object.keys(self.json).length >= self.layers.length) {
+													self.mapReady = true;
+												}
+											})
+										});
 									}
-								}
-							})
-							.catch(function(err){
-								console.log(err)
-								//- self.json[key] = self.doc;
-								self.dataLayer = self.loadLayer(self.doc);
-								self.map.addLayer(self.dataLayer);
-								if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
-								//- self.tileLayer.bringToBack()
-								if (!latlng) {
-									latlng = self.dataLayer.getBounds().getCenter();
-									self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
-									self.map.panTo(latlng)
+									if (self.availablelayers && self.availablelayers.length > 0) {
+										self.availablelayers.forEach(function(item, i){
+											var key = item._id;
+											$.get('/publishers/esta/json/json_'+key+'.json').then(function(result){
+												if (result) {
+													self.json[key] = result;
+													self.lyr[key] = self.loadLayer(item, key)
+													if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+													self.lyr[key].remove()
+													self.mapReady = true;
 
-								}
+												}
+											})
+											.catch(function(err){
+												self.json[key] = item;
+												self.lyr[key] = self.loadLayer(item, key);
+												if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+												self.lyr[key].remove()
+												self.mapReady = true;
+
+											})
+										})
+									}
+								} 
 							})
 						}
-						if (self.doc.properties.title.str !== 'Geography') {
-							var keys = self.doc.properties.layers.map(function(item){return item.lid})
-							if (self.layers && self.layers.length > 0) {
-								//- self.dataLayer.disableEdit();
-								if (self.dataLayer.options) self.dataLayer.options.interactive = false;
-								
-								self.mapEdit = false;
-								self.layers.forEach(function(item){
-									var key = item._id;
-									
-									$.get('/publishers/esta/json/json_'+key+'.json').then(function(result){
-										if (result) {
-											var isPointCoords = (!result.features ? self.isPointCoords(result.geometry.coordinates) : self.isPointCoords(result.features[0].geometry.coordinates))
 
-											self.json[key] = result;
-											self.lyr[key] = self.loadLayer(result, key);
-											if (self.lyr[key].options) self.lyr[key].options.interactive = false;
-
-											if (isPointCoords) {
-												self.lyr[key].bringToFront()
-											} else {
-												self.lyr[key].bringToBack()
-												if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
-												//- self.tileLayer.bringToBack()
-											}
-											//- self.map.addLayer(self.lyr[key])
-											if (!latlng) {
-												latlng = self.lyr[key].getBounds().getCenter();
-												self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
-												self.map.panTo(latlng)
-
-											}
-										}
-									})
-									.catch(function(err){
-										console.log(err)
-										self.json[key] = item;
-										self.lyr[key] = self.loadLayer(item, key);
-										if (self.lyr[key].options) self.lyr[key].options.interactive = false;
-										if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
-										//- self.map.addLayer(self.lyr[key]);
-										if (!latlng) {
-											latlng = self.lyr[key].getBounds().getCenter();
-											self.lMarker = L.marker(latlng, {icon:customIcon, draggable: true, opacity: 0}).addTo(self.map);
-											self.map.panTo(latlng)
-
-										}
-									})
-								})
-							}
-							if (self.availablelayers && self.availablelayers.length > 0) {
-								self.availablelayers.forEach(function(item, i){
-									var key = item._id;
-									$.get('/publishers/esta/json/json_'+key+'.json').then(function(result){
-										if (result) {
-											self.json[key] = result;
-											self.lyr[key] = self.loadLayer(item, key)
-											if (self.lyr[key].options) self.lyr[key].options.interactive = false;
-
-											//- self.map.addLayer(self.lyr[key])
-											self.lyr[key].remove()
-										}
-									})
-									.catch(function(err){
-										console.log(err)
-										self.json[key] = item;
-										self.lyr[key] = self.loadLayer(item, key);
-										if (self.lyr[key].options) self.lyr[key].options.interactive = false;
-
-										//- self.map.addLayer(self.lyr[key]);
-										self.lyr[key].remove()
-									})
-								})
-							}
-						} 
 						//- self.map.on('click', function(e){
 						//- 	self.viewerList = false;
 						//- });
 						self.map.on('dragstart', function(e){
 							self.viewerList = false;
+						});
+						self.map.on('viewreset', function(e){
+							self.viewerList = false;
 						})
+
 						//- self.map.on('zoomstart', function(e){
 						//- 	console.log(e)
 						//- 	self.viewerList = false;

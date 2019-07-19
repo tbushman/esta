@@ -1,4 +1,4 @@
-fieldset.lcontrol(style="padding:0;border:none;", v-cloak)
+fieldset.lcontrol(style="padding:0;border:none;", v-cloak, v-if="mapReady")
 	input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers[]")
 	
 	legend(style="font-size: 11px;") layers
@@ -14,7 +14,7 @@ fieldset.lcontrol(style="padding:0;border:none;", v-cloak)
 			legend.block(style="font-size: 11px;") style
 			label.block(style="font-size: 9px;margin-top:10px;", for="key") Key
 			select#key.block(@change="changeAttribute(layer._id, $event)", v-model="style.key" style="margin-top:0;")
-				option(v-for="(item,l) in layer.properties.keys", v-if="json[layer._id] && json[layer._id].features && !isNaN(parseInt(json[layer._id].features[0].properties[item],10))", v-text="item", :value="item", :selected="item === style.key")
+				option(v-for="(item,l) in layer.properties.keys", v-text="item", :value="item", :selected="item === style.key", v-if="(json[style.lid] && json[style.lid].features && !isNaN(parseInt(json[style.lid].features[0].properties[item],10)))")
 			label.block(style="font-size: 9px;", for="buckets") # Buckets
 			input.block(type="number", min="1", max="4", v-model="style.buckets", style="margin-top:0;", @change="numberColorBucket(style.lid, $event)")
 			legend.block(style="font-size: 11px;") Color
