@@ -13,14 +13,14 @@ fieldset.lcontrol(style="padding:0;border:none;", v-cloak, v-if="mapReady")
 		div.slidedown(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id")
 			legend(style="font-size: 11px;") style
 			label(style="font-size: 9px;margin-top:10px;", for="key") Key
-			select#key(@change="changeAttribute(layer._id, $event)", v-model="style.key" style="margin-top:0;")
+			select#key(@change="changeAttribute(layer._id, $event)", v-model="style.key" style="margin:0;")
 				//v-if="(json[style.lid] && json[style.lid].features && !isNaN(parseInt(json[style.lid].features[0].properties[item],10)))"
 				option(v-for="(item,l) in layer.properties.keys", v-text="item", :value="item", :selected="item === style.key")
 			label(style="font-size: 9px;", for="buckets") # Buckets
-			input(type="number", min="1", max="4", v-model="style.buckets", style="margin-top:0;", @change="numberColorBucket(style.lid, $event)")
+			input(type="number", min="1", max="4", v-model="style.buckets", style="margin:0;", @change="numberColorBucket(style.lid, $event)")
 			legend(style="font-size: 11px;") Color
-			div.row(v-for="(c,j) in style.colors")
-				label(style="font-size: 9px;position:absolute;", :for="'color'+j", v-text="c")
+			div.row(v-if="style.inc", v-for="(c,j) in style.colors")
+				label(style="font-size: 7px;position:absolute;padding:6px;color:#fff;font-weight:heavier;", :for="'color'+j", v-text="(style.min + (style.inc * j)).toFixed(1) + '–' + (!style.colors[j+1] ? style.max : (style.min + (style.inc * (j+1)))).toFixed(1)")
 				input(:id="'color'+j", type="color", v-model="style.colors[j]", @change="changeColorBucket(style.lid, j, $event)", style="pointer-events:all;")
 		
 

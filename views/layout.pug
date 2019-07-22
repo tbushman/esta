@@ -1592,7 +1592,15 @@ html
 						if (self.lyr[id] && typeof self.lyr[id].clearLayers === 'function') {
 							self.lyr[id].clearLayers();
 						}
-						var style = (!id ? {buckets:1,colors:['#fff']} : self.doc.properties.layers.filter(function(item, i){
+						var ind = null;
+						var style = (!id ? {buckets:1,colors:['#fff']} : self.doc.properties.layers
+						.map(function(item, i){
+							if (item.lid === id) {
+								ind = i;
+							}
+							return item;
+						}).filter(function(item){
+							
 							return item.lid === id
 						})[0]);
 						if (item.features && item.features[0]) {
@@ -1610,6 +1618,12 @@ html
 							var max = Math.max.apply(null,vals);
 							var range = max - min;
 							var inc = range / colors.length;
+							style.min = min;
+							style.max = max;
+							style.inc = inc;
+							if (ind) {
+								self.doc.properties.layers[ind] = style;
+							}
 							ljson = L.geoJson().addTo(self.map);
 							//- console.log(thisKey,min,max,inc,colors)
 							var isPointCoords = (!item.features ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
