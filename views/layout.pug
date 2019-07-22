@@ -50,6 +50,7 @@ html
 			Vue.prototype.SignaturePad = SignaturePad;
 			Vue.prototype.$ = $;
 			Vue.prototype.htmldiff = htmldiff;
+			Vue.prototype.window = window;
 			//- Vue.prototype.d3 = d3;
 			//- Vue.prototype.xth = xth;
 			Vue.prototype.L = L;
@@ -70,8 +71,8 @@ html
 						lvl: 'h',
 						wWidth: window.innerWidth,
 						wHeight: window.innerHeight,
-						btn: { x: (this.wWidth / 2), 
-							y: (this.wHeight/ 2),
+						btn: { x: (window.innerWidth / 2), 
+							y: (window.innerHeight/ 2),
 							r: 21,
 							vis: (!this.mapActive || !this.mapEdit ? null : 'block')
 						},
@@ -452,10 +453,49 @@ html
 						self.map.on('dragstart', function(e){
 							self.viewerList = false;
 						});
-						self.map.on('viewreset', function(e){
-							self.viewerList = false;
+						//- self.map.on('viewreset', function(e){
+						//- 	if (self.geo.length === 0) {
+						//- 		self.viewerList = false;
+						//- 	} else {
+						//- 		self.viewerList = true;
+						//- 	}
+						//- })
+						//- self.map.on('zoomstart', function(e){
+						//- 	self.viewerListState = JSON.parse(JSON.stringify(self.viewerList));
+						//- })
+						self.map.on('zoomend', function(e){
+							//- if (self.geo.length === 0) {
+							//- 	self.viewerList = false;
+							//- } else if (self.viewerList && self.geo.length > 0){
+							//- 	self.viewerList = true;
+							//- } else {
+							//- 	self.viewerList = false;
+							//- }
+							var coord = self.lMarker.getLatLng();
+							var xy = self.map.latLngToLayerPoint(coord);
+							var x = xy.x;
+							var y = xy.y;
+							self.btn.x = x;
+							self.btn.y = y;
 						})
-
+						//- self.map.on('zoomstart', function(e){
+						//- 	self.btn.x = window.innerWidth / 2;
+						//- 	self.btn.y = window.innerHeight / 2;
+						//- })
+						//- self.map.on('preclick', function(e){
+						//- 	if (self.geo.length === 0) {
+						//- 		self.viewerList = false;
+						//- 	} else if (self.geo.length > 0){
+						//- 		self.viewerList = true;
+						//- 	} else {
+						//- 		self.viewerList = false;
+						//- 	}
+						//- })
+						//- self.map.on('preclick', function(e){
+						//- 	if (self.viewerList) {
+						//- 		self.viewerList = false;
+						//- 	}
+						//- })
 						$('.submenu.drop').slideUp(100);
 						$('.slidedown').slideUp(100);
 
@@ -820,7 +860,6 @@ html
 						var thickness = (!thickness ? 50 : thickness);
 						var nw = (!self.wWidth ? window.innerWidth : self.wWidth);
 						var nh = (!self.wHeight ? window.innerHeight : self.wHeight);
-						
 						var d;
 						if (self.type === 'draw') {
 							d = "M0,0v"+nh+"h"+nw+"V0H0L0,0z"
@@ -1469,8 +1508,8 @@ html
 					setView(feature, latlng){
 						var self = this;
 						if (self.buf) self.buf.remove()
+						//- self.viewerList = true;
 						self.geo = [feature]
-						self.viewerList = true;
 						self.buf = L.geoJSON(feature, {
 							style: function (feature) {
 								return {color: 'tomato'};
@@ -1481,7 +1520,9 @@ html
 						self.map.fitBounds(l1)
 						self.lMarker.setLatLng(c);
 						self.lMarker.setOpacity(1);
-						
+						self.btn.x = (self.wWidth/2);
+						self.btn.y = (self.wHeight/2);
+						self.viewerList = true;
 						//- if (self.buf && self.buf.length > 0) {
 						//- 	self.buf.forEach(function(item){
 						//- 		item.remove();
@@ -2124,12 +2165,20 @@ html
 						pH = ( !self.pHeight ? (wH * (self.res?0.5:0.5) ) : self.pHeight ), 
 						r = self.btn.r, cRc = (r * 0.5523), cRr = 0.81, 
 						sY = (isNaN(self.btn.y)?(wH*(self.res?0.5:0.5)):self.btn.y);
-						var str =`M${wW},${wH}H0V0h${wW}V${wH}z 
-						M${(wW - pW) + r},${sY}c0-${cRc}-${(cRc * cRr)}-${r}-${r}-${r}
-							c-${cRc},0-${r},${(cRc * cRr)}-${r},${r} 
-						c0,${cRc},${(cRc * cRr)},${r},${r},${r}
-							C${(wW - pW) + cRc},${(sY+r)},${(wW - pW)+r},${(sY + cRc)},
-							${((wW - pW) + r)},${sY}z`
+						var lx = self.btn.x - 1//(!min === cx ? (min + side) : cx);
+						var ly = self.btn.y - 42//(!min === cy ? (min + side) : cy);
+						var bez = 
+						`M${lx},${ly}v43c10-19.3,14-21.8,14-30.2C${lx+14},${ly+6},${lx+6},${ly},${lx},${ly}z`
+
+						//- var circle = `M${wW},${wH}H0V0h${wW}V${wH}z 
+						//- M${(wW - pW) + r},${sY}c0-${cRc}-${(cRc * cRr)}-${r}-${r}-${r}
+						//- 	c-${cRc},0-${r},${(cRc * cRr)}-${r},${r} 
+						//- c0,${cRc},${(cRc * cRr)},${r},${r},${r}
+						//- 	C${(wW - pW) + cRc},${(sY+r)},${(wW - pW)+r},${(sY + cRc)},
+						//- 	${((wW - pW) + r)},${sY}z`
+						
+						var str = 
+						`M${wW},${wH}H0V0h${wW}V${wH}z ${bez}`
 						return str; }
 					},
 					sliderImg(int){

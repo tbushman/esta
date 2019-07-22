@@ -613,7 +613,7 @@ em {
 .submenu.drop span {
   display: inline-block;
 }
-.drop:hover span {
+.layer:hover .drop span {
   display: inline-block;
   color: #000;
   color: var(--secondary);
@@ -652,17 +652,21 @@ fieldset select:hover {
 	display: flex;
 	flex-direction: column;
 }
-
-.lcontrol:hover {
-  /* width: calc(50% - (45px * 2)); */
-  /* width: calc(50% - (calc(var(--thumbw) * 2))); */
+.layer {
+	width: var(--thumbw);
+	pointer-events: auto;
+}
+.layer:hover {
+	width: calc(var(--thumbw) * 3);
+}
+/* .lcontrol:hover {
 	width: calc(45px * 2);
 	width: calc(var(--thumbw) * 2);
-}
+} */
 
-.lcontrol select {
+/* .lcontrol select {
   width: 100%!important;
-} 
+}  */
 /* .lcontrol select option {
   width: 45px;
   width: var(--thumbw);
@@ -1259,6 +1263,7 @@ button, a[role="button"], input[type="submit"] {
 	padding: 10px;
 	color: #fff;
 	color: var(--primary);
+	text-align: center;
 }
 button:hover, a[role="button"]:hover, input[type="submit"]:hover{
 	background-color: #9e1f63;
