@@ -1210,6 +1210,19 @@ textarea {
 	font-family: var(--afontname), calc(var(--afonttype))!important;
 }
 
+input[type="color"] {
+  border: none;
+  border-radius: 0;
+  background: none;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+	padding: 0;
+  margin:0;
+}
+
 input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="tel"], input[type="file"], textarea, select, hr {
 	line-height: normal;
 	background-color: #fff;

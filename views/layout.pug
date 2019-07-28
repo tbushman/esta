@@ -12,7 +12,7 @@ html
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.draw.css")
 		//- link(href="https://api.tiles.mapbox.com/mapbox.js/v2.1.6/mapbox.css")
-		script(type="text/javascript", src="/scripts/vue.js")
+		script(type="text/javascript", src="/scripts/vue.min.js")
 		script(type="text/javascript", src="/scripts/jquery.min.js")
 		script(type="text/javascript", src="/scripts/jquery-ui.min.js")
 		script(type="text/javascript", src="/scripts/moment-with-locales.min.js")
@@ -439,7 +439,7 @@ html
 					const tempstyles = (!self.doc || self.doc.properties.layers.length === 0 ? [] : self.doc.properties.layers)
 					self.tempstyles = JSON.parse(JSON.stringify(tempstyles));
 					self.loadMap(function(dataCoords){
-						console.log(dataCoords)
+						//- console.log(dataCoords)
 						//- if (dataCoords){
 						//- 	self.latlng.lng = dataCoords.lng;
 						//- 	self.latlng.lat = dataCoords.lat;
