@@ -1559,6 +1559,10 @@ del {
 	margin: 0 0 0 51%;
 	z-index:1;
 }
+#publish_logo.mapactive {
+  min-width: 60px;
+  max-width: 60px;
+}
 #publish_logo > img {
 	width: 100%;
 	height: auto;
