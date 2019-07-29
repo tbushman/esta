@@ -16,7 +16,7 @@ block content
 					path(v-if="btn && !isNaN(wWidth)" 
 						:d="getClip()")
 		
-		// User Interface Button-->
+		// User Interface Button
 		div.skittle(v-if="btn.vis === 'block' && !isNaN(wWidth)" 
 		:style="{'top': btn.y+'px', 'left': btn.x+'px'}")
 		div.skittle.vis(v-if="btn.vis === 'block'" 

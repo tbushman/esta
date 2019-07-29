@@ -3065,6 +3065,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				type: "Feature",
 				index: doc.index,
 				properties: {
+					credit: body.credit,
 					title: {
 						ind: doc.properties.title.ind,
 						str: doc.properties.title.str 

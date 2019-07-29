@@ -12,7 +12,7 @@ html
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.draw.css")
 		//- link(href="https://api.tiles.mapbox.com/mapbox.js/v2.1.6/mapbox.css")
-		script(type="text/javascript", src="/scripts/vue.min.js")
+		script(type="text/javascript", src="/scripts/vue.js")
 		script(type="text/javascript", src="/scripts/jquery.min.js")
 		script(type="text/javascript", src="/scripts/jquery-ui.min.js")
 		script(type="text/javascript", src="/scripts/moment-with-locales.min.js")
@@ -219,6 +219,7 @@ html
 						gpo: null,
 						latlng: {lat: 40, lng: -111.8},
 						//- lyrs: [],
+						credit: this.getCredit(),
 						base: 0,
 						baseMaps: [
 							{
@@ -352,8 +353,8 @@ html
 							var keyName = event.key;
 							if (keyName === 'Enter') event.preventDefault()
 						});
-						//- $('.submenu.drop').slideUp(100);
-						//- $('.slidedown').slideUp(100);
+						$('.submenu.drop').slideUp(100);
+						$('.slidedown').slideUp(100);
 
 					})
 					var self = this;
@@ -517,6 +518,18 @@ html
 
 				},
 				methods: {
+					getCredit() {
+						var self = this;
+						var credit = null;
+						if (self.layers && self.layers.length > 0) {
+							var credits = self.layers.map(function(layer){ return (!layer.properties.credit ? '' : layer.properties.credit)}).join(' | ');
+							credit = (!self.doc || !self.doc.properties.credit ? '' : self.doc.properties.credit);
+							credit += credits;
+						} else {
+							credit = (!self.doc || !self.doc.properties.credit ? '' : self.doc.properties.credit);
+						}
+						return credit
+					},
 					resizeFrame(e) {
 						var self = this;
 						self.dPath = self.dPathAttr()
@@ -593,10 +606,11 @@ html
 					},
 					changeBase(i, e) {
 						var self = this;
+						var credit = self.credit + ' | ' + self.baseMaps[self.base].attribution;
 						if (e.target.checked) {
 							self.base = i
 							self.tilelayer.remove();
-							self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: self.map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(self.map);
+							self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: self.map.getBounds().pad(1000), attribution: credit}).addTo(self.map);
 						}
 
 					},
@@ -2069,7 +2083,8 @@ html
 						
 						//- self.censusLayer = L.tileLayer('https://api.censusreporter.org/1.0/geo/tiger2013/tiles/040/{z}/{x}/{y}.geojson').addTo(map)
 						//- self.censusLayer.bringToFront();
-						self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: self.baseMaps[self.base].attribution}).addTo(map);
+						var credit = (!self.credit || self.credit === '' ? self.getCredit() : self.credit) + ' | ' + self.baseMaps[self.base].attribution
+						self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: credit}).addTo(map);
 						self.map = map;
 						//- self.cZF = (18 - self.map.getZoom() + self.zfactor)
 						
