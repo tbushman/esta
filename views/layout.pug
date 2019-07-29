@@ -346,10 +346,6 @@ html
 					var self = this;
 					//- if (self.colorTimeout) clearTimeout(self.colorTimeout);
 				},
-				beforeDestroy: function(){
-					var self = this;
-					if (self.colorTimeout) clearTimeout(self.colorTimeout);
-				},
 				mounted: function(){
 					$(document).ready(function(){
 						document.addEventListener('keydown', function(event) {
@@ -438,7 +434,9 @@ html
 					}
 					const tempstyles = (!self.doc || self.doc.properties.layers.length === 0 ? [] : self.doc.properties.layers)
 					self.tempstyles = JSON.parse(JSON.stringify(tempstyles));
+					window.addEventListener('resize', self.resizeFrame);
 					self.loadMap(function(dataCoords){
+						
 						//- console.log(dataCoords)
 						//- if (dataCoords){
 						//- 	self.latlng.lng = dataCoords.lng;
@@ -512,8 +510,17 @@ html
 					clearInterval(self.sliderInterval);
 					clearTimeout(self.sliderTimeout1);
 					clearTimeout(self.sliderTimeout2)
+					if (self.colorTimeout) clearTimeout(self.colorTimeout);
+					window.removeEventListener('resize', self.resizeFrame)
+
 				},
 				methods: {
+					resizeFrame(e) {
+						var self = this;
+						self.dPath = self.dPathAttr()
+						self.wWidth = window.innerWidth;
+						self.wHeight = window.innerHeight;
+					},
 					ifNullThenArr(obj) {
 						if (!obj) return [];
 						return obj;
