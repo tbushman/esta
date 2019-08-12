@@ -1,4 +1,4 @@
-fieldset.lcontrol(style="padding:0;border:none;", v-cloak, v-if="mapReady")
+fieldset.lcontrol(style="padding:0;border:none;", v-cloak, v-if="mapReady && mapActive")
 	input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers[]")
 	
 	legend(style="font-size: 11px;") layers
@@ -20,8 +20,8 @@ fieldset.lcontrol(style="padding:0;border:none;", v-cloak, v-if="mapReady")
 			input(type="number", min="1", max="4", v-model="style.buckets", style="margin:0;", @change="numberColorBucket(style.lid, $event)")
 			legend(style="font-size: 11px;") Color
 			div.row(v-if="style.inc", v-for="(c,j) in style.colors")
-				label(style="font-size: 7px;position:absolute;padding:6px;color:#fff;font-weight:heavier;", :for="'color'+j", v-text="(style.min + (style.inc * j)).toFixed(1) + '–' + (!style.colors[j+1] ? style.max : (style.min + (style.inc * (j+1)))).toFixed(1)")
-				input(:id="'color'+j", type="color", v-model="style.colors[j]", @change="changeColorBucket(style.lid, j, $event)", style="pointer-events:all;")
+				label(style="font-size: 7px;position:absolute;padding:6px;color:#fff;font-weight:heavier;", :for="'color'+k+'_'+j", v-text="(style.min + (style.inc * j)).toFixed(1) + '–' + (!style.colors[j+1] ? style.max : (style.min + (style.inc * (j+1)))).toFixed(1)")
+				input(:id="'color'+k+'_'+j", type="color", :value="c", @change="changeColorBucket(k, j, $event)", style="pointer-events:all;")
 		
 
 	legend.block(style="font-size: 11px; margin-top:10px;", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0") more
