@@ -17,7 +17,7 @@ const { PublisherTest, ContentTest, SignatureTest } = require('../models/index.j
 // const domJSON = require('domjson');
 const mockSnapshotsExist = fs.existsSync(
   path.join(__dirname, '.', '__snapshots__', 'index.test.js.snap'));
-let mockSnapshots;
+let mockSnapshots = null;
 if (mockSnapshotsExist) {
   mockSnapshots = require(path.join(__dirname, '.', '__snapshots__', 'index.test.js.snap'));
 }
@@ -37,12 +37,15 @@ if (testing === undefined) {
 nockBack.setMode('record');
 
 describe('API calls', () => {
-  let key, gp, agent, csrf;
+  let key, gp, agent, cs = null;
   // eslint-disable-next-line no-undef
   beforeAll(async(done) => {
+    nock.enableNetConnect('127.0.0.1');
     await app.listen(8686, () => {
       console.log('connected');
-      agent = request.agent(app)
+      // agent = request.agent(app);
+      // agent.get('/').expect(200, done)
+      // console.log(agent)
       done()
     })
   }, 5000);
@@ -111,52 +114,207 @@ describe('API calls', () => {
   //   console.log(csrf)
   // }, 5000)
   
-  key = 'should add an admin user via manual registration';
+  key = 'registration page should contain a csrf token';
   test(key, async() => {
     const snapKey = ('API calls '+key+' 1');
-    const csrfKey = 'API calls should initiate getting csrf';
-    const snap = (!mockSnapshotsExist ? null : mockSnapshots[snapKey]);
-    const csurf = (!mockSnapshotsExist ? 
-      await agent.get('/register/')
-        .then((res) => {
-          return res.header['set-cookie'].filter((item) => {
-              return /(\_csrf=)/.test(item)
-            })[0].split('_csrf=')[1].split(';')[0]
-        }) 
-        : 
-        mockSnapshots[csrfKey]
-    );
-    console.log(csurf)
     const { nockDone } = await nockBack(
-      'pu.addAdminUser.json'
+      'pu.initAdminUser.json'
     );
     nock.enableNetConnect('127.0.0.1');
-    const pu = (
-      !recording ? 
-      await new Mock(snapKey).dat : 
-      await agent
+    let csrf = (!mockSnapshots ? null : mockSnapshots[snapKey]);
+    
+    if (!recording) {
+      expect(csrf).toMatchSnapshot();
+      nockDone()
+
+    } else {
+      await request(app)
+      .get('/register')
+      .expect(200)
+      .then(async(res)=>{
+        const csf = res.header['set-cookie'].filter((item) => {
+            console.log(item, /(\_csrf=)/.test(item))
+            return /(\_csrf=)/.test(item)
+          })[0].split('_csrf=')[1].split(';')[0];
+        if (!csf) throw new Error('missing csrf token');
+        expect(csf).toMatchSnapshot();
+        
+        request(app)
         .post('/register')
+        .set('Cookie', cookies(res))
         .send({
-          _csrf: csurf,
+          _csrf: csf,
           givenName: 'Tracey Bushman',
           zip: '90210',
           username: 'tbushman',
-          password: 'password'
+          password: 'password',
+          email: 'tracey.bushman@gmail.com'
         })
-        .then((data) => data).catch((err) => err)
-    );
-    expect(pu).toMatchSnapshot();
-    nockDone()
-  })
-  key = 'should add a user via manual registration';
-  key = 'should add a user via slack';
-  key = 'should add an admin user via slack';
-  key = 'as an authenticated admin, add a Geography document';
-  key = 'as an authenticated admin, add a Solidarity document';
-  key = 'as an authenticated admin, add a EIS document';
-  key = 'as an authenticated user, sign a Solidarity document';
+        .expect(302)
+        .expect('Location', '/sig/admin')
+        .then((res) => /*console.log(res)*/
+        {
+          console.log('k')
 
-});
+        })
+        .catch((err) => console.log(err))
+      })
+      
+      
+      
+      
+      // let cs = null;
+      // let rescookies = null;
+      // cs = await agent.get('/register/')
+      // .then(async (res) => {
+      //   const csf = res.header['set-cookie'].filter((item) => {
+      //       console.log(item, /(\_csrf=)/.test(item))
+      //       return /(\_csrf=)/.test(item)
+      //     })[0].split('_csrf=')[1].split(';')[0];
+      //   if (!csf) throw new Error('missing csrf token');
+      //   expect(csf).toMatchSnapshot();
+      //   agent.attachCookies(res);
+      //   cs = csf;
+      // });
+      nockDone()
+      
+      
+      
+      // .expect(async (res) => {
+      //   // console.log(res.header)
+      //   const csf = res.header['set-cookie'].filter((item) => {
+      //       console.log(item, /(\_csrf=)/.test(item))
+      //       return /(\_csrf=)/.test(item)
+      //     })[0].split('_csrf=')[1].split(';')[0];
+      //   if (!csf) throw new Error('missing csrf token');
+      //   cs = csf;
+      //   rescookies = res
+      //   agent.attachCookies(res)
+      // })
+      // .then(async (res) => {
+      //   // console.log(res)
+      //   // const cs = await res.header['set-cookie'].filter((item) => {
+      //   //     // console.log(item, /(\_csrf=)/.test(item))
+      //   //     return /(\_csrf=)/.test(item)
+      //   //   })[0].split('_csrf=')[1].split(';')[0];
+      //   // console.log(cs)
+      //   expect(cs).toMatchSnapshot();
+      //   console.log(cookies(res))
+      //   console.log(cookies(rescookies))
+      //   return agent
+      //     .post('/register')
+      //     // .set('Set-Cookie', res.header['set-cookie'].join(''))
+      //     .send({
+      //       _csrf: cs,
+      //       givenName: 'Tracey Bushman',
+      //       zip: '90210',
+      //       username: 'tbushman',
+      //       password: 'password',
+      //       email: 'tracey.bushman@gmail.com'
+      //     })
+      //     .expect(302)
+      //     .expect('Location', '/sig/admin')
+      //     .then((res) => /*console.log(res)*/
+      //     {
+      //       console.log('k')
+      //     })
+      //     .catch((err) => console.log(err))
+      // })
+      //   cs = csf;
+      //   rescookies = res;
+      //   console.log(csf)
+      //   expect(csf).toMatchSnapshot();
+      // 
+      // })
+      
+    }
+    
+  });
+  // key = 'should add an admin user';
+  // test(key, async() => {
+  //   const snapKey = ('API calls '+key+' 1');
+  //   const { nockDone } = await nockBack(
+  //     'pu.addAdminUser.json'
+  //   );
+  //   nock.enableNetConnect('127.0.0.1');
+  //   if (cs) {
+  //     const pu = await agent
+  //       .post('/register')
+  //       // .set('Set-Cookie', res.header['set-cookie'].join(''))
+  //       .send({
+  //         _csrf: cs,
+  //         givenName: 'Tracey Bushman',
+  //         zip: '90210',
+  //         username: 'tbushman',
+  //         password: 'password',
+  //         email: 'tracey.bushman@gmail.com'
+  //       })
+  //       .expect(302)
+  //       .expect('Location', '/sig/admin')
+  //       .then((res) => /*console.log(res)*/
+  //       {
+  //         console.log('k')
+  // 
+  //       })
+  //       .catch((err) => console.log(err))
+  //       expect(pu).toMatchSnapshot();
+  //   }
+  //   nockDone()
+
+  //   const pu = (
+  //     !recording ? 
+  //     await new Mock(snapKey).dat : 
+  //     await agent
+  //       .post('/register')
+  //       .send({
+  //         _csrf: cs,
+  //         givenName: 'Tracey Bushman',
+  //         zip: '90210',
+  //         username: 'tbushman',
+  //         password: 'password'
+  //       })
+  //       .then((data) => data).catch((err) => err)
+  //   );
+  //   expect(pu).toMatchSnapshot();
+  //   nockDone()
+  // })
+
+})
+  //     // .then((res) => {
+  //     // })
+  //   if (!mockSnapshotsExist && !csurf) csurf = mockSnapshots[csrfKey];
+  // 
+  //   console.log(csurf)
+  //   const { nockDone } = await nockBack(
+  //     'pu.addAdminUser.json'
+  //   );
+  //   nock.enableNetConnect('127.0.0.1');
+  //   const pu = (
+  //     !recording ? 
+  //     await new Mock(snapKey).dat : 
+  //     await agent
+  //       .post('/register')
+  //       .send({
+  //         _csrf: csurf,
+  //         givenName: 'Tracey Bushman',
+  //         zip: '90210',
+  //         username: 'tbushman',
+  //         password: 'password'
+  //       })
+  //       .then((data) => data).catch((err) => err)
+  //   );
+  //   expect(pu).toMatchSnapshot();
+  //   nockDone()
+  // })
+  // key = 'should add a user via manual registration';
+  // key = 'should add a user via slack';
+  // key = 'should add an admin user via slack';
+  // key = 'as an authenticated admin, add a Geography document';
+  // key = 'as an authenticated admin, add a Solidarity document';
+  // key = 'as an authenticated admin, add a EIS document';
+  // key = 'as an authenticated user, sign a Solidarity document';
+
+// });
 
 // describe('MongoDB methods', () => {
 //   let key, pu;
@@ -198,3 +356,41 @@ describe('API calls', () => {
 
 // For more information about testing with Jest see:
 // https://facebook.github.io/jest/
+
+
+function cookie (res, name) {
+  return res.headers['set-cookie'].filter(function (cookies) {
+    return cookies.split('=')[0] === name
+  })[0]
+}
+function cookies (res) {
+  return res.headers['set-cookie'].map(function (cookies) {
+    return cookies.split(';')[0]
+  }).join(';')
+}
+// function promisedRegisterRequest() {
+//   var authenticatedagent2b = request.agent(app);
+//   return new Promise((resolve, reject) => {
+//     authenticatedagent2b
+//       .post("/register")
+//       .send(user)
+//       .end(function(error, response) {
+//         if (error) reject(error);
+//         resolve(authenticatedagent2b);
+//       });
+//   });
+// }
+// // Auxiliary function.
+// function createLoginAgent(server, loginDetails, done) {
+//   agent
+//     .post(server)
+//     .send(loginDetails)
+//     .end(function (error, response) {
+//         if (error) {
+//             throw error;
+//         }
+//         // var loginAgent = request.agent();
+//         agent.saveCookies(response);
+//         done(loginAgent);
+//     });
+// };
