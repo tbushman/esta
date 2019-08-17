@@ -2216,20 +2216,23 @@ html
 						pH = ( !self.pHeight ? (wH * (self.res?0.5:0.5) ) : self.pHeight ), 
 						r = self.btn.r, cRc = (r * 0.5523), cRr = 0.81, 
 						sY = (isNaN(self.btn.y)?(wH*(self.res?0.5:0.5)):self.btn.y);
-						var lx = self.btn.x - 1//(!min === cx ? (min + side) : cx);
-						var ly = self.btn.y - 42//(!min === cy ? (min + side) : cy);
-						var bez = 
-						`M${lx},${ly}v43c10-19.3,14-21.8,14-30.2C${lx+14},${ly+6},${lx+6},${ly},${lx},${ly}z`
+						var lx = self.btn.x;
+						var ly = self.btn.y;
+						//- var lx = self.btn.x - 1//(!min === cx ? (min + side) : cx);
+						//- var ly = self.btn.y - 42//(!min === cy ? (min + side) : cy);
+						//- var bez = 
+						//- `M${lx},${ly}v43c10-19.3,14-21.8,14-30.2C${lx+14},${ly+6},${lx+6},${ly},${lx},${ly}z`
 
-						//- var circle = `M${wW},${wH}H0V0h${wW}V${wH}z 
-						//- M${(wW - pW) + r},${sY}c0-${cRc}-${(cRc * cRr)}-${r}-${r}-${r}
-						//- 	c-${cRc},0-${r},${(cRc * cRr)}-${r},${r} 
-						//- c0,${cRc},${(cRc * cRr)},${r},${r},${r}
-						//- 	C${(wW - pW) + cRc},${(sY+r)},${(wW - pW)+r},${(sY + cRc)},
-						//- 	${((wW - pW) + r)},${sY}z`
+						var circle = 
+						//- `M${wW},${wH}H0V0h${wW}V${wH}z 
+						`M${lx + r},${sY}c0-${cRc}-${(cRc * cRr)}-${r}-${r}-${r}
+							c-${cRc},0-${r},${(cRc * cRr)}-${r},${r} 
+						c0,${cRc},${(cRc * cRr)},${r},${r},${r}
+							C${lx + cRc},${(sY+r)},${lx+r},${(sY + cRc)},
+							${(lx + r)},${sY}z`
 						
 						var str = 
-						`M${wW},${wH}H0V0h${wW}V${wH}z ${bez}`
+						`M${wW},${wH}H0V0h${wW}V${wH}z ${circle}`
 						return str; }
 					},
 					sliderImg(int){
