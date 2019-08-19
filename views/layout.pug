@@ -63,12 +63,12 @@ html
 						tempstyles: [],
 						colorTimeout: null,
 						buf: null,
-						attribute: null,
-						attributes: [],
+						//- attribute: null,
+						//- attributes: [],
 						availablelayers: this.ifNullThenArr(!{JSON.stringify(availablelayers)}),
 						c: ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928","#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"],
 						//['#39B54A', '#D9E021', '#FBB03B', '#FC644D', '#ED1C24'],
-						lvl: 'h',
+						//- lvl: 'h',
 						wWidth: window.innerWidth,
 						wHeight: window.innerHeight,
 						btn: { x: (window.innerWidth / 2), 
@@ -76,10 +76,10 @@ html
 							r: 21,
 							vis: (!this.mapActive || !this.mapEdit ? null : 'block')
 						},
-						h: 0,
-						i: 0,
-						j: 0,
-						m: 0,
+						//- h: 0,
+						//- i: 0,
+						//- j: 0,
+						//- m: 0,
 						signable: this.parseBool(!{JSON.stringify(signable)}),
 						unsigned: this.parseBool(!{JSON.stringify(unsigned)}),
 						avail: this.parseBool(!{JSON.stringify(avail)}),
@@ -92,13 +92,13 @@ html
 						layers: this.parseObj(!{JSON.stringify(layers)}),
 						position: (!this.parseObj(!{JSON.stringify(session.position)}) ? {lat: 40, lng: -111.89, zoom: 6}/*null*/ : this.parseObj(!{JSON.stringify(session.position)})),
 						edit: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)}).index),
-						chindexes: [],
+						//- chindexes: [],
 						chindex: 0,
 						//- dindexes: [],
 						did: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)})._id),
 						cursor: null,
-						input: '',
-						fixedPug: '',
+						//- input: '',
+						//- fixedPug: '',
 						map: '',
 						mapActive: (this.parseBool(!{JSON.stringify(mapActive)})),
 						mapReady: false,
@@ -236,42 +236,8 @@ html
 						cZF: null,
 						viewerList: false,
 						censusVars: null,
-						censusLoad: {tempGeo:[],placetype:'',cats:null,cat:null} 
-						//- boundary: null,
-						//- //https://gist.githubusercontent.com/wboykinm/ae69cce5f5b419c071bf/raw/83fc193556f94c32eacdd64747eee876e1e0f790/cr-leaflet.js
-						//- //from censusreporter
-						//- boundaries: [
-						//- 	{code: '020', name:'region'},
-						//- 	{code: '030', name:'division'},
-						//- 	{code: '040', name:'state'},
-						//- 	{code: '050', name:'county'},
-						//- 	{code: '060', name:'county subdivision'},
-						//- 	{code: '140', name:'census tract'},
-						//- 	{code: '150', name:'block group'},
-						//- 	{code: '160', name:'place'},
-						//- 	{code: '170', name:'consolidated city'},
-						//- 	{code: '230', name:'Alaska native regional corporation'},
-						//- 	{code: '250', name:'native area'},
-						//- 	{code: '251', name:'tribal subdivision'},
-						//- 	{code: '256', name:'tribal tract'},
-						//- 	{code: '310', name:'metro area (CBSA)'},
-						//- 	{code: '314', name:'metropolitan division'},
-						//- 	{code: '330', name:'combined statistical area'},
-						//- 	{code: '335', name:'combined NECTA'},
-						//- 	{code: '350', name:'NECTA'},
-						//- 	{code: '364', name:'NECTA division'},
-						//- 	{code: '400', name:'urban area'},
-						//- 	{code: '500', name:'congressional district'},
-						//- 	{code: '610', name:'state house (upper)'},
-						//- 	{code: '620', name:'state house (lower)'},
-						//- 	{code: '795', name:'PUMA'},
-						//- 	{code: '860', name:'ZIP code'},
-						//- 	{code: '950', name:'school district (elementary)'},
-						//- 	{code: '960', name:'school district (secondary)'},
-						//- 	{code: '970', name:'school district (unified)'}],
-							//(!this.map ? (6 * this.zfactor) : (this.map.getZoom() + this.zfactor))
-							//(!this.parseObj(!{JSON.stringify(dat)}).length ? [[]] : Array(this.parseObj(!{JSON.stringify(dat)}).length).fill([]))
-							,json: {}
+						censusLoad: {tempGeo:[],placetype:'',cats:null,cat:null} ,
+						json: {}
 						
 					}
 				},
@@ -520,6 +486,28 @@ html
 
 				},
 				methods: {
+					parseObj: function(obj) {
+						if (!obj) return '';
+						return obj;
+					},
+					parseBool: function(item) {
+						if (!item) return false;
+						return true;
+					},
+					ifNullThenArr(obj) {
+						if (!obj) return [];
+						return obj;
+					},
+					parsePu(obj) {
+						if (!obj) {
+							return {
+								properties: {
+									givenName: ''
+								}
+							}
+						}
+						return obj;
+					},
 					getCredit() {
 						var self = this;
 						var credit = null;
@@ -537,38 +525,6 @@ html
 						self.dPath = self.dPathAttr()
 						self.wWidth = window.innerWidth;
 						self.wHeight = window.innerHeight;
-					},
-					ifNullThenArr(obj) {
-						if (!obj) return [];
-						return obj;
-					},
-					parsePu(obj) {
-						if (!obj) {
-							return {
-								properties: {
-									givenName: ''
-								}
-							}
-						}
-						return obj;
-					},
-					getXML(){
-						var self = this;
-						var xhr = new XMLHttpRequest();
-						xhr.addEventListener("load", self.selfOnload, false);
-						xhr.open('GET', xml, false);
-						xhr.send();
-
-					},
-					selfOnload(e) {
-						var self = this;
-						self.xmlnode = e.target.responseXML;
-					},
-					parseXML(xml){
-						//- console.log(xml)
-						var parser = new DOMParser();
-						var parsed = parser.parseFromString(xml, 'text/xml');
-						return parsed;
 					},
 					subDropdown(e) {
 						var self = this;
@@ -704,8 +660,6 @@ html
 								self.doc.properties.layers[ind].key = key
 							} 
 						});
-						
-						
 					},
 					setXmlId(e){
 						var self = this;
@@ -866,10 +820,6 @@ html
 							}
 						}
 					},
-					parseBool: function(item) {
-						if (!item) return false;
-						return true;
-					},
 					toggleExport: function() {
 						this.export = !this.export;
 					},
@@ -894,14 +844,7 @@ html
 						}
 						return d;
 					},
-					widthRectAttr: function(plus,type){
-						var nw = this.getSize(type).nw;
-						return nw - ((self.thickness + plus) * 2);
-					},
-					heightRectAttr: function(plus,type){
-						var nh = this.getSize(type).nh;
-						return nh - ((self.thickness + plus) * 2);
-					},
+					
 					panZoom: function(){
 						var self = this;
 						//console.log(self.map)
@@ -910,43 +853,6 @@ html
 							})
 						}
 						
-					},
-					importCsv: function(e){
-
-						var self = this;
-						var file = document.getElementById('importcsv').files[0];//e.target.files[0];
-						var reader = new FileReader();
-						
-						reader.onloadend = function(e) {
-							var fd = new FormData();
-
-							fd.append("csv", file);
-							if (self.doc && self.doc !== '') {
-								var uploadurl = '/api/importcsv/'+(self.doc._id )+'/csv';
-								$.ajax({
-									url: uploadurl,
-									type: 'POST',
-									data: fd,
-									processData: false,
-									contentType: false,
-									success: function(response) { 
-										self.doc = response;
-										window.location.reload(true)
-									}
-									
-								})
-							}
-							
-						}
-						reader.readAsDataURL(file)
-						
-					},
-					submitForm: function(ind){
-						$('#form_'+ind+'').submit()
-					},
-					parseObj: function(obj) {
-						if (!obj) return '';
-						return obj;
 					},
 					toggleEdit: function(ind) {
 						var self = this;
@@ -1298,70 +1204,6 @@ html
 							
 						}, 100);
 					},
-					getCoordInds(latlngs, latlng) {
-						
-					},
-					latlngsToArr(latlngs, cll){
-						if (!Array.isArray(latlngs)) {
-							return;
-						}
-						return latlngs.map(function(latlng, h){
-							if (!Array.isArray(latlng)) {
-								self.h = null;
-								return [latlng.lng,latlng.lat];
-							} else {
-								if (latlng[0].lat && (latlng[0].lat !== latlng[latlng.length-1].lat || latlng[0].lng !== latlng[latlng.length-1].lng)) {
-									latlng.push(latlng[0])
-								}
-								return latlng.map(function(ll, i){
-									if (!Array.isArray(ll)) {
-										if (ll.lat === cll.lat && ll.lng === cli.lng) {
-											self.h = h;
-											self.i = i;
-											self.lvl = 'hi'
-										}
-										return [ll.lng,ll.lat]
-
-									} else {
-										if (ll[0].lat && (ll[0].lat !== ll[ll.length-1].lat || ll[0].lng !== ll[ll.length-1].lng)) {
-											ll.push(ll[0])
-										}
-										return ll.map(function(l, j) {
-											if (!Array.isArray(l)) {
-												if (l.lat === cll.lat && l.lng === cll.lng) {
-													self.h = h;
-													self.i = i;
-													self.j = j;
-													self.lvl = 'hij'
-												}
-												return [l.lng,l.lat]
-
-											} else {
-												if (l[0].lat && (l[0].lat !== l[l.length-1].lat || l[0].lng !== l[l.length-1].lng)) {
-													l.push(l[0])
-												}
-												return l.map(function(k, m){
-													if (!Array.isArray(k)) {
-														if (k.lat === cll.lat && k.lng === cll.lng) {
-															self.h = h;
-															self.i = i;
-															self.j = j;
-															self.m = m;
-															self.lvl = 'hijm';
-														}
-														return [k.lng,k.lat]
-													} else {
-														console.log('giant array')
-													}
-												})
-											}
-										})
-									}
-								})
-							}
-							
-						});
-					},
 					handleGeoJson(e){
 						var self = this;
 						self.file = 
@@ -1428,16 +1270,11 @@ html
 					},
 					isPointCoords(ll) {
 						if (ll.length === 2 || ll.length === 3 && !Array.isArray(ll[0])) {
-							//- console.log('l 1')
 							return true
-						//- } else {
 						} else 
 						if (ll[0][0] && ll[0].length === 2 && !Array.isArray(ll[0][0])) {
-							//- console.log(ll)
-							//- console.log('l 2')
 							return true
 						} else if (ll[0][0][0] && ll[0][0].length === 2 && !Array.isArray(ll[0][0][0])) {
-							//- console.log('l 3')
 							return true
 						} else {
 							return false;
@@ -1449,13 +1286,6 @@ html
 						} else {
 							return false
 						} 
-						//- if (ll[0] && !isNaN(parseInt(ll[0].lat, 10))) {
-						//- 	return true
-						//- } else if (ll[0][0] && !isNaN(parseInt(ll[0][0].lat, 10))) {
-						//- 	return true
-						//- } else {
-						//- 	return false;
-						//- }
 					},
 					async filterViewerList(ll1, ll2, feature, keys, vals, buf) {
 						var self = this;
@@ -1746,9 +1576,6 @@ html
 
 							}
 						})]
-					},
-					onSwapImageLoad(e){
-						
 					},
 					getEvictionLab() {
 						$.post('/utahcourts')
