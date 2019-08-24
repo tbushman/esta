@@ -963,6 +963,9 @@ html
 
 						}
 						self.mapActive = !mapActive;
+						if (self.mapActive && !self.mapReady) {
+							self.mapReady = true;
+						}
 						if (self.mapActive) {
 							$('.slidedown').slideUp(100);
 
