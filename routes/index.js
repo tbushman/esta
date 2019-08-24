@@ -3250,8 +3250,14 @@ router.post('/api/deleteentry/:id', async function(req, res, next) {
 	var id = req.params.id;
 	// var index = parseInt(req.params.index, 10);
 	var dc = await ContentDB.findOne({_id: id}).then(function(doc){return doc}).catch(function(err){return next(err)});
-	var med = dc.properties.media[0].thumb;
-	var index = med.split('thumbs/')[1].split('/')[0];
+	var med = null, index = null;
+	if (dc.properties.media.length > 0) {
+		med = dc.properties.media[0].thumb;
+		index = med.split('thumbs/')[1].split('/')[0];
+	} 
+	if (!index) {
+		index = 0;
+	}
 	ContentDB.remove({_id: id}, function(err, data) {
 		if (err) {
 			return next(err); 
