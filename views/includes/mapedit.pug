@@ -1,5 +1,4 @@
 fieldset.lcontrol(style="padding:0;border:none;", v-cloak, v-if="mapReady && mapActive")
-	input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers[]")
 	
 	legend(style="font-size: 11px;") layers
 	div.layer(v-for="(layer, o) in layers")

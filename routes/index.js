@@ -2941,6 +2941,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	if (!body.description){
 		body.description = ''
 	}
+	console.log(body)
 	asynk.waterfall([
 		function(next){
 			var publishersDir = (process.env.NODE_ENV === 'production' ? process.env.PD.toString() : (!process.env.DEVPD ? null : process.env.DEVPD.toString()));
@@ -3059,7 +3060,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			if (!Array.isArray(JSON.parse(body.latlng)[0][0])) {
 				type = 'MultiPoint'
 			}
-			console.log(body.layers)
+			// console.log(body)
 			var entry = {
 				_id: id,
 				type: "Feature",
