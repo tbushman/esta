@@ -60,6 +60,7 @@ html
 				el: '#vue',
 				data: function data(){
 					return {
+						initbounds: null,
 						tempstyles: [],
 						colorTimeout: null,
 						buf: null,
@@ -434,7 +435,7 @@ html
 						//- self.map.on('zoomstart', function(e){
 						//- 	self.viewerListState = JSON.parse(JSON.stringify(self.viewerList));
 						//- })
-						self.map.on('zoomend', function(e){
+						self.map.on('moveend', function(e){
 							//- if (self.geo.length === 0) {
 							//- 	self.viewerList = false;
 							//- } else if (self.viewerList && self.geo.length > 0){
@@ -577,8 +578,6 @@ html
 						if (self.json[id]) self.lyr[id] = self.loadLayer(self.json[id], id);
 						if (self.lyr[id].options) self.lyr[id].options.interactive = true;
 						//- self.map.addLayer(self.lyr[id]);
-						var bounds = self.lyr[id].getBounds();
-						self.map.fitBounds(bounds);
 					},
 					async addLayer(id, e) {
 						var self = this;
@@ -1842,12 +1841,12 @@ html
 									self.map.addLayer(self.dataLayer);
 									if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
 
-									if (!latlng) {
-										latlng = self.dataLayer.getBounds().getCenter();
-										self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
-										self.map.panTo(latlng)
-
-									}
+									//- if (!latlng) {
+									//- 	latlng = self.dataLayer.getBounds().getCenter();
+									//- 	self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
+									//- 	self.map.panTo(latlng)
+									//- 
+									//- }
 
 								} else {
 									self.json[key] = result;
@@ -1863,7 +1862,12 @@ html
 									if (!latlng) {
 										latlng = self.lyr[key].getBounds().getCenter();
 										self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
-										self.map.panTo(latlng)
+										if (isPointCoords) {
+											var bounds = self.lyr[key].getBounds();
+											self.map.fitBounds(bounds);
+										}//- } else {
+										//- 	self.map.panTo(latlng)
+										//- }
 
 									}
 
