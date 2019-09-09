@@ -1,0 +1,962 @@
+script(type="text/javascript").
+	Vue.prototype.moment = moment;
+	Vue.prototype.$ = $;
+	Vue.prototype.window = window;
+	Vue.prototype.L = L;
+	if (typeof tinymce === 'object') Vue.prototype.tinymce = tinymce;
+	new Vue({
+		el: '#vue',
+		data: function data(){
+			return {
+				initbounds: null,
+				tempstyles: [],
+				colorTimeout: null,
+				buf: null,
+				availablelayers: this.ifNullThenArr(!{JSON.stringify(availablelayers)}),
+				c: ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928","#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"],
+				wWidth: window.innerWidth,
+				wHeight: window.innerHeight,
+				btn: { x: (window.innerWidth / 2), 
+					y: (window.innerHeight/ 2),
+					r: 21,
+					vis: (!this.mapActive || !this.mapEdit ? null : 'block')
+				},
+				avail: this.parseBool(!{JSON.stringify(avail)}),
+				type: this.parseObj(!{JSON.stringify(type)}),
+				menu: this.parseObj(!{JSON.stringify(menu)}),
+				dat: this.parseObj(!{JSON.stringify(dat)}),
+				doc: this.parseObj(!{JSON.stringify(doc)}),
+				layers: this.parseObj(!{JSON.stringify(layers)}),
+				position: (!this.parseObj(!{JSON.stringify(session.position)}) ? {lat: 40, lng: -111.89, zoom: 6}/*null*/ : this.parseObj(!{JSON.stringify(session.position)})),
+				chindex: 0,
+				did: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)})._id),
+				cursor: null,
+				map: '',
+				mapActive: (this.parseBool(!{JSON.stringify(mapActive)})),
+				mapReady: false,
+				mapEdit: false,
+				mapEditable: false,
+				dataLayer: '',
+				lMarker: '',
+				thickness: 45,
+				res: (window.innerWidth < 600),
+				dPath: this.dPathAttr(),
+				web: true,
+				export: this.parseBool(!{JSON.stringify(exports)}),
+				modal: {msg:null},
+				dragind: null,
+				latlngs: null,
+				str: this.parseObj(!{JSON.stringify(str)}),
+				lyr: {},
+				geo: [],
+				latlng: {lat: 40, lng: -111.8},
+				credit: this.getCredit(),
+				base: 0,
+				baseMaps: [
+					{
+						url: 'https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A',
+						attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+					},
+					{
+						url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+						attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+					}
+					
+				],
+				zfactor: (0.01 * (!this.map ? 6 : (18 - this.map.getZoom() ) )),
+				cZF: null,
+				viewerList: false,
+				json: {}
+				
+			}
+		},
+		mounted: function(){
+			$(document).ready(function(){
+				document.addEventListener('keydown', function(event) {
+					var keyName = event.key;
+					if (keyName === 'Enter') event.preventDefault()
+				});
+				setTimeout(function(){
+					$('.submenu.drop').slideUp(100);
+					$('.slidedown').slideUp(100);
+				},3000)
+
+			})
+			var self = this;
+			$(document).on('click', '.href', function(e){
+				e.stopPropagation();
+			});
+			const tempstyles = (!self.doc || self.doc.properties.layers.length === 0 ? [] : self.doc.properties.layers)
+			self.tempstyles = JSON.parse(JSON.stringify(tempstyles));
+			window.addEventListener('resize', self.resizeFrame);
+
+			self.loadMap(function(dataCoords){
+				self.map.on('dragstart', function(e){
+					self.viewerList = false;
+				});
+				self.map.on('moveend', function(e){
+					var coord = self.lMarker.getLatLng();
+					var xy = self.map.latLngToLayerPoint(coord);
+					var x = xy.x;
+					var y = xy.y;
+					self.btn.x = x;
+					self.btn.y = y;
+				})
+
+			})
+		},
+		beforeDestroy: function(){
+			//TODO clearTimout
+			var self = this;
+			if (self.colorTimeout) clearTimeout(self.colorTimeout);
+			window.removeEventListener('resize', self.resizeFrame)
+
+		},
+		methods: {
+			parseObj: function(obj) {
+				if (!obj) return '';
+				return obj;
+			},
+			parseBool: function(item) {
+				if (!item) return false;
+				return true;
+			},
+			ifNullThenArr(obj) {
+				if (!obj) return [];
+				return obj;
+			},
+			getCredit() {
+				var self = this;
+				var credit = null;
+				if (self.layers && self.layers.length > 0) {
+					var credits = self.layers.map(function(layer){ return (!layer.properties.credit ? '' : layer.properties.credit)}).join(' | ');
+					credit = (!self.doc || !self.doc.properties.credit ? '' : self.doc.properties.credit);
+					credit += credits;
+				} else {
+					credit = (!self.doc || !self.doc.properties.credit ? '' : self.doc.properties.credit);
+				}
+				return credit
+			},
+			resizeFrame(e) {
+				var self = this;
+				self.dPath = self.dPathAttr()
+				self.wWidth = window.innerWidth;
+				self.wHeight = window.innerHeight;
+			},
+			subDropdown(e) {
+				var self = this;
+				if (!$(e.target).next('.slidedown')) {
+			
+					return;
+				} else {
+					var sub = $(e.target).next('.slidedown')[0];
+					//- console.log(e.target.nextSibling)
+					//- console.log(sub)
+					$('.drop').not($(e.target)).removeClass('active');
+					$(sub).slideToggle(100);
+					$(e.target).toggleClass('active');
+				}
+			},
+			mainDropdown(e) {
+				var self = this;
+				if ($('.dropdown').hasClass('active')) {
+					$('.dropdown').removeClass('active');
+				} else {
+					$('.dropdown').addClass('active');
+				}
+				$('.submenu.drop').slideToggle(100);
+			},
+			changeBase(i, e) {
+				var self = this;
+				var credit = self.credit + ' | ' + self.baseMaps[self.base].attribution;
+				if (e.target.checked) {
+					self.base = i
+					self.tilelayer.remove();
+					self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: self.map.getBounds().pad(1000), attribution: credit}).addTo(self.map);
+				}
+
+			},
+			layerAdd(id) {
+				var self = this;
+				if (self.json[id]) self.lyr[id] = self.loadLayer(self.json[id], id);
+				if (self.lyr[id].options) self.lyr[id].options.interactive = true;
+				//- self.map.addLayer(self.lyr[id]);
+			},
+			async addLayer(id, e) {
+				var self = this;
+				var tlrs = self.tempstyles.filter(function(item){
+					return item.lid === id
+				})[0];
+				var style;
+				if (!tlrs) { 
+					style = {
+						lid: id,
+						buckets: 1,
+						colors: [self.c[0]],
+						key: ''
+					};
+				} else { 
+					style = tlrs;
+				}
+				var ind = null;
+				var thisAvailableLayer = await self.availablelayers.filter(function(item, i){
+					if (item._id === id) {
+						ind = i;
+					} 
+					return item._id === id
+				})[0];
+				var thisLayer = await self.layers.filter(function(item, i){
+					return item._id === id
+				})[0];
+				if (!thisLayer && thisAvailableLayer) {
+					if (ind !== null && self.json[id]) {
+						self.availablelayers.splice(ind, 1);
+						self.layers.push(thisAvailableLayer);
+						await self.doc.properties.layers.push(style);
+						self.layerAdd(id)
+					}
+				}
+			},
+			async removeLayer(id, e) {
+				var self = this;
+				var keys = self.doc.properties.layers.map(function(item){return item.lid})
+				var ind = null;
+				var thisLayer = await self.layers.filter(function(item, i){
+					if (item._id === id) {
+						ind = i;
+					} 
+					return item._id === id
+				})[0];
+				var thisAvailableLayer = self.availablelayers.filter(function(item, i){
+					return item._id === id;
+				})[0]
+				if (thisLayer && !thisAvailableLayer) {
+					if (ind > -1) {
+						self.layers.splice(ind, 1);
+						self.doc.properties.layers.splice(keys.indexOf(id), 1);
+					}
+					self.availablelayers.push(thisLayer);
+				}
+				if (self.doc.properties.layers && self.doc.properties.layers.length === 0 && typeof self.dataLayer.getBounds === 'function') {
+					var bounds = self.dataLayer.getBounds();
+					self.map.fitBounds(bounds)
+				}
+				self.lyr[id].remove()
+			},
+			changeLayers(id, e) {
+				var self = this;
+				if (e.target.checked) {
+					self.addLayer(id, e)
+				} else {
+					self.removeLayer(id, e)
+				}
+			},
+			changeAttribute(id, e) {
+				var self = this;
+				var ind = null;
+				var key = e.target.value;
+				var thisLayer = self.doc.properties.layers.forEach(function(item, i){
+					if (ind) return;
+					if (item.lid === id) {
+						ind = i;
+						self.doc.properties.layers[ind].key = key
+					} 
+				});
+			},
+			navigateTo: function(url){
+				window.location.href = url;
+			},
+			getHTML: function(type, str) {
+				var self = this;
+				var span = document.createElement(type);
+				span.innerHTML = str;
+				return span.outerHTML;
+			},
+
+			dPathAttr: function() {
+				var self = this;
+				var thickness = (!thickness ? 50 : thickness);
+				var nw = (!self.wWidth ? window.innerWidth : self.wWidth);
+				var nh = (!self.wHeight ? window.innerHeight : self.wHeight);
+				var d;
+				if (self.type === 'draw') {
+					d = "M0,0v"+nh+"h"+nw+"V0H0L0,0z"
+				} else {
+					d = "M0,0v"+nh+"h"+nw+"V0H0L0,0z "+
+					"M"+(thickness)+","+(thickness)+"H"+(nw - thickness)+"V"+(nh - thickness)+"H"+(thickness)+"V"+(thickness)+"z "
+				}
+				return d;
+			},
+			
+			panZoom: function(){
+				var self = this;
+				//console.log(self.map)
+				if (self.map && self.latlng) {
+					$.post('/panzoom/'+self.latlng.lat+'/'+self.latlng.lng+'/'+self.map.getZoom()+'', function(result){
+					})
+				}
+				
+			},
+			getLayers(id) {
+				//- self.lyr[item._id]
+				var self = this;
+				$.get('/api/geointersect/'+id+'', function(res){
+					if (res.length === 1 && res[0]._id === self.doc._id) {
+						$.get('/')
+					}
+					console.log(res)
+				})
+			},
+			styleOf(feature, type) {
+				var self = this;
+				var keys = self.doc.properties.layers.map(function(item){return item.lid})
+				var cind = keys.indexOf(feature._id);
+				var c = (!self.c[cind] ? 'var(--highlight)' : self.c[cind]);
+				var style = {
+										fillColor: c,
+										color: c,
+										weight: 2,
+										opacity: 1,
+										fillOpacity: 0.8,
+										className: feature._id
+										
+										}
+				switch(type){
+					case 'MultiPoint':
+						style.radius = 10;
+						style.color = '#fff';
+						style.fillColor = c;
+						break;
+					case 'Point':
+						style.radius = 10;
+						style.color = '#fff';
+						style.fillColor = c;
+						break;
+					case 'Polygon':
+						break;
+					case 'MultiPolygon':
+						break;
+					default: 
+				}
+				return style;
+			},
+			coordsToLatLng(coords) { // (Array[, Boolean]) -> LatLng
+				return new L.LatLng(coords[1], coords[0]);
+			},
+			coordsToLatLngs(coords, levelsDeep, coordsToLatLng) { // (Array[, Number, Function]) -> Array
+				var latlng, i, len,
+						latlngs = [];
+				for (i = 0, len = coords.length; i < len; i++) {
+					latlng = levelsDeep ?
+						this.coordsToLatLngs(coords[i], levelsDeep - 1, coordsToLatLng) :
+						(coordsToLatLng || this.coordsToLatLng)(coords[i]);
+					latlngs.push(latlng);
+				}
+				return latlngs;
+			},
+			isPointCoords(ll) {
+				if (ll.length === 2 || ll.length === 3 && !Array.isArray(ll[0])) {
+					return true
+				} else 
+				if (ll[0][0] && ll[0].length === 2 && !Array.isArray(ll[0][0])) {
+					return true
+				} else if (ll[0][0][0] && ll[0][0].length === 2 && !Array.isArray(ll[0][0][0])) {
+					return true
+				} else {
+					return false;
+				}
+			},
+			isPointLatlng(ll) {
+				if (!Number.isNaN(parseInt(ll.lat, 10))) {
+					return true
+				} else {
+					return false
+				} 
+			},
+			async filterViewerList(ll1, ll2, feature, keys, vals, buf) {
+				var self = this;
+				var latlng = ll2;
+				//- $.get('/publishers/esta/json/json_'+feature._id+'.json')
+				//- .then(async function(json){
+				//- 	if (json.features){
+				if (self.json[feature._id]) {
+					var counter = 0;
+					self.geo = (!self.json[feature._id].features ? [self.json[feature._id]] : await self.json[feature._id].features
+					.filter(function(ft, j){
+						if (self.isPointCoords(ft.geometry.coordinates)) {
+							//TODO: Add as layer, then get bounds, then get center
+							var rx = ft.geometry.coordinates.reverse();
+							var center = L.latLng(rx) 
+							latlng = center;
+							return ll1.contains(center);
+						} else {
+							var bf = L.geoJSON(ft, {
+								style: function (feature) {
+									return {color: 'tomato'};
+								}
+							}).addTo(self.map);
+							var l1 = bf.getBounds();
+							var contains = (l1.contains(latlng));
+							if (contains) {
+								ll1 = l1
+								self.buf[counter] = bf;
+								counter++
+							} else {
+								bf.remove()
+							}
+							return contains;
+						}
+					}))
+					if (self.geo && self.geo.length > 0) {
+						//- console.log(self.geo)
+						if (ll1._southWest) {
+							self.map.fitBounds(ll1);
+							var mark = L.latLngBounds(ll1).getCenter();
+							self.map.panTo(mark);
+							self.lMarker.setLatLng(mark);
+						} else {
+							self.map.panTo(latlng);
+							self.lMarker.setLatLng(latlng);
+						}
+						//- 
+						if (self.geo.length > 0) {
+							self.viewerList = true;
+						} else {
+							self.viewerList = false;
+						}
+					} else {
+						console.log('wtaf')
+						//- buf.remove();
+
+					}
+				}
+				
+				buf.remove();
+
+				//- })
+				//- .catch(function(err){
+				//- 	console.log(err)
+				//- })
+			},
+			getAttributes(feature) {
+				var self = this;
+				var vals = self.lyr[feature._id]
+				$.get('/publishers/esta/json/json_'+feature._id+'.json')
+				.then(async function(json){
+					if (json.features){
+						return Object.keys(json.features[0])
+					}
+				})
+			},
+			//- arrayEqArray(arr1, arr2)
+			setView(feature, latlng){
+				var self = this;
+				if (self.buf) self.buf.remove()
+				//- self.viewerList = true;
+				self.geo = [feature]
+				self.buf = L.geoJSON(feature, {
+					style: function (feature) {
+						return {color: 'tomato'};
+					}
+				}).addTo(self.map);
+				var l1 = self.buf.getBounds();
+				var c = l1.getCenter();
+				self.map.fitBounds(l1)
+				self.lMarker.setLatLng(c);
+				self.lMarker.setOpacity(1);
+				self.btn.x = (self.wWidth/2);
+				self.btn.y = (self.wHeight/2);
+				self.viewerList = true;
+				//- if (self.buf && self.buf.length > 0) {
+				//- 	self.buf.forEach(function(item){
+				//- 		item.remove();
+				//- 	})
+				//- }
+				//- self.cZF = (self.map.getZoom() + self.zfactor);
+				//- var cp = self.map.latLngToLayerPoint(latlng);
+				//- var x1 = cp.x-10;
+				//- var y1 = cp.y-10;
+				//- var x2 = cp.x+10;
+				//- var y2 = cp.y+10;
+				//- var p1 = self.map.layerPointToLatLng(L.point(x1,y1));
+				//- var p2 = self.map.layerPointToLatLng(L.point(x2, y2));
+				//- 
+				//- var buf = L.featureGroup([L.circle(p1), L.circle(p2)]).addTo(self.map);
+				//- var ll1 = buf.getBounds();
+				//- var ll2 = latlng;
+				//- var keys;
+				//- var vals;
+				//- if (!self.dataLayer._layers && self.lyr[feature._id]) {
+				//- 	if (!self.lyr[feature._id]._layers) {
+				//- 		keys = Array.from(Array(self.lyr[feature._id]._latlngs.length).keys())
+				//- 	} else {
+				//- 		keys = Object.keys(self.lyr[feature._id]._layers)
+				//- 	}
+				//- 	vals = self.lyr[feature._id];
+				//- 	//- console.log(feature, vals)
+				//- } else {
+				//- 	vals = self.dataLayer;
+				//- 	keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
+				//- 	//- console.log(keys)
+				//- }
+				//- self.filterViewerList(ll1, ll2, feature, keys, vals, buf)
+				
+				
+			},
+			onEachFeaturePoly(id,feature,layer){
+				
+			},
+			onEachFeaturePoint(id, feature,layer){
+				//- var thisLayer = L.GeoJSON.geometryToLayer(feature, {
+				//- 	pointToLayer: function(ft, latlng) {
+				//- 		var circle = new L.CircleMarker(latlng)//, self.styleOf(ft, ft.geometry.type))
+				//- 			.on('click', function(){
+				//- 				return self.setView(ft, latlng)
+				//- 			});
+				//- 		return circle;
+				//- 	}
+				//- 
+				//- });
+				//- colors.forEach(function(color, i){
+				//- 	var mi = inc * i;
+				//- 	var ma = (!colors[i+1] ? max : (inc * i+1));
+				//- 	//- console.log(feature.properties[thisKey], mi, ma)
+				//- 	if (feature.properties[thisKey] >= mi && feature.properties[thisKey] < ma) {
+				//- 		thisLayer.setStyle({fillColor:color, color:color})
+				//- 	}
+				//- })
+				//- thisLayer.on('click', function(e){
+				//- 	self.setView(feature, e.latlng)
+				//- })
+				//- ljson.addLayer(thisLayer)
+			},
+			loadLayer(item, id) {
+				var self = this;
+				var ljson;
+				if (self.lyr[id] && typeof self.lyr[id].clearLayers === 'function') {
+					self.lyr[id].clearLayers();
+				}
+				var ind = null;
+				var style = (!id ? {buckets:1,colors:['#fff']} : self.doc.properties.layers
+				.map(function(item, i){
+					if (item.lid === id) {
+						ind = i;
+					}
+					return item;
+				}).filter(function(item){
+					
+					return item.lid === id
+				})[0]);
+				if (item.features && item.features[0]) {
+					
+				
+					//- var colors = ['red','yellow','blue'];
+					var colors = style.colors;
+					var theseKeys = Object.keys(item.features[0].properties).filter(function(it){return !isNaN(parseInt(item.features[0].properties[it], 10))})
+					var thisKey = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
+					var vals = item.features.map(function(feature){
+						return (!isNaN(parseInt(feature.properties[thisKey],10)) ? feature.properties[thisKey] : null) 
+						//- return parseFloat(feature.properties[thisKey]
+						})
+					var min = Math.min.apply(null,vals);
+					var max = Math.max.apply(null,vals);
+					var range = max - min;
+					var inc = range / colors.length;
+					style.min = min;
+					style.max = max;
+					style.inc = inc;
+					if (ind) {
+						self.doc.properties.layers[ind] = style;
+					}
+					ljson = L.geoJson().addTo(self.map);
+					//- console.log(thisKey,min,max,inc,colors)
+					var isPointCoords = (!item.features ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
+					if (isPointCoords) {
+						//- console.log('is point')
+						var ojson = L.geoJson(item, {
+							
+							onEachFeature:function(feature,layer){
+								var thisLayer = L.GeoJSON.geometryToLayer(feature, {
+									pointToLayer: function(ft, latlng) {
+										var thisVal = ft.properties[thisKey]//parseFloat(feature.properties[thisKey])
+										var cls = []
+										var cl = colors.forEach(function(color,i){
+											var mi = min;
+											var ma = (!colors[i+1] ? max : (inc * i+1));
+											if (thisVal >= mi && thisVal <= ma) {
+												cls.push(color)
+											}
+										})
+										var style = {fillColor:cls[0], color:cls[0], opacity: 0.8, fillOpacity: 0.6, radius: 8}
+										var circle = new L.CircleMarker(latlng, style)//, self.styleOf(ft, ft.geometry.type))
+											.on('click', function(){
+												return self.setView(ft, latlng)
+											});
+										return circle;
+									}
+
+								});
+								thisLayer.on('click', function(e){
+									self.setView(feature, e.latlng)
+								})
+								ljson.addLayer(thisLayer)
+							}
+						})
+					} else {
+
+						var ojson = L.geoJson(item, {
+							
+							onEachFeature:function(feature,layer){
+								var thisLayer = L.GeoJSON.geometryToLayer(feature);
+								thisLayer.setStyle({fillColor:'#fff',color:'#fff', weight:1, opacity: 0.3, fillOpacity: 0.2})
+								colors.forEach(function(color, i){
+									var mi = inc * i;
+									var ma = (!colors[i+1] ? max : (inc * i+1));
+									var thisVal = parseFloat(feature.properties[thisKey])
+									if (thisVal >= mi && thisVal < ma) {
+										thisLayer.setStyle({fillColor:color, color:color, opacity: 0.8, fillOpacity: 0.6})
+									}
+								})
+								thisLayer.on('click', function(e){
+									self.setView(feature, e.latlng)
+								})
+								ljson.addLayer(thisLayer)
+							}
+						})
+					}
+				} 
+				else {
+					var isPointCoords = (!item.features || !item.features[0] ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
+					if (isPointCoords) {
+						ljson = L.GeoJSON.geometryToLayer(item, {
+							style: function(feature) {
+								return self.styleOf(feature, feature.geometry.type)
+							},
+							pointToLayer: function(feature, latlng) {
+								var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type))
+									.on('click', function(){
+										return self.setView(feature, latlng)
+									});
+								return circle;
+							}
+						})
+				
+					} else {
+						//- console.log('wtaff?')
+						ljson = L.GeoJSON.geometryToLayer(item)
+					}
+				
+				}
+				return ljson;
+				
+			},
+			layerToDataLayer(dataLayer) {
+				var self = this;
+				var keys = Object.keys(dataLayer._layers)
+				self.latlngs = [keys.map(function(key){
+					if (dataLayer._layers[parseInt(key, 10)]._latlng) {
+						return L.latLng([dataLayer._layers[parseInt(key, 10)]._latlng.lat, dataLayer._layers[parseInt(key, 10)]._latlng.lng])//.wrap();
+					} else {
+						//- console.log('bleh')
+						//- console.log(dataLayer._layers[parseInt(key, 10)]);
+
+					}
+				})]
+			},
+			numberColorBucket(lid, e) {
+				var self = this;
+				if (self.colorTimeout) clearTimeout(self.colorTimeout);
+				self.colorTimeout = setTimeout(function(){
+					var length = parseInt(e.target.value,10);
+					self.doc.properties.layers.forEach(function(item, j){
+						if (item.lid === lid) {
+							//- console.log(self.doc.properties.layers[j].colors.length, length)
+							if (self.doc.properties.layers[j].colors.length < length) {
+								var diff = length - self.doc.properties.layers[j].colors.length;
+								for (var i = 0; i < diff; i++) {
+									self.doc.properties.layers[j].colors.push('#000000')
+								}
+							} else {
+								var diff = self.doc.properties.layers[j].colors.length - length;
+								self.doc.properties.layers[j].colors.splice(length-1, diff)
+							}
+							self.lyr[lid] = self.loadLayer(self.json[lid], lid)
+							//- self.doc.properties.layers[j].colors[index] = e.target.value
+						}
+					});
+				},500)
+				
+			},
+			changeColorBucket(i, index, e) {
+				var self = this;
+				if (self.colorTimeout) clearTimeout(self.colorTimeout);
+				self.colorTimeout = setTimeout(function(){
+					//- console.log('ok')
+					//- const thisLayer = self.doc.properties.layers.filter(function(item){
+					//- 	return item.lid === lid
+					//- })[0];
+					//- if (thisLayer) {
+						self.doc.properties.layers[i].colors[index] = e.target.value;
+						self.lyr[self.doc.properties.layers[i].lid] = self.loadLayer(self.json[self.doc.properties.layers[i].lid], self.doc.properties.layers[i].lid)
+					//- }
+					//- self.doc.properties.layers.forEach(function(item, j){
+					//- 	//- console.log(item, lid, index, e.target.value)
+					//- 	if (item.lid === lid) {
+					//- 		//- console.log(lid, index, e)
+					//- 		//self.doc.properties.layers[j]
+					//- 		item.colors[index] = e.target.value;
+					//- 		self.lyr[lid] = self.loadLayer(self.json[lid], lid)
+					//- 
+					//- 	}
+					//- });
+				},500)
+				
+				
+			},
+			serverJson(isDataLayer, key, cb) {
+				var self = this;
+				var latlng;
+				var customIcon = L.icon({
+					iconUrl: '/images/buttonmarker.svg',
+					iconSize: [33, 33]
+				});
+				$.get('/publishers/esta/json/json_'+key+'.json').then(async function(result){
+					if (result) {
+						var isPointCoords = (!result.features ? self.isPointCoords(result.geometry.coordinates) : self.isPointCoords(result.features[0].geometry.coordinates))
+						if (isDataLayer) {
+							self.dataLayer = await self.loadLayer(result);
+							self.map.addLayer(self.dataLayer);
+							if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+
+							//- if (!latlng) {
+							//- 	latlng = self.dataLayer.getBounds().getCenter();
+							//- 	self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
+							//- 	self.map.panTo(latlng)
+							//- 
+							//- }
+
+						} else {
+							self.json[key] = result;
+							self.lyr[key] = self.loadLayer(result, key);
+							if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+
+							if (isPointCoords) {
+								self.lyr[key].bringToFront()
+							} else {
+								self.lyr[key].bringToBack()
+								if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+							}
+							if (!latlng) {
+								latlng = self.lyr[key].getBounds().getCenter();
+								self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
+								if (isPointCoords) {
+									var bounds = self.lyr[key].getBounds();
+									self.map.fitBounds(bounds);
+								}//- } else {
+								//- 	self.map.panTo(latlng)
+								//- }
+
+							}
+
+						}
+						cb(latlng)
+					}
+				})
+				.catch(function(err){
+					if (isDataLayer) {
+						self.dataLayer = self.loadLayer(self.doc);
+						self.map.addLayer(self.dataLayer);
+						if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+						if (!latlng) {
+							latlng = self.dataLayer.getBounds().getCenter();
+							self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
+							self.map.panTo(latlng)
+
+						}
+
+					} else {
+						self.json[key] = item;
+						self.lyr[key] = self.loadLayer(item, key);
+						if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+						if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+
+						if (!latlng) {
+							latlng = self.lyr[key].getBounds().getCenter();
+							self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
+							self.map.panTo(latlng)
+
+						}
+					}
+					cb(latlng)
+				})
+			}
+			 /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
+			async loadMap(cb) {
+				var self = this;
+				var dataLayer;
+				var dataCoords;
+				var map = new L.map('map', { 
+					center: [
+						(!self.latlng ? 40.7608 : self.latlng.lng),
+						(!self.latlng ? -111.8910 : self.latlng.lat)
+					], 
+					zoom: (!self.position ? 6 : self.position.zoom),
+					zoomControl: false,
+					minZoom: 2,
+					maxZoom: 18,
+					editable: true,
+					renderer: L.canvas(),
+					preferCanvas: true,
+					editOptions: {
+						skipMiddleMarkers: true
+					}
+				});
+				L.control.zoom({
+					position:'topleft'
+				}).addTo(map);
+				
+				//- self.censusLayer = L.tileLayer('https://api.censusreporter.org/1.0/geo/tiger2013/tiles/040/{z}/{x}/{y}.geojson').addTo(map)
+				//- self.censusLayer.bringToFront();
+				var credit = (!self.credit || self.credit === '' ? self.getCredit() : self.credit) + ' | ' + self.baseMaps[self.base].attribution
+				self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: credit}).addTo(map);
+				self.map = map;
+				//- self.cZF = (18 - self.map.getZoom() + self.zfactor)
+				
+				var myRenderer = L.canvas({ padding: 0.5 });
+				//- var latlng;
+				if (self.doc && self.doc !== '') {
+					// generate geographic points from data
+					var key = self.doc._id;
+					self.serverJson(true, key, async function(latlng){
+						//- console.log(latlng)
+						if (self.doc.properties && self.doc.properties.title.str !== 'Geography') {
+							var keys = self.doc.properties.layers.map(async function(item){return item.lid})
+							if (self.layers && self.layers.length > 0) {
+								if (self.dataLayer.options) self.dataLayer.options.interactive = false;
+								self.mapEdit = false;
+								await self.layers.forEach(function(item){
+									var key = item._id;
+									self.serverJson(false, key, function(latlng){
+										if (Object.keys(self.json).length >= self.layers.length) {
+											self.mapReady = true;
+										}
+									})
+								});
+							}
+							if (self.availablelayers && self.availablelayers.length > 0) {
+								await self.availablelayers.forEach(function(item, i){
+									var key = item._id;
+									$.get('/publishers/esta/json/json_'+key+'.json').then(function(result){
+										if (result) {
+											self.json[key] = result;
+											self.lyr[key] = self.loadLayer(item, key)
+											if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+											self.lyr[key].remove()
+											if (!latlng) {
+												latlng = self.lyr[key].getBounds().getCenter();
+											}
+										}
+									})
+									.catch(function(err){
+										self.json[key] = item;
+										self.lyr[key] = self.loadLayer(item, key);
+										if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+										self.lyr[key].remove()
+										if (!latlng) {
+											latlng = self.lyr[key].getBounds().getCenter();
+										}
+									})
+								})
+							}
+							if (latlng) {
+								cb(latlng)
+							} else {
+								console.log('no latlng?')
+							}
+						} else {
+							if (latlng) {
+								cb(latlng)
+							} else {
+								console.log('no latlng?')
+							}
+						}
+					})
+				} else {
+					cb(null)
+				}
+
+				//- self.map.on('click', function(e){
+				//- 	self.viewerList = false;
+				//- });
+
+				//- self.map.on('zoomstart', function(e){
+				//- 	console.log(e)
+				//- 	self.viewerList = false;
+				//- })
+
+
+					//- self.map.on('editable:vertex:rawclick', function(e){
+					//- 	self.layers.forEach(function(item, i){
+					//- 		if (item._id !== e.layer._id) {
+					//- 			//- item.disableEdit();
+					//- 		} else {
+					//- 			//- item.enableEdit();
+					//- 			//- self.mapEdit = true;
+					//- 		}
+					//- 	})
+					//- })
+					//- self.map.on('editable:editing', function (e) {
+					//- 	e.layer.setStyle({color: 'DarkRed'});
+					//- });
+					//- self.map.on('editable:vertex:dragstart', async function(e){
+					//- 	var cll = e.vertex.latlng.__vertex.latlng;
+					//- 	var dll = self.dataLayer.getLatLngs();
+					//- 	var lvl = 0;
+					//- 	var p = 0;
+					//- 	var dl;
+					//- 	var lll = self.dataLayer.getLatLngs();
+					//- 	self.latlngs = lll;
+					//- })
+					//- self.map.on('editable:vertex:dragend', function(e){
+					//- 	console.log(e)
+					//- 	var cll = e.vertex.latlng.__vertex.latlng;
+					//- 	var dll = self.dataLayer.getLatLngs();
+					//- 	var lvl = 0;
+					//- 	var p = 0;
+					//- 	var dl;
+					//- 	self.latlngs = dll;
+					//- 	self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
+					//- })
+			},
+			getClip() { 
+				var self = this;
+				if (self.btn) {// make central clipping svg d value reactive
+				var wW = ( !self.wWidth ? window.innerWidth : self.wWidth ), 
+				wH = ( !self.wHeight ? window.innerHeight : self.wHeight ), 
+				pW = ( !self.pWidth ? ( wW * (self.res?0.5:0.5) ) : self.pWidth ), 
+				pH = ( !self.pHeight ? (wH * (self.res?0.5:0.5) ) : self.pHeight ), 
+				r = self.btn.r, cRc = (r * 0.5523), cRr = 0.81, 
+				sY = (isNaN(self.btn.y)?(wH*(self.res?0.5:0.5)):self.btn.y);
+				var lx = self.btn.x;
+				var ly = self.btn.y;
+				//- var lx = self.btn.x - 1//(!min === cx ? (min + side) : cx);
+				//- var ly = self.btn.y - 42//(!min === cy ? (min + side) : cy);
+				//- var bez = 
+				//- `M${lx},${ly}v43c10-19.3,14-21.8,14-30.2C${lx+14},${ly+6},${lx+6},${ly},${lx},${ly}z`
+
+				var circle = 
+				//- `M${wW},${wH}H0V0h${wW}V${wH}z 
+				`M${lx + r},${sY}c0-${cRc}-${(cRc * cRr)}-${r}-${r}-${r}
+					c-${cRc},0-${r},${(cRc * cRr)}-${r},${r} 
+				c0,${cRc},${(cRc * cRr)},${r},${r},${r}
+					C${lx + cRc},${(sY+r)},${lx+r},${(sY + cRc)},
+					${(lx + r)},${sY}z`
+				
+				var str = 
+				`M${wW},${wH}H0V0h${wW}V${wH}z ${circle}`
+				return str; }
+			}
+
+		}
+	});
+

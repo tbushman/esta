@@ -26,3 +26,6 @@ block content
 		div.centerallwrap(:style="{'clip-path': (!isNaN(wWidth) && mapActive ? 'url(#clipPath)' : 'none'), 'pointer-events':(mapActive ? 'none' : 'auto'), 'overflow-y': (mapActive ? 'hidden' : 'scroll'), top:'0',position:'absolute'}")
 
 			!= str
+
+	#map
+	include includes/vue/mapvue.pug

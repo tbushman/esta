@@ -1,0 +1,539 @@
+script(type="text/javascript").
+	Vue.prototype.moment = moment;
+	Vue.prototype.marked = marked;
+	Vue.prototype.$ = $;
+	Vue.prototype.window = window;
+	if (typeof tinymce === 'object') Vue.prototype.tinymce = tinymce;
+	new Vue({
+		el: '#vue',
+		data: function data(){
+			return {
+				initbounds: null,
+				tempstyles: [],
+				colorTimeout: null,
+				buf: null,
+				//- attribute: null,
+				//- attributes: [],
+				availablelayers: this.ifNullThenArr(!{JSON.stringify(availablelayers)}),
+				c: ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928","#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"],
+				//['#39B54A', '#D9E021', '#FBB03B', '#FC644D', '#ED1C24'],
+				//- lvl: 'h',
+				wWidth: window.innerWidth,
+				wHeight: window.innerHeight,
+				btn: { x: (window.innerWidth / 2), 
+					y: (window.innerHeight/ 2),
+					r: 21,
+					vis: (!this.mapActive || !this.mapEdit ? null : 'block')
+				},
+				//- h: 0,
+				//- i: 0,
+				//- j: 0,
+				//- m: 0,
+				signable: this.parseBool(!{JSON.stringify(signable)}),
+				unsigned: this.parseBool(!{JSON.stringify(unsigned)}),
+				avail: this.parseBool(!{JSON.stringify(avail)}),
+				type: this.parseObj(!{JSON.stringify(type)}),
+				pu: this.parsePu(!{JSON.stringify(pu)}),
+				loggedin: (this.parseObj(!{JSON.stringify(session)}) !== '' && this.parseObj(!{JSON.stringify(session.loggedin)}) !== '' ? this.parseObj(!{JSON.stringify(session.loggedin)}) : null ),
+				menu: this.parseObj(!{JSON.stringify(menu)}),
+				dat: this.parseObj(!{JSON.stringify(dat)}),
+				doc: this.parseObj(!{JSON.stringify(doc)}),
+				layers: this.parseObj(!{JSON.stringify(layers)}),
+				position: (!this.parseObj(!{JSON.stringify(session.position)}) ? {lat: 40, lng: -111.89, zoom: 6}/*null*/ : this.parseObj(!{JSON.stringify(session.position)})),
+				edit: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)}).index),
+				//- chindexes: [],
+				chindex: 0,
+				//- dindexes: [],
+				did: (this.parseObj(!{JSON.stringify(doc)}) === '' ? null : this.parseObj(!{JSON.stringify(doc)})._id),
+				cursor: null,
+				//- input: '',
+				//- fixedPug: '',
+				map: '',
+				mapActive: (this.parseBool(!{JSON.stringify(mapActive)})),
+				mapReady: false,
+				mapEdit: false,
+				mapEditable: false,
+				dataLayer: '',
+				lMarker: '',
+				thickness: 45,
+				res: (window.innerWidth < 600),
+				dPath: this.dPathAttr(),
+				tinymce: '',
+				dfi: 0,
+				diff: null,
+				web: true,
+				export: this.parseBool(!{JSON.stringify(exports)}),
+				ff: this.parseObj(!{JSON.stringify(ff)}),
+				newDoc: {tempGeo:[],placetype:'',place:null,tiind:null,xmlid:'',chind:null,chtitle:''},						
+				placemenu: false,
+				
+				placetypes: [{
+					ind: 0,
+					name: 'Nation',
+					url: '/json/usstates.json'
+				},
+				{
+					ind: 1,
+					name: 'State',
+					url: '/json/usstates.json'
+				},
+				{
+					ind: 2,
+					name: 'County',
+					url: '/json/uscounties.json'
+				}],
+				modal: {msg:null},
+				uploadisreplace: false,
+				uploadchtitle: null,
+				dragind: null,
+				latlngs: null,
+				//- gp: (this.parseObj(#{session.importgdrive}) !== '' ? this.parseObj(!{JSON.stringify(gp)}) : null),
+				sliderIndex: 1,
+				sliderInterval: '',
+				sliderTimeout1: '',
+				sliderTimeout2: '',
+				str: this.parseObj(!{JSON.stringify(str)}),
+				ts: this.ifNullThenArr(!{JSON.stringify(ts)}),
+				can: [],
+				lyr: {},
+				geo: [],
+				tis: [
+					{
+						ind: 0,
+						name: 'in support of legislation',
+						code: 'BILLS-',
+						chapter: [
+							{
+								ind: 115,
+								name: 'United States Congress',
+								code: 'hres',
+								section: [
+									{
+										ind: 108,
+										name: 'House Simple Resolution (H. Res.)',
+										code: 'ih'
+									}
+								]
+							}
+						]
+					},
+					{
+						ind: 1,
+						name: 'in Solidarity',
+						chapter: [
+							{
+								ind: 0,
+								name: 'Jurisdiction'
+							}
+						]
+					},
+					{
+						ind: 2,
+						name: 'Candidate for Public Office',
+						chapter: [
+							{
+								ind: 0,
+								name: 'Jurisdiction'
+							}
+						]
+					},
+					{
+						ind: 3,
+						name: 'Environmental Impact Statement',
+						chapter: [
+							{
+								ind: 0,
+								name: 'Jurisdiction'
+							}
+						]
+					},
+					{
+						ind: 4,
+						name: 'Geography',
+						chapter: [
+							{
+								ind: 0,
+								name: 'Jurisdiction'
+							}
+						]
+					}
+				],
+				xml: //this.parseXML(
+					this.parseObj(!{JSON.stringify(xml)})
+				//)
+				,
+				xmlnode: '',
+				accordions: [[]],
+				sliderOpacity: 1,
+				gpo: null,
+				latlng: {lat: 40, lng: -111.8},
+				//- lyrs: [],
+				base: 0,
+				baseMaps: [
+					{
+						url: 'https://api.mapbox.com/styles/v1/tbushman/ciq7gm0ov008kbfm580v9mm9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoidGJ1c2htYW4iLCJhIjoiSmI0aU94OCJ9.SZytljBzoWupPUYeu_OR9A',
+						attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+					},
+					{
+						url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+						attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+					}
+					
+				],
+				zfactor: (0.01 * (!this.map ? 6 : (18 - this.map.getZoom() ) )),
+				cZF: null,
+				viewerList: false,
+				censusVars: null,
+				censusLoad: {tempGeo:[],placetype:'',cats:null,cat:null} ,
+				json: {}
+				
+			}
+		},
+		watch: {
+			accordions: {
+				deep: true,
+				handler(accordions) {
+					var self = this;
+					self.accordions = accordions
+				}
+			}
+		},
+		
+		updated: function(){
+			var self = this;
+			//- if (self.colorTimeout) clearTimeout(self.colorTimeout);
+		},
+		mounted: function(){
+			$(document).ready(function(){
+				document.addEventListener('keydown', function(event) {
+					var keyName = event.key;
+					if (keyName === 'Enter') event.preventDefault()
+				});
+				setTimeout(function(){
+					$('.submenu.drop').slideUp(100);
+					$('.slidedown').slideUp(100);
+				},3000)
+
+			})
+			var self = this;
+			$(document).on('click', '.href', function(e){
+				e.stopPropagation();
+			});
+			var modal = document.getElementById('modal');
+
+			if (!self.doc || self.doc === '') {
+				if (!self.dat || self.dat === '') {
+					self.accordions = [[]];
+				} else {
+					self.accordions = self.dat.map(function(data){
+						return []
+					});
+				}
+			} else {
+				if (!self.dat || self.dat === '') {
+					self.accordions = [[self.doc.index]];
+				} else {
+					self.accordions = self.dat.map(function(data){return data.map(function(doc){return doc.index})});
+				}
+				self.edit = self.doc._id;
+				self.did = self.edit;
+				
+			}
+
+			window.addEventListener('resize', self.resizeFrame);
+
+
+			if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {
+				var int = 8000;
+				self.sliderImg(int)
+			}
+
+		},
+		beforeDestroy: function(){
+			//TODO clearTimout
+			var self = this;
+			clearInterval(self.sliderInterval);
+			clearTimeout(self.sliderTimeout1);
+			clearTimeout(self.sliderTimeout2)
+			if (self.colorTimeout) clearTimeout(self.colorTimeout);
+			window.removeEventListener('resize', self.resizeFrame)
+
+		},
+		methods: {
+			parseObj: function(obj) {
+				if (!obj) return '';
+				return obj;
+			},
+			parseBool: function(item) {
+				if (!item) return false;
+				return true;
+			},
+			ifNullThenArr(obj) {
+				if (!obj) return [];
+				return obj;
+			},
+			parsePu(obj) {
+				if (!obj) {
+					return {
+						properties: {
+							givenName: ''
+						}
+					}
+				}
+				return obj;
+			},
+			dPathAttr: function() {
+				var self = this;
+				var thickness = (!thickness ? 50 : thickness);
+				var nw = (!self.wWidth ? window.innerWidth : self.wWidth);
+				var nh = (!self.wHeight ? window.innerHeight : self.wHeight);
+				var d;
+				if (self.type === 'draw') {
+					d = "M0,0v"+nh+"h"+nw+"V0H0L0,0z"
+				} else {
+					d = "M0,0v"+nh+"h"+nw+"V0H0L0,0z "+
+					"M"+(thickness)+","+(thickness)+"H"+(nw - thickness)+"V"+(nh - thickness)+"H"+(thickness)+"V"+(thickness)+"z "
+				}
+				return d;
+			},
+
+
+			resizeFrame(e) {
+				var self = this;
+				self.dPath = self.dPathAttr()
+				self.wWidth = window.innerWidth;
+				self.wHeight = window.innerHeight;
+			},
+			subDropdown(e) {
+				var self = this;
+				if (!$(e.target).next('.slidedown')) {
+			
+					return;
+				} else {
+					var sub = $(e.target).next('.slidedown')[0];
+					//- console.log(e.target.nextSibling)
+					//- console.log(sub)
+					$('.drop').not($(e.target)).removeClass('active');
+					$(sub).slideToggle(100);
+					$(e.target).toggleClass('active');
+				}
+			},
+			mainDropdown(e) {
+				var self = this;
+				if ($('.dropdown').hasClass('active')) {
+					$('.dropdown').removeClass('active');
+				} else {
+					$('.dropdown').addClass('active');
+				}
+				$('.submenu.drop').slideToggle(100);
+			},
+			getGpo() {
+				var self = this;
+				$.get(
+					'/api/gpo'
+				)
+				.then(function(data){
+					//- console.log(data)
+					self.gpo = JSON.parse(data);
+				})
+				.catch(function(err){
+					console.log(err)
+				})
+			},
+			setXmlId(e){
+				var self = this;
+				var ind = parseInt(e.target.value, 10);
+				self.newDoc.xmlid = self.gpo.packages[ind].packageId;
+				self.newDoc.chind = (parseInt(self.gpo.packages[ind].congress, 10) - 1);
+				self.newDoc.chtitle = self.gpo.packages[ind].title;
+				//- console.log(self.newDoc)
+			},
+			filterGpo(e) {
+				var self = this;
+				if (e.target.value === '') {
+					return self.getGpo();
+				}
+				var gpo = self.gpo.packages;
+				gpo = gpo.filter(function(g){
+					return new RegExp(e.target.value).test(g.title)
+				})
+				//- console.log(gpo)
+				if (gpo && gpo.length > 0) {
+					self.gpo.packages = gpo;
+				}
+			},
+			changeDocType(e) {
+				e.preventDefault()
+				
+				var self = this;
+				//- console.log(e.target.value)
+				var ind = parseInt(e.target.value, 10);
+				self.newDoc.tiind = ind;
+			},
+			changePlaceType(e) {
+				e.preventDefault()
+				var self = this;
+				var url;
+				if (self.placetypes && self.placetypes.length > 0) {
+					url = self.placetypes.filter(function(pt){
+						if (pt && pt.name) {
+							return pt.name === e.target.value;
+						} else {
+							return false;
+						}
+						
+					});
+				} 
+				if (url[0]) {
+					url = url[0].url;
+					var type = 
+						e.target.value
+					$.getJSON(url).then(async function(json){
+						await console.log(json)
+						self.newDoc.placetype = type;
+						self.newDoc.tempGeo = await json.features;
+						if (type === 'Nation' && self.newDoc.tiind === 0) {
+							self.newDoc.tempGeo = [self.newDoc.tempGeo[0]];
+							self.getGpo();
+						}
+						console.log(self.newDoc.tempGeo)
+					})
+					.catch((err)=>console.log(err))
+				}
+				
+			},
+			changePlaceNew(e) {
+				e.preventDefault()
+				var self = this;
+				//- console.log(e.target.value)
+				var ind = parseInt(e.target.value, 10);
+				//- console.log(ind)
+				self.newDoc.place = (isNaN(ind) || !self.newDoc.tempGeo[ind] ? (!self.newDoc.tempGeo[self.newDoc.tempGeo.length-1] ? null : self.newDoc.tempGeo.length-1) : ind )
+			},
+			submitZip(e) {
+				var self = this;
+				$.post('/pu/getgeo/'+null+'/'+null+'/'+self.modal.zip+'')
+				.then(function(href){
+					window.location.href = href
+				})
+			},
+			handleLocationOutcome(geolocation, pos) {
+				var self = this;
+				//- console.log(geolocation)
+				var modal = document.getElementById('modal');
+				if (!geolocation && modal) {
+					self.modal.msg = 'geolocator didn\'t work. Please provide the zip code you vote from. ';
+					self.modal.id = 'zip'
+				} else if (geolocation) {
+					if (!pos || !pos.lat) {
+						
+					} else {
+						$.post('/pu/getgeo/'+pos.lat+'/'+pos.lng+'/'+null+'')
+						.then(function(href){
+							window.location.href = href
+						})
+					}
+					
+				} else {
+					if (!self.pu || !self.pu._id){
+						
+					}else {
+						window.location.href = '/pu/getgeo/'+self.pu._id+''
+					}
+				}
+			},
+			navigateTo: function(url){
+				window.location.href = url;
+			},
+			accordion(n, ind, e) {
+				var self = this;
+				if (e) e.preventDefault();
+				if (!ind) {
+					if (!self.accordions[n].length) {
+						if (!self.dat || self.dat === '') {
+						} else {
+							self.dat.forEach(async function(datas, i){
+								if (i === n) {
+									self.accordions[n] = await datas.map(function(doc){return doc.index})
+								}
+							});
+							
+						}
+						self.accordions[n].sort();
+					} else {
+						var sac = self.accordions;
+						if (sac) {
+							while(sac[n].length > 0) {sac[n].pop();}
+							self.accordions = sac;
+						}
+						
+					}
+				} else {
+					if (self.accordions[n].indexOf(ind) === -1) {
+						self.accordions[n].push(ind);
+						self.accordions[n].sort();
+					} else {
+						self.accordions[n].splice(self.accordions[n].indexOf(ind), 1);
+					}
+				}
+			},
+			toggleExport: function() {
+				this.export = !this.export;
+			},
+			getHTML: function(type, str) {
+				var self = this;
+				var span = document.createElement(type);
+				span.innerHTML = str;
+				return span.outerHTML;
+			},
+
+
+			sliderImg(int){
+				var self = this;
+				//- if ($('#slider')[0]) {
+				//- 	var starttime;
+				//- 	self.sliderInterval = setInterval(function(){
+				//- 		self.sliderOpacity = 0;
+				//- 		self.sliderTimeout1 = setTimeout(function(){
+				//- 			if (self.sliderIndex > 3) {
+				//- 				self.sliderIndex = 1;
+				//- 			} else {
+				//- 				self.sliderIndex += 1;
+				//- 			}
+				//- 			self.sliderTimeout2 = setTimeout(function(){
+				//- 				self.sliderOpacity = 1;
+				//- 			},(int/5))
+				//- 		},(int/5))
+				//- 	}, int)
+				//- 		//- requestAnimationFrame(function(ts){
+				//- 		//- 	var duration = int;
+				//- 		//- 	if (!starttime) {
+				//- 		//- 		starttime = ts;
+				//- 		//- 	}
+				//- 		//- 	var timestamp = ts || new Date().getTime()
+				//- 		//- 	var runtime = timestamp - starttime;
+				//- 		//- 	if (runtime >= duration) {
+				//- 		//- 		self.sliderOpacity = 0;
+				//- 		//- 		self.sliderTimeout1 = setTimeout(function(){
+				//- 		//- 			if (self.sliderIndex > 3) {
+				//- 		//- 				self.sliderIndex = 1;
+				//- 		//- 			} else {
+				//- 		//- 				self.sliderIndex += 1;
+				//- 		//- 			}
+				//- 		//- 			self.sliderTimeout2 = setTimeout(function(){
+				//- 		//- 				self.sliderOpacity = 1;
+				//- 		//- 			},(int/5))
+				//- 		//- 
+				//- 		//- 		},(int/5))
+				//- 		//- 	}
+				//- 		//- 
+				//- 		/**/
+				//- 	//- }) //10000
+				//- } else {
+				//- 	console.log('no slider')
+				//- }
+			}
+
+		}
+	});
+
