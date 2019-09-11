@@ -1286,6 +1286,24 @@ button span, a[role="button"] span {
 	color: #fff;
 	color: var(--primary);
 }
+#inputs {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    position: fixed;
+    bottom: 3px;
+    right: auto;
+    left: 45px;
+    z-index: 1;
+}
+button.mapActive {
+  text-align: center;
+  margin-right: 10px;
+  pointer-events: all;
+}
+button.mapActive:last-child {
+  flex: 1;
+}
 input[type="file"]::-webkit-file-upload-button {
 	border: 0;
 	font-style: normal;
