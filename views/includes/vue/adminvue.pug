@@ -364,69 +364,45 @@ script(type="text/javascript").
 			window.addEventListener('resize', self.resizeFrame);
 
 			self.loadMap(function(dataCoords){
-				
-				//- console.log(dataCoords)
-				//- if (dataCoords){
-				//- 	self.latlng.lng = dataCoords.lng;
-				//- 	self.latlng.lat = dataCoords.lat;
-				//- 	self.panZoom();
-				//- } else {
-				//- 	self.latlng.lat = 40;
-				//- 	self.latlng.lng = -111;
-				//- 	self.panZoom();
-				//- }
-				//- self.mapReady = true;
 				self.map.on('dragstart', function(e){
 					self.viewerList = false;
 				});
-				//- self.map.on('viewreset', function(e){
-				//- 	if (self.geo.length === 0) {
-				//- 		self.viewerList = false;
-				//- 	} else {
-				//- 		self.viewerList = true;
-				//- 	}
-				//- })
-				//- self.map.on('zoomstart', function(e){
-				//- 	self.viewerListState = JSON.parse(JSON.stringify(self.viewerList));
-				//- })
+				self.map.on('movestart', function(){
+					self.viewerList = false;
+				})
+				self.map.on('zoomstart', function(){
+					self.viewerList = false;
+				})
+
 				self.map.on('moveend', function(e){
-					//- if (self.geo.length === 0) {
-					//- 	self.viewerList = false;
-					//- } else if (self.viewerList && self.geo.length > 0){
-					//- 	self.viewerList = true;
-					//- } else {
-					//- 	self.viewerList = false;
-					//- }
 					var coord = self.lMarker.getLatLng();
 					var xy = self.map.latLngToLayerPoint(coord);
 					var x = xy.x;
 					var y = xy.y;
 					self.btn.x = x;
 					self.btn.y = y;
+					self.dPath = self.dPathAttr()
+					self.wWidth = window.innerWidth;
+					self.wHeight = window.innerHeight;
+					if (self.geo.length > 0) {
+						self.viewerList = true;
+					}
 				})
-				//- self.map.on('zoomstart', function(e){
-				//- 	self.btn.x = window.innerWidth / 2;
-				//- 	self.btn.y = window.innerHeight / 2;
-				//- })
-				//- self.map.on('preclick', function(e){
-				//- 	if (self.geo.length === 0) {
-				//- 		self.viewerList = false;
-				//- 	} else if (self.geo.length > 0){
-				//- 		self.viewerList = true;
-				//- 	} else {
-				//- 		self.viewerList = false;
-				//- 	}
-				//- })
-				//- self.map.on('preclick', function(e){
-				//- 	if (self.viewerList) {
-				//- 		self.viewerList = false;
-				//- 	}
-				//- })
+				self.map.on('zoomend', function(e) {
+					var coord = self.lMarker.getLatLng();
+					var xy = self.map.latLngToLayerPoint(coord);
+					var x = xy.x;
+					var y = xy.y;
+					self.btn.x = x;
+					self.btn.y = y;
+					self.dPath = self.dPathAttr()
+					self.wWidth = window.innerWidth;
+					self.wHeight = window.innerHeight;
+					if (self.geo.length > 0) {
+						self.viewerList = true;
+					}
 
-				if ($('#slider')[0] && (!self.sliderInterval || self.sliderInterval === '')) {
-					var int = 8000;
-					self.sliderImg(int)
-				}
+				})
 
 			})
 		},
@@ -1317,6 +1293,10 @@ script(type="text/javascript").
 						return Object.keys(json.features[0])
 					}
 				})
+				.catch(function(err){
+					console.log(err)
+					return []
+				})
 			},
 			//- arrayEqArray(arr1, arr2)
 			setView(feature, latlng){
@@ -1373,33 +1353,6 @@ script(type="text/javascript").
 				
 				
 			},
-			onEachFeaturePoly(id,feature,layer){
-				
-			},
-			onEachFeaturePoint(id, feature,layer){
-				//- var thisLayer = L.GeoJSON.geometryToLayer(feature, {
-				//- 	pointToLayer: function(ft, latlng) {
-				//- 		var circle = new L.CircleMarker(latlng)//, self.styleOf(ft, ft.geometry.type))
-				//- 			.on('click', function(){
-				//- 				return self.setView(ft, latlng)
-				//- 			});
-				//- 		return circle;
-				//- 	}
-				//- 
-				//- });
-				//- colors.forEach(function(color, i){
-				//- 	var mi = inc * i;
-				//- 	var ma = (!colors[i+1] ? max : (inc * i+1));
-				//- 	//- console.log(feature.properties[thisKey], mi, ma)
-				//- 	if (feature.properties[thisKey] >= mi && feature.properties[thisKey] < ma) {
-				//- 		thisLayer.setStyle({fillColor:color, color:color})
-				//- 	}
-				//- })
-				//- thisLayer.on('click', function(e){
-				//- 	self.setView(feature, e.latlng)
-				//- })
-				//- ljson.addLayer(thisLayer)
-			},
 			loadLayer(item, id) {
 				var self = this;
 				var ljson;
@@ -1418,16 +1371,13 @@ script(type="text/javascript").
 					return item.lid === id
 				})[0]);
 				if (item.features && item.features[0]) {
-					
-				
-					//- var colors = ['red','yellow','blue'];
+
 					var colors = style.colors;
 					var theseKeys = Object.keys(item.features[0].properties).filter(function(it){return !isNaN(parseInt(item.features[0].properties[it], 10))})
 					var thisKey = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
 					var vals = item.features.map(function(feature){
 						return (!isNaN(parseInt(feature.properties[thisKey],10)) ? feature.properties[thisKey] : null) 
-						//- return parseFloat(feature.properties[thisKey]
-						})
+					})
 					var min = Math.min.apply(null,vals);
 					var max = Math.max.apply(null,vals);
 					var range = max - min;
@@ -1439,16 +1389,16 @@ script(type="text/javascript").
 						self.doc.properties.layers[ind] = style;
 					}
 					ljson = L.geoJson().addTo(self.map);
-					//- console.log(thisKey,min,max,inc,colors)
+
 					var isPointCoords = (!item.features ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
 					if (isPointCoords) {
-						//- console.log('is point')
+
 						var ojson = L.geoJson(item, {
 							
 							onEachFeature:function(feature,layer){
 								var thisLayer = L.GeoJSON.geometryToLayer(feature, {
 									pointToLayer: function(ft, latlng) {
-										var thisVal = ft.properties[thisKey]//parseFloat(feature.properties[thisKey])
+										var thisVal = ft.properties[thisKey]
 										var cls = []
 										var cl = colors.forEach(function(color,i){
 											var mi = min;
@@ -1520,216 +1470,6 @@ script(type="text/javascript").
 				return ljson;
 				
 			},
-			layerToDataLayer(dataLayer) {
-				var self = this;
-				var keys = Object.keys(dataLayer._layers)
-				self.latlngs = [keys.map(function(key){
-					if (dataLayer._layers[parseInt(key, 10)]._latlng) {
-						return L.latLng([dataLayer._layers[parseInt(key, 10)]._latlng.lat, dataLayer._layers[parseInt(key, 10)]._latlng.lng])//.wrap();
-					} else {
-						//- console.log('bleh')
-						//- console.log(dataLayer._layers[parseInt(key, 10)]);
-
-					}
-				})]
-			},
-			getEvictionLab() {
-				$.post('/utahcourts')
-				.then((result)=>{
-					console.log(result);
-				})
-				.catch((err)=>console.log(err))
-			},
-			async changeCensusJurisdiction(e){
-				var self = this;
-				if (self.censusLoad) {
-					self.censusLoad.placetype = e.target.value;
-					$.post('/censusload/'+self.censusLoad.placetype)
-					.then(async function(result){
-						//- console.log(JSON.parse(result).layers[0].fields)
-						console.log(result)
-						var variables = JSON.parse(result).variables
-						var keys = Object.keys(variables)
-						self.censusLoad.cats = 
-						//- await JSON.parse(result).layers[0].fields.map(function(field){
-						//- 	return field.name;
-						//- })
-						keys//- keys.map(function(k){
-						//- 	return variables[k].concept
-						//- })
-						//- Object.keys(JSON.parse(result).layers[0].fields)
-						//- JSON.parse(result).variables.map(function(fd){
-						//- 	return fd.concept;
-						//- })
-					})
-					.catch(function(err){
-						console.log(err)
-					})
-				}
-			},
-			async changeCensusData(e){
-				var self = this;
-				//- self.map.removeLayer(self.censusLayer);
-				var code = e.target.value;
-				var keys = Object.keys(self.lyr);
-				var filterkeys = keys.filter(function(lr){
-					return !isNaN(parseInt(lr, 10))
-				})
-				filterkeys.forEach(function(lr){
-					return self.map.removeLayer(self.lyr[lr])
-				})
-				self.placetypes.forEach(function(bound){
-					if (self.lyr[bound.ind]) {
-						self.map.removeLayer(self.lyr[bound.ind])
-					}
-				})
-				if (!code) {
-					self.censusLoad.placetype = null;
-				}
-				else if (!self.lyr[code]) {
-					
-					var hoverStyle = {
-					"fillOpacity": 0.5
-					};
-					var mapBounds = self.map.getBounds();
-					//- var crs = self.map.options.crs;
-					//- var nwLatLng = mapBounds.getNorthWest();
-					//- var seLatLng = mapBounds.getSouthEast();
-					//- var topLeft = self.map.latLngToLayerPoint(nwLatLng);
-					//- var bottomRight = self.map.latLngToLayerPoint(seLatLng);
-					//- $.post('/censusload/'+)
-					$.post('/census/'+self.censusLoad.placetype+'/'+encodeURIComponent(self.censusLoad.cat)+'')//+tableid+'/'+state+'')
-					.then(function(result){
-						//- console.log(JSON.parse(result))
-						self.censusData = JSON.parse(result).features;
-						var colors = self.c;//['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
-						
-						self.censusData.forEach(async function(item, i){
-							var pop = item.attributes.POP100;
-							var color = (
-								pop < 5000 ? colors[0] :
-								(
-									pop >= 5000 && pop < 10000 ? colors[1] :
-									(
-										pop >= 10000 && pop < 25000 ? colors[2] :
-										(
-											pop >= 25000 && pop < 50000 ? colors[3] :
-											(
-												pop >= 50000 ? colors[4] : '#ffffff'
-											)
-										)
-									)
-								)
-							);
-							var style = {
-							"clickable": true,
-							"color": "#00D",
-							"fillColor": color,//colors[i],
-							"weight": 1.0,
-							"opacity": 0.3,
-							"fillOpacity": 0.2
-							};
-							//- console.log(item)
-							var it = {geometry: {}, properties:{}};
-							it.geometry.coordinates = [item.geometry.rings];
-							it.geometry.type = 'MultiPolygon';
-							it.properties = item.attributes;
-							it.properties.name = item.attributes.name;
-							it.type = 'Feature';
-							//- console.log(it)
-							if (it.geometry.coordinates) {
-								
-								self.lyr[code] = self.loadLayer(it);
-								self.lyr[code].setStyle(style)
-								//- await self.map.addLayer(self.lyr[code]);
-								var bounds = self.lyr[code].getBounds();
-								self.map.fitBounds(bounds);
-								//- self.lyr[item.attributes.OBJECTID].remove()
-							}
-						})
-					})
-					.catch(function(err){
-						console.log(err)
-					})							
-				} else {
-					self.boundary = code;
-					self.map.addLayer(self.lyr[code]);
-					var bounds = self.lyr[code].getBounds();
-					self.map.fitBounds(bounds);
-				}
-			},
-			async changeCensus(e){
-				var self = this;
-				//- self.map.removeLayer(self.censusLayer);
-				var code = e.target.value;
-				var keys = Object.keys(self.lyr);
-				var filterkeys = keys.filter(function(lr){
-					return !isNaN(parseInt(lr, 10))
-				})
-				filterkeys.forEach(function(lr){
-					return self.map.removeLayer(self.lyr[lr])
-				})
-				self.boundaries.forEach(function(bound){
-					if (self.lyr[bound.code]) {
-						self.map.removeLayer(self.lyr[bound.code])
-					}
-				})
-				if (!code) {
-					self.boundary = null;
-				}
-				else if (!self.lyr[code]) {
-					var style = {
-					"clickable": true,
-					"color": "#00D",
-					"fillColor": "#00D",
-					"weight": 1.0,
-					"opacity": 0.3,
-					"fillOpacity": 0.2
-					};
-					var hoverStyle = {
-					"fillOpacity": 0.5
-					};
-					var mapBounds = self.map.getBounds();
-					var crs = self.map.options.crs;
-					var nwLatLng = mapBounds.getNorthWest();
-					var seLatLng = mapBounds.getSouthEast();
-					var topLeft = self.map.latLngToLayerPoint(nwLatLng);
-					var bottomRight = self.map.latLngToLayerPoint(seLatLng);
-					$.post('/census/'+code+'/')//+tableid+'/'+state+'')
-					.then(function(result){
-						//- console.log(JSON.parse(result))
-						self.censusData = JSON.parse(result).results;
-						var colors = self.c;//['tomato', '#191970', '#F5FFFA', '#1E90FF', '#ADFF2F', '#FF7F50']
-
-						self.censusData.forEach(async function(item, i){
-							console.log(item)
-							var it = {geometry: {}, properties:{}};
-							it.geometry.coordinates = [item.geometry.rings];
-							it.geometry.type = 'MultiPolygon';
-							it.properties = item.attributes;
-							it.properties.name = item.attributes.name;
-							it.type = 'Feature';
-							console.log(it)
-							if (it.geometry.coordinates) {
-								
-								self.lyr[item.attributes.OBJECTID] = self.loadLayer(it);
-								self.lyr[item.attributes.OBJECTID].setStyle({fillColor: self.c[i]})
-								//- await self.map.addLayer(self.lyr[item.attributes.OBJECTID]);
-								//- self.lyr[item.attributes.OBJECTID].remove()
-							}
-						})
-					})
-					.catch(function(err){
-						console.log(err)
-					})							
-				} else {
-					self.boundary = code;
-					self.map.addLayer(self.lyr[code]);
-					var bounds = self.lyr[code].getBounds();
-					self.map.fitBounds(bounds);
-				}
-				
-			},
 			numberColorBucket(lid, e) {
 				var self = this;
 				if (self.colorTimeout) clearTimeout(self.colorTimeout);
@@ -1737,7 +1477,6 @@ script(type="text/javascript").
 					var length = parseInt(e.target.value,10);
 					self.doc.properties.layers.forEach(function(item, j){
 						if (item.lid === lid) {
-							//- console.log(self.doc.properties.layers[j].colors.length, length)
 							if (self.doc.properties.layers[j].colors.length < length) {
 								var diff = length - self.doc.properties.layers[j].colors.length;
 								for (var i = 0; i < diff; i++) {
@@ -1747,8 +1486,9 @@ script(type="text/javascript").
 								var diff = self.doc.properties.layers[j].colors.length - length;
 								self.doc.properties.layers[j].colors.splice(length-1, diff)
 							}
-							self.lyr[lid] = self.loadLayer(self.json[lid], lid)
-							//- self.doc.properties.layers[j].colors[index] = e.target.value
+							if (self.json[lid]) {
+								self.lyr[lid] = self.loadLayer(self.json[lid], lid)
+							}
 						}
 					});
 				},500)
@@ -1758,24 +1498,10 @@ script(type="text/javascript").
 				var self = this;
 				if (self.colorTimeout) clearTimeout(self.colorTimeout);
 				self.colorTimeout = setTimeout(function(){
-					//- console.log('ok')
-					//- const thisLayer = self.doc.properties.layers.filter(function(item){
-					//- 	return item.lid === lid
-					//- })[0];
-					//- if (thisLayer) {
 						self.doc.properties.layers[i].colors[index] = e.target.value;
-						self.lyr[self.doc.properties.layers[i].lid] = self.loadLayer(self.json[self.doc.properties.layers[i].lid], self.doc.properties.layers[i].lid)
-					//- }
-					//- self.doc.properties.layers.forEach(function(item, j){
-					//- 	//- console.log(item, lid, index, e.target.value)
-					//- 	if (item.lid === lid) {
-					//- 		//- console.log(lid, index, e)
-					//- 		//self.doc.properties.layers[j]
-					//- 		item.colors[index] = e.target.value;
-					//- 		self.lyr[lid] = self.loadLayer(self.json[lid], lid)
-					//- 
-					//- 	}
-					//- });
+						if (self.json[self.doc.properties.layers[i].lid]) {
+							self.lyr[self.doc.properties.layers[i].lid] = self.loadLayer(self.json[self.doc.properties.layers[i].lid], self.doc.properties.layers[i].lid)
+						}
 				},500)
 				
 				
@@ -1787,75 +1513,64 @@ script(type="text/javascript").
 					iconUrl: '/images/buttonmarker.svg',
 					iconSize: [33, 33]
 				});
-				$.get('/publishers/esta/json/json_'+key+'.json').then(async function(result){
-					if (result) {
-						var isPointCoords = (!result.features ? self.isPointCoords(result.geometry.coordinates) : self.isPointCoords(result.features[0].geometry.coordinates))
-						if (isDataLayer) {
-							self.dataLayer = await self.loadLayer(result);
-							self.map.addLayer(self.dataLayer);
-							if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+				if (isDataLayer) {
+					self.dataLayer = self.loadLayer(self.doc);
+					self.map.addLayer(self.dataLayer);
+					if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+					if (!latlng) {
+						latlng = self.dataLayer.getBounds().getCenter();
+						// currently modifying Leaflet source code directly to enable the custom icon to be captured in leaflet-image captures
+						// custom icon was otherwise crashing leaflet-image during map image captures .
+						self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
+						self.map.panTo(latlng)
 
-							//- if (!latlng) {
-							//- 	latlng = self.dataLayer.getBounds().getCenter();
-							//- 	self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
-							//- 	self.map.panTo(latlng)
-							//- 
-							//- }
-
-						} else {
-							self.json[key] = result;
-							self.lyr[key] = self.loadLayer(result, key);
-							if (self.lyr[key].options) self.lyr[key].options.interactive = false;
-
-							if (isPointCoords) {
-								self.lyr[key].bringToFront()
-							} else {
-								self.lyr[key].bringToBack()
-								if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
-							}
-							if (!latlng) {
-								latlng = self.lyr[key].getBounds().getCenter();
-								self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
-								if (isPointCoords) {
-									var bounds = self.lyr[key].getBounds();
-									self.map.fitBounds(bounds);
-								}//- } else {
-								//- 	self.map.panTo(latlng)
-								//- }
-
-							}
-
-						}
-						cb(latlng)
-					}
-				})
-				.catch(function(err){
-					if (isDataLayer) {
-						self.dataLayer = self.loadLayer(self.doc);
-						self.map.addLayer(self.dataLayer);
-						if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
-						if (!latlng) {
-							latlng = self.dataLayer.getBounds().getCenter();
-							self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
-							self.map.panTo(latlng)
-
-						}
-
-					} else {
-						self.json[key] = item;
-						self.lyr[key] = self.loadLayer(item, key);
-						if (self.lyr[key].options) self.lyr[key].options.interactive = false;
-						if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
-
-						if (!latlng) {
-							latlng = self.lyr[key].getBounds().getCenter();
-							self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
-							self.map.panTo(latlng)
-
-						}
 					}
 					cb(latlng)
-				})
+				} else {
+					$.get('/publishers/esta/json/json_'+key+'.json').then(async function(result){
+						if (result) {
+							var isPointCoords = (!result.features ? self.isPointCoords(result.geometry.coordinates) : self.isPointCoords(result.features[0].geometry.coordinates))
+							if (isDataLayer) {
+								self.dataLayer = await self.loadLayer(result);
+								self.map.addLayer(self.dataLayer);
+								if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+
+							} else {
+								self.json[key] = result;
+								self.lyr[key] = self.loadLayer(result, key);
+								if (self.lyr[key].options) self.lyr[key].options.interactive = false;
+
+								if (isPointCoords) {
+									self.lyr[key].bringToFront()
+								} else {
+									self.lyr[key].bringToBack()
+									if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+								}
+								if (!latlng) {
+									latlng = self.lyr[key].getBounds().getCenter();
+									self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
+									if (isPointCoords) {
+										var bounds = self.lyr[key].getBounds();
+										self.map.fitBounds(bounds);
+									}
+								}
+
+							}
+							cb(latlng)
+						} else {
+							console.log('no result')
+							cb(null)
+						}
+					})
+					.catch(function(err){
+						//- if (isDataLayer) {
+						console.log('there was an error')
+						console.log(err)
+							
+						cb(null)
+					})
+
+				}
 			}
 			 /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
 			async loadMap(cb) {
@@ -1887,24 +1602,23 @@ script(type="text/javascript").
 				var credit = (!self.credit || self.credit === '' ? self.getCredit() : self.credit) + ' | ' + self.baseMaps[self.base].attribution
 				self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: credit}).addTo(map);
 				self.map = map;
-				//- self.cZF = (18 - self.map.getZoom() + self.zfactor)
-				
+
 				var myRenderer = L.canvas({ padding: 0.5 });
-				//- var latlng;
 				if (self.doc && self.doc !== '') {
 					// generate geographic points from data
 					var key = self.doc._id;
 					self.serverJson(true, key, async function(latlng){
-						//- console.log(latlng)
 						if (self.doc.properties && self.doc.properties.title.str !== 'Geography') {
-							var keys = self.doc.properties.layers.map(async function(item){return item.lid})
+							var keys = await self.doc.properties.layers.map(async function(item){return item.lid})
 							if (self.layers && self.layers.length > 0) {
-								if (self.dataLayer.options) self.dataLayer.options.interactive = false;
+								if (self.dataLayer.options) {
+									self.dataLayer.options.interactive = false;
+								}
 								self.mapEdit = false;
 								await self.layers.forEach(function(item){
-									var key = item._id;
-									self.serverJson(false, key, function(latlng){
-										if (Object.keys(self.json).length >= self.layers.length) {
+									var k = item._id;
+									self.serverJson(false, k, function(latlng){
+										if (latlng && Object.keys(self.json).length >= self.layers.length) {
 											self.mapReady = true;
 										}
 									})
@@ -1952,48 +1666,6 @@ script(type="text/javascript").
 					cb(null)
 				}
 
-				//- self.map.on('click', function(e){
-				//- 	self.viewerList = false;
-				//- });
-
-				//- self.map.on('zoomstart', function(e){
-				//- 	console.log(e)
-				//- 	self.viewerList = false;
-				//- })
-
-
-					//- self.map.on('editable:vertex:rawclick', function(e){
-					//- 	self.layers.forEach(function(item, i){
-					//- 		if (item._id !== e.layer._id) {
-					//- 			//- item.disableEdit();
-					//- 		} else {
-					//- 			//- item.enableEdit();
-					//- 			//- self.mapEdit = true;
-					//- 		}
-					//- 	})
-					//- })
-					//- self.map.on('editable:editing', function (e) {
-					//- 	e.layer.setStyle({color: 'DarkRed'});
-					//- });
-					//- self.map.on('editable:vertex:dragstart', async function(e){
-					//- 	var cll = e.vertex.latlng.__vertex.latlng;
-					//- 	var dll = self.dataLayer.getLatLngs();
-					//- 	var lvl = 0;
-					//- 	var p = 0;
-					//- 	var dl;
-					//- 	var lll = self.dataLayer.getLatLngs();
-					//- 	self.latlngs = lll;
-					//- })
-					//- self.map.on('editable:vertex:dragend', function(e){
-					//- 	console.log(e)
-					//- 	var cll = e.vertex.latlng.__vertex.latlng;
-					//- 	var dll = self.dataLayer.getLatLngs();
-					//- 	var lvl = 0;
-					//- 	var p = 0;
-					//- 	var dl;
-					//- 	self.latlngs = dll;
-					//- 	self.doc.geometry.coordinates = self.latlngsToArr(dll, cll);
-					//- })
 			},
 			getClip() { 
 				var self = this;
