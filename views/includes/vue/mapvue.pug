@@ -100,35 +100,39 @@ script(type="text/javascript").
 				self.map.on('zoomstart', function(){
 					self.viewerList = false;
 				})
-
+				
 				self.map.on('moveend', function(e){
+					self.wWidth = window.innerWidth;
+					self.wHeight = window.innerHeight;
 					var coord = self.lMarker.getLatLng();
+					console.log(coord)
 					var xy = self.map.latLngToLayerPoint(coord);
 					var x = xy.x;
 					var y = xy.y;
+					console.log(x,y)
 					self.btn.x = x;
 					self.btn.y = y;
 					self.dPath = self.dPathAttr()
-					self.wWidth = window.innerWidth;
-					self.wHeight = window.innerHeight;
 					if (self.geo.length > 0) {
 						self.viewerList = true;
 					}
 				})
 				self.map.on('zoomend', function(e) {
+					self.wWidth = window.innerWidth;
+					self.wHeight = window.innerHeight;
 					var coord = self.lMarker.getLatLng();
+					console.log(coord)
 					var xy = self.map.latLngToLayerPoint(coord);
 					var x = xy.x;
 					var y = xy.y;
+					console.log(x,y)
 					self.btn.x = x;
 					self.btn.y = y;
 					self.dPath = self.dPathAttr()
-					self.wWidth = window.innerWidth;
-					self.wHeight = window.innerHeight;
 					if (self.geo.length > 0) {
 						self.viewerList = true;
 					}
-
+				
 				})
 
 			})
@@ -494,8 +498,8 @@ script(type="text/javascript").
 				self.wWidth = window.innerWidth;
 				self.wHeight = window.innerHeight;
 				setTimeout(function(){
-					self.btn.x = (self.wWidth/2);
-					self.btn.y = (self.wHeight/2);
+					//- self.btn.x = (self.wWidth/2);
+					//- self.btn.y = (self.wHeight/2);
 					self.viewerList = true;
 				}, 800)
 				//- if (self.buf && self.buf.length > 0) {
