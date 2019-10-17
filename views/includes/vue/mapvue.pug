@@ -91,13 +91,36 @@ script(type="text/javascript").
 			window.addEventListener('resize', self.resizeFrame);
 
 			self.loadMap(function(dataCoords){
+				/* TODO DRY this out: */
+				//- console.log(self.map.getPixelOrigin())
+				//- console.log(self.map.project(dataCoords), dataCoords);
+				//- console.log(self.lMarker.getLatLng());
+				//- console.log(self.map.latLngToLayerPoint(self.lMarker.getLatLng()))
 				self.map.on('dragstart', function(e){
+					var coord = self.lMarker.getLatLng();
+					var xy = self.map.latLngToContainerPoint(coord);
+					var x = xy.x;
+					var y = xy.y;
+					self.dPath = self.dPathAttr()
+					self.setBtn(x, y);
 					self.viewerList = false;
 				});
 				self.map.on('movestart', function(){
+					var coord = self.lMarker.getLatLng();
+					var xy = self.map.latLngToContainerPoint(coord);
+					var x = xy.x;
+					var y = xy.y;
+					self.dPath = self.dPathAttr()
+					self.setBtn(x, y);
 					self.viewerList = false;
 				})
 				self.map.on('zoomstart', function(){
+					var coord = self.lMarker.getLatLng();
+					var xy = self.map.latLngToContainerPoint(coord);
+					var x = xy.x;
+					var y = xy.y;
+					self.dPath = self.dPathAttr()
+					self.setBtn(x, y);
 					self.viewerList = false;
 				})
 				
@@ -105,26 +128,39 @@ script(type="text/javascript").
 					self.wWidth = window.innerWidth;
 					self.wHeight = window.innerHeight;
 					var coord = self.lMarker.getLatLng();
-					var xy = self.map.latLngToLayerPoint(coord);
+					var xy = self.map.latLngToContainerPoint(coord);
 					var x = xy.x;
 					var y = xy.y;
-					self.btn.x = x;
-					self.btn.y = y;
 					self.dPath = self.dPathAttr()
+					self.setBtn(x, y);
 					if (self.geo.length > 0) {
 						self.viewerList = true;
 					}
+				})
+				self.map.on('dragend', function(e) {
+					self.wWidth = window.innerWidth;
+					self.wHeight = window.innerHeight;
+					var coord = self.lMarker.getLatLng();
+					var xy = self.map.latLngToContainerPoint(coord);
+					console.log(xy, self.map.layerPointToLatLng)
+					var x = xy.x;
+					var y = xy.y;
+					self.dPath = self.dPathAttr()
+					self.setBtn(x, y);
+					if (self.geo.length > 0) {
+						self.viewerList = true;
+					}
+
 				})
 				self.map.on('zoomend', function(e) {
 					self.wWidth = window.innerWidth;
 					self.wHeight = window.innerHeight;
 					var coord = self.lMarker.getLatLng();
-					var xy = self.map.latLngToLayerPoint(coord);
+					var xy = self.map.latLngToContainerPoint(coord);
 					var x = xy.x;
 					var y = xy.y;
-					self.btn.x = x;
-					self.btn.y = y;
 					self.dPath = self.dPathAttr()
+					self.setBtn(x, y);
 					if (self.geo.length > 0) {
 						self.viewerList = true;
 					}
@@ -209,6 +245,12 @@ script(type="text/javascript").
 				if (self.json[id]) self.lyr[id] = self.loadLayer(self.json[id], id);
 				if (self.lyr[id].options) self.lyr[id].options.interactive = true;
 				//- self.map.addLayer(self.lyr[id]);
+			},
+			setBtn(x, y) {
+				var self = this;
+				self.btn.x = x;
+				self.btn.y = y;
+
 			},
 			async addLayer(id, e) {
 				var self = this;
@@ -789,6 +831,7 @@ script(type="text/javascript").
 					// generate geographic points from data
 					var key = self.doc._id;
 					self.serverJson(true, key, async function(latlng){
+						console.log(self.lMarker)
 						if (self.doc.properties && self.doc.properties.title.str !== 'Geography') {
 							var keys = await self.doc.properties.layers.map(async function(item){return item.lid})
 							if (self.layers && self.layers.length > 0) {
