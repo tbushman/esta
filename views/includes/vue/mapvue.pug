@@ -443,21 +443,26 @@ script(type="text/javascript").
 					return false
 				} 
 			},
-			async filterViewerList(ll1, ll2, feature, keys, vals, buf) {
+			async filterViewerList(ll1, ll2, feature, id, keys, vals, buf) {
 				var self = this;
+				//- console.log(ll1, ll2, feature, keys, vals, buf)
 				var latlng = ll2;
-				//- $.get('/publishers/esta/json/json_'+feature._id+'.json')
+				//- $.get('/publishers/esta/json/json_'+id+'.json')
 				//- .then(async function(json){
 				//- 	if (json.features){
-				if (self.json[feature._id]) {
+				//- console.log(self.json[id], id, feature)
+				if (self.json[id]) {
 					var counter = 0;
-					self.geo = (!self.json[feature._id].features ? [self.json[feature._id]] : await self.json[feature._id].features
+					//- console.log(self.json[id])
+					self.geo = (!self.json[id].features ? [self.json[id]] : await self.json[id].features
 					.filter(function(ft, j){
+						//- console.log(self.isPointCoords(ft.geometry.coordinates))
 						if (self.isPointCoords(ft.geometry.coordinates)) {
 							//TODO: Add as layer, then get bounds, then get center
 							var rx = ft.geometry.coordinates.reverse();
 							var center = L.latLng(rx) 
 							latlng = center;
+							console.log(ll1.contains(center), center)
 							return ll1.contains(center);
 						} else {
 							var bf = L.geoJSON(ft, {
@@ -477,6 +482,7 @@ script(type="text/javascript").
 							return contains;
 						}
 					}))
+					//- console.log(self.geo)
 					if (self.geo && self.geo.length > 0) {
 						//- console.log(self.geo)
 						if (ll1._southWest) {
@@ -489,6 +495,9 @@ script(type="text/javascript").
 							self.lMarker.setLatLng(latlng);
 						}
 						//- 
+						self.btn.x = (self.wWidth/2);
+						self.btn.y = (self.wHeight/2);
+
 						if (self.geo.length > 0) {
 							self.viewerList = true;
 						} else {
@@ -501,7 +510,7 @@ script(type="text/javascript").
 					}
 				}
 				
-				buf.remove();
+				//- buf.remove();
 			},
 			getAttributes(feature) {
 				var self = this;
@@ -518,61 +527,62 @@ script(type="text/javascript").
 				})
 			},
 			//- arrayEqArray(arr1, arr2)
-			setView(feature, latlng){
+			setView(feature, id, latlng){
 				var self = this;
 				if (self.buf) self.buf.remove()
 				//- self.viewerList = true;
-				self.geo = [feature]
+				//- self.geo = [feature]
 				self.buf = L.geoJSON(feature, {
 					style: function (feature) {
 						return {color: 'tomato'};
 					}
 				}).addTo(self.map);
-				var l1 = self.buf.getBounds();
-				var c = l1.getCenter();
-				self.map.fitBounds(l1)
-				self.lMarker.setLatLng(c);
-				self.lMarker.setOpacity(1);
+				//- var l1 = self.buf.getBounds();
+				//- var c = l1.getCenter();
+				//- self.map.fitBounds(l1)
+				//- self.lMarker.setLatLng(c);
+				//- self.lMarker.setOpacity(1);
 				self.wWidth = window.innerWidth;
 				self.wHeight = window.innerHeight;
-				setTimeout(function(){
-					//- self.btn.x = (self.wWidth/2);
-					//- self.btn.y = (self.wHeight/2);
-					self.viewerList = true;
-				}, 800)
+				//- setTimeout(function(){
+				//- 	self.viewerList = true;
+				//- }, 800)
 				//- if (self.buf && self.buf.length > 0) {
 				//- 	self.buf.forEach(function(item){
 				//- 		item.remove();
 				//- 	})
 				//- }
-				//- self.cZF = (self.map.getZoom() + self.zfactor);
-				//- var cp = self.map.latLngToLayerPoint(latlng);
-				//- var x1 = cp.x-10;
-				//- var y1 = cp.y-10;
-				//- var x2 = cp.x+10;
-				//- var y2 = cp.y+10;
-				//- var p1 = self.map.layerPointToLatLng(L.point(x1,y1));
-				//- var p2 = self.map.layerPointToLatLng(L.point(x2, y2));
-				//- 
-				//- var buf = L.featureGroup([L.circle(p1), L.circle(p2)]).addTo(self.map);
-				//- var ll1 = buf.getBounds();
-				//- var ll2 = latlng;
-				//- var keys;
-				//- var vals;
-				//- if (!self.dataLayer._layers && self.lyr[feature._id]) {
-				//- 	if (!self.lyr[feature._id]._layers) {
-				//- 		keys = Array.from(Array(self.lyr[feature._id]._latlngs.length).keys())
-				//- 	} else {
-				//- 		keys = Object.keys(self.lyr[feature._id]._layers)
-				//- 	}
-				//- 	vals = self.lyr[feature._id];
-				//- 	//- console.log(feature, vals)
-				//- } else {
-				//- 	vals = self.dataLayer;
-				//- 	keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
-				//- 	//- console.log(keys)
-				//- }
-				//- self.filterViewerList(ll1, ll2, feature, keys, vals, buf)
+				self.cZF = (self.map.getZoom() + self.zfactor);
+				var cp = self.map.latLngToContainerPoint(latlng);
+				var x1 = cp.x-30;
+				var y1 = cp.y-30;
+				var x2 = cp.x+30;
+				var y2 = cp.y+30;
+				var bounds = [[x1,y1],[x2,y2]];
+				var p1 = self.map.containerPointToLatLng(L.point(x1,y1));
+				var p2 = self.map.containerPointToLatLng(L.point(x2, y2));
+				
+				var buf = L.rectangle(bounds, {color: 'rgba(255,255,255,0.5)' }).addTo(self.map)//L.featureGroup([L.circle(p1), L.circle(p2)]).addTo(self.map);
+				var bufBounds = buf.getBounds();
+				console.log(bufBounds)
+				var ll2 = latlng;
+				var keys;
+				var vals;
+				if (!self.dataLayer._layers && self.lyr[id]) {
+					if (!self.lyr[id]._layers) {
+						keys = Array.from(Array(self.lyr[id]._latlngs.length).keys())
+					} else {
+						keys = Object.keys(self.lyr[id]._layers)
+					}
+					vals = self.lyr[id];
+					//- console.log(feature, vals)
+				} else {
+					vals = self.dataLayer;
+					keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
+					//- console.log(keys)
+				}
+				console.log(vals)
+				self.filterViewerList(bufBounds, ll2, feature, id, keys, vals, buf)
 				
 				
 			},
@@ -633,15 +643,15 @@ script(type="text/javascript").
 										var style = {fillColor:cls[0], color:cls[0], opacity: 0.8, fillOpacity: 0.6, radius: 8}
 										var circle = new L.CircleMarker(latlng, style)//, self.styleOf(ft, ft.geometry.type))
 											.on('click', function(){
-												return self.setView(ft, latlng)
+												return self.setView(ft, id, latlng)
 											});
 										return circle;
 									}
 
 								});
-								thisLayer.on('click', function(e){
-									self.setView(feature, e.latlng)
-								})
+								//- thisLayer.on('click', function(e){
+								//- 	self.setView(feature, e.latlng)
+								//- })
 								ljson.addLayer(thisLayer)
 							}
 						})
@@ -661,7 +671,7 @@ script(type="text/javascript").
 									}
 								})
 								thisLayer.on('click', function(e){
-									self.setView(feature, e.latlng)
+									self.setView(feature, id, e.latlng)
 								})
 								ljson.addLayer(thisLayer)
 							}
@@ -678,7 +688,7 @@ script(type="text/javascript").
 							pointToLayer: function(feature, latlng) {
 								var circle = new L.CircleMarker(latlng, self.styleOf(feature, feature.geometry.type))
 									.on('click', function(){
-										return self.setView(feature, latlng)
+										return self.setView(feature, id, latlng)
 									});
 								return circle;
 							}
@@ -729,6 +739,29 @@ script(type="text/javascript").
 				
 				
 			},
+			adjustCoord(coords) {
+				var self = this;
+				if (coords.length === 3 && coords[2] === 0) {
+					//- console.log(coords)
+					coords.pop()
+				} else if (coords.length === 3 && coords[0] === 0) {
+					coords.shift()
+				}
+				return coords;
+			},
+			adjustedGeometryCoord(feature) {
+				var self = this;
+				if (!feature.features) {
+					var coord = feature.geometry.coordinates;
+					feature.geometry.coordinates = self.adjustCoord(coord)
+				} else {
+					feature.features.forEach(function(item) {
+						var coords = item.geometry.coordinates;
+						item.geometry.coordinates = self.adjustCoord(coords)
+					})
+				}
+				return feature
+			},
 			serverJson(isDataLayer, key, cb) {
 				var self = this;
 				var latlng;
@@ -750,9 +783,15 @@ script(type="text/javascript").
 					}
 					cb(latlng)
 				} else {
-					$.get('/publishers/esta/json/json_'+key+'.json').then(async function(result){
-						if (result) {
-							var isPointCoords = (!result.features ? self.isPointCoords(result.geometry.coordinates) : self.isPointCoords(result.features[0].geometry.coordinates))
+					$.get('/publishers/esta/json/json_'+key+'.json').then(async function(results){
+						if (results) {
+							var result = self.adjustedGeometryCoord(results);
+							var coords = (!result.features ? result.geometry.coordinates : result.features[0].geometry.coordinates)
+							//- var adj = (!result.features ? result.geometry.coordinates : result.features[0].geometry.coordinates);
+							//- var needsAdj = adj.length === 3;
+							//- if (needsAdj) adj.shift()
+							//- var pointCoordsAdjusted = (!result.features ? (result.geometry.coordinates.length === 3 ? adj : result.geometry.coordinates) : (result.features[0].geometry.coordinates.length === 3 ? adj : result.features[0].geometry.coordinates))
+							var isPointCoords = self.isPointCoords(coords)
 							if (isDataLayer) {
 								self.dataLayer = await self.loadLayer(result);
 								self.map.addLayer(self.dataLayer);
