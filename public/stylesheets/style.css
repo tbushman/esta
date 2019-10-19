@@ -201,8 +201,13 @@ z-index: 999;
 background-color: var(--primary);
 margin-top: calc(var(--thumbw) * 1.1);
 margin-right: var(--thumbw);
-overflow-y: scroll; 
-
+overflow-y: hidden; 
+max-height: 46vh;
+}
+.viewerlist > ul {
+  overflow-y: scroll;
+  height: auto;
+  max-height: 40vh;
 }
 .viewerlist > ul > li {
 	margin-top: 8px;

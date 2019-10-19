@@ -1,6 +1,14 @@
+p.tb-font-xs(v-if="geo && geo.length && geo.length > 0" v-text="geo.length + ' features at this location'" style="padding: 8px;")
 ul(style="margin: 10px; padding:0;")
-	li(v-for="(go, g) in geo", style="background-color:rgba(255,255,255,0.5);padding-bottom:8px;")
-		table(style="table-layout:fixed; margin-right: 25px;")
+	li(
+		v-for="(go, g) in geo", 
+		style="padding-bottom:4px;cursor:pointer;",
+		:style="{'background-color': (g % 2 === 0 ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0)')}",
+		@mouseover="highlightFeature(go)",
+		@mouseleave="unHighlightFeature(go)",
+		@click="setView(go, go._id, null, $event)"
+		)
+		table(style="table-layout:fixed; margin-right: 25px;pointer-events:none;")
 			tr(v-for="(p, j) in Object.keys(go.properties)", v-if="go.properties[p] && go.properties[p] !== '' && ['STATEFP10','COUNTYFP10','BLKGRPCE10','INTPTLON10','INTPTLAT10','TRACTCE10','GEOID10', 'tessellate', 'visibility'].indexOf(p) === -1")
 				td(colspan="2", style="white-space:wrap;")
 					p.tb-font-xxxs(style="padding:0;")
