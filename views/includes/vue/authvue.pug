@@ -1276,14 +1276,18 @@ script(type="text/javascript").
 						//- console.log(self.isPointCoords(ft.geometry.coordinates))
 						ft._id = id
 						if (self.isPointCoords(ft.geometry.coordinates)) {
-							var rx = ft.geometry.coordinates.reverse();
-							var center = L.latLng(rx[0], rx[1]) 
-							latlng = center;
-							if (ll1.contains(center)) {
+							var bff = L.geoJSON(ft).addTo(self.map);
+							latlng = bff.getBounds().getCenter();
+							bff.remove()
+							//- var rx = ft.geometry.coordinates.reverse();
+							//- var center = L.latLng(rx[0], rx[1]) 
+							//- latlng = center;
+							//- console.log(ll1.contains(latlng), ll1)
+							if (ll1.contains(latlng)) {
 								ft.geometry.coordinates.reverse()
 								var bf = L.GeoJSON.geometryToLayer(ft, {
 									pointToLayer: function(ft, latlng) {
-										var style = {fillColor:'tomato', color:'tomato', opacity: 0.8, fillOpacity: 0.6, radius: 8}
+										var style = {fillColor:'tomato', color:'tomato', opacity: 0.8, fillOpacity: 0.6, radius: 8, interactive: false}
 										var circle = new L.CircleMarker(latlng, style)//, self.styleOf(ft, ft.geometry.type))
 										return circle;
 									}
@@ -1293,11 +1297,11 @@ script(type="text/javascript").
 								counter++
 							}
 							//- console.log(ll1, rx, ll1.contains(center), center)
-							return ll1.contains(center);
+							return ll1.contains(latlng);
 						} else {
 							var bf = L.geoJSON(ft, {
 								style: function (feature) {
-									return {color: 'tomato'};
+									return {color: 'tomato', interactive: false};
 								}
 							}).addTo(self.map);
 							var l1 = bf.getBounds();
@@ -1347,7 +1351,6 @@ script(type="text/javascript").
 				}
 				
 			},
-
 			getAttributes(feature) {
 				var self = this;
 				var vals = self.lyr[feature._id]
@@ -1375,12 +1378,12 @@ script(type="text/javascript").
 				self.buf.push(!self.isPointCoords(go.geometry.coordinates) ? 
 					L.geoJSON(go, {
 						style: function (feature) {
-							return {color: 'tomato'};
+							return {color: 'tomato', interactive: false};
 						}
 					}).addTo(self.map) :
 					L.GeoJSON.geometryToLayer(go, {
 						pointToLayer: function(ft, latlng) {
-							var style = {fillColor:'tomato', color:'tomato', opacity: 0.8, fillOpacity: 0.6, radius: 8}
+							var style = {fillColor:'tomato', color:'tomato', opacity: 0.8, fillOpacity: 0.6, radius: 8, interactive: false}
 							var circle = new L.CircleMarker(latlng, style)//, self.styleOf(ft, ft.geometry.type))
 							return circle;
 						}
@@ -1421,7 +1424,7 @@ script(type="text/javascript").
 				var northWest = self.map.containerPointToLatLng(L.point(x1,y1));//L.latLng(y1,x1);
 				var southEast = self.map.containerPointToLatLng(L.point(x2,y2));//L.latLng(y2,x2);
 				var bounds = L.latLngBounds(northWest, southEast)//[[x1,y1],[x2,y2]];
-				var buf = L.rectangle(bounds, {fill: 'rgba(255,255,255,0.5)', color: 'rgba(255,255,255,0.5)' }).addTo(self.map)//L.featureGroup([L.circle(p1), L.circle(p2)]).addTo(self.map);
+				var buf = L.rectangle(bounds, {fill: 'rgba(255,255,255,0.5)', color: 'rgba(255,255,255,0.5)', interactive: false }).addTo(self.map)//L.featureGroup([L.circle(p1), L.circle(p2)]).addTo(self.map);
 				var ll2 = (!latlng ? bounds.getCenter() : latlng);
 				var keys;
 				var vals;
@@ -1436,6 +1439,7 @@ script(type="text/javascript").
 					vals = self.dataLayer;
 					keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
 				}
+				//- console.log(bounds, ll2, feature, id, keys, vals, buf)
 				self.filterViewerList(bounds, ll2, feature, id, keys, vals, buf)
 				
 				
