@@ -39,7 +39,7 @@ script(type="text/javascript").
 				dataLayer: '',
 				lMarker: '',
 				thickness: 45,
-				res: (window.innerWidth < 600),
+				res: this.isResponsive(),
 				dPath: this.dPathAttr(),
 				web: true,
 				export: this.parseBool(!{JSON.stringify(exports)}),
@@ -66,7 +66,8 @@ script(type="text/javascript").
 				zfactor: (0.01 * (!this.map ? 6 : (18 - this.map.getZoom() ) )),
 				cZF: null,
 				viewerList: false,
-				json: {}
+				json: {},
+				mapCtrl: false
 				
 			}
 		},
@@ -177,6 +178,17 @@ script(type="text/javascript").
 
 		},
 		methods: {
+			switchMapCtrl() {
+				var self = this;
+				var mapCtrl = self.mapCtrl;
+				self.mapCtrl = !mapCtrl;
+				//- if (self.mapCtrl) {
+				//- 
+				//- }
+			},
+			isResponsive() {
+				return (window.innerWidth < 600)
+			},
 			parseObj: function(obj) {
 				if (!obj) return '';
 				return obj;
