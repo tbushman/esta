@@ -178,7 +178,8 @@ script(type="text/javascript").
 
 		},
 		methods: {
-			switchMapCtrl() {
+			switchMapCtrl(e) {
+				e.preventDefault()
 				var self = this;
 				var mapCtrl = self.mapCtrl;
 				self.mapCtrl = !mapCtrl;

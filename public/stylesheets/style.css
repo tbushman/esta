@@ -218,37 +218,56 @@ blockquote, .blockquote {
 }
 .legend {
   position: absolute;
-  bottom: 0;
+  top: 0;
   height: 45px;
   height: var(--thumbw);
-  width: auto;
-  padding-top: 5px;
-}
-.legend.res {
   width: 13px;
+  /* width: var(--thumbw); */
+  /* padding-top: 5px; */
   display: flex;
   flex-direction: column;
   align-items: stretch;
 }
+.legend.res {
+  width: 13px;
+  /* display: flex; */
+  /* flex-direction: column; */
+  /* align-items: stretch; */
+}
 .legend input {
-  bottom: 0;
+  /* bottom: 0; */
+  vertical-align: top;
   border: 0px solid rgba(255,255,255,0)!important;
   padding-inline-end: 0;
   padding-inline-start: 0;
+  height: auto;
+  width: 100%;
 }
 .legend label {
-  
+  display: none;
 }
-.legend .res {
+.legend.ctrl:hover label {
+  display: inline-block;
+  width: 45px;
+  width: var(--thumbw);
+}
+.legend .res, .legend .row {
   /* display: inline-block; */
-  height: 13px;
+  /* height: auto; */
 }
 .legend .res input {
-  width: 13px;
-  height: 13px;
+  /* width: 13px; */
+  /* height: 13px; */
 }
 .legend .res label {
   display: none;
+}
+.legend .ctrl {
+  width: 13px;
+}
+.legend:hover .ctrl input {
+  width: 45px;
+  width: var(--thumbw);
 }
 /*.blockquote p,
 .blockquote h3,
@@ -635,6 +654,18 @@ em {
 	pointer-events: all;
 	cursor: pointer;
 }
+.layerDrop {
+  height: 45px;
+	height: var(--thumbw);
+	background-color: rgba(255,255,255,0);
+	display: inline-block;
+	width: 45px;
+  width: var(--thumbw);
+	pointer-events: auto;
+	cursor: pointer;
+  overflow: visible;
+  white-space: normal;
+}
 
 .drop span {
 	display: none;
@@ -649,16 +680,44 @@ em {
   white-space: nowrap;
   vertical-align: top;
 }
-.submenu.drop span {
-  display: inline-block;
-}
-.layer:hover .drop span {
-  display: inline-block;
+.layerDrop > span {
+  padding: 0 0 0 0;
+	line-height: 45px;
+	line-height: var(--thumbw);
+	pointer-events: none;
   color: #000;
   color: var(--secondary);
   background-color: #fff;
+  z-index: 9;
+  white-space: nowrap;
+  vertical-align: top;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  left: 45px;
+  left: var(--thumbw);
+}
+.layerDrop > .row {
+  width: 180px;
+  pointer-events: auto;
+}
+.layerDrop > .row > span {
+  padding: 0;
+}
+.submenu.drop span {
+  display: inline-block;
+}
+.layer:hover .layerDrop > span {
+  /* display: inline-block; */
   /* width: calc(100% - (45px * 2));
   width: calc(100% - (calc(var(--thumbw) * 2))); */
+}
+
+.layerDrop select, .layerDrop input {
+  /* -webkit-appearance: none; */
+  height: 22px!important;
+  color: #555!important;
+  font-size: 13px!important;
 }
 
 /* fieldset {
@@ -687,8 +746,9 @@ fieldset select:hover {
 	right: var(--thumbw);
 	top: calc(var(--thumbw) * 1.2);
 	bottom: auto;
-	width: var(--thumbw);
-	display: flex;
+	/* width: var(--thumbw); */
+	width: auto;
+  display: flex;
 	flex-direction: column;
 }
 .layer {
@@ -696,9 +756,13 @@ fieldset select:hover {
 	pointer-events: auto;
   position: relative;
 }
-.layer:hover {
-	width: calc(var(--thumbw) * 3);
+.layer.ctrl {
+  width: calc(45px * 3);
+  width: calc(var(--thumbw) * 3);
 }
+/* .layer:hover {
+	width: auto;
+} */
 /* .lcontrol:hover {
 	width: calc(45px * 2);
 	width: calc(var(--thumbw) * 2);

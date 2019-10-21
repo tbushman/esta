@@ -1,29 +1,53 @@
 fieldset.lcontrol(style="padding:0;border:none;", v-cloak, v-if="mapReady && mapActive")
 	
 	legend(style="font-size: 11px;") layers
-	div.layer(v-for="(layer, o) in layers")
-		a.drop(style="display: flex;", @click="subDropdown($event)", @mouseover="switchMapCtrl", @touchstart="switchMapCtrl")
-			.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;pointer-events:none;")
+	div.layer(v-for="(layer, o) in layers", :class="mapCtrl ? 'ctrl' : ''")
+		//- @mouseover="mapCtrl = true", @touchstart="mapCtrl = true", 
+		//- @mouseleave="mapCtrl = false", @touchend="mapCtrl = false"
+		//- @click="subDropdown($event)", 
+		a.layerDrop(style="display: flex;"
+			)
+			.ui(@click="switchMapCtrl",
+				style="min-width:45px;min-width:var(--thumbw);margin:0;")
 
 				img(:src="(!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? (!layer.properties.media[0] ? '/images/publish_logo_sq.svg' : layer.properties.media[0].thumb) : layer.properties.media[layer.properties.media.length - 1].thumb)+'?version='+Math.random()", style="pointer-events: none;")
 			
-			span.tb-font-m(v-text="layer.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
 			input(type="checkbox", :value="layer._id", :id="'layer_'+o", v-text="layer.properties.label", style="position:absolute;right:0", @click="changeLayers(layer._id, $event)", :checked="(doc.properties.layers.map(function(item){return item.lid}).indexOf(layer._id) !== -1)")
-			div.legend(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id", :style="{width: (mapCtrl ? '13px' : 'auto')}", :class="mapCtrl ? 'res' : '' ")
+			span.row(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id && mapCtrl")
+				span.tb-10-m0.tb-font-s(v-text="layer.properties.label", style="padding-right: 15px; padding-left: 8px;")
+				span.tb-10-m0
+					span.row
+						span.tb-08-m0
+							//- label.tb-10-m0(style="font-size: 9px;margin-top:10px;pointer-events: none;", for="key") field
+							select#key.tb-10-m0(@change="changeAttribute(layer._id, $event)", v-model="style.key" style="margin:0;")
+								option(v-for="(item,l) in layer.properties.keys", v-text="item", :value="item", :selected="item === style.key")
+						span.tb-02-m0
+							//- label.tb-10-m0(style="font-size: 9px;pointer-events: none;", for="buckets") divisor
+							input.tb-10-m0(type="number", min="1", max="4", v-model="style.buckets", style="margin:0;", @change="numberColorBucket(style.lid, $event)")
+			//- :style="{width: (mapCtrl ? '45px' : '13px'), width: (mapCtrl ? 'var(--thumbw)' : '13px')}", 
+			div.legend(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id", 
+				:class="!mapCtrl ? 'res' : 'ctrl' "
+				)
 				
-				legend(style="font-size: 11px;", v-if="!mapCtrl") Color
-				div(v-if="style.inc", v-for="(c,j) in style.colors", :class="mapCtrl ? 'res' : 'row'", :style="{height: (mapCtrl ? 'calc(var(--thumbw) / '+style.colors.length+' )' : 'auto') }")
-					label(style="font-size: 7px;position:absolute;padding:6px;color:#fff;font-weight:heavier;", :for="'color'+k+'_'+j", v-text="(style.min + (style.inc * j)).toFixed(1) + '–' + (!style.colors[j+1] ? style.max : (style.min + (style.inc * (j+1)))).toFixed(1)")
-					input(:id="'color'+k+'_'+j", type="color", :value="c", @change="changeColorBucket(k, j, $event)", style="pointer-events:all;", :style="{height: (mapCtrl ? 'calc(var(--thumbw) / '+style.colors.length+' )' : 'auto') }" )
+				//- legend(style="font-size: 11px;", v-if="!mapCtrl") Color
+				//- :style="{height: (!mapCtrl ? 'calc(var(--thumbw) / '+style.colors.length+' )' : 'calc(var(--thumbw) / '+style.colors.length+' )') }" 
+				//- :style="{height: (mapCtrl ? 'calc(var(--thumbw) / '+style.colors.length+' )' : 'calc(var(--thumbw) / '+style.colors.length+' )') }"
+				div(v-if="style.inc", v-for="(c,j) in style.colors", :class="!mapCtrl ? 'res' : 'ctrl'", 
+				:style="{height: 'calc(45px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )' }"
+				)
+					label(style="font-size: 7px;position:absolute;padding:2px;color:#fff;font-weight:heavier;", :for="'color'+k+'_'+j", v-text="(style.min + (style.inc * j)).toFixed(1) + '–' + (!style.colors[j+1] ? style.max : (style.min + (style.inc * (j+1)))).toFixed(1)")
+					input(:id="'color'+k+'_'+j", type="color", :value="c", @change="changeColorBucket(k, j, $event)", style="pointer-events:all;", 
+					:style="{height: 'calc(45px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )' }"
+					)
 
-		div.slidedown(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id")
-			legend(style="font-size: 11px;") style
-			label(style="font-size: 9px;margin-top:10px;", for="key") Key
-			select#key(@change="changeAttribute(layer._id, $event)", v-model="style.key" style="margin:0;")
-				//v-if="(json[style.lid] && json[style.lid].features && !isNaN(parseInt(json[style.lid].features[0].properties[item],10)))"
-				option(v-for="(item,l) in layer.properties.keys", v-text="item", :value="item", :selected="item === style.key")
-			label(style="font-size: 9px;", for="buckets") # Buckets
-			input(type="number", min="1", max="4", v-model="style.buckets", style="margin:0;", @change="numberColorBucket(style.lid, $event)")
+		//- div.slidedown(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id && mapCtrl")
+		//- 	//- legend(style="font-size: 11px;") style
+		//- 	label(style="font-size: 9px;margin-top:10px;", for="key") field
+		//- 	select#key(@change="changeAttribute(layer._id, $event)", v-model="style.key" style="margin:0;")
+		//- 		//v-if="(json[style.lid] && json[style.lid].features && !isNaN(parseInt(json[style.lid].features[0].properties[item],10)))"
+		//- 		option(v-for="(item,l) in layer.properties.keys", v-text="item", :value="item", :selected="item === style.key")
+		//- 	label(style="font-size: 9px;", for="buckets") divisor
+		//- 	input(type="number", min="1", max="4", v-model="style.buckets", style="margin:0;", @change="numberColorBucket(style.lid, $event)")
 		
 
 	legend.block(style="font-size: 11px; margin-top:10px;", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0") more

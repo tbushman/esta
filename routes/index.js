@@ -778,7 +778,7 @@ function getLayers(req, res, next) {
 		if (err) {
 			return next(err)
 		}
-		if (doc.properties.layers) {
+		if (doc && doc.properties.layers) {
 			var layerids = await doc.properties.layers.map(function(layer){return layer.lid}) || [];
 			ContentDB.find({_id: {$in:layerids}}).lean().exec(function(err, data){
 				if (err) {
