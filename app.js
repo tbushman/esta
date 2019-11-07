@@ -278,9 +278,9 @@ app.use(function (req, res, next) {
   res.locals.session = req.session;
   next();
 });
-app.get(/^(\/|\/register$|\/login$|\/api\/new|\/api\/editcontent)/, csrfProtection);
+app.get(/^(\/|\/register$|\/login$|\/api\/new|\/api\/editcontent|\/loadgmaps)/, csrfProtection);
 // ensure multer parses before csrf
-app.post(/^(\/register$|\/login$|\/api\/editcontent|\/sig\/editprofile)/, upload.array(), parseBody, csrfProtection);
+app.post(/^(\/register$|\/login$|\/api\/editcontent|\/sig\/editprofile|\/loadgmaps)/, upload.array(), parseBody, csrfProtection);
 app.post(/^(\/diff)/, upload.array(), parseBody);
 //app.post(/^(\/api\/uploadmedia)/, parseBody)
 app.post(/^(\/api\/export)/, upload.array(), parseBody);

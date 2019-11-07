@@ -23,7 +23,7 @@ fieldset.lcontrol(style="padding:0;border:none;", v-cloak, v-if="mapReady && map
 								option(v-for="(item,l) in layer.properties.keys", v-text="item", :value="item", :selected="item === style.key")
 						span.tb-02-m0
 							//- label.tb-10-m0(style="font-size: 9px;pointer-events: none;", for="buckets") divisor
-							input.tb-10-m0(type="number", min="1", max="4", v-model="style.buckets", style="margin:0;", @change="numberColorBucket(style.lid, $event)")
+							input.tb-10-m0(type="number", min="1", max="11", v-model="style.buckets", style="margin:0;", @change="numberColorBucket(style.lid, $event)")
 			//- :style="{width: (mapCtrl ? '45px' : '13px'), width: (mapCtrl ? 'var(--thumbw)' : '13px')}", 
 			div.legend(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id", 
 				:class="!mapCtrl ? 'res' : 'ctrl' "
@@ -32,10 +32,12 @@ fieldset.lcontrol(style="padding:0;border:none;", v-cloak, v-if="mapReady && map
 				//- legend(style="font-size: 11px;", v-if="!mapCtrl") Color
 				//- :style="{height: (!mapCtrl ? 'calc(var(--thumbw) / '+style.colors.length+' )' : 'calc(var(--thumbw) / '+style.colors.length+' )') }" 
 				//- :style="{height: (mapCtrl ? 'calc(var(--thumbw) / '+style.colors.length+' )' : 'calc(var(--thumbw) / '+style.colors.length+' )') }"
-				div(v-if="style.inc", v-for="(c,j) in style.colors", :class="!mapCtrl ? 'res' : 'ctrl'", 
+				div(v-if="style.colors && style.colors.length > 0", v-for="(c,j) in style.colors", :class="!mapCtrl ? 'res' : 'ctrl'", 
 				:style="{height: 'calc(45px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )' }"
 				)
-					label(style="font-size: 7px;position:absolute;padding:2px;color:#fff;font-weight:heavier;", :for="'color'+k+'_'+j", v-text="(style.min + (style.inc * j)).toFixed(1) + '–' + (!style.colors[j+1] ? style.max : (style.min + (style.inc * (j+1)))).toFixed(1)")
+					label(style="font-size: 7px;position:absolute;padding:2px;color:#fff;font-weight:heavier;", 
+						:for="'color'+k+'_'+j", 
+						v-text="(style.set[j]) + '–' + (!style.colors[j+1] ? style.max : style.set[j+1])")
 					input(:id="'color'+k+'_'+j", type="color", :value="c", @change="changeColorBucket(k, j, $event)", style="pointer-events:all;", 
 					:style="{height: 'calc(45px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )' }"
 					)

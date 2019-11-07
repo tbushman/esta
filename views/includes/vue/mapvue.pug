@@ -87,8 +87,8 @@ script(type="text/javascript").
 			$(document).on('click', '.href', function(e){
 				e.stopPropagation();
 			});
-			const tempstyles = (!self.doc || self.doc.properties.layers.length === 0 ? [] : self.doc.properties.layers)
-			self.tempstyles = JSON.parse(JSON.stringify(tempstyles));
+			//- const tempstyles = (!self.doc || self.doc.properties.layers.length === 0 ? [] : self.doc.properties.layers)
+			//- self.tempstyles = JSON.parse(JSON.stringify(tempstyles));
 			window.addEventListener('resize', self.resizeFrame);
 
 			self.loadMap(function(dataCoords){
@@ -267,7 +267,7 @@ script(type="text/javascript").
 			},
 			async addLayer(id, e) {
 				var self = this;
-				var tlrs = self.tempstyles.filter(function(item){
+				var tlrs = self.doc.properties.layers.filter(function(item){
 					return item.lid === id
 				})[0];
 				var style;
@@ -638,6 +638,66 @@ script(type="text/javascript").
 				
 				
 			},
+			determineLegend(item, style, ind, cb) {
+				var self = this;
+				var colors = style.colors;
+				var theseKeys = Object.keys(item.features[0].properties).filter(function(it){return !isNaN(parseInt(item.features[0].properties[it], 10))})
+				var thisKey = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
+				var count = 0;
+				var distinct = [];
+				var vals = item.features.map(function(feature){
+					if (feature.properties[thisKey] !== parseInt(feature.properties[thisKey], 10) || isNaN(parseInt(feature.properties[thisKey]))) {
+						// register non-integer value
+						count++
+					}
+					if (!isNaN(parseInt(feature.properties[thisKey],10))) {
+						if (distinct.indexOf(parseInt(feature.properties[thisKey], 10)) === -1) {
+							distinct.push(parseInt(feature.properties[thisKey], 10));
+						}
+						return parseInt(feature.properties[thisKey], 10)
+					} else {
+						return 0;
+					}
+				});
+				distinct.sort(function(a, b){
+					return a - b;
+				});
+				var min = distinct[0];
+				var max = distinct[distinct.length-1];
+				var range = max - min;
+				style.min = min;
+				style.max = max;
+				if (count === 0) {
+					style.inc = null;
+					var set = [];
+					if (distinct.length > 4) {
+						var ic = parseInt((distinct.length / 4), 10);
+						var l0 = distinct[0];
+						var l1 = distinct[ic];
+						var l2 = distinct[(ic*2)];
+						var l3 = distinct[(ic*3)];
+						var h3 = distinct[distinct.length - 1];
+						set.push(l0,l1,l2,l3);
+					} else {
+						set = distinct;
+					}
+					style.set = set;
+					for (var i = colors.length; i < style.set.length; i++) {
+						style.colors.push(self.c[i]) 
+					}
+				} else {
+					var inc = range / colors.length;
+					style.inc = inc;
+					var set = [];
+					for (var i = 0; i < colors.length; i++) {
+						set.push((min + (inc * i)))
+					}
+					style.set = set;
+				}
+				style.isInt = count === 0;
+				self.doc.properties.layers[ind] = style;
+				cb(style)
+			},
 			loadLayer(item, id) {
 				var self = this;
 				var ljson;
@@ -657,78 +717,62 @@ script(type="text/javascript").
 				})[0]);
 				if (item.features && item.features[0]) {
 
-					var colors = style.colors;
-					var theseKeys = Object.keys(item.features[0].properties).filter(function(it){return !isNaN(parseInt(item.features[0].properties[it], 10))})
-					var thisKey = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
-					var vals = item.features.map(function(feature){
-						return (!isNaN(parseInt(feature.properties[thisKey],10)) ? feature.properties[thisKey] : null) 
+					self.determineLegend(item, style, ind, function(styl){
+						ljson = L.geoJson().addTo(self.map);
+
+						var isPointCoords = (!item.features ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
+						if (isPointCoords) {
+
+							var ojson = L.geoJson(item, {
+								
+								onEachFeature:function(feature,layer){
+									var thisLayer = L.GeoJSON.geometryToLayer(feature, {
+										pointToLayer: function(ft, latlng) {
+											var thisVal = ft.properties[styl.key]
+											var cl = styl.colors.filter(function(color,i){
+												var mi = styl.set[i];
+												var ma = (!styl.colors[i+1] ? styl.max : styl.set[i+1]);
+												return (thisVal >= mi && thisVal <= ma)
+											})[0]
+											var style = {fillColor:cl, color:cl, opacity: 0.8, fillOpacity: 0.6, radius: 8}
+											var circle = new L.CircleMarker(latlng, style)//, self.styleOf(ft, ft.geometry.type))
+												.on('click', function(){
+													return self.setView(ft, id, latlng)
+												});
+											return circle;
+										}
+
+									});
+									ljson.addLayer(thisLayer)
+								}
+							})
+						} else {
+
+							var ojson = L.geoJson(item, {
+								
+								onEachFeature:function(feature,layer){
+									var thisLayer = L.GeoJSON.geometryToLayer(feature);
+									thisLayer.setStyle({fillColor:'#fff',color:'#fff', weight:1, opacity: 0.3, fillOpacity: 0.2});
+									var color = styl.colors.filter(function(c, i){
+										var mi = styl.set[i];
+										var ma = (!styl.colors[i+1] ? styl.max : styl.set[i+1]);
+										var thisVal = parseFloat(
+											feature.properties[styl.key]
+										)
+										return (thisVal >= mi && thisVal < ma)
+									})[0]
+									thisLayer.setStyle({fillColor:color, color:color, opacity: 0.8, fillOpacity: 0.6})
+									thisLayer.on('click', function(e){
+										self.setView(feature, id, e.latlng)
+									})
+									ljson.addLayer(thisLayer)
+								}
+							})
+						}
+
 					})
-					var min = Math.min.apply(null,vals);
-					var max = Math.max.apply(null,vals);
-					var range = max - min;
-					var inc = range / colors.length;
-					style.min = min;
-					style.max = max;
-					style.inc = inc;
-					if (ind) {
-						self.doc.properties.layers[ind] = style;
-					}
-					ljson = L.geoJson().addTo(self.map);
-
-					var isPointCoords = (!item.features ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
-					if (isPointCoords) {
-
-						var ojson = L.geoJson(item, {
-							
-							onEachFeature:function(feature,layer){
-								var thisLayer = L.GeoJSON.geometryToLayer(feature, {
-									pointToLayer: function(ft, latlng) {
-										var thisVal = ft.properties[thisKey]
-										var cls = []
-										var cl = colors.forEach(function(color,i){
-											var mi = min;
-											var ma = (!colors[i+1] ? max : (inc * i+1));
-											if (thisVal >= mi && thisVal <= ma) {
-												cls.push(color)
-											}
-										})
-										var style = {fillColor:cls[0], color:cls[0], opacity: 0.8, fillOpacity: 0.6, radius: 8}
-										var circle = new L.CircleMarker(latlng, style)//, self.styleOf(ft, ft.geometry.type))
-											.on('click', function(){
-												return self.setView(ft, id, latlng)
-											});
-										return circle;
-									}
-
-								});
-								//- thisLayer.on('click', function(e){
-								//- 	self.setView(feature, e.latlng)
-								//- })
-								ljson.addLayer(thisLayer)
-							}
-						})
-					} else {
-
-						var ojson = L.geoJson(item, {
-							
-							onEachFeature:function(feature,layer){
-								var thisLayer = L.GeoJSON.geometryToLayer(feature);
-								thisLayer.setStyle({fillColor:'#fff',color:'#fff', weight:1, opacity: 0.3, fillOpacity: 0.2})
-								colors.forEach(function(color, i){
-									var mi = inc * i;
-									var ma = (!colors[i+1] ? max : (inc * i+1));
-									var thisVal = parseFloat(feature.properties[thisKey])
-									if (thisVal >= mi && thisVal < ma) {
-										thisLayer.setStyle({fillColor:color, color:color, opacity: 0.8, fillOpacity: 0.6})
-									}
-								})
-								thisLayer.on('click', function(e){
-									self.setView(feature, id, e.latlng)
-								})
-								ljson.addLayer(thisLayer)
-							}
-						})
-					}
+						
+					
 				} 
 				else {
 					var isPointCoords = (!item.features || !item.features[0] ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
