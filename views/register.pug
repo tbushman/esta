@@ -2,6 +2,9 @@ extends layout
 block page
 	- var menu = 'register'
 block content
+	script(type="text/javascript", src="/scripts/basefunctions.js")
+	script(type="text/javascript", src="/scripts/mapfunctions.js")
+	script(type="text/javascript", src="/scripts/adminfunctions.js")
 	div#vue
 
 		include includes/menu.pug

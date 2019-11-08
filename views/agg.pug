@@ -1,7 +1,10 @@
 extends layout
 block page
 block content
-	
+	script(type="text/javascript", src="/scripts/adminfunctions.js")
+	script(type="text/javascript", src="/scripts/basefunctions.js")
+	script(type="text/javascript", src="/scripts/mapfunctions.js")
+
 	div#vue
 		include includes/menu.pug
 		div.centerallwrap(style="pointer-events:auto;")
