@@ -60,8 +60,9 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 			div.row(v-if="(!loggedin || loggedin === '') || (!pu || !pu.properties.admin)")
 				include header.pug
 				//- div(v-if="mapActive && doc.properties.title.str !== 'Geography'")
-				include mapedit.pug
-				include viewerlist.pug
+				div(:style="{display: (mapActive ? 'block' : 'none')}")
+					include mapedit.pug
+					include viewerlist.pug
 				include bodysingle.pug
 				p.tb-font-m(v-text="'External document'")
 				include gpo/xml.pug

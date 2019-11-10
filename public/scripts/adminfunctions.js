@@ -244,6 +244,7 @@ var adminFunctions = {
 				//- self.dataLayer.enableEdit();
 				self.mapEdit = !mapEdit;
 			}
+			console.log('expected')
 			document.getElementById('viewer').scrollIntoView();
 			$('.submenu.drop').slideUp(100);
 			$('.slidedown').slideUp(100);

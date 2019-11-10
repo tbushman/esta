@@ -193,7 +193,9 @@ script(type="text/javascript").
 				censusVars: null,
 				censusLoad: {tempGeo:[],placetype:'',cats:null,cat:null} ,
 				json: {},
-				mapCtrl: false
+				mapCtrl: false,
+				exclude: ['visibility', 'extrude', 'tessellate', 'INTPTLAT10', 'INTPTLON10', 'STATEFP10', 'COUNTYFP10', 'TRACTCE10', 'BLKGRPCE10', 'GEOID10']
+
 
 			}
 		},
@@ -370,6 +372,9 @@ script(type="text/javascript").
 				//- console.log(self.map.project(dataCoords), dataCoords);
 				//- console.log(self.lMarker.getLatLng());
 				//- console.log(self.map.latLngToLayerPoint(self.lMarker.getLatLng()))
+				self.map.on('click', function(){
+					self.mapCtrl = false;
+				})
 				self.map.on('dragstart', function(e){
 					var coord = self.lMarker.getLatLng();
 					var xy = self.map.latLngToContainerPoint(coord);

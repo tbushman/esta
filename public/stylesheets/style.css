@@ -234,6 +234,9 @@ blockquote, .blockquote {
   /* flex-direction: column; */
   /* align-items: stretch; */
 }
+.layer.ctrl {
+	margin-top: 10px;
+}
 .legend input {
   /* bottom: 0; */
   vertical-align: top;
@@ -246,7 +249,7 @@ blockquote, .blockquote {
 .legend label {
   display: none;
 }
-.legend.ctrl:hover label {
+.legend.ctrl label {
   display: inline-block;
   width: 45px;
   width: var(--thumbw);
@@ -262,10 +265,10 @@ blockquote, .blockquote {
 .legend .res label {
   display: none;
 }
-.legend .ctrl {
+/* .legend .ctrl {
   width: 13px;
-}
-.legend:hover .ctrl input {
+} */
+.legend .ctrl input {
   width: 45px;
   width: var(--thumbw);
 }
@@ -715,11 +718,17 @@ em {
 
 .layerDrop select, .layerDrop input {
   /* -webkit-appearance: none; */
-  height: 22px!important;
+	height: 22px!important;
   color: #555!important;
   font-size: 13px!important;
 }
-
+.layerDrop input[type="color"] {
+	height: 11.25px!important;
+	height: calc(var(--thumbw) / 4)!important;
+	font-size: 13px!important;
+	color: #555!important;
+	border: 0px solid #fff;
+}
 /* fieldset {
   width: 45px!important;
   width: var(--thumbw)!important;

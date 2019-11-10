@@ -22,7 +22,6 @@ var mapFunctions = {
 		}
 	},
 	dPathAttr: function() {
-		console.log('it\'s working :D')
 		var self = this;
 		var thickness = (!thickness ? 50 : thickness);
 		var nw = (!self.wWidth ? window.innerWidth : self.wWidth);
@@ -53,7 +52,6 @@ var mapFunctions = {
 			if (res.length === 1 && res[0]._id === self.doc._id) {
 				$.get('/')
 			}
-			console.log(res)
 		})
 	},
 	styleOf: function(feature, type) {
@@ -124,25 +122,16 @@ var mapFunctions = {
 	},
 	filterViewerList: async function(ll1, ll2, feature, id, keys, vals, buf) {
 		var self = this;
-		//- console.log(ll1, ll2, feature, keys, vals, buf)
 		var latlng = ll2;
-		//- console.log(self.json[id], id, feature)
 		if (self.json[id]) {
 			var counter = 0;
-			//- console.log(self.json[id].features, self.json[id])
-			//- self.json[id]._id = id
 			self.geo = (!self.json[id].features ? [self.json[id]] : await self.json[id].features
 			.filter(function(ft, j){
-				//- console.log(self.isPointCoords(ft.geometry.coordinates))
 				ft._id = id
 				if (self.isPointCoords(ft.geometry.coordinates)) {
 					var bff = L.geoJSON(ft).addTo(self.map);
 					latlng = bff.getBounds().getCenter();
 					bff.remove()
-					//- var rx = ft.geometry.coordinates.reverse();
-					//- var center = L.latLng(rx[0], rx[1]) 
-					//- latlng = center;
-					//- console.log(ll1.contains(latlng), ll1)
 					if (ll1.contains(latlng)) {
 						ft.geometry.coordinates.reverse()
 						var bf = L.GeoJSON.geometryToLayer(ft, {
@@ -156,7 +145,6 @@ var mapFunctions = {
 						self.buf[counter] = bf;
 						counter++
 					}
-					//- console.log(ll1, rx, ll1.contains(center), center)
 					return ll1.contains(latlng);
 				} else {
 					var bf = L.geoJSON(ft, {
@@ -176,9 +164,7 @@ var mapFunctions = {
 					return contains;
 				}
 			}))
-			//- console.log(self.geo)
 			if (self.geo && self.geo.length > 0) {
-				//- console.log(self.geo)
 				if (ll1._southWest) {
 					self.map.fitBounds(ll1);
 					var mark = L.latLngBounds(ll1).getCenter();
@@ -188,7 +174,6 @@ var mapFunctions = {
 					self.map.panTo(latlng);
 					self.lMarker.setLatLng(latlng);
 				}
-				//- 
 				self.lMarker.setOpacity(1);
 
 				self.btn.x = (self.wWidth/2);
@@ -306,6 +291,7 @@ var mapFunctions = {
 	},
 	determineLegend: function(item, style, ind, cb) {
 		var self = this;
+		var buckets = style.buckets;
 		var colors = style.colors;
 		var theseKeys = Object.keys(item.features[0].properties).filter(function(it){return !isNaN(parseInt(item.features[0].properties[it], 10))})
 		var thisKey = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
@@ -336,14 +322,11 @@ var mapFunctions = {
 		if (count === 0) {
 			style.inc = null;
 			var set = [];
-			if (distinct.length > 4) {
-				var ic = parseInt((distinct.length / 4), 10);
-				var l0 = distinct[0];
-				var l1 = distinct[ic];
-				var l2 = distinct[(ic*2)];
-				var l3 = distinct[(ic*3)];
-				var h3 = distinct[distinct.length - 1];
-				set.push(l0,l1,l2,l3);
+			if (distinct.length > buckets) {
+				var ic = parseInt((distinct.length / buckets), 10);
+				for (var i = 0; i < buckets; i++) {
+					set.push(distinct[ic*i]);
+				}
 			} else {
 				set = distinct;
 			}
@@ -468,24 +451,37 @@ var mapFunctions = {
 	numberColorBucket: function(lid, e) {
 		var self = this;
 		if (self.colorTimeout) clearTimeout(self.colorTimeout);
-		self.colorTimeout = setTimeout(function(){
+		self.colorTimeout = setTimeout(async function(){
 			var length = parseInt(e.target.value,10);
-			self.doc.properties.layers.forEach(function(item, j){
-				if (item.lid === lid) {
-					if (self.doc.properties.layers[j].colors.length < length) {
-						var diff = length - self.doc.properties.layers[j].colors.length;
-						for (var i = 0; i < diff; i++) {
-							self.doc.properties.layers[j].colors.push('#000000')
-						}
+			var item = self.json[lid];
+			if (item) {
+				var itemi = null;
+				var style = await self.doc.properties.layers.filter(function(it, i){
+					if (it.lid === lid) {
+						itemi = i;
+						return true;
 					} else {
-						var diff = self.doc.properties.layers[j].colors.length - length;
-						self.doc.properties.layers[j].colors.splice(length-1, diff)
+						return false;
 					}
-					if (self.json[lid]) {
-						self.lyr[lid] = self.loadLayer(self.json[lid], lid)
+				})[0];
+				if (style.buckets < length) {
+					var diff = length - style.buckets;
+					for (var i = 0; i < diff; i++) {
+						style.colors.push(self.c[length+i])
 					}
+				} else {
+					var diff = style.buckets - length;
+					style.colors.splice(length, diff)
 				}
-			});
+				style.buckets = length;
+				self.doc.properties.layers[itemi] = style;
+				self.determineLegend(item, style, itemi, function(styl){
+					self.lyr[lid] = self.loadLayer(item, lid)
+				})
+
+			}
+			
+			
 		},500)
 		
 	},
@@ -493,9 +489,14 @@ var mapFunctions = {
 		var self = this;
 		if (self.colorTimeout) clearTimeout(self.colorTimeout);
 		self.colorTimeout = setTimeout(function(){
-				self.doc.properties.layers[i].colors[index] = e.target.value;
+			var style = self.doc.properties.layers[i];
+			style.colors[index] = e.target.value;
 				if (self.json[self.doc.properties.layers[i].lid]) {
-					self.lyr[self.doc.properties.layers[i].lid] = self.loadLayer(self.json[self.doc.properties.layers[i].lid], self.doc.properties.layers[i].lid)
+					var item = self.json[self.doc.properties.layers[i].lid];
+					self.determineLegend(item, style, i, function(styl){
+						self.doc.properties.layers[i] = styl;
+						self.lyr[self.doc.properties.layers[i].lid] = self.loadLayer(self.json[self.doc.properties.layers[i].lid], self.doc.properties.layers[i].lid)
+					})
 				}
 		},500)
 		
@@ -633,7 +634,6 @@ var mapFunctions = {
 			// generate geographic points from data
 			var key = self.doc._id;
 			self.serverJson(true, key, async function(latlng){
-				console.log(self.lMarker)
 				if (self.doc.properties && self.doc.properties.title.str !== 'Geography') {
 					var keys = await self.doc.properties.layers.map(async function(item){return item.lid})
 					if (self.layers && self.layers.length > 0) {
@@ -739,7 +739,6 @@ var mapFunctions = {
 
 	},
 	addLayer: async function(id, e) {
-		console.log('it\'s working :D')
 		var self = this;
 		var tlrs = self.doc.properties.layers.filter(function(item){
 			return item.lid === id
@@ -817,6 +816,7 @@ var mapFunctions = {
 			if (item.lid === id) {
 				ind = i;
 				self.doc.properties.layers[ind].key = key
+				self.lyr[self.doc.properties.layers[ind].lid] = self.loadLayer(self.json[self.doc.properties.layers[ind].lid], self.doc.properties.layers[ind].lid)
 			} 
 		});
 	},
