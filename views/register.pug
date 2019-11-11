@@ -28,22 +28,5 @@ block content
 								p &nbsp
 								span.tb-font-xl or Register manually:
 								include includes/profile/puedit.pug
-								//- form.row#form(enctype="multipart/form-data", method="POST", action="/register", style="margin-bottom: 50px")
-								//- 	input(type="hidden", name="_csrf", value= csrfToken)
-								//- 
-								//- 	label Username
-								//- 	input(type="text", name="username", maxlength="40")
-								//- 	label Email
-								//- 	input(type="email", name="email")
-								//- 	label Password
-								//- 	input(type="password", name="password")
-								//- 	p
-								//- 	button(type="submit", ariaDescription="Register")
-								//- 		span Register
-								//- //
-								//- 	p.tb-font-xl Or 
-								//- 	p.tb-font-xl authenticate with Google:
-								//- 	a.tb-03-m0.block.danger(href="/auth/google", title="Authenticate with Google")
-								//- 		span Google
 								#info #{info}
 	include includes/vue/basic.pug
