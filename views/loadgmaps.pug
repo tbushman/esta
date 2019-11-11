@@ -1,0 +1,16 @@
+extends layout
+block page
+	- var menu = "loadgmaps"
+block content
+	
+	div#vue
+
+		include includes/menu.pug
+
+		div.centerallwrap(style="padding: 100px;")
+			label.text-uppercase(for="csv" v-text="'upload csv'")
+			input.form-control#csv(@change="handleGmapsFile('testcsv', $event)" type="file" style="min-height: 52px;")
+
+			
+	#map
+	include includes/vue/loadgmapsvue.pug

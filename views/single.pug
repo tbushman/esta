@@ -2,6 +2,9 @@ extends layout
 block page
 	- var menu = 'map'
 block content
+	script(type="text/javascript", src="/scripts/basefunctions.js")
+	script(type="text/javascript", src="/scripts/mapfunctions.js")
+	script(type="text/javascript", src="/scripts/adminfunctions.js")
 
 	div#vue
 		include includes/menu.pug
@@ -24,7 +27,7 @@ block content
 		@mousedown="clickSkittle" @mouseleave="unclickSkittle"
 		@mouseup="unclickSkittle" @touchstart="touchHandler" 
 		@touchend="touchStart" @touchmove="touchEnd")
-		div.centerallwrap(:style="{'clip-path': (!isNaN(wWidth) && mapActive ? 'url(#clipPath)' : 'none'), 'pointer-events':(mapActive ? 'none' : 'auto'), 'overflow-y': (mapActive ? 'hidden' : 'scroll'), top:'0',position:'absolute'}")
+		div.centerallwrap(:style="{'clip-path': (!isNaN(wWidth) && mapActive ? 'url(#clipPath)' : 'none'), 'pointer-events':(mapActive ? 'none' : 'auto'), 'overflow-y': (mapActive ? 'scroll' : 'hidden'), top:'0',position:'absolute'}")
 
 			!= str
 	

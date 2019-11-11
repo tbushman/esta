@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/tbushman/esta#readme",
   "dependencies": {
+    "@google/maps": "^1.0.2",
     "@tinymce/tinymce-vue": "^1.1.2",
     "async": "^2.6.3",
     "async-indesign-script": "^1.0.4",

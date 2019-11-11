@@ -30,6 +30,7 @@ var htmlDiffer = new HtmlDiffer({
 	ignoreAttributes: ['id', 'for', 'class', 'href', 'style']
 });
 var {google} = require('googleapis');
+const d3 = require('d3');
 const config = require('../config/index.js');
 const testenv = config.testenv;
 const PublisherDB = (!testenv ? Publisher : PublisherTest);
@@ -49,6 +50,11 @@ marked.setOptions({
 var geolocation = require ('google-geolocation') ({
 	key: process.env.GOOGLE_KEY
 });
+const googleMaps = require('@google/maps').createClient({
+  key: process.env.GOOGLE_MAPS_KEY
+});
+
+
 
 var isJurisdiction = async function isJurisdiction(reqpos, doc, pu, cb) {
 	var lat, lng;
@@ -778,7 +784,7 @@ function getLayers(req, res, next) {
 		if (err) {
 			return next(err)
 		}
-		if (doc.properties.layers) {
+		if (doc && doc.properties.layers) {
 			var layerids = await doc.properties.layers.map(function(layer){return layer.lid}) || [];
 			ContentDB.find({_id: {$in:layerids}}).lean().exec(function(err, data){
 				if (err) {
@@ -1227,6 +1233,53 @@ router.get(/(.*)/, ensureGpo/*, ensureSequentialSectionInd*/)
 router.get('/', function(req, res, next){
 	return res.redirect('/home')
 });
+
+router.get('/loadgmaps', csrfProtection, function(req, res, next){
+	return res.render('loadgmaps', {
+		csrfToken: req.csrfToken()
+	})
+})
+
+router.post('/loadgmaps/:id', uploadmedia.single('csv'), csrfProtection, async function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+
+	fs.readFile(req.file.path, 'utf8', async function (err, content) {
+		if (err) {
+			return console.log(err)
+		}
+		d3.csv.parse(content, function(d){
+			console.log(d)
+			d.forEach(function(f){
+				googleMaps.findPlace({
+					input: escape(f.last_name),
+					inputtype: 'textquery',
+					language: 'en',
+					locationbias: 'circle:8000@40.680686,-111.9370777',
+					// locationbias: 'point:40.67,-111.901',
+					// location: [40.67,-111.901],
+					// radius: 5000,
+					fields: [
+						'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
+						'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
+						'geometry/viewport/northeast/lat', 'geometry/viewport/northeast/lng',
+						'geometry/viewport/southwest', 'geometry/viewport/southwest/lat',
+						'geometry/viewport/southwest/lng', 'name',
+						'permanently_closed', 'types'
+					]
+				}, function (err, response) {
+					console.log(err)
+					console.log(
+						// JSON.parse(
+							response.json.candidates[0]//[response.json.candidates.length-1].geometry.viewport.northeast
+						// )
+					)
+				})
+			})
+
+		})
+	})
+})
 
 router.get('/home', getDat, ensureCurly, function(req, res, next){
 	//getDat(function(dat, distinct){
