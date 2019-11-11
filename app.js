@@ -306,7 +306,7 @@ var uri = process.env.DEVDB;
 		useNewUrlParser: true, useUnifiedTopology: true
 	}/*, {authMechanism: 'ScramSHA1'}*/);
 	promise.then(function(){
-		console.log('connected')
+		console.log('connected esta')
 		// db.on('error', 
 		// console.error.bind(console, 'connection error:')
 	//);
