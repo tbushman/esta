@@ -345,7 +345,7 @@ var storage = multer.diskStorage({
 		if (req.params.type === 'png') {
 			cb(null, 'img_' + req.params.counter + '.png')
 		} else if (req.params.type === 'csv') {
-			cb(null, 'csv_' + req.params.id + '.csv')
+			cb(null, 'csv_' + req.params.id + '_temp.csv')
 		} else if (req.params.type === 'txt') {
 			cb(null, 'txt_' + Date.now() + '.txt')
 		} else if (req.params.type === 'docx') {
@@ -1251,7 +1251,21 @@ router.post('/loadgmaps/:id', uploadmedia.single('csv'), parseForm/*, csrfProtec
 			return console.log(err)
 		}
 		// console.log(content)
-		var json = {}
+		// var json = {}
+		var p = ''+publishers+'/pu/publishers/esta/csv/'+req.params.id;
+		await fs.access(p, async function(err) {
+			if (err && err.code === 'ENOENT') {
+				await mkdirp(p, function(err){
+					if (err) {
+						console.log("err", err);
+					}
+				})
+			}
+		});
+		var pathh = await path.join(p, '/csv_'+req.params.id+'.json');
+		var jsonExists = await fs.existsSync(pathh);
+		const json = (!jsonExists ? {} : await fs.readFileSync(pathh, 'utf8'));
+		
 		if (content) {
 			const csv = await d3.csvParse(content, function(d){
 				// console.log(d)
@@ -1260,10 +1274,34 @@ router.post('/loadgmaps/:id', uploadmedia.single('csv'), parseForm/*, csrfProtec
 				// })
 				var key = d.last_name.trim() +'';
 				var state = d.state.trim() +'';
+				var date = d.filing_date.trim() +'';
+				if (d.case_type === 'EV' && d.party_code === 'PLA' && d.locn_descr === 'Salt Lake City') {
+					var tf = {
+						properties: {
+							date: date,
+							state: state,
+							label: key,
+							count: 1
+						}
+					}
+					
+					return tf
+				} else {
+					return
+				}
+				
+			});
+			// console.log(csv)
+			// const keys = Object.keys(csv);
+			var count = 0;
+			const updated = await csv.map(function(c){
+				count++;
+				var key = c.properties.label;
+				var state = c.properties.state;
 				if (json[key]) {
 					json[key].properties.count++
-				} else 
-				if (d.case_type === 'EV' && d.party_code === 'PLA' && d.locn_descr === 'Salt Lake City' && !json[key]) {
+					json[key].properties.dates.push(c.properties.date)
+				} else {
 					var input = escape(key) + ' ' + escape(state)
 					googleMaps.findPlace({
 						input: input,
@@ -1281,58 +1319,46 @@ router.post('/loadgmaps/:id', uploadmedia.single('csv'), parseForm/*, csrfProtec
 							'geometry/viewport/southwest/lng', 'name'
 						]
 					}, function (err, response) {
-						console.log(err)
+						if (err) console.log(err)
 						// console.log('response.json')
-						console.log(
-						// 	// JSON.parse(
-							JSON.stringify(response.json)
-						
-								// response.json.candidates[0]//[response.json.candidates.length-1].geometry.viewport.northeast
-							// )
-						)
+						// console.log(
+						// // 	// JSON.parse(
+						// 	JSON.stringify(response.json)
+						// 
+						// 		// response.json.candidates[0]//[response.json.candidates.length-1].geometry.viewport.northeast
+						// 	// )
+						// )
 						if (response.json.candidates[0]) {
 							var ent = response.json.candidates[0];
-							var tf = {
+							json[key] = {
 								geometry: {
 									type: 'Point',
 									coordinates: [ent.geometry.location.lng, ent.geometry.location.lat]
 								},
-								properties: {
-									label: key,
-									name: ent.name,
-									count: 1
-								}
+								properties: c.properties
 							}
-							json[key] = tf
+							// json[key].geometry = ;
+							json[key].properties.name = ent.name;
+							json[key].properties.dates = [c.properties.date];
 							// console.log(json)
-							var obj = {};
-							obj[key] = tf;
-							return obj
-							// return ent;
+							return json[key]
 						}
 					})
-				} else {
-					// do nothing
-				}
-			})
-			var p = ''+publishers+'/pu/publishers/esta/csv/'+req.params.id;
 					
-			await fs.access(p, async function(err) {
-				if (err && err.code === 'ENOENT') {
-					await mkdirp(p, function(err){
-						if (err) {
-							console.log("err", err);
-						}
-					})
 				}
-			});
-			
-			var pathh = await path.join(p, '/csv_'+req.params.id+'.json');
-			fs.writeFile(pathh, csv, function(err){
-				if (err) {
-					return next(err)
-				}
+
 			})
+				
+			if (count === csv.length) {
+				console.log(updated, json, JSON.stringify(json), JSON.parse(JSON.stringify(json)))
+				fs.writeFile(pathh, json, function(err){
+					if (err) {
+						return next(err)
+					}
+					return res.redirect('/loadgmaps')
+				})
+			}
+			
 		}
 	})
 })
