@@ -33,6 +33,8 @@ var {google} = require('googleapis');
 const d3 = require('d3');
 const config = require('../config/index.js');
 const testenv = config.testenv;
+const bodyParser = require('body-parser');
+var parseForm = bodyParser.urlencoded({ extended: false });
 const PublisherDB = (!testenv ? Publisher : PublisherTest);
 const ContentDB = (!testenv ? Content : ContentTest);
 const SignatureDB = (!testenv ? Signature : SignatureTest);
@@ -1234,13 +1236,13 @@ router.get('/', function(req, res, next){
 	return res.redirect('/home')
 });
 
-router.get('/loadgmaps', csrfProtection, function(req, res, next){
+router.get('/loadgmaps'/*, csrfProtection*/, function(req, res, next){
 	return res.render('loadgmaps', {
 		csrfToken: req.csrfToken()
 	})
 })
 
-router.post('/loadgmaps/:id', uploadmedia.single('csv'), csrfProtection, async function(req, res, next){
+router.post('/loadgmaps/:id', uploadmedia.single('csv'), parseForm/*, csrfProtection*/, async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 
@@ -1248,36 +1250,90 @@ router.post('/loadgmaps/:id', uploadmedia.single('csv'), csrfProtection, async f
 		if (err) {
 			return console.log(err)
 		}
-		d3.csv.parse(content, function(d){
-			console.log(d)
-			d.forEach(function(f){
-				googleMaps.findPlace({
-					input: escape(f.last_name),
-					inputtype: 'textquery',
-					language: 'en',
-					locationbias: 'circle:8000@40.680686,-111.9370777',
-					// locationbias: 'point:40.67,-111.901',
-					// location: [40.67,-111.901],
-					// radius: 5000,
-					fields: [
-						'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
-						'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
-						'geometry/viewport/northeast/lat', 'geometry/viewport/northeast/lng',
-						'geometry/viewport/southwest', 'geometry/viewport/southwest/lat',
-						'geometry/viewport/southwest/lng', 'name',
-						'permanently_closed', 'types'
-					]
-				}, function (err, response) {
-					console.log(err)
-					console.log(
-						// JSON.parse(
-							response.json.candidates[0]//[response.json.candidates.length-1].geometry.viewport.northeast
-						// )
-					)
-				})
+		// console.log(content)
+		var json = {}
+		if (content) {
+			const csv = await d3.csvParse(content, function(d){
+				// console.log(d)
+				// d.forEach(function(f){
+				// 
+				// })
+				var key = d.last_name.trim() +'';
+				var state = d.state.trim() +'';
+				if (json[key]) {
+					json[key].properties.count++
+				} else 
+				if (d.case_type === 'EV' && d.party_code === 'PLA' && d.locn_descr === 'Salt Lake City' && !json[key]) {
+					var input = escape(key) + ' ' + escape(state)
+					googleMaps.findPlace({
+						input: input,
+						inputtype: 'textquery',
+						language: 'en',
+						locationbias: 'circle:15000@40.680686,-111.9370777',
+						// locationbias: 'point:40.67,-111.901',
+						// location: [40.67,-111.901],
+						// radius: 5000,
+						fields: [
+							'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
+							'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
+							'geometry/viewport/northeast/lat', 'geometry/viewport/northeast/lng',
+							'geometry/viewport/southwest', 'geometry/viewport/southwest/lat',
+							'geometry/viewport/southwest/lng', 'name'
+						]
+					}, function (err, response) {
+						console.log(err)
+						// console.log('response.json')
+						console.log(
+						// 	// JSON.parse(
+							JSON.stringify(response.json)
+						
+								// response.json.candidates[0]//[response.json.candidates.length-1].geometry.viewport.northeast
+							// )
+						)
+						if (response.json.candidates[0]) {
+							var ent = response.json.candidates[0];
+							var tf = {
+								geometry: {
+									type: 'Point',
+									coordinates: [ent.geometry.location.lng, ent.geometry.location.lat]
+								},
+								properties: {
+									label: key,
+									name: ent.name,
+									count: 1
+								}
+							}
+							json[key] = tf
+							// console.log(json)
+							var obj = {};
+							obj[key] = tf;
+							return obj
+							// return ent;
+						}
+					})
+				} else {
+					// do nothing
+				}
 			})
-
-		})
+			var p = ''+publishers+'/pu/publishers/esta/csv/'+req.params.id;
+					
+			await fs.access(p, async function(err) {
+				if (err && err.code === 'ENOENT') {
+					await mkdirp(p, function(err){
+						if (err) {
+							console.log("err", err);
+						}
+					})
+				}
+			});
+			
+			var pathh = await path.join(p, '/csv_'+req.params.id+'.json');
+			fs.writeFile(pathh, csv, function(err){
+				if (err) {
+					return next(err)
+				}
+			})
+		}
 	})
 })
 
