@@ -1246,120 +1246,159 @@ router.post('/loadgmaps/:id', uploadmedia.single('csv'), parseForm/*, csrfProtec
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 
-	fs.readFile(req.file.path, 'utf8', async function (err, content) {
-		if (err) {
-			return console.log(err)
-		}
-		// console.log(content)
-		// var json = {}
-		var p = ''+publishers+'/pu/publishers/esta/csv/'+req.params.id;
-		await fs.access(p, async function(err) {
-			if (err && err.code === 'ENOENT') {
-				await mkdirp(p, function(err){
-					if (err) {
-						console.log("err", err);
-					}
-				})
-			}
-		});
-		var pathh = await path.join(p, '/csv_'+req.params.id+'.json');
-		var jsonExists = await fs.existsSync(pathh);
-		const json = (!jsonExists ? {} : await fs.readFileSync(pathh, 'utf8'));
-		
-		if (content) {
-			const csv = await d3.csvParse(content, function(d){
-				// console.log(d)
-				// d.forEach(function(f){
-				// 
-				// })
-				var key = d.last_name.trim() +'';
-				var state = d.state.trim() +'';
-				var date = d.filing_date.trim() +'';
-				if (d.case_type === 'EV' && d.party_code === 'PLA' && d.locn_descr === 'Salt Lake City') {
-					var tf = {
-						properties: {
-							date: date,
-							state: state,
-							label: key,
-							count: 1
-						}
-					}
-					
-					return tf
-				} else {
-					return
+	asynk.waterfall([
+		function(cb) {
+			fs.readFile(req.file.path, 'utf8', async function (err, content) {
+				if (err) {
+					return console.log(err)
 				}
-				
-			});
-			// console.log(csv)
-			// const keys = Object.keys(csv);
-			var count = 0;
-			const updated = await csv.map(function(c){
-				count++;
-				var key = c.properties.label;
-				var state = c.properties.state;
-				if (json[key]) {
-					json[key].properties.count++
-					json[key].properties.dates.push(c.properties.date)
-				} else {
-					var input = escape(key) + ' ' + escape(state)
-					googleMaps.findPlace({
-						input: input,
-						inputtype: 'textquery',
-						language: 'en',
-						locationbias: 'circle:15000@40.680686,-111.9370777',
-						// locationbias: 'point:40.67,-111.901',
-						// location: [40.67,-111.901],
-						// radius: 5000,
-						fields: [
-							'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
-							'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
-							'geometry/viewport/northeast/lat', 'geometry/viewport/northeast/lng',
-							'geometry/viewport/southwest', 'geometry/viewport/southwest/lat',
-							'geometry/viewport/southwest/lng', 'name'
-						]
-					}, function (err, response) {
-						if (err) console.log(err)
-						// console.log('response.json')
-						// console.log(
-						// // 	// JSON.parse(
-						// 	JSON.stringify(response.json)
-						// 
-						// 		// response.json.candidates[0]//[response.json.candidates.length-1].geometry.viewport.northeast
-						// 	// )
-						// )
-						if (response.json.candidates[0]) {
-							var ent = response.json.candidates[0];
-							json[key] = {
-								geometry: {
-									type: 'Point',
-									coordinates: [ent.geometry.location.lng, ent.geometry.location.lat]
-								},
-								properties: c.properties
-							}
-							// json[key].geometry = ;
-							json[key].properties.name = ent.name;
-							json[key].properties.dates = [c.properties.date];
-							// console.log(json)
-							return json[key]
+				cb(null, content)
+			})
+		},
+		function(content, cb) {
+			var p = ''+publishers+'/pu/publishers/esta/csv/'+req.params.id;
+			fs.access(p, async function(err) {
+				if (err && err.code === 'ENOENT') {
+					await mkdirp(p, function(err){
+						if (err) {
+							console.log("err", err);
 						}
 					})
-					
 				}
-
-			})
-				
-			if (count === csv.length) {
-				console.log(updated, json, JSON.stringify(json), JSON.parse(JSON.stringify(json)))
-				fs.writeFile(pathh, json, function(err){
-					if (err) {
-						return next(err)
-					}
-					return res.redirect('/loadgmaps')
-				})
-			}
+				var pathh = await path.join(p, '/csv_'+req.params.id+'.json');
+				var jsonExists = await fs.existsSync(pathh);
+				const json = (!jsonExists ?
+					{ 
+						type: "FeatureCollection",
+						name: "Evictions_SLC",
+						crs: { type: "name", properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+						features: [] 
+					} : await JSON.parse(fs.readFileSync(pathh, 'utf8'))
+				);
+				cb(null, content, json, pathh)
+			});
 			
+		},
+		function(content, json, pathh, cb) {
+			var existing = (json.features && json.features.length > 0 ? json.features.map(function(f){return f.properties.key}) : [] )
+			let csv = null;
+			if (content) {
+			
+				csv = new Promise(resolve => {
+					const data = d3.csvParse(content);
+					resolve(data);
+				});
+				csv.then(async data => {
+					cb(null, json, pathh, existing, data)
+				});
+			} else {
+				cb(null, json, pathh, existing, null)
+			}
+		},
+		function(json, pathh, existing, data, cb) {
+			var count = 0;
+			if (data) {
+				var promise0 = new Promise(function(resolve, reject){
+					for (const d of data) {
+						count++;
+						// var d = data[i];
+						// console.log(d)
+						var key = d.last_name.trim() +'';
+						var state = d.state.trim() +'';
+						var date = d.filing_date.trim() +'';
+						var casetype = d.case_type.trim() +'';
+						var partycode = d.party_code.trim() +'';
+						var locndescr = d.locn_descr.trim() +'';
+						if (existing.indexOf(key) !== -1) {
+							json.features[existing.indexOf(key)].properties.count++
+							json.features[existing.indexOf(key)].properties.dates.push(date)
+						} else if (casetype === 'EV' && partycode === 'PLA' && locndescr === 'Salt Lake City') {
+							var promise1 = new Promise(function(resolve, reject){
+								var input = escape(key) + ' ' + escape(state);
+								googleMaps.findPlace({
+									input: input,
+									inputtype: 'textquery',
+									language: 'en',
+									locationbias: 'circle:15000@40.680686,-111.9370777',
+									// locationbias: 'point:40.67,-111.901',
+									// location: [40.67,-111.901],
+									// radius: 5000,
+									fields: [
+										'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
+										'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
+										'geometry/viewport/northeast/lat', 'geometry/viewport/northeast/lng',
+										'geometry/viewport/southwest', 'geometry/viewport/southwest/lat',
+										'geometry/viewport/southwest/lng', 'name'
+									]
+								}, function (err, response) {
+									if (err) return reject(err)
+									if (response.json.candidates[0]) {
+										var ent = response.json.candidates[0];
+										const entryTransformed = {
+											type: 'Feature',
+											geometry: {
+												type: 'Point',
+												coordinates: [ent.geometry.location.lng, ent.geometry.location.lat]
+											},
+											properties: {
+												dates: [date],
+												state: state,
+												label: key,
+												name: ent.name,
+												count: 1
+											}
+										}
+										resolve(entryTransformed);
+									}
+								})
+							})
+							promise1.then(function(entryTransformed){
+								
+								return json.features.push(entryTransformed)
+							})
+							.catch(function(err){
+								console.log(err)
+							})
+
+							// return entry;
+						}
+					}
+					if (count === data.length) {
+						resolve()
+					} else {
+						// console.log(count, data)
+					}
+
+				})
+				promise0.then(function(){
+					cb(null, json, pathh, data)
+
+				})
+				// callDataForEach(data, function(){
+				// 	console.log(json, pathh, existing, data)
+				// 
+				// 
+				// })
+				
+			} else {
+				cb(null, json, pathh, null)
+			}
+				
 		}
+	], function(err, json, pathh, data) {
+		if (err) {
+			return next(err)
+		}
+		if (!data) {
+			return res.redirect('/loadgmaps')
+		}
+		fs.writeFile(pathh, JSON.stringify(json), function(err){
+			if (err) {
+				return next(err)
+			}
+			return res.redirect('/loadgmaps')
+		})
+
 	})
 })
 
