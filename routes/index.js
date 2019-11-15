@@ -1236,11 +1236,11 @@ router.get('/', function(req, res, next){
 	return res.redirect('/home')
 });
 
-router.get('/loadgmaps'/*, csrfProtection*/, function(req, res, next){
-	return res.render('loadgmaps', {
-		csrfToken: req.csrfToken()
-	})
-})
+// router.get('/loadgmaps'/*, csrfProtection*/, function(req, res, next){
+// 	return res.render('loadgmaps', {
+// 		csrfToken: req.csrfToken()
+// 	})
+// })
 
 const iteratePlaces = (data, pathh) => {
 	return new Promise(async resolve => {
@@ -1253,28 +1253,31 @@ const iteratePlaces = (data, pathh) => {
 				features: [] 
 			} : await JSON.parse(fs.readFileSync(pathh, 'utf8'))
 		);
-		var existing = (json.features && json.features.length > 0 ? json.features.map(function(f){return f.properties.key}) : [] )
+		var existing = (json.features && json.features.length > 0 ? json.features.map(function(f){return f.properties.label}) : [] )
 		var count = 0;
 		if (data) {
+			// console.log(data)
 			// var keys = Array.from(Array(data.length).keys());
 			
 			for (var k = 0; k < data.length; k++) {
 				count++
 				var d = data[k]
-				// console.log(d)
-				var key = d.last_name.trim() +'';
-				var state = d.state.trim() +'';
-				var date = d.filing_date.trim() +'';
-				var casetype = d.case_type.trim() +'';
-				var partycode = d.party_code.trim() +'';
-				var locndescr = d.locn_descr.trim() +'';
+				var key = (!d.last_name ? '' : d.last_name.trim() +'');
+				var state = (!d.state ? 'Utah' : d.state.trim() +'');
+				var date = (!d.filing_date ? '' : d.filing_date.trim() +'');
+				// console.log(d.case_type, d["'case_type'"])
+				var casetype = (!d.case_type ? (!d["'case_type'"] ? '': d["'case_type'"].trim()) : d.case_type.trim() +'');
+				var partycode = (!d.party_code ? '' : d.party_code.trim() +'');
+				var locndescr = (!d.locn_descr ? '' : d.locn_descr.trim() +'');
+				var firstname = (!d.first_name || d.first_name === '' ? null : d.first_name.trim() +'')
 				if (existing.indexOf(key) !== -1) {
 					json.features[existing.indexOf(key)].properties.count++
 					json.features[existing.indexOf(key)].properties.dates.push(date)
-					// callback()
-				} else if (casetype === 'EV' && partycode === 'PLA' && locndescr === 'Salt Lake City') {
+					// console.log(existing)
+					// console.log(json.features[existing.indexOf(key)])
+				} else if (!firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
 					await places(date, key, state).then(entryTransformed => {
-						console.log(entryTransformed)
+						// console.log(entryTransformed)
 						if (entryTransformed) {
 							json.features.push(entryTransformed)
 						}
@@ -1283,14 +1286,8 @@ const iteratePlaces = (data, pathh) => {
 						console.log(json)
 						console.log(err)
 					})
-					// callback()
-					// console.log(entryTransformed)
-					// .then(function(entryTransformed){
-					// 	return json.features.push(entryTransformed)
-					// })
-					// .catch(function(err){
-					// 	if (err) return next(err)
-					// })
+				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
+					console.log(firstname, key)
 				}
 			}
 			
@@ -1307,15 +1304,12 @@ const iteratePlaces = (data, pathh) => {
 
 const places = (date, key, state) => {
 	return new Promise(async resolve => {
-		var input = escape(key) + ' ' + escape(state);
+		var input = escape(key) + escape(' ') + escape(state);
 		await googleMaps.findPlace({
 			input: input,
 			inputtype: 'textquery',
 			language: 'en',
 			locationbias: 'circle:15000@40.680686,-111.9370777',
-			// locationbias: 'point:40.67,-111.901',
-			// location: [40.67,-111.901],
-			// radius: 5000,
 			fields: [
 				'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
 				'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
@@ -1342,9 +1336,6 @@ const places = (date, key, state) => {
 					}
 				}
 				resolve(entryTransformed)
-				// return json.features.push(entryTransformed)
-				
-				// callback(entryTransformed);
 			} else {
 				resolve(null)
 			}
@@ -1356,12 +1347,7 @@ router.post('/loadgmaps/:id', uploadmedia.single('csv'), parseForm/*, csrfProtec
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	const content = await fs.readFileSync(req.file.path, 'utf8');
-	
-	// fs.readFile(req.file.path, 'utf8', async function (err, content) {
-	// 	if (err) {
-	// 		return console.log(err)
-	// 	}
-	var p = ''+publishers+'/pu/publishers/esta/csv/'+req.params.id;
+	var p = ''+publishers+'/pu/publishers/esta/json';
 	fs.access(p, async function(err) {
 		if (err && err.code === 'ENOENT') {
 			await mkdirp(p, function(err){
@@ -1370,7 +1356,7 @@ router.post('/loadgmaps/:id', uploadmedia.single('csv'), parseForm/*, csrfProtec
 				}
 			})
 		}
-		var pathh = await path.join(p, '/csv_'+req.params.id+'.json');
+		var pathh = await path.join(p, '/json_'+req.params.id+'.json');
 		let csv = null;
 		const data = await d3.csvParse(content);
 		// console.log(data)
@@ -1383,161 +1369,16 @@ router.post('/loadgmaps/:id', uploadmedia.single('csv'), parseForm/*, csrfProtec
 					if (err) {
 						return next(err)
 					} else {
-						return res.redirect('/loadgmaps')
+						return res.status(200).send(json);
+						// return res.redirect('/loadgmaps')
 					}
 				})
 			}
 			
 		})
-		.catch(err => next(err))
+		.catch(err => res.status(400).send(err))
 		
 	});
-	// })
-	
-	// asynk.waterfall([
-	// 	function(cb) {
-	// 		fs.readFile(req.file.path, 'utf8', async function (err, content) {
-	// 			if (err) {
-	// 				return console.log(err)
-	// 			}
-	// 			cb(null, content)
-	// 		})
-	// 	},
-	// 	function(content, cb) {
-	// 		var p = ''+publishers+'/pu/publishers/esta/csv/'+req.params.id;
-	// 		fs.access(p, async function(err) {
-	// 			if (err && err.code === 'ENOENT') {
-	// 				await mkdirp(p, function(err){
-	// 					if (err) {
-	// 						console.log("err", err);
-	// 					}
-	// 				})
-	// 			}
-	// 			var pathh = await path.join(p, '/csv_'+req.params.id+'.json');
-	// 			var jsonExists = await fs.existsSync(pathh);
-	// 			const json = (!jsonExists ?
-	// 				{ 
-	// 					type: "FeatureCollection",
-	// 					name: "Evictions_SLC",
-	// 					crs: { type: "name", properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-	// 					features: [] 
-	// 				} : await JSON.parse(fs.readFileSync(pathh, 'utf8'))
-	// 			);
-	// 			cb(null, content, json, pathh)
-	// 		});
-	// 
-	// 	},
-	// 	function(content, json, pathh, cb) {
-	// 		var existing = (json.features && json.features.length > 0 ? json.features.map(function(f){return f.properties.key}) : [] )
-	// 		let csv = null;
-	// 		if (content) {
-	// 
-	// 			csv = new Promise(resolve => {
-	// 				const data = d3.csvParse(content);
-	// 				resolve(data);
-	// 			});
-	// 			csv.then(async data => {
-	// 				cb(null, json, pathh, existing, data)
-	// 			});
-	// 		} else {
-	// 			cb(null, json, pathh, existing, null)
-	// 		}
-	// 	},
-	// 	function(json, pathh, existing, data, cb) {
-	// 		var count = 0;
-	// 		if (data) {
-	// 			asynk.forEach(
-	// 				data,
-	// 				function(d, callback){
-	// 					console.log(d)
-	// 					var key = d.last_name.trim() +'';
-	// 					var state = d.state.trim() +'';
-	// 					var date = d.filing_date.trim() +'';
-	// 					var casetype = d.case_type.trim() +'';
-	// 					var partycode = d.party_code.trim() +'';
-	// 					var locndescr = d.locn_descr.trim() +'';
-	// 					if (existing.indexOf(key) !== -1) {
-	// 						json.features[existing.indexOf(key)].properties.count++
-	// 						json.features[existing.indexOf(key)].properties.dates.push(date)
-	// 					} else if (casetype === 'EV' && partycode === 'PLA' && locndescr === 'Salt Lake City') {
-	// 						var input = escape(key) + ' ' + escape(state);
-	// 						googleMaps.findPlace({
-	// 							input: input,
-	// 							inputtype: 'textquery',
-	// 							language: 'en',
-	// 							locationbias: 'circle:15000@40.680686,-111.9370777',
-	// 							// locationbias: 'point:40.67,-111.901',
-	// 							// location: [40.67,-111.901],
-	// 							// radius: 5000,
-	// 							fields: [
-	// 								'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
-	// 								'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
-	// 								'geometry/viewport/northeast/lat', 'geometry/viewport/northeast/lng',
-	// 								'geometry/viewport/southwest', 'geometry/viewport/southwest/lat',
-	// 								'geometry/viewport/southwest/lng', 'name'
-	// 							]
-	// 						}, function (err, response) {
-	// 							if (err) callback(err)
-	// 							if (response.json.candidates[0]) {
-	// 								var ent = response.json.candidates[0];
-	// 								const entryTransformed = {
-	// 									type: 'Feature',
-	// 									geometry: {
-	// 										type: 'Point',
-	// 										coordinates: [ent.geometry.location.lng, ent.geometry.location.lat]
-	// 									},
-	// 									properties: {
-	// 										dates: [date],
-	// 										state: state,
-	// 										label: key,
-	// 										name: ent.name,
-	// 										count: 1
-	// 									}
-	// 								}
-	// 								json.features.push(entryTransformed)
-	// 								callback(null)
-	// 								// callback(entryTransformed);
-	// 							}
-	// 						})
-	// 						// console.log(entryTransformed)
-	// 						// .then(function(entryTransformed){
-	// 						// 	return json.features.push(entryTransformed)
-	// 						// })
-	// 						// .catch(function(err){
-	// 						// 	if (err) return next(err)
-	// 						// })
-	// 					}
-	// 
-	// 				},
-	// 				function(err){
-	// 					if (err) {
-	// 						return cb(err)
-	// 					}
-	// 					cb(null, json, pathh, data)
-	// 				}
-	// 			)
-	// 
-	// 
-	// 		} else {
-	// 			cb(null, json, pathh, null)
-	// 		}
-	// 
-	// 	}
-	// ], function(err, json, pathh, data) {
-	// 	if (err) {
-	// 		return next(err)
-	// 	}
-	// 	if (!data) {
-	// 		return res.redirect('/loadgmaps')
-	// 	}
-	// 	fs.writeFile(pathh, JSON.stringify(json), function(err){
-	// 		if (err) {
-	// 			return next(err)
-	// 		}
-	// 		return res.redirect('/loadgmaps')
-	// 	})
-	// 
-	// })
 })
 
 router.get('/home', getDat, ensureCurly, function(req, res, next){
@@ -3253,7 +3094,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	if (!body.description){
 		body.description = ''
 	}
-	console.log(body)
+	// console.log(body)
 	asynk.waterfall([
 		function(next){
 			var publishersDir = (process.env.NODE_ENV === 'production' ? process.env.PD.toString() : (!process.env.DEVPD ? null : process.env.DEVPD.toString()));
@@ -3272,7 +3113,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				await keys.forEach(function(key, i){
 					var thiskey = 'thumb'+count+'';
 					if (key === thiskey) {
-						console.log(thiskey, body[thiskey])
+						// console.log(thiskey, body[thiskey])
 						var thisbody = body[thiskey];
 						if (thisbody && typeof thisbody.split === 'function' && thisbody.split('').length > 100) {
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
@@ -3315,7 +3156,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					count++;
 				}
 			}
-			console.log(imgs)
+			// console.log(imgs)
 			next(null, doc, thumburls, imgs, orientations, body, keys, pu, id)
 		},
 		function(doc, thumburls, imgs, orientations, body, keys, pu, id, next) {
@@ -3337,8 +3178,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			next(null, doc, thumburls, imgs, orientations, footnotes, body, pu, id)
 		},
 		function(doc, thumburls, imgs, orientations, footnotes, body, pu, id, next) {
-			console.log('footnotes')
-			console.log(footnotes)
+			// console.log('footnotes')
+			// console.log(footnotes)
 			var straight = function(str) {
 				return str.replace(/(\d\s*)&rdquo;/g, '$1\"').replace(/(\d\s*)&rsquo;/g, "$1'")
 			}

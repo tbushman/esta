@@ -14,6 +14,7 @@ script(type="text/javascript").
 		el: '#vue',
 		data: function data(){
 			return {
+				csrfToken: this.parseObj(!{JSON.stringify(csrfToken)}),
 				initbounds: null,
 				tempstyles: [],
 				colorTimeout: null,
