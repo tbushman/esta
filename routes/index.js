@@ -33,6 +33,8 @@ var {google} = require('googleapis');
 const d3 = require('d3');
 const config = require('../config/index.js');
 const testenv = config.testenv;
+const bodyParser = require('body-parser');
+var parseForm = bodyParser.urlencoded({ extended: false });
 const PublisherDB = (!testenv ? Publisher : PublisherTest);
 const ContentDB = (!testenv ? Content : ContentTest);
 const SignatureDB = (!testenv ? Signature : SignatureTest);
@@ -343,7 +345,7 @@ var storage = multer.diskStorage({
 		if (req.params.type === 'png') {
 			cb(null, 'img_' + req.params.counter + '.png')
 		} else if (req.params.type === 'csv') {
-			cb(null, 'csv_' + req.params.id + '.csv')
+			cb(null, 'csv_' + req.params.id + '_temp.csv')
 		} else if (req.params.type === 'txt') {
 			cb(null, 'txt_' + Date.now() + '.txt')
 		} else if (req.params.type === 'docx') {
@@ -1234,51 +1236,149 @@ router.get('/', function(req, res, next){
 	return res.redirect('/home')
 });
 
-router.get('/loadgmaps', csrfProtection, function(req, res, next){
-	return res.render('loadgmaps', {
-		csrfToken: req.csrfToken()
-	})
-})
+// router.get('/loadgmaps'/*, csrfProtection*/, function(req, res, next){
+// 	return res.render('loadgmaps', {
+// 		csrfToken: req.csrfToken()
+// 	})
+// })
 
-router.post('/loadgmaps/:id', uploadmedia.single('csv'), csrfProtection, async function(req, res, next){
+const iteratePlaces = (data, pathh) => {
+	return new Promise(async resolve => {
+		var jsonExists = await fs.existsSync(pathh);
+		const json = (!jsonExists ?
+			{ 
+				type: "FeatureCollection",
+				name: "Evictions_SLC",
+				crs: { type: "name", properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+				features: [] 
+			} : await JSON.parse(fs.readFileSync(pathh, 'utf8'))
+		);
+		var existing = (json.features && json.features.length > 0 ? json.features.map(function(f){return f.properties.label}) : [] )
+		var count = 0;
+		if (data) {
+			// console.log(data)
+			// var keys = Array.from(Array(data.length).keys());
+			
+			for (var k = 0; k < data.length; k++) {
+				count++
+				var d = data[k]
+				var key = (!d.last_name ? '' : d.last_name.trim() +'');
+				var state = (!d.state ? 'Utah' : d.state.trim() +'');
+				var date = (!d.filing_date ? '' : d.filing_date.trim() +'');
+				// console.log(d.case_type, d["'case_type'"])
+				var casetype = (!d.case_type ? (!d["'case_type'"] ? '': d["'case_type'"].trim()) : d.case_type.trim() +'');
+				var partycode = (!d.party_code ? '' : d.party_code.trim() +'');
+				var locndescr = (!d.locn_descr ? '' : d.locn_descr.trim() +'');
+				var firstname = (!d.first_name || d.first_name === '' ? null : d.first_name.trim() +'')
+				if (existing.indexOf(key) !== -1) {
+					json.features[existing.indexOf(key)].properties.count++
+					json.features[existing.indexOf(key)].properties.dates.push(date)
+					// console.log(existing)
+					// console.log(json.features[existing.indexOf(key)])
+				} else if (!firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
+					await places(date, key, state).then(entryTransformed => {
+						// console.log(entryTransformed)
+						if (entryTransformed) {
+							json.features.push(entryTransformed)
+						}
+					})
+					.catch(err => {
+						console.log(json)
+						console.log(err)
+					})
+				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
+					console.log(firstname, key)
+				}
+			}
+			
+			
+		} else {
+			console.log('wtf no data')
+		}
+		if (count === data.length) {
+			resolve(json)
+		}
+	})
+
+}
+
+const places = (date, key, state) => {
+	return new Promise(async resolve => {
+		var input = escape(key) + escape(' ') + escape(state);
+		await googleMaps.findPlace({
+			input: input,
+			inputtype: 'textquery',
+			language: 'en',
+			locationbias: 'circle:15000@40.680686,-111.9370777',
+			fields: [
+				'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
+				'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
+				'geometry/viewport/northeast/lat', 'geometry/viewport/northeast/lng',
+				'geometry/viewport/southwest', 'geometry/viewport/southwest/lat',
+				'geometry/viewport/southwest/lng', 'name'
+			]
+		}, function (err, response) {
+			if (err) console.log(err)
+			if (response.json.candidates[0]) {
+				var ent = response.json.candidates[0];
+				const entryTransformed = {
+					type: 'Feature',
+					geometry: {
+						type: 'Point',
+						coordinates: [ent.geometry.location.lng, ent.geometry.location.lat]
+					},
+					properties: {
+						dates: [date],
+						state: state,
+						label: key,
+						name: ent.name,
+						count: 1
+					}
+				}
+				resolve(entryTransformed)
+			} else {
+				resolve(null)
+			}
+		}) 
+	})
+}
+
+router.post('/loadgmaps/:id', uploadmedia.single('csv'), parseForm/*, csrfProtection*/, async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
-
-	fs.readFile(req.file.path, 'utf8', async function (err, content) {
-		if (err) {
-			return console.log(err)
-		}
-		d3.csv.parse(content, function(d){
-			console.log(d)
-			d.forEach(function(f){
-				googleMaps.findPlace({
-					input: escape(f.last_name),
-					inputtype: 'textquery',
-					language: 'en',
-					locationbias: 'circle:8000@40.680686,-111.9370777',
-					// locationbias: 'point:40.67,-111.901',
-					// location: [40.67,-111.901],
-					// radius: 5000,
-					fields: [
-						'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
-						'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
-						'geometry/viewport/northeast/lat', 'geometry/viewport/northeast/lng',
-						'geometry/viewport/southwest', 'geometry/viewport/southwest/lat',
-						'geometry/viewport/southwest/lng', 'name',
-						'permanently_closed', 'types'
-					]
-				}, function (err, response) {
-					console.log(err)
-					console.log(
-						// JSON.parse(
-							response.json.candidates[0]//[response.json.candidates.length-1].geometry.viewport.northeast
-						// )
-					)
-				})
+	const content = await fs.readFileSync(req.file.path, 'utf8');
+	var p = ''+publishers+'/pu/publishers/esta/json';
+	fs.access(p, async function(err) {
+		if (err && err.code === 'ENOENT') {
+			await mkdirp(p, function(err){
+				if (err) {
+					console.log("err", err);
+				}
 			})
-
+		}
+		var pathh = await path.join(p, '/json_'+req.params.id+'.json');
+		let csv = null;
+		const data = await d3.csvParse(content);
+		// console.log(data)
+		await iteratePlaces(data, pathh).then((json) => {
+			console.log(json)
+			if (!json || json.features.length === 0 || json[0] === {} ) {
+				return next(new Error('didn\'t work'))
+			} else {
+				fs.writeFile(pathh, JSON.stringify(json), function(err){
+					if (err) {
+						return next(err)
+					} else {
+						return res.status(200).send(json);
+						// return res.redirect('/loadgmaps')
+					}
+				})
+			}
+			
 		})
-	})
+		.catch(err => res.status(400).send(err))
+		
+	});
 })
 
 router.get('/home', getDat, ensureCurly, function(req, res, next){
@@ -2994,7 +3094,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 	if (!body.description){
 		body.description = ''
 	}
-	console.log(body)
+	// console.log(body)
 	asynk.waterfall([
 		function(next){
 			var publishersDir = (process.env.NODE_ENV === 'production' ? process.env.PD.toString() : (!process.env.DEVPD ? null : process.env.DEVPD.toString()));
@@ -3013,7 +3113,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 				await keys.forEach(function(key, i){
 					var thiskey = 'thumb'+count+'';
 					if (key === thiskey) {
-						console.log(thiskey, body[thiskey])
+						// console.log(thiskey, body[thiskey])
 						var thisbody = body[thiskey];
 						if (thisbody && typeof thisbody.split === 'function' && thisbody.split('').length > 100) {
 							var thumbbuf = new Buffer(body[thiskey], 'base64'); // decode
@@ -3056,7 +3156,7 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					count++;
 				}
 			}
-			console.log(imgs)
+			// console.log(imgs)
 			next(null, doc, thumburls, imgs, orientations, body, keys, pu, id)
 		},
 		function(doc, thumburls, imgs, orientations, body, keys, pu, id, next) {
@@ -3078,8 +3178,8 @@ router.post('/api/editcontent/:id', function(req, res, next){
 			next(null, doc, thumburls, imgs, orientations, footnotes, body, pu, id)
 		},
 		function(doc, thumburls, imgs, orientations, footnotes, body, pu, id, next) {
-			console.log('footnotes')
-			console.log(footnotes)
+			// console.log('footnotes')
+			// console.log(footnotes)
 			var straight = function(str) {
 				return str.replace(/(\d\s*)&rdquo;/g, '$1\"').replace(/(\d\s*)&rsquo;/g, "$1'")
 			}

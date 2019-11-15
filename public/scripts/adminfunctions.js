@@ -234,10 +234,21 @@ var adminFunctions = {
 			})
 		})
 	},
-	activateMap: function(){
+	deactivateMap: function() {
+		var self = this;
+		self.mapActive = false;
+		if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && typeof self.dataLayer.disableEdit === 'function') {
+			self.dataLayer.disableEdit();
+			self.mapEdit = !mapEdit;
+		}
+
+		document.getElementById('inputs').scrollIntoView();
+	},
+	activateMap: async function(){
 		var self = this;
 		var mapActive = self.mapActive;
 		var mapEdit = self.mapEdit;
+		self.mapReady = false;
 		console.log(self.mapActive, self.mapEdit, self.mapReady)
 		if (!mapActive) {
 			if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && self.dataLayer._latlngs && self.dataLayer._latlngs.length < 2) {
@@ -245,10 +256,10 @@ var adminFunctions = {
 				self.mapEdit = !mapEdit;
 			}
 			console.log('expected')
-			document.getElementById('viewer').scrollIntoView();
+			await document.getElementById('viewer').scrollIntoView();
 			$('.submenu.drop').slideUp(100);
 			$('.slidedown').slideUp(100);
-
+			self.mapReady = true;
 			//- tinymce.get('description').hide();
 		} else {
 			if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && typeof self.dataLayer.disableEdit === 'function') {
@@ -316,6 +327,26 @@ var adminFunctions = {
 			cb()
 		})
 	},
+	handleGmapsFile: function(id, e) {
+		var self = this;
+		self.file = e.target.files[0];
+		var formData = new FormData();
+		formData.append('csv', self.file);
+		$.ajax({
+			url: '/loadgmaps/'+self.doc._id+'',
+			method: 'POST',
+			data: formData,
+			processData: false,
+			contentType: false
+			
+		}).done((result) => {
+			console.log(result)
+			
+		}).fail(function (xhr, status) {
+			console.log(xhr, status)
+			alert(status);
+		})
+	},
 	handleFile: function(did, index) {
 		var self = this;
 		self.did = did;
@@ -336,7 +367,7 @@ var adminFunctions = {
 			var blob = this.result;
 			//- console.log(blob)
 			fd.append("json", file);
-			fd.append('_csrf', '#{csrfToken}');
+			fd.append('_csrf', self.csrfToken);
 
 			var uploadurl = '/api/importjson/'+self.doc._id+'/json';
 			$.ajax({
