@@ -2815,7 +2815,7 @@ router.get('/api/geointersect/:id', function(req, res, next){
 	})
 })
 
-router.post('/api/importjson/:id/:type', uploadmedia.single('json'), csrfProtection, function(req, res, next){
+router.post('/api/importjson/:id/:type', uploadmedia.single('json')/*, csrfProtection*/, function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 
