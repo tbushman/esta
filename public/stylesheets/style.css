@@ -237,7 +237,7 @@ blockquote, .blockquote {
 .layer.ctrl {
 	margin-top: 10px;
 }
-.legend input {
+.legend input, .legend .color {
   /* bottom: 0; */
   vertical-align: top;
   border: 0px solid rgba(255,255,255,0)!important;
@@ -246,10 +246,10 @@ blockquote, .blockquote {
   height: auto;
   width: 100%;
 }
-.legend label {
+.legend label, .legend .label {
   display: none;
 }
-.legend.ctrl label {
+.legend.ctrl label, .legend.ctrl .label {
   display: inline-block;
   width: 45px;
   width: var(--thumbw);
@@ -262,14 +262,11 @@ blockquote, .blockquote {
   /* width: 13px; */
   /* height: 13px; */
 }
-.legend .res label {
+.legend .res label, .legend .res .label {
   display: none;
 }
-/* .legend .ctrl {
-  width: 13px;
-} */
-.legend .ctrl input {
-  width: 45px;
+.legend.ctrl, .legend.ctrl > .ctrl {
+	width: 45px;
   width: var(--thumbw);
 }
 /*.blockquote p,
