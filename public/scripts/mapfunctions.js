@@ -191,7 +191,7 @@ var mapFunctions = {
 			if (buf) {
 				setTimeout(function(){
 					buf.remove()
-				},5000)
+				},3000)
 			}
 		}
 		
@@ -410,7 +410,7 @@ var mapFunctions = {
 								)
 								return (thisVal >= mi && thisVal < ma)
 							})[0]
-							thisLayer.setStyle({fillColor:color, color:color, opacity: 0.8, fillOpacity: 0.6})
+							thisLayer.setStyle({fillColor:color, color:color, opacity: 0.8, fillOpacity: 0.5})
 							thisLayer.on('click', function(e){
 								self.setView(feature, id, e.latlng)
 							})
@@ -567,8 +567,11 @@ var mapFunctions = {
 						if (self.lyr[key].options) self.lyr[key].options.interactive = false;
 
 						if (isPointCoords) {
+							console.log('isPointCoords');
 							self.lyr[key].bringToFront()
+							if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
 						} else {
+							console.log('isPolyCoords');
 							self.lyr[key].bringToBack()
 							if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
 						}
@@ -623,8 +626,6 @@ var mapFunctions = {
 			position:'topleft'
 		}).addTo(map);
 		
-		//- self.censusLayer = L.tileLayer('https://api.censusreporter.org/1.0/geo/tiger2013/tiles/040/{z}/{x}/{y}.geojson').addTo(map)
-		//- self.censusLayer.bringToFront();
 		var credit = (!self.credit || self.credit === '' ? self.getCredit() : self.credit) + ' | ' + self.baseMaps[self.base].attribution
 		self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: credit}).addTo(map);
 		self.map = map;

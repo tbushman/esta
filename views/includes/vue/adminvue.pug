@@ -14,6 +14,7 @@ script(type="text/javascript").
 		el: '#vue',
 		data: function data(){
 			return {
+				isSafari: /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification)),
 				csrfToken: this.parseObj(!{JSON.stringify(csrfToken)}),
 				initbounds: null,
 				tempstyles: [],
@@ -342,7 +343,7 @@ script(type="text/javascript").
 					statusbar: false,
 					theme: 'inlite',
 					inline: true,
-					selector: "#description,#title",
+					selector: "#description",
 					plugins: 'lists',
 					valid_elements: '*[*]',
 					setup: function (editor) {

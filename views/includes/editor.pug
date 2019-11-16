@@ -1,7 +1,7 @@
 div.row.tb-font-m
 	div.sectionnum.bd(v-text="(parseInt(doc.properties.title.ind,10)+1)+'.'+(parseInt(doc.properties.chapter.ind,10)+1)+'.'+(parseInt(doc.properties.section.ind,10)+1)+''")
 	span(v-text="' '")
-	div#title(v-text="doc.properties.section.str")
+	input#section(type="text" name="section" :value="doc.properties.section.str")
 
 p(style="margin-top:20px;")
 	label.tb-10-m0(for="label") Document label:

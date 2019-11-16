@@ -39,7 +39,7 @@ block content
 					
 							
 							div.cell.tb-11-m0(v-if="accordions[n] && accordions[n].length", v-for="(doc, i) in data", aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head")
-								a(v-bind:href="'/menu/'+doc.properties.title.ind+'/'+doc.properties.chapter.ind+''")
+								a(v-bind:href="'/list/'+doc._id+'/null'")
 									div.header.row.tb-font-m
 										span(v-text="doc.properties.chapter.str")
 										span.tb-font-s(v-text="' | '+doc.properties.label")

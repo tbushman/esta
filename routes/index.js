@@ -3230,12 +3230,12 @@ router.post('/api/editcontent/:id', function(req, res, next){
 					},
 					section: {
 						ind: doc.properties.section.ind,
-						str: doc.properties.section.str
+						str: body.section ? curly(body.section) : doc.properties.section.str
 					},
 					published: (!body.published ? false : true),
 					_id: id,
-					label: body.label ? curly(body.label) : doc.properties.label,
-					place: body.place ? curly(body.place) : doc.properties.place,
+					label: body.label && body.label !== '' ? curly(body.label) : doc.properties.label,
+					place: body.place && body.place !== '' ? curly(body.place) : doc.properties.place,
 					description: desc ? marked(curly(desc)) : doc.properties.description,
 					time: {
 						begin: new Date(body.datebegin),
