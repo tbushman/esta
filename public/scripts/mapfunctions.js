@@ -526,6 +526,7 @@ var mapFunctions = {
 		return feature
 	},
 	serverJson: function(isDataLayer, key, cb) {
+		console.log(isDataLayer)
 		var self = this;
 		var latlng;
 		var customIcon = L.icon({
@@ -535,7 +536,10 @@ var mapFunctions = {
 		if (isDataLayer) {
 			self.dataLayer = self.loadLayer(self.doc);
 			self.map.addLayer(self.dataLayer);
-			if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+			// if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') {
+			// 	self.dataLayer.bringToBack();
+			// 	self.tileLayer.bringToBack();
+			// }
 			if (!latlng) {
 				latlng = self.dataLayer.getBounds().getCenter();
 				// currently modifying Leaflet source code directly to enable the custom icon to be captured in leaflet-image captures
@@ -558,7 +562,7 @@ var mapFunctions = {
 					if (isDataLayer) {
 						self.dataLayer = await self.loadLayer(result);
 						self.map.addLayer(self.dataLayer);
-						if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+						
 
 					} else {
 						self.json[key] = result;
@@ -568,12 +572,20 @@ var mapFunctions = {
 
 						if (isPointCoords) {
 							console.log('isPointCoords');
-							self.lyr[key].bringToFront()
-							if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+							// self.lyr[key].bringToFront()
+							// if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') {
+							// 	self.dataLayer.bringToBack();
+							// 	self.tileLayer.bringToBack();
+							// 
+							// } 
 						} else {
 							console.log('isPolyCoords');
-							self.lyr[key].bringToBack()
-							if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') self.dataLayer.bringToBack()
+							// self.lyr[key].bringToBack()
+							// if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') {
+							// 	self.dataLayer.bringToBack();
+							// 	self.tileLayer.bringToBack();
+							// 
+							// } 
 						}
 						if (!latlng) {
 							latlng = self.lyr[key].getBounds().getCenter();
@@ -581,10 +593,17 @@ var mapFunctions = {
 							if (isPointCoords) {
 								var bounds = self.lyr[key].getBounds();
 								self.map.fitBounds(bounds);
+								// self.lyr[key].bringToFront()
+								// setTimeout(()=>,500)
+								
+							} else {
+								self.lyr[key].bringToBack()
 							}
 						}
 
 					}
+					
+
 					cb(latlng)
 				} else {
 					console.log('no result')
@@ -627,8 +646,8 @@ var mapFunctions = {
 		}).addTo(map);
 		
 		var credit = (!self.credit || self.credit === '' ? self.getCredit() : self.credit) + ' | ' + self.baseMaps[self.base].attribution
-		self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: credit}).addTo(map);
 		self.map = map;
+		self.tileLayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: credit}).addTo(self.map);
 
 		var myRenderer = L.canvas({ padding: 0.5 });
 		if (self.doc && self.doc !== '') {
@@ -722,8 +741,8 @@ var mapFunctions = {
 		var credit = self.credit + ' | ' + self.baseMaps[self.base].attribution;
 		if (e.target.checked) {
 			self.base = i
-			self.tilelayer.remove();
-			self.tilelayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: self.map.getBounds().pad(1000), attribution: credit}).addTo(self.map);
+			self.tileLayer.remove();
+			self.tileLayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: self.map.getBounds().pad(1000), attribution: credit}).addTo(self.map);
 		}
 
 	},

@@ -8,6 +8,7 @@ script(type="text/javascript").
 		el: '#vue',
 		data: function data(){
 			return {
+				dropped: {drop: false, layers: false, new: false},
 				isSafari: /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification)),
 				initbounds: null,
 				tempstyles: [],
@@ -37,6 +38,7 @@ script(type="text/javascript").
 				mapReady: false,
 				mapEdit: false,
 				mapEditable: false,
+				tileLayer: null,
 				dataLayer: '',
 				lMarker: '',
 				thickness: 45,
@@ -79,10 +81,10 @@ script(type="text/javascript").
 					var keyName = event.key;
 					if (keyName === 'Enter') event.preventDefault()
 				});
-				setTimeout(function(){
-					$('.submenu.drop').slideUp(100);
-					$('.slidedown').slideUp(100);
-				},3000)
+				//- setTimeout(function(){
+				//- 	$('.submenu.drop').slideUp(100);
+				//- 	$('.slidedown').slideUp(100);
+				//- },3000)
 
 			})
 			var self = this;
@@ -99,6 +101,7 @@ script(type="text/javascript").
 				//- console.log(self.map.project(dataCoords), dataCoords);
 				//- console.log(self.lMarker.getLatLng());
 				//- console.log(self.map.latLngToLayerPoint(self.lMarker.getLatLng()))
+				self.tileLayer.bringToBack();
 				self.map.on('click', function(){
 					self.mapCtrl = false;
 				})

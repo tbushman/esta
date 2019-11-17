@@ -2,7 +2,7 @@
 
 each mn, k in menus
 	div.menu(class= mn)
-		a.mainmenu(class= mn, title="Menu", style="pointer-events: auto;", @click="mainDropdown($event)")
+		a.mainmenu(class= mn, title="Menu", style="pointer-events: auto;", @click="drop('drop', $event)")
 			
 			svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px", width="30.1px", height="25px", viewBox="0 0 30.1 28", style="enable-background:new 0 0 30.1 28; padding: 0 0 0 8px;", xml:space="preserve")
 				path(style="fill:#000;", d="M1.103,4.464c-0.606,0-1.1-0.493-1.1-1.1v-2.3c0-0.606,0.493-1.1,1.1-1.1h27.893  c0.607,0,1.1,0.494,1.1,1.1v2.3c0,0.606-0.492,1.1-1.1,1.1H1.103z")
@@ -14,7 +14,7 @@ each mn, k in menus
 			div.dropdown.static(v-cloak, style="float: left; left:14px; right:auto; display: flex;height:45px;overflow-y:hidden!important;")
 				a.submenu.drop(href="/", class= mn, style="max-height:45px;")
 					span esta.bli.sh
-		div.dropdown(v-cloak, class= mn)
+		div.dropdown(v-cloak, class= mn, v-if=""+(mn === 'static')+" || dropped.drop")
 			
 			a.submenu.drop(class= mn, :class="((/home/gi).test(menu) ? 'active' : '')", href="/")
 				if (mn !== 'static')
@@ -25,7 +25,7 @@ each mn, k in menus
 							path(d="M240,1.31,479,203.46V479H1V203.46L240,1.31M240,0,0,203V480H480V203L240,0Z")
 				span.tb-font-m Home
 			
-			a.submenu.drop(v-if="loggedin && pu && pu !== '' && pu.properties.admin", class= mn, title="New", @click="subDropdown($event)")
+			a.submenu.drop(v-if="loggedin && pu && pu !== '' && pu.properties.admin", class= mn, title="New", @click="drop('new', $event)")
 				if (mn !== 'static')
 					.ui
 						svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
@@ -33,7 +33,7 @@ each mn, k in menus
 							polygon(points="479 152.03 327.48 152.03 327.48 0.5 152.03 0.5 152.03 152.03 0.5 152.03 0.5 327.48 152.03 327.48 152.03 479 327.48 479 327.48 327.48 479 327.48 479 152.03")
 				span.tb-font-m New
 			
-			div.slidedown(v-if="loggedin && pu && pu !== '' && pu.properties.admin", class= mn)
+			div.slidedown(v-if="loggedin && pu && pu !== '' && pu.properties.admin && dropped.new", class= mn)
 				include menu/jurisdiction.pug
 
 				label(for="doctype") Type of document

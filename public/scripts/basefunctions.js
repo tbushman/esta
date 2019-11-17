@@ -20,6 +20,49 @@ var baseFunctions = {
 		self.wWidth = window.innerWidth;
 		self.wHeight = window.innerHeight;
 	},
+	deactivateMap: function() {
+		var self = this;
+		self.mapActive = false;
+		var mapEdit = self.mapEdit;
+		if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin) {
+			if (typeof self.dataLayer.disableEdit === 'function') { self.dataLayer.disableEdit(); }
+			self.mapEdit = !mapEdit;
+		}
+
+		document.getElementById('editor').scrollIntoView();
+	},
+	activateMap: async function(){
+		var self = this;
+		var mapActive = self.mapActive;
+		var mapEdit = self.mapEdit;
+		if (!mapActive) {
+			console.log(document.getElementById('viewer'))
+			document.getElementById('viewer').scrollIntoView();
+			setTimeout(()=>{
+				self.mapReady = false;
+				console.log(self.mapActive, self.mapEdit, self.mapReady)
+				if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && self.dataLayer._latlngs && self.dataLayer._latlngs.length < 2) {
+					//- self.dataLayer.enableEdit();
+					self.mapEdit = !mapEdit;
+				}
+				var droppedkeys = Object.keys(self.dropped);
+				droppedkeys.forEach(key => self.dropped[key] = false);
+				self.mapReady = true;
+				self.mapActive = true;
+			},1000)
+			
+			//- tinymce.get('description').hide();
+		}
+		if (self.mapActive && !self.mapReady) {
+			self.mapReady = true;
+		}
+	},
+	drop: function(code, e) {
+		var self = this;
+		var cd = self.dropped[code];
+		
+		self.dropped[code] = !cd;
+	},
 	subDropdown: function(e) {
 		var self = this;
 		if (!$(e.target).next('.slidedown')) {

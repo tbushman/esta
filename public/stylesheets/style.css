@@ -1393,6 +1393,9 @@ button span, a[role="button"] span {
 	color: #fff;
 	color: var(--primary);
 }
+#viewer {
+	left: 0;
+}
 #inputs {
     display: flex;
     flex-direction: row;

@@ -63,13 +63,13 @@ fieldset.lcontrol(style="padding:0;border:none;width:45px;", v-cloak, v-if="mapR
 		
 
 	legend.block(style="font-size: 11px; margin-top:10px;", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0") more
-	a.drop(style="display: flex;width:45px;width:var(--thumbw);", @click="subDropdown($event)", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0")
+	a.drop(style="display: flex;width:45px;width:var(--thumbw);", @click="drop('layers', $event)", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0")
 		.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;pointer-events:none;")
 			img(src="/images/icons/add.svg", style="pointer-events: none;")
 	
 		span.tb-font-m(v-html="'Available layers'", style="width:auto; padding-right: 15px; padding-left: 8px;")
 
-	div.slidedown
+	div.slidedown(v-if="dropped.layers")
 		a.drop(v-for="(alayer, p) in availablelayers", v-if="(doc.properties.layers.map(function(item){return item.lid}).indexOf(alayer._id) === -1)" style="display: flex;width:45px;width:var(--thumbw);")
 			.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;")
 				img(:src="(!alayer.properties.media[alayer.properties.media.length - 1] || !alayer.properties.media[alayer.properties.media.length - 1].thumb || alayer.properties.media[alayer.properties.media.length - 1].thumb === '' ? (!alayer.properties.media[0] ? '/images/publish_logo_sq.svg' : alayer.properties.media[0].thumb) : alayer.properties.media[alayer.properties.media.length - 1].thumb)+'?version='+Math.random()", style="pointer-events: none;")

@@ -8,6 +8,7 @@ script(type="text/javascript").
 		el: '#vue',
 		data: function data(){
 			return {
+				dropped: {drop: false, layers: false, new: false},
 				initbounds: null,
 				tempstyles: [],
 				colorTimeout: null,
@@ -53,6 +54,7 @@ script(type="text/javascript").
 				mapReady: false,
 				mapEdit: false,
 				mapEditable: false,
+				tileLayer: null,
 				dataLayer: '',
 				lMarker: '',
 				thickness: 45,
@@ -211,10 +213,10 @@ script(type="text/javascript").
 					var keyName = event.key;
 					if (keyName === 'Enter') event.preventDefault()
 				});
-				setTimeout(function(){
-					$('.submenu.drop').slideUp(100);
-					$('.slidedown').slideUp(100);
-				},3000)
+				//- setTimeout(function(){
+				//- 	$('.submenu.drop').slideUp(100);
+				//- 	$('.slidedown').slideUp(100);
+				//- },3000)
 
 			})
 			var self = this;

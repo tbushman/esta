@@ -234,53 +234,6 @@ var adminFunctions = {
 			})
 		})
 	},
-	deactivateMap: function() {
-		var self = this;
-		self.mapActive = false;
-		if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && typeof self.dataLayer.disableEdit === 'function') {
-			self.dataLayer.disableEdit();
-			self.mapEdit = !mapEdit;
-		}
-
-		document.getElementById('inputs').scrollIntoView();
-	},
-	activateMap: async function(){
-		var self = this;
-		var mapActive = self.mapActive;
-		var mapEdit = self.mapEdit;
-		self.mapReady = false;
-		console.log(self.mapActive, self.mapEdit, self.mapReady)
-		if (!mapActive) {
-			if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && self.dataLayer._latlngs && self.dataLayer._latlngs.length < 2) {
-				//- self.dataLayer.enableEdit();
-				self.mapEdit = !mapEdit;
-			}
-			console.log('expected')
-			await document.getElementById('viewer').scrollIntoView();
-			$('.submenu.drop').slideUp(100);
-			$('.slidedown').slideUp(100);
-			self.mapReady = true;
-			//- tinymce.get('description').hide();
-		} else {
-			if (self.loggedin && self.loggedin !== '' && self.pu && self.pu !== '' && self.pu.properties.admin && typeof self.dataLayer.disableEdit === 'function') {
-				self.dataLayer.disableEdit();
-				self.mapEdit = !mapEdit;
-			}
-
-			document.getElementById('inputs').scrollIntoView();
-			//- tinymce.get('description').show();
-
-		}
-		self.mapActive = !mapActive;
-		if (self.mapActive && !self.mapReady) {
-			self.mapReady = true;
-		}
-		if (self.mapActive) {
-			$('.slidedown').slideUp(100);
-
-		}
-	},
-	
 	addMapBlob: function() {
 		var self = this;
 		var ind = self.doc.properties.media.length;

@@ -1,6 +1,4 @@
-div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 'auto')}")
-	//- div.dropdown.static(style="margin: 0 auto; bottom:0; top:auto;z-index:2; position:absolute;pointer-events:all;")
-	//- && pu && pu !== '' && pu.admin
+div.maintitle.centerall#editor(v-cloak, :style="{'pointer-events':(mapActive && mapReady ? 'none' : 'auto')}")
 	div#inputs(v-if="(pu && pu !== '' && pu.properties.admin && type !== 'draw')", style="z-index:1;")
 		button.mapActive(v-if="!mapActive && loggedin && loggedin !== ''", v-on:click="activateMap()")
 			span Edit Map
@@ -61,10 +59,6 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 							span(v-text="doc.properties.chapter.str")
 			div.row(v-if="(!loggedin || loggedin === '') || (!pu || !pu.properties.admin)")
 				include header.pug
-				//- div(v-if="mapActive && doc.properties.title.str !== 'Geography'")
-				div(:style="{display: (mapActive ? 'block' : 'none')}")
-					include mapedit.pug
-					include viewerlist.pug
 				include bodysingle.pug
 				p.tb-font-m(v-text="'External document'")
 				include gpo/xml.pug
@@ -75,10 +69,6 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 					input(type="hidden", name="_csrf", value= csrfToken)
 					input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers")
 
-					//v-if="doc.properties.title.str !== 'Geography'", 
-					div(:style="{display: (mapActive ? 'block' : 'none')}")
-						include mapedit.pug
-						include viewerlist.pug
 					include editor.pug
 					p.tb-font-m(v-text="'External document'")
 					include gpo/xml.pug
@@ -92,18 +82,13 @@ div.maintitle.centerall(v-cloak, :style="{'pointer-events':(mapActive? 'none' : 
 		v-bind:height="(wHeight)+'px'",
 		style="position:absolute;top:0;pointer-events:fill;display:inline-block;left:0;z-index:-1;"
 		)
-		//
-			defs
-				clipPath#myPath(fill="none", clipPathUnits="objectBoundingBox")
-					path#path(v-bind:d="dPath", fill="none")
-				use(clip-path="url(#myPath)", xlink:href="#path")
 		path(style="pointer-events: all; overflow-y: scroll;", v-bind:d="'M0,0v'+(wHeight)+'h'+wWidth+'V0H0L0,0z'", fill="var(--primary)")
 
 div#viewer(style="position:absolute;pointer-events: none;")
-	//- p(:style="{position:'absolute',left:(wWidth/2)+'px',padding:'calc(var(--thumbw) * 0.8) 0 0 calc(var(--thumbw) * 0.9)',width:'50vw','background-color':'var(--primary)','z-index':9999}", v-if="geo.length && viewerList", v-text="(geo.length)+' nearby:'")
 
-	div.module.viewerlist(v-if="geo.length && viewerList", :style="{'pointer-events':'all',left: btn.x + 'px',bottom:(wHeight - btn.y) + 'px'}")
-		include tooltip.pug
+	div(:style="{display: (mapActive ? 'block' : 'none')}")
+		include mapedit.pug
+	include viewerlist.pug
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px",
 		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
 		, 
@@ -111,11 +96,6 @@ div#viewer(style="position:absolute;pointer-events: none;")
 		v-bind:height="wHeight+'px'",
 		style="pointer-events: none;"
 		)
-		//
-			defs
-				clipPath#myPath(fill="none", clipPathUnits="objectBoundingBox")
-					path#path(v-bind:d="dPath", fill="none")
-				use(clip-path="url(#myPath)", xlink:href="#path")
 		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")
 	
 	table(width="100%", height="100%", v-if="doc && pu && pu.username === loggedin && type === 'draw'", style="position:fixed;top:0;background-color:var(--primary);")

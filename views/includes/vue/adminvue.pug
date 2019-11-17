@@ -14,6 +14,7 @@ script(type="text/javascript").
 		el: '#vue',
 		data: function data(){
 			return {
+				dropped: {drop: false, layers: false, new: false},
 				isSafari: /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification)),
 				csrfToken: this.parseObj(!{JSON.stringify(csrfToken)}),
 				initbounds: null,
@@ -61,6 +62,7 @@ script(type="text/javascript").
 				mapReady: false,
 				mapEdit: false,
 				mapEditable: false,
+				tileLayer: null,
 				dataLayer: '',
 				lMarker: '',
 				thickness: 45,
@@ -279,10 +281,10 @@ script(type="text/javascript").
 					var keyName = event.key;
 					if (keyName === 'Enter') event.preventDefault()
 				});
-				setTimeout(function(){
-					$('.submenu.drop').slideUp(100);
-					$('.slidedown').slideUp(100);
-				},3000)
+				//- setTimeout(function(){
+				//- 	$('.submenu.drop').slideUp(100);
+				//- 	$('.slidedown').slideUp(100);
+				//- },3000)
 
 			})
 			var self = this;
@@ -314,27 +316,28 @@ script(type="text/javascript").
 					self.handleLocationOutcome(false, pos);
 				}
 			
-			} else if (!self.mapActive) {
-
-				if (!self.doc || self.doc === '') {
-					if (!self.dat || self.dat === '') {
-						self.accordions = [[]];
-					} else {
-						self.accordions = self.dat.map(function(data){
-							return []
-						});
-					}
-				} else {
-					if (!self.dat || self.dat === '') {
-						self.accordions = [[self.doc.index]];
-					} else {
-						self.accordions = self.dat.map(function(data){return data.map(function(doc){return doc.index})});
-					}
-					self.edit = self.doc._id;
-					self.did = self.edit;
-					
-				}
-			}
+			} 
+			//- else if (!self.mapActive) {
+			//- 
+			//- 	if (!self.doc || self.doc === '') {
+			//- 		if (!self.dat || self.dat === '') {
+			//- 			self.accordions = [[]];
+			//- 		} else {
+			//- 			self.accordions = self.dat.map(function(data){
+			//- 				return []
+			//- 			});
+			//- 		}
+			//- 	} else {
+			//- 		if (!self.dat || self.dat === '') {
+			//- 			self.accordions = [[self.doc.index]];
+			//- 		} else {
+			//- 			self.accordions = self.dat.map(function(data){return data.map(function(doc){return doc.index})});
+			//- 		}
+			//- 		self.edit = self.doc._id;
+			//- 		self.did = self.edit;
+			//- 
+			//- 	}
+			//- }
 
 			if (self.tinymce === ''  && $('#description')[0] && typeof tinymce === 'object') {
 				//- console.log($('#description')[0])
@@ -364,8 +367,8 @@ script(type="text/javascript").
 					selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | footnote'
 				});
 			}
-			const tempstyles = (!self.doc || self.doc.properties.layers.length === 0 ? [] : self.doc.properties.layers)
-			self.tempstyles = JSON.parse(JSON.stringify(tempstyles));
+			//- const tempstyles = (!self.doc || self.doc.properties.layers.length === 0 ? [] : self.doc.properties.layers)
+			//- self.tempstyles = JSON.parse(JSON.stringify(tempstyles));
 			window.addEventListener('resize', self.resizeFrame);
 
 			self.loadMap(function(dataCoords){
@@ -374,6 +377,20 @@ script(type="text/javascript").
 				//- console.log(self.map.project(dataCoords), dataCoords);
 				//- console.log(self.lMarker.getLatLng());
 				//- console.log(self.map.latLngToLayerPoint(self.lMarker.getLatLng()))
+				if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') {
+					//- self.layers.forEach(function(layer){
+					//- 	if (!self.isPointCoords(layer.geometry.coordinates)) {
+					//- 			self.lyr[layer._id].bringToBack()
+					//- 	}
+					//- })	
+					setTimeout(async function(){
+						
+						self.dataLayer.bringToBack();
+						self.tileLayer.bringToBack();
+						
+					}, 1000)
+				
+				} 
 				self.map.on('click', function(){
 					self.mapCtrl = false;
 				})

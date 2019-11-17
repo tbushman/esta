@@ -2824,32 +2824,22 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json')/*, csrfProte
 			return console.log(err)
 		}
 		var json = JSON.parse(content);
+		await json.features.forEach(feat => {
+			if (feat.properties.dates) {
+				var dates = feat.properties.dates.split(':')[1].replace(')', '');
+				if (dates) {
+					feat.properties.dates = dates.split(',').join(', ')
+					
+				}
+				
+			}
+		})
 		var multiPolygon;
 		var type = 'MultiPolygon';
 		var keys;
 		if (json.features && json.features.length) {
 			// console.log(json.features[0].geometry)
 			keys = Object.keys(json.features[0].properties);
-			// await json.features.forEach(function(feat, i){
-			// 	console.log(feat)
-			// 	var ft = {
-			// 		type: 
-			// 	}
-			// 	await ContentDB.findOneAndUpdate({_id: req.params.id}, {$set:{features: json.features }}, {safe: true, new:true}, function(err, doc){
-			// 		if (err) {
-			// 			return next(err)
-			// 		}
-			// 
-			// 	})
-			// // })
-			// ContentDB.findOneAndUpdate({_id: req.params.id}, {$set: {geometry: {type: doc.geometry.type, geometry:[] }}}, {safe:true, new:true}, async function(err, doc){
-			// 	if (err) {
-			// 		return next(err)
-			// 	}
-			// 	return res.status(200).send(doc)
-			// })
-			
-			// console.log(json.features)
 			if (json.features[0] && json.features[0].geometry.type === 'Point') {
 				type = 'MultiPoint'
 			}
@@ -2884,7 +2874,12 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json')/*, csrfProte
 			if (err) {
 				return next(err)
 			}
-			return res.status(200).send(doc)
+			fs.writeFile(req.file.path, JSON.stringify(json), function(err){
+				if (err) {
+					return next(err);
+				}
+				return res.status(200).send(doc)
+			})
 		})
 		
 	})
