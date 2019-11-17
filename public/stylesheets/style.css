@@ -202,7 +202,8 @@ background-color: var(--primary);
 margin-top: calc(var(--thumbw) * 1.1);
 margin-right: var(--thumbw);
 overflow-y: hidden; 
-max-height: 46vh;
+max-height: 44vh;
+max-width: 44vw;
 }
 .viewerlist > ul {
   overflow-y: scroll;
