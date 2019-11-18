@@ -14,6 +14,7 @@ script(type="text/javascript").
 		el: '#vue',
 		data: function data(){
 			return {
+				dragging: {isDragging: false, y: 0},
 				dropped: {drop: false, layers: false, new: false},
 				isSafari: /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification)),
 				csrfToken: this.parseObj(!{JSON.stringify(csrfToken)}),
@@ -198,7 +199,7 @@ script(type="text/javascript").
 				censusLoad: {tempGeo:[],placetype:'',cats:null,cat:null} ,
 				json: {},
 				mapCtrl: false,
-				exclude: ['visibility', 'extrude', 'tessellate', 'INTPTLAT10', 'INTPTLON10', 'STATEFP10', 'COUNTYFP10', 'TRACTCE10', 'BLKGRPCE10', 'GEOID10']
+				exclude: ['visibility', 'extrude', 'tessellate', 'INTPTLAT10', 'INTPTLON10', 'STATEFP10', 'COUNTYFP10', 'TRACTCE10', 'BLKGRPCE10', 'GEOID10', 'ST_KEY', 'CIMID', 'SITEADDRES', 'ZIPCODE', 'NORTHING', 'EASTING']
 
 
 			}
@@ -339,34 +340,6 @@ script(type="text/javascript").
 			//- 	}
 			//- }
 
-			if (self.tinymce === ''  && $('#description')[0] && typeof tinymce === 'object') {
-				//- console.log($('#description')[0])
-				self.tinymce = tinymce.init({
-					menubar: false,
-					statusbar: false,
-					theme: 'inlite',
-					inline: true,
-					selector: "#description",
-					plugins: 'lists',
-					valid_elements: '*[*]',
-					setup: function (editor) {
-						//- editor.ui.registry.addButton('footnote', {
-						editor.addButton('footnote', {
-							text: 'Add footnote',
-							icon: 'link',
-							onclick: function(){
-								self.doc.properties.footnotes.push(
-									''
-								);
-								editor.insertContent('<a v-if="doc.properties.footnotes && doc.properties.footnotes['+(self.doc.properties.footnotes.length - 1)+']" href="ftnref'+(self.doc.properties.footnotes.length)+'"><span class="super">'+(self.doc.properties.footnotes.length)+'</span></a>')
-								//editor.insertContent('<span v-if="doc.properties.footnotes && doc.properties.footnotes['+(self.doc.properties.footnotes.length - 1)+']" class="super">'+(self.doc.properties.footnotes.length)+'</span>')
-								$('#footnote'+self.doc.properties.footnotes.length - 1).focus()
-							}
-						})
-					},
-					selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | footnote'
-				});
-			}
 			//- const tempstyles = (!self.doc || self.doc.properties.layers.length === 0 ? [] : self.doc.properties.layers)
 			//- self.tempstyles = JSON.parse(JSON.stringify(tempstyles));
 			window.addEventListener('resize', self.resizeFrame);
@@ -464,6 +437,34 @@ script(type="text/javascript").
 					}
 				
 				})
+				if (self.tinymce === ''  && $('#description')[0] && typeof tinymce === 'object') {
+					//- console.log($('#description')[0])
+					self.tinymce = tinymce.init({
+						menubar: false,
+						statusbar: false,
+						theme: 'inlite',
+						inline: true,
+						selector: "#description",
+						plugins: 'lists',
+						valid_elements: '*[*]',
+						setup: function (editor) {
+							//- editor.ui.registry.addButton('footnote', {
+							editor.addButton('footnote', {
+								text: 'Add footnote',
+								icon: 'link',
+								onclick: function(){
+									self.doc.properties.footnotes.push(
+										''
+									);
+									editor.insertContent('<a v-if="doc.properties.footnotes && doc.properties.footnotes['+(self.doc.properties.footnotes.length - 1)+']" href="ftnref'+(self.doc.properties.footnotes.length)+'"><span class="super">'+(self.doc.properties.footnotes.length)+'</span></a>')
+									//editor.insertContent('<span v-if="doc.properties.footnotes && doc.properties.footnotes['+(self.doc.properties.footnotes.length - 1)+']" class="super">'+(self.doc.properties.footnotes.length)+'</span>')
+									$('#footnote'+self.doc.properties.footnotes.length - 1).focus()
+								}
+							})
+						},
+						selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | footnote'
+					});
+				}
 
 			})
 		},

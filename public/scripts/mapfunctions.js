@@ -293,8 +293,19 @@ var mapFunctions = {
 		var self = this;
 		var buckets = style.buckets;
 		var colors = style.colors;
-		var theseKeys = Object.keys(item.features[0].properties).filter(function(it){return !isNaN(parseInt(item.features[0].properties[it], 10))})
+		var theseKeys = Object.keys(item.features[0].properties).filter(function(it){
+			
+			return self.exclude.indexOf(it) === -1 && !isNaN(parseInt(item.features[0].properties[it], 10))
+		})
+		if (theseKeys.length === 0) {
+			theseKeys = Object.keys(item.features[0].properties).filter(function(it){
+				return self.exclude.indexOf(it) === -1 && /(yes|no|true|false)/i.test(item.features[0].properties[it])
+			})
+			// console.log(item.features[0].properties);
+		}
+		// self.layers[ind].properties.keys = theseKeys;
 		var thisKey = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
+		style.key = thisKey;
 		var count = 0;
 		var distinct = [];
 		var vals = item.features.map(function(feature){
@@ -308,7 +319,11 @@ var mapFunctions = {
 				}
 				return parseInt(feature.properties[thisKey], 10)
 			} else {
-				return 0;
+				var val = /(yes|true)/i.test(feature.properties[thisKey]) ? 1 : 0;
+				if (distinct.indexOf(val) === -1) {
+					distinct.push(val)
+				}
+				return val;
 			}
 		});
 		distinct.sort(function(a, b){
@@ -331,21 +346,66 @@ var mapFunctions = {
 				set = distinct;
 			}
 			style.set = set;
-			for (var i = colors.length; i < style.set.length; i++) {
-				style.colors.push(self.c[i]) 
-			}
 		} else {
-			var inc = range / colors.length;
+			style.set = distinct;
+			style.buckets = distinct.length;
+			var inc = range / buckets;
 			style.inc = inc;
-			var set = [];
-			for (var i = 0; i < colors.length; i++) {
-				set.push((min + (inc * i)))
-			}
-			style.set = set;
+			
+			
+		}
+		for (var i = colors.length; i < style.set.length; i++) {
+			style.colors.push(self.c[i]) 
 		}
 		style.isInt = count === 0;
 		self.doc.properties.layers[ind] = style;
-		cb(style)
+		cb(item, style)
+	},
+	initDragLayer: function(i, e) {
+		var self = this;
+		self.dragging.isDragging = true;
+		self.dragging.y = e.screenY;
+		setTimeout(function(){
+			if (!self.dragging.isDragging) {
+				self.dragging.isDragging = false;
+			}
+		},1000)
+	},
+	dragLayer: function(i, e) {
+		var self = this;
+		if (self.dragging.isDragging) {
+			self.dragging.y = e.screenY;
+		}
+		self.dragging.isDragging = true;
+	},
+	endDragLayer: function(i, e) {
+		var self = this;
+		var prevSibling = (e.target.previousSibling && e.target.previousSibling.id !== 'legend' ? e.target.previousSibling : null);
+		var nextSibling = (e.target.nextSibling && e.target.nextSibling.id !== 'availablelayers' ? e.target.nextSibling : null);
+		if (prevSibling && self.dragging.y < prevSibling.getBoundingClientRect().top) {
+			console.log('move up')
+			// var dtemp = self.doc.properties.layers[i-1];
+			var tmp = self.layers[i-1];
+			// var dlayer = self.doc.properties.layers[i];
+			var layer = self.layers[i];
+			self.layers[i-1] = layer;
+			// self.doc.properties.layers[i-1] = dlayer;
+			self.layers[i] = tmp;
+			// self.doc.properties.layers[i] = dtemp;
+		} else if (nextSibling && self.dragging.y > nextSibling.getBoundingClientRect().top) {
+			console.log('move down')
+			// var dtemp = self.doc.properties.layers[i+1];
+			var tmp = self.layers[i+1];
+			// var dlayer = self.doc.properties.layers[i];
+			var layer = self.layers[i];
+			self.layers[i+1] = layer;
+			// self.doc.properties.layers[i+1] = dlayer;
+			self.layers[i] = tmp;
+			// self.doc.properties.layers[i] = dtemp;
+			self.lyr[self.layers[i]._id].bringToBack();
+		}
+		self.dragging.isDragging = false;
+
 	},
 	loadLayer: function(item, id) {
 		var self = this;
@@ -366,13 +426,14 @@ var mapFunctions = {
 		})[0]);
 		if (item.features && item.features[0]) {
 
-			self.determineLegend(item, style, ind, function(styl){
+			self.determineLegend(item, style, ind, function(it, styl){
+				// self.layers[ind] = it;
 				ljson = L.geoJson().addTo(self.map);
 
-				var isPointCoords = (!item.features ? self.isPointCoords(item.geometry.coordinates) : self.isPointCoords(item.features[0].geometry.coordinates))
+				var isPointCoords = (!it.features ? self.isPointCoords(it.geometry.coordinates) : self.isPointCoords(it.features[0].geometry.coordinates))
 				if (isPointCoords) {
 
-					var ojson = L.geoJson(item, {
+					var ojson = L.geoJson(it, {
 						
 						onEachFeature:function(feature,layer){
 							var thisLayer = L.GeoJSON.geometryToLayer(feature, {
@@ -397,7 +458,7 @@ var mapFunctions = {
 					})
 				} else {
 
-					var ojson = L.geoJson(item, {
+					var ojson = L.geoJson(it, {
 						
 						onEachFeature:function(feature,layer){
 							var thisLayer = L.GeoJSON.geometryToLayer(feature);
@@ -475,8 +536,8 @@ var mapFunctions = {
 				}
 				style.buckets = length;
 				self.doc.properties.layers[itemi] = style;
-				self.determineLegend(item, style, itemi, function(styl){
-					self.lyr[lid] = self.loadLayer(item, lid)
+				self.determineLegend(item, style, itemi, function(it, styl){
+					self.lyr[lid] = self.loadLayer(it, lid)
 				})
 
 			}
@@ -493,7 +554,7 @@ var mapFunctions = {
 			style.colors[index] = e.target.value;
 				if (self.json[self.doc.properties.layers[i].lid]) {
 					var item = self.json[self.doc.properties.layers[i].lid];
-					self.determineLegend(item, style, i, function(styl){
+					self.determineLegend(item, style, i, function(it, styl){
 						self.doc.properties.layers[i] = styl;
 						self.lyr[self.doc.properties.layers[i].lid] = self.loadLayer(self.json[self.doc.properties.layers[i].lid], self.doc.properties.layers[i].lid)
 					})
@@ -550,7 +611,7 @@ var mapFunctions = {
 			}
 			cb(latlng)
 		} else {
-			$.get('/publishers/esta/json/json_'+key+'.json').then(async function(results){
+			$.get('/publishers/esta/json/json_'+key+'.json?v=1').then(async function(results){
 				if (results) {
 					var result = self.adjustedGeometryCoord(results);
 					var coords = (!result.features ? result.geometry.coordinates : result.features[0].geometry.coordinates)
@@ -596,9 +657,10 @@ var mapFunctions = {
 								// self.lyr[key].bringToFront()
 								// setTimeout(()=>,500)
 								
-							} else {
-								self.lyr[key].bringToBack()
 							}
+							//  else {
+							// 	self.lyr[key].bringToBack()
+							// }
 						}
 
 					}
@@ -645,7 +707,7 @@ var mapFunctions = {
 			position:'topleft'
 		}).addTo(map);
 		
-		var credit = (!self.credit || self.credit === '' ? self.getCredit() : self.credit) + ' | ' + self.baseMaps[self.base].attribution
+		var credit = (!self.credit || self.credit === '' ? self.getCredit() : self.credit) + self.baseMaps[self.base].attribution
 		self.map = map;
 		self.tileLayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: map.getBounds().pad(1000), attribution: credit}).addTo(self.map);
 
@@ -673,7 +735,7 @@ var mapFunctions = {
 					if (self.availablelayers && self.availablelayers.length > 0) {
 						await self.availablelayers.forEach(function(item, i){
 							var key = item._id;
-							$.get('/publishers/esta/json/json_'+key+'.json').then(function(result){
+							$.get('/publishers/esta/json/json_'+key+'.json?v=1').then(function(result){
 								if (result) {
 									self.json[key] = result;
 									self.json[key]._id = key;
@@ -738,9 +800,9 @@ var mapFunctions = {
 	},
 	changeBase: function(i, e) {
 		var self = this;
-		var credit = self.credit + ' | ' + self.baseMaps[self.base].attribution;
 		if (e.target.checked) {
 			self.base = i
+			var credit = (!self.credit || self.credit === '' ? self.getCredit() : self.credit) + self.baseMaps[self.base].attribution;
 			self.tileLayer.remove();
 			self.tileLayer = L.tileLayer(self.baseMaps[self.base].url, {renderer: L.canvas({padding:0.5}), bounds: self.map.getBounds().pad(1000), attribution: credit}).addTo(self.map);
 		}
@@ -748,8 +810,10 @@ var mapFunctions = {
 	},
 	layerAdd: function(id) {
 		var self = this;
-		if (self.json[id]) self.lyr[id] = self.loadLayer(self.json[id], id);
-		if (self.lyr[id].options) self.lyr[id].options.interactive = true;
+		if (self.json[id]) {
+			self.lyr[id] = self.loadLayer(self.json[id], id);
+		}
+		if (self.lyr[id] && self.lyr[id].options) self.lyr[id].options.interactive = true;
 		//- self.map.addLayer(self.lyr[id]);
 	},
 	setBtn: function(x, y) {
@@ -759,6 +823,7 @@ var mapFunctions = {
 
 	},
 	addLayer: async function(id, e) {
+		console.log(id)
 		var self = this;
 		var tlrs = self.doc.properties.layers.filter(function(item){
 			return item.lid === id

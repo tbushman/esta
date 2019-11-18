@@ -236,7 +236,7 @@ blockquote, .blockquote {
   /* align-items: stretch; */
 }
 .layer.ctrl {
-	margin-top: 10px;
+	margin-bottom: 10px;
 }
 .legend input, .legend .color {
   /* bottom: 0; */
@@ -631,7 +631,6 @@ em {
 	overflow-y: hidden;
 	overflow-x: hidden;
 	position: fixed;
-	visibility: hidden;
 	pointer-events: none;
 	padding: 0 20px 0 17px;
 	
@@ -699,7 +698,7 @@ em {
   left: var(--thumbw);
 }
 .layerDrop > .row {
-  width: 180px;
+  width: calc(100vw - calc(var(--thumbw) * 2));
   pointer-events: auto;
 }
 .layerDrop > .row > span {
@@ -1118,6 +1117,13 @@ breadcrumbs a {
 	left: 25%;
 }
 
+.leaflet-container {
+	font: 10px/1.2 "Helvetica Neue", Arial, Helvetica, sans-serif!important;
+	font: calc(var(--thumbw) / 5)/calc(var(--thumbw) / calc(var(--thumbw) / 1.2)) "Helvetica Neue", Arial, Helvetica, sans-serif!important;
+}
+.leaflet-control-attribution {
+	padding: 0!important;
+}
 .leaflet-pane > svg path {
 	cursor: pointer;
 	pointer-events: auto;
@@ -1698,6 +1704,9 @@ del {
 }
 
 @media (min-width: 600px) {
+	.layerDrop > .row {
+		width: 250px;
+	}
 	.dropdown {
 	width: 250px;
 	}

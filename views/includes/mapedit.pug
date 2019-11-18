@@ -1,19 +1,35 @@
-fieldset.lcontrol(style="padding:0;border:none;width:45px;", v-cloak, v-if="mapReady && mapActive")
-	
-	legend(style="font-size: 11px;") layers
-	div.layer(v-for="(layer, o) in layers", :class="mapCtrl ? 'ctrl' : ''")
+fieldset.lcontrol(style="padding:0;border:none;width:45px;min-inline-size:auto;", v-cloak, v-if="mapReady && mapActive")
+	//- div.row(style="width: calc(100vw - calc(var(--thumbw) * 2));")
+	legend#legend(style="height:9px;font-size: 11px;background-color:var(--primary);")
+		span.layerDrop(style="position:absolute;height:auto;width:calc(calc(100vw - var(--thumbw)) - 9px);")
+			span(style="height:9px;left:0;line-height:9px;font-size:9px;" v-text="'layers'")
+			a.legend.close(v-if="mapCtrl" @click="mapCtrl = false" style="width:9px;height:9px;display:inline-block; left:auto;right:0;")
+		
+				span.tb-font-xxs( v-text="'x'" style="line-height: 9px;padding:3px 0 0 0;vertical-align:top;")
+	div.layer(
+		v-for="(layer, o) in layers"
+		:class="mapCtrl ? 'ctrl' : ''"
+		@mousedown="initDragLayer(o, $event)"
+		@touchstart="initDragLayer(o, $event)"
+		@mousemove="dragLayer(o, $event)"
+		@touchmove="dragLayer(o, $event)"
+		@mouseup="endDragLayer(o, $event)"
+		@touchend="endDragLayer(o, $event)"
+		@click="switchMapCtrl"
+		)
 		//- @mouseover="mapCtrl = true", @touchstart="mapCtrl = true", 
 		//- @mouseleave="mapCtrl = false", @touchend="mapCtrl = false"
 		//- @click="subDropdown($event)", 
-		a.layerDrop(style="display: flex;"
+		a.layerDrop(
+			style="display: flex;pointer-events:none;"
 			)
-			.ui(@click="switchMapCtrl",
-				style="min-width:45px;min-width:var(--thumbw);margin:0;")
+			.ui(
+				style="pointer-events:none;min-width:45px;min-width:var(--thumbw);margin:0;")
 
 				img(:src="(!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? (!layer.properties.media[0] ? '/images/publish_logo_sq.svg' : layer.properties.media[0].thumb) : layer.properties.media[layer.properties.media.length - 1].thumb)+'?version='+Math.random()", style="pointer-events: none;")
 			
-			input(type="checkbox", :value="layer._id", :id="'layer_'+o", v-text="layer.properties.label", style="position:absolute;right:0", @click="changeLayers(layer._id, $event)", :checked="(doc.properties.layers.map(function(item){return item.lid}).indexOf(layer._id) !== -1)")
-			span.row(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id && mapCtrl")
+			input(type="checkbox", :value="layer._id", :id="'layer_'+o", v-text="layer.properties.label", style="position:absolute;right:0;pointer-events:all;", @click="changeLayers(layer._id, $event)", :checked="(doc.properties.layers.map(function(item){return item.lid}).indexOf(layer._id) !== -1)")
+			span.row(style="pointer-events:all;", v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id && mapCtrl")
 				span.tb-10-m0.tb-font-s(v-text="layer.properties.label", style="padding-right: 15px; padding-left: 8px;")
 				span.tb-10-m0
 					span.row
@@ -27,7 +43,7 @@ fieldset.lcontrol(style="padding:0;border:none;width:45px;", v-cloak, v-if="mapR
 							//- v-model="style.buckets", 
 							input.tb-10-m0(type="number", min="1", max="11", style="margin:0;", :value="style.buckets", @change="numberColorBucket(style.lid, $event)", @blur="numberColorBucket(style.lid, $event)")
 			//- :style="{width: (mapCtrl ? '45px' : '13px'), width: (mapCtrl ? 'var(--thumbw)' : '13px')}", 
-			div.legend(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id", 
+			div.legend(style="pointer-events:all;", v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id", 
 				:class="!mapCtrl ? 'res' : 'ctrl' "
 				)
 				
@@ -62,7 +78,7 @@ fieldset.lcontrol(style="padding:0;border:none;width:45px;", v-cloak, v-if="mapR
 		//- 	input(type="number", min="1", max="4", v-model="style.buckets", style="margin:0;", @change="numberColorBucket(style.lid, $event)")
 		
 
-	legend.block(style="font-size: 11px; margin-top:10px;", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0") more
+	legend.block#availablelayers(style="font-size: 11px; margin-top:10px;", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0") more
 	a.drop(style="display: flex;width:45px;width:var(--thumbw);", @click="drop('layers', $event)", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0")
 		.ui(style="min-width:45px;min-width:var(--thumbw);margin:0;pointer-events:none;")
 			img(src="/images/icons/add.svg", style="pointer-events: none;")
