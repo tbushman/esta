@@ -85,10 +85,14 @@ body {
 	background-color: var(--primary);
 }
 fieldset.lcontrol {
-  margin-inline-start: 0;
-margin-inline-end: 0;
-padding-inline-start: 0;
-padding-inline-end: 0;
+  -webkit-margin-start: 0;
+          margin-inline-start: 0;
+-webkit-margin-end: 0;
+        margin-inline-end: 0;
+-webkit-padding-start: 0;
+        padding-inline-start: 0;
+-webkit-padding-end: 0;
+        padding-inline-end: 0;
 }
 /* .hidden {
   display: none!important;
@@ -101,7 +105,9 @@ padding-inline-end: 0;
 	height: var(--thumbw);
 	cursor: -webkit-grab;
 	cursor: grab;
-	transform: translate(-50%,-50%);
+	-webkit-transform: translate(-50%,-50%);
+	    -ms-transform: translate(-50%,-50%);
+	        transform: translate(-50%,-50%);
 	z-index: 5;
 	/*clip-path: url(#btn);*/
 	background-color: rgba(255,255,255,0.25);
@@ -208,7 +214,7 @@ max-width: 44vw;
 .viewerlist > ul {
   overflow-y: scroll;
   height: auto;
-  max-height: 40vh;
+  max-height: 35vh;
 }
 .viewerlist > ul > li {
 	margin-top: 8px;
@@ -225,9 +231,16 @@ blockquote, .blockquote {
   width: 13px;
   /* width: var(--thumbw); */
   /* padding-top: 5px; */
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: stretch;
+      -ms-flex-align: stretch;
+          align-items: stretch;
 }
 .legend.res {
   width: 13px;
@@ -242,8 +255,10 @@ blockquote, .blockquote {
   /* bottom: 0; */
   vertical-align: top;
   border: 0px solid rgba(255,255,255,0)!important;
-  padding-inline-end: 0;
-  padding-inline-start: 0;
+  -webkit-padding-end: 0;
+          padding-inline-end: 0;
+  -webkit-padding-start: 0;
+          padding-inline-start: 0;
   height: auto;
   width: 100%;
 }
@@ -270,6 +285,7 @@ blockquote, .blockquote {
 	width: 45px;
   width: var(--thumbw);
 }
+
 /*.blockquote p,
 .blockquote h3,
 blockquote
@@ -491,12 +507,15 @@ i.fas.active {
 div.thumbnails {
 	height: auto!important;
 	white-space: nowrap;
+	display:-webkit-box;
+	display:-ms-flexbox;
 	display:flex;
-	flex-flow:nowrap;
+	-ms-flex-flow:nowrap;
+	    flex-flow:nowrap;
 	overflow-y: hidden;
 	overflow-x: hidden;
 	width: auto;
-	-ms-transition: left 2s;
+	-o-transition: left 2s;
 	transition: left 2s;
 	-webkit-transition: left 2s;
 	position: absolute!important;
@@ -626,7 +645,8 @@ em {
 	right: auto;
 	margin-top: 0;
 	background-color: #fff;
-	box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
+	-webkit-box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
+	        box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
 	height: calc(100% - 100px);
 	overflow-y: hidden;
 	overflow-x: hidden;
@@ -691,8 +711,13 @@ em {
   z-index: 9;
   white-space: nowrap;
   vertical-align: top;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
-  flex-direction: column;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
   position: absolute;
   left: 45px;
   left: var(--thumbw);
@@ -725,6 +750,15 @@ em {
 	font-size: 13px!important;
 	color: #555!important;
 	border: 0px solid #fff;
+	padding: 0;
+	border: none;
+	
+}
+.layerDrop input[type="color"]::-webkit-color-swatch, .layerDrop input[type="color"]::-moz-color-swatch {
+	border: none;
+}
+.layerDrop input[type="color"]::-webkit-color-swatch-wrapper {
+	padding: 0;
 }
 /* fieldset {
   width: 45px!important;
@@ -754,8 +788,13 @@ fieldset select:hover {
 	bottom: auto;
 	/* width: var(--thumbw); */
 	width: auto;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
-	flex-direction: column;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: column;
+	        flex-direction: column;
 }
 .layer {
 	width: var(--thumbw);
@@ -838,7 +877,8 @@ font-size: 10px;
 	min-height: 45px;
 	min-height: var(--thumbw);
 	margin: 0;
-	box-shadow: 3px 3px 2px 1px rgba(0, 0, 0, .2);
+	-webkit-box-shadow: 3px 3px 2px 1px rgba(0, 0, 0, .2);
+	        box-shadow: 3px 3px 2px 1px rgba(0, 0, 0, .2);
 	right: auto;
 }
 
@@ -856,9 +896,12 @@ font-size: 10px;
 	background-color: rgba(255,255,255,0);
 	max-height: 100%;
 	position: fixed;
-	box-shadow: none;
+	-webkit-box-shadow: none;
+	        box-shadow: none;
 	margin: 0 auto;
-	justify-content: center;
+	-webkit-box-pack: center;
+	    -ms-flex-pack: center;
+	        justify-content: center;
 	width: auto;
 	left: auto;
 	right: 33px;
@@ -932,7 +975,8 @@ font-size: 10px;
 	overflow-x: hidden;
 	padding: 5px 0 10px 0;
 	border: 2px solid rgba(255,255,255,1);
-	box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
+	-webkit-box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
+	        box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
 	
 }
 .slidedown.static span {
@@ -944,7 +988,8 @@ font-size: 10px;
 	margin-left: 0;
 	min-height: inherit;
 	max-height: inherit;
-	box-shadow: 0px 0px 0px 0px #fff;
+	-webkit-box-shadow: 0px 0px 0px 0px #fff;
+	        box-shadow: 0px 0px 0px 0px #fff;
 	background-color: #fff;
 	background-color: var(--primary);
 }
@@ -1014,7 +1059,8 @@ breadcrumbs a {
 .centerall img {
 	width: 100%;
 	height: 100%;
-	box-shadow: 3px 3px 2px 1px rgba(0, 0, 0, .2);
+	-webkit-box-shadow: 3px 3px 2px 1px rgba(0, 0, 0, .2);
+	        box-shadow: 3px 3px 2px 1px rgba(0, 0, 0, .2);
 }
 
 .row {
@@ -1033,7 +1079,8 @@ breadcrumbs a {
 	margin: 0 auto;
 	width: auto;
 	height: auto;
-	box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
 	/*pointer-events: auto;*/
 	/*background-color: #fff;
 	background-color: var(--primary);*/
@@ -1232,33 +1279,42 @@ a.submenu.drop.active > div.ui > svg > path, a.submenu.drop.active > div.ui > sv
 
 .flexcontainr {
 	display: -webkit-box;
-  display: -moz-box;
   display: -ms-flexbox;
-  display: -webkit-flex;
 	display: flex;
-	justify-content: space-around;
-	flex-direction: row;
+	-ms-flex-pack: distribute;
+	    justify-content: space-around;
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: row;
+	        flex-direction: row;
 	min-height: auto;
 	/*height: 100%;*/
 }
 .flexcontainr > img {
-	flex:1;
+	-webkit-box-flex:1;
+	    -ms-flex:1;
+	        flex:1;
 }
 div.flexcontainl {
 	
 }
 .flexcontainc {
 	display: -webkit-box;
-  display: -moz-box;
   display: -ms-flexbox;
-  display: -webkit-flex;
 	display: flex;
-	justify-content:center;
-	flex-direction: column;
+	-webkit-box-pack:center;
+	    -ms-flex-pack:center;
+	        justify-content:center;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: column;
+	        flex-direction: column;
 	height: 100%;
 }
 .imginner {
-	flex: none!important; width:100%;height: auto;
+	-webkit-box-flex: 0!important;
+	    -ms-flex: none!important;
+	        flex: none!important; width:100%;height: auto;
 }
 
 a.img {
@@ -1286,7 +1342,9 @@ a.img img {
 	width: 100%;
 	height: auto;
 	top: 0;
-	transform: none;
+	-webkit-transform: none;
+	    -ms-transform: none;
+	        transform: none;
 	left: 0;
 }
 
@@ -1357,6 +1415,7 @@ input[type="text"], input[type="password"], input[type="email"], input[type="num
 	-webkit-box-sizing: content-box;
 					box-sizing: content-box;
 	-webkit-transition: all 0.3s;
+	-o-transition: all 0.3s;
 	transition: all 0.3s;
 	pointer-events: all;
 }
@@ -1404,9 +1463,16 @@ button span, a[role="button"] span {
 	left: 0;
 }
 #inputs {
+    display: -webkit-box;
+    display: -ms-flexbox;
     display: flex;
-    flex-direction: row;
-    align-items: stretch;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+        -ms-flex-direction: row;
+            flex-direction: row;
+    -webkit-box-align: stretch;
+        -ms-flex-align: stretch;
+            align-items: stretch;
     position: fixed;
     bottom: 3px;
     right: auto;
@@ -1419,7 +1485,9 @@ button.mapActive {
   pointer-events: all;
 }
 button.mapActive:last-child {
-  flex: 1;
+  -webkit-box-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
 }
 input[type="file"]::-webkit-file-upload-button {
 	border: 0;
@@ -1704,8 +1772,11 @@ del {
 }
 
 @media (min-width: 600px) {
+	.layerDrop {
+		width: 295px!important;
+	}
 	.layerDrop > .row {
-		width: 250px;
+		width: 250px!important;
 	}
 	.dropdown {
 	width: 250px;
@@ -1803,6 +1874,8 @@ del {
 		display: none;
 	}
 	.dropdown.static {
+		display: -webkit-box;
+		display: -ms-flexbox;
 		display: flex;
 	}
 	.tb-10-m4 {

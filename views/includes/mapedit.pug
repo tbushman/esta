@@ -1,25 +1,28 @@
 fieldset.lcontrol(style="padding:0;border:none;width:45px;min-inline-size:auto;", v-cloak, v-if="mapReady && mapActive")
-	//- div.row(style="width: calc(100vw - calc(var(--thumbw) * 2));")
+
 	legend#legend(style="height:9px;font-size: 11px;background-color:var(--primary);")
-		span.layerDrop(style="position:absolute;height:auto;width:calc(calc(100vw - var(--thumbw)) - 9px);")
+		span.layerDrop(
+			style="position:absolute;height:auto;width:calc(calc(100vw - var(--thumbw)) - 9px);background-color:var(--primary);height:9px;"
+			:style="{height: mapCtrl ? '9px' : 0}"
+			)
 			span(style="height:9px;left:0;line-height:9px;font-size:9px;" v-text="'layers'")
 			a.legend.close(v-if="mapCtrl" @click="mapCtrl = false" style="width:9px;height:9px;display:inline-block; left:auto;right:0;")
 		
-				span.tb-font-xxs( v-text="'x'" style="line-height: 9px;padding:3px 0 0 0;vertical-align:top;")
+				span.tb-font-xs( v-text="'x'" style="line-height: 9px;padding:0 0 0 0;vertical-align:top;")
+
 	div.layer(
 		v-for="(layer, o) in layers"
 		:class="mapCtrl ? 'ctrl' : ''"
-		@mousedown="initDragLayer(o, $event)"
 		@touchstart="initDragLayer(o, $event)"
-		@mousemove="dragLayer(o, $event)"
 		@touchmove="dragLayer(o, $event)"
-		@mouseup="endDragLayer(o, $event)"
 		@touchend="endDragLayer(o, $event)"
+		@mouseenter="endDragLayer(o, $event)"
+		@mousedown="initDragLayer(o, $event)"
+		@mousemove="dragLayer(o, $event)"
+		@mouseleave="endDragLayer(o, $event)"
+		@mouseup="endDragLayer(o, $event)"
 		@click="switchMapCtrl"
 		)
-		//- @mouseover="mapCtrl = true", @touchstart="mapCtrl = true", 
-		//- @mouseleave="mapCtrl = false", @touchend="mapCtrl = false"
-		//- @click="subDropdown($event)", 
 		a.layerDrop(
 			style="display: flex;pointer-events:none;"
 			)
@@ -31,32 +34,30 @@ fieldset.lcontrol(style="padding:0;border:none;width:45px;min-inline-size:auto;"
 			input(type="checkbox", :value="layer._id", :id="'layer_'+o", v-text="layer.properties.label", style="position:absolute;right:0;pointer-events:all;", @click="changeLayers(layer._id, $event)", :checked="(doc.properties.layers.map(function(item){return item.lid}).indexOf(layer._id) !== -1)")
 			span.row(style="pointer-events:all;", v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id && mapCtrl")
 				span.tb-10-m0.tb-font-s(v-text="layer.properties.label", style="padding-right: 15px; padding-left: 8px;")
-				span.tb-10-m0
+				span.tb-10-m0(style="display:flex;flex-direction:column;")
+					span.row(style="height:9px;")
+						span.tb-08-m0(style="height:9px;")
+							label.tb-10-m0(style="font-size: 9px;pointer-events: none;line-height:9px;padding-left:8px;", for="key") field
+						span.tb-02-m0(style="height:9px;")
+							label.tb-10-m0(style="font-size: 9px;pointer-events: none;line-height:9px;", for="buckets") divisor
 					span.row
 						span.tb-08-m0
-							//- label.tb-10-m0(style="font-size: 9px;margin-top:10px;pointer-events: none;", for="key") field
-							//- v-model="style.key" 
 							select#key.tb-10-m0(@change="changeAttribute(layer._id, $event)", :value="style.key", style="margin:0;")
 								option(v-for="(item,l) in layer.properties.keys", v-if="!isNaN(parseFloat(json[style.lid].features[0].properties[item])) && exclude.indexOf(item) === -1" v-text="item.replace(/^r_/, '').replace(/^el_/, '').split('_').join(' ')", :value="item", :selected="item === style.key")
 						span.tb-02-m0
-							//- label.tb-10-m0(style="font-size: 9px;pointer-events: none;", for="buckets") divisor
-							//- v-model="style.buckets", 
-							input.tb-10-m0(type="number", min="1", max="11", style="margin:0;", :value="style.buckets", @change="numberColorBucket(style.lid, $event)", @blur="numberColorBucket(style.lid, $event)")
-			//- :style="{width: (mapCtrl ? '45px' : '13px'), width: (mapCtrl ? 'var(--thumbw)' : '13px')}", 
+							input.tb-10-m0#buckets(type="number", min="1", max="11", style="margin:0;", :value="style.buckets", @change="numberColorBucket(style.lid, $event)", @blur="numberColorBucket(style.lid, $event)")
+
 			div.legend(style="pointer-events:all;", v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id", 
 				:class="!mapCtrl ? 'res' : 'ctrl' "
 				)
 				
-				//- legend(style="font-size: 11px;", v-if="!mapCtrl") Color
-				//- :style="{height: (!mapCtrl ? 'calc(var(--thumbw) / '+style.colors.length+' )' : 'calc(var(--thumbw) / '+style.colors.length+' )') }" 
-				//- :style="{height: (mapCtrl ? 'calc(var(--thumbw) / '+style.colors.length+' )' : 'calc(var(--thumbw) / '+style.colors.length+' )') }"
 				div(v-if="style.colors && style.colors.length > 0", v-for="(c,j) in style.colors", :class="!mapCtrl ? 'res' : 'ctrl'", 
 				:style="{height: 'calc(45px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )' }"
 				)
-					label(v-if="!isSafari" style="font-size: 7px;position:absolute;padding:2px;color:#fff;font-weight:heavier;", 
+					label(v-if="!isSafari" style="font-size: 8px;position:absolute;padding:1px 2px;color:#fff;font-weight:heavier;", 
 						:for="'color'+k+'_'+j", 
 						v-text="(style.set[j]) + '–' + (!style.colors[j+1] ? style.max : style.set[j+1])")
-					//- input(class="jscolor", :value="c.replace('#', '')", @change="changeColorBucket(k, j, $event)")
+
 					input(v-if="!isSafari" :id="'color'+k+'_'+j", type="color", :value="c", @change="changeColorBucket(k, j, $event)", style="pointer-events:all;", 
 					:style="{height: 'calc(45px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )' }"
 					)
@@ -68,15 +69,6 @@ fieldset.lcontrol(style="padding:0;border:none;width:45px;min-inline-size:auto;"
 								:style="{backgroundColor: c, height: 'calc(var(--thumbw) / '+style.colors.length+' )'}")
 								
 
-		//- div.slidedown(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id && mapCtrl")
-		//- 	//- legend(style="font-size: 11px;") style
-		//- 	label(style="font-size: 9px;margin-top:10px;", for="key") field
-		//- 	select#key(@change="changeAttribute(layer._id, $event)", v-model="style.key" style="margin:0;")
-		//- 		//v-if="(json[style.lid] && json[style.lid].features && !isNaN(parseInt(json[style.lid].features[0].properties[item],10)))"
-		//- 		option(v-for="(item,l) in layer.properties.keys", v-text="item", :value="item", :selected="item === style.key")
-		//- 	label(style="font-size: 9px;", for="buckets") divisor
-		//- 	input(type="number", min="1", max="4", v-model="style.buckets", style="margin:0;", @change="numberColorBucket(style.lid, $event)")
-		
 
 	legend.block#availablelayers(style="font-size: 11px; margin-top:10px;", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0") more
 	a.drop(style="display: flex;width:45px;width:var(--thumbw);", @click="drop('layers', $event)", v-if="availablelayers && availablelayers !== '' && availablelayers.length > 0")
@@ -92,30 +84,6 @@ fieldset.lcontrol(style="padding:0;border:none;width:45px;min-inline-size:auto;"
 			
 			span.tb-font-m(v-text="alayer.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
 			input(type="checkbox", :value="alayer._id", :id="'alayer_'+p", v-text="alayer.properties.label", style="position:absolute;", @click="changeLayers(alayer._id, $event)", :checked="(doc.properties.layers.map(function(item){return item.lid}).indexOf(alayer._id) !== -1)")
-	//- legend(style="font-size: 11px;") census
-	//- label(for="placetype", style="width: 45px;") Population Data
-	//- select#placetype(style="pointer-events: all;", name="placetype",@change="changeCensusJurisdiction($event)")
-	//- 	option(value="null", v-text="'None'", v-bind:selected="!censusLoad.placetype")
-	//- 	option(v-for="(pl, p) in placetypes", v-text="pl.name", :value="p")
-	//- label(for="placetype", v-if="censusLoad.cats && censusLoad.cats.length") Data category
-	//- select#place( v-if="censusLoad.cats && censusLoad.cats.length", style="pointer-events: all;", @change="changeCensusData($event)", v-model="censusLoad.cat")
-	//- 	option(value="null", v-text="'None'", v-bind:selected="!censusLoad.cat")
-	//- 	option(v-if="censusLoad.cats.length", v-for="(cat, i) in censusLoad.cats", v-text="cat", :value="cat", :selected="censusLoad.cat === cat")
-
-	//- select(@change="changeCensus($event)")
-	//- 	option(value="null", v-text="'None'", v-bind:selected="!boundary")
-	//- 	option(v-for="(bound, r) in boundaries", v-text="bound.name", :value="bound.code")
-	//- a.drop(v-for="(bound, r) in boundaries", style="display:flex;")
-	//- 	.ui(style="pointer-events: none;min-width:45px;min-width:var(--thumbw);margin:0;")
-	//- 		img(src="/images/publish_logo_sq.svg", style="pointer-events:none;")
-	//- 	span.tb-font-m(v-text="bound.name")
-	//- 	input(type="checkbox", :value="bound.code", v-text="bound.name", style="position:absolute;", @click="changeCensus(bound.code, $event)")
-
-	//- legend(style="font-size: 11px;") eviction
-	//- a.drop(style="display:flex;", @click="getEvictionLab")
-	//- 	.ui(style="pointer-events: none;min-width:45px;min-width:var(--thumbw);margin:0;")
-	//- 		img(src="/images/publish_logo_sq.svg")
-	//- 	span.tb-font-m(v-text="'evictionlab'", style="width:auto; padding-right: 15px; padding-left: 8px;")
 
 	
 	legend(style="font-size: 11px;") base
@@ -127,7 +95,7 @@ fieldset.lcontrol(style="padding:0;border:none;width:45px;min-inline-size:auto;"
 		input(type="radio", value="0", id="base_0", v-text="'Streets'", style="position:absolute;", @click="changeBase(0, $event)", :checked="base === 0")
 	a.drop(style="display: flex;width:45px;width:var(--thumbw);")
 		.ui(style="pointer-events: none;min-width:45px;min-width:var(--thumbw);margin:0;")
-			//- label(for="base_1", v-text="'satellite'", style="font-size: 7px;line-height:7px;height:7px;pointer-events:none;position:absolute;background-color:var(--primary);") 
+
 			img(src="/images/base_1.jpg", style="pointer-events: none;margin:0;")
 		span.tb-font-m(v-text="'Satellite'", style="width:auto; padding-right: 15px; padding-left: 8px;")
 		input(type="radio", value="1", id="base_1", v-text="'Satellite'", style="position:absolute;", @click="changeBase(1, $event)", :checked="base === 1")

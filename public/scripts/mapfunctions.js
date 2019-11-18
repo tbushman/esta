@@ -368,43 +368,62 @@ var mapFunctions = {
 		setTimeout(function(){
 			if (!self.dragging.isDragging) {
 				self.dragging.isDragging = false;
+			} else {
+				
 			}
 		},1000)
 	},
 	dragLayer: function(i, e) {
 		var self = this;
 		if (self.dragging.isDragging) {
-			self.dragging.y = e.screenY;
+			console.log(e)
+			self.dragging.y = e.clientY;
+			e.target.style.cursor = 'grabbing'
+			e.target.style.position = 'fixed';
+			e.target.style.left = 0;
+			e.target.style.top = self.dragging.y - 22 + 'px'
+			self.dragging.isDragging = true;
+		} else {
+			e.target.style.cursor = 'grab';
 		}
-		self.dragging.isDragging = true;
 	},
 	endDragLayer: function(i, e) {
 		var self = this;
-		var prevSibling = (e.target.previousSibling && e.target.previousSibling.id !== 'legend' ? e.target.previousSibling : null);
-		var nextSibling = (e.target.nextSibling && e.target.nextSibling.id !== 'availablelayers' ? e.target.nextSibling : null);
-		if (prevSibling && self.dragging.y < prevSibling.getBoundingClientRect().top) {
-			console.log('move up')
-			// var dtemp = self.doc.properties.layers[i-1];
-			var tmp = self.layers[i-1];
-			// var dlayer = self.doc.properties.layers[i];
-			var layer = self.layers[i];
-			self.layers[i-1] = layer;
-			// self.doc.properties.layers[i-1] = dlayer;
-			self.layers[i] = tmp;
-			// self.doc.properties.layers[i] = dtemp;
-		} else if (nextSibling && self.dragging.y > nextSibling.getBoundingClientRect().top) {
-			console.log('move down')
-			// var dtemp = self.doc.properties.layers[i+1];
-			var tmp = self.layers[i+1];
-			// var dlayer = self.doc.properties.layers[i];
-			var layer = self.layers[i];
-			self.layers[i+1] = layer;
-			// self.doc.properties.layers[i+1] = dlayer;
-			self.layers[i] = tmp;
-			// self.doc.properties.layers[i] = dtemp;
-			self.lyr[self.layers[i]._id].bringToBack();
+		if (self.dragging.isDragging) {
+			self.dragging.isDragging = false;
+			e.target.style.position = 'relative';
+			e.target.style.top = 'unset'
+			var layerEls = document.getElementsByClassName('layer');
+			console.log(layerEls[i]);
+			var prevSibling = layerEls[i - 1];
+			var nextSibling = layerEls[i + 1];
+			if (prevSibling && typeof prevSibling.getBoundingClientRect === 'function' && self.dragging.y < prevSibling.getBoundingClientRect().bottom) {
+				console.log('move up')
+				var dtemp = self.doc.properties.layers[i-1];
+				var tmp = self.layers[i-1];
+				var dlayer = self.doc.properties.layers[i];
+				var layer = self.layers[i];
+				self.layers[i-1] = layer;
+				self.doc.properties.layers[i-1] = dlayer;
+				self.layers[i] = tmp;
+				self.lyr[self.layers[i-1]._id].bringToFront();
+				self.doc.properties.layers[i] = dtemp;
+			} else if (nextSibling && typeof nextSibling.getBoundingClientRect === 'function' && self.dragging.y > nextSibling.getBoundingClientRect().top) {
+				console.log('move down')
+				var dtemp = self.doc.properties.layers[i+1];
+				var tmp = self.layers[i+1];
+				var dlayer = self.doc.properties.layers[i];
+				var layer = self.layers[i];
+				self.layers[i+1] = layer;
+				self.doc.properties.layers[i+1] = dlayer;
+				self.layers[i] = tmp;
+				self.doc.properties.layers[i] = dtemp;
+				self.lyr[self.layers[i+1]._id].bringToBack();
+			}
+
+		} else {
+			return self.dragging.isDragging = false;
 		}
-		self.dragging.isDragging = false;
 
 	},
 	loadLayer: function(item, id) {
