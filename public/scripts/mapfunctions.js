@@ -26,12 +26,16 @@ var mapFunctions = {
 		var thickness = (!thickness ? 50 : thickness);
 		var nw = (!self.wWidth ? window.innerWidth : self.wWidth);
 		var nh = (!self.wHeight ? window.innerHeight : self.wHeight);
+		var m = (!self.pu ? 
+			"M"+(thickness)+",0H"+(nw)+"V"+(nh)+"H"+(thickness)+"V0z " :
+			"M"+(thickness)+","+(thickness)+"H"+(nw - thickness)+"V"+(nh - thickness)+"H"+(thickness)+"V"+(thickness)+"z "
+		)
 		var d;
 		if (self.type === 'draw') {
 			d = "M0,0v"+nh+"h"+nw+"V0H0L0,0z"
 		} else {
 			d = "M0,0v"+nh+"h"+nw+"V0H0L0,0z "+
-			"M"+(thickness)+","+(thickness)+"H"+(nw - thickness)+"V"+(nh - thickness)+"H"+(thickness)+"V"+(thickness)+"z "
+			m
 		}
 		return d;
 	},

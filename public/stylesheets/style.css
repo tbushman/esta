@@ -1168,9 +1168,7 @@ breadcrumbs a {
 	font: 10px/1.2 "Helvetica Neue", Arial, Helvetica, sans-serif!important;
 	font: calc(var(--thumbw) / 5)/calc(var(--thumbw) / calc(var(--thumbw) / 1.2)) "Helvetica Neue", Arial, Helvetica, sans-serif!important;
 }
-.leaflet-control-attribution {
-	padding: 0!important;
-}
+
 .leaflet-pane > svg path {
 	cursor: pointer;
 	pointer-events: auto;
@@ -1194,11 +1192,18 @@ breadcrumbs a {
 	left: calc(var(--thumbw) * 1.1 )!important;
 }
 
-.leaflet-bottom {
-	bottom: 48px!important;
-	bottom: calc(var(--thumbw) * 1.1 )!important;
+.leaflet-container .leaflet-bottom {
+	/* bottom: 48px!important;
+	bottom: calc(var(--thumbw) * 1.1 )!important; */
+	transform: rotate(270deg) translate(0, -4px);
+	transform-origin: left bottom;
+	
 }
-
+.leaflet-container .leaflet-control-attribution {
+	/* padding: 0!important; */
+	height: var(--thumbw);
+	/* background-color: rgba(); */
+}
 .mce-panel {
 	pointer-events: all!important;
 }

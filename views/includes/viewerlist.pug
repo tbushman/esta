@@ -3,12 +3,15 @@ div#viewerlist(style="position:absolute;pointer-events: none;")
 
 	div.module.viewerlist(:style="{'pointer-events':'all',left: (btn.x + 'px'),bottom:(wHeight - btn.y) + 'px', 'transition-property': 'display', 'transition-duration': '1.5s', display: (!viewerList ? 'none' : 'inline-block')}")
 		include tooltip.pug
-	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px",
+	svg(v-if="pu" version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px",
 		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
 		, 
 		v-bind:width="wWidth +'px'",
 		v-bind:height="wHeight+'px'",
 		style="pointer-events: none;"
 		)
-
-		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")
+		defs
+			linearGradient#barGradient(gradientTransform="rotate(90)")
+				stop(offset="20%" stop-color="var(--primary)")
+				stop(offset="50%" stop-color="rgba(255,255,255,0)")
+		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="url(#barGradient)")
