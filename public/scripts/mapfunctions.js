@@ -399,11 +399,11 @@ var mapFunctions = {
 			e.target.style.position = 'relative';
 			e.target.style.top = 'unset'
 			var layerEls = document.getElementsByClassName('layer');
-			console.log(layerEls[i]);
+			// console.log(layerEls[i]);
 			var prevSibling = layerEls[i - 1];
 			var nextSibling = layerEls[i + 1];
 			if (prevSibling && typeof prevSibling.getBoundingClientRect === 'function' && self.dragging.y < prevSibling.getBoundingClientRect().bottom) {
-				console.log('move up')
+				// console.log('move up')
 				var dtemp = self.doc.properties.layers[i-1];
 				var tmp = self.layers[i-1];
 				var dlayer = self.doc.properties.layers[i];
@@ -414,7 +414,7 @@ var mapFunctions = {
 				self.lyr[self.layers[i-1]._id].bringToFront();
 				self.doc.properties.layers[i] = dtemp;
 			} else if (nextSibling && typeof nextSibling.getBoundingClientRect === 'function' && self.dragging.y > nextSibling.getBoundingClientRect().top) {
-				console.log('move down')
+				// console.log('move down')
 				var dtemp = self.doc.properties.layers[i+1];
 				var tmp = self.layers[i+1];
 				var dlayer = self.doc.properties.layers[i];
@@ -611,7 +611,7 @@ var mapFunctions = {
 		return feature
 	},
 	serverJson: function(isDataLayer, key, cb) {
-		console.log(isDataLayer)
+		// console.log(isDataLayer)
 		var self = this;
 		var latlng;
 		var customIcon = L.icon({
@@ -656,7 +656,7 @@ var mapFunctions = {
 						if (self.lyr[key].options) self.lyr[key].options.interactive = false;
 
 						if (isPointCoords) {
-							console.log('isPointCoords');
+							// console.log('isPointCoords');
 							// self.lyr[key].bringToFront()
 							// if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') {
 							// 	self.dataLayer.bringToBack();
@@ -664,7 +664,7 @@ var mapFunctions = {
 							// 
 							// } 
 						} else {
-							console.log('isPolyCoords');
+							// console.log('isPolyCoords');
 							// self.lyr[key].bringToBack()
 							// if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') {
 							// 	self.dataLayer.bringToBack();

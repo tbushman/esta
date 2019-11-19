@@ -357,7 +357,14 @@ script(type="text/javascript").
 					//- 	}
 					//- })	
 					setTimeout(async function(){
-						
+						Object.keys(self.json).forEach(function(key){
+							var result = self.json[key];
+							var coords = (!result.features ? result.geometry.coordinates : result.features[0].geometry.coordinates)
+							var isPointCoords = self.isPointCoords(coords);
+							if (isPointCoords) {
+								self.lyr[key].bringToFront()
+							}
+						})
 						self.dataLayer.bringToBack();
 						self.tileLayer.bringToBack();
 						

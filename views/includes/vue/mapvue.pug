@@ -102,7 +102,27 @@ script(type="text/javascript").
 				//- console.log(self.map.project(dataCoords), dataCoords);
 				//- console.log(self.lMarker.getLatLng());
 				//- console.log(self.map.latLngToLayerPoint(self.lMarker.getLatLng()))
-				self.tileLayer.bringToBack();
+				if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') {
+					//- self.layers.forEach(function(layer){
+					//- 	if (!self.isPointCoords(layer.geometry.coordinates)) {
+					//- 			self.lyr[layer._id].bringToBack()
+					//- 	}
+					//- })	
+					setTimeout(async function(){
+						Object.keys(self.json).forEach(function(key){
+							var result = self.json[key];
+							var coords = (!result.features ? result.geometry.coordinates : result.features[0].geometry.coordinates)
+							var isPointCoords = self.isPointCoords(coords);
+							if (isPointCoords) {
+								self.lyr[key].bringToFront()
+							}
+						})
+						self.dataLayer.bringToBack();
+						self.tileLayer.bringToBack();
+						
+					}, 1000)
+				
+				} 
 				self.map.on('click', function(){
 					self.mapCtrl = false;
 				})
