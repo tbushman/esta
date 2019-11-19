@@ -11,19 +11,20 @@ fieldset.lcontrol(style="padding:0;border:none;width:45px;min-inline-size:auto;"
 		
 				span.tb-font-xs( v-text="'x'")
 
-				//- @touchstart="initDragLayer(o, $event)"
-				//- @touchmove="dragLayer(o, $event)"
-				//- @touchend="endDragLayer(o, $event)"
-				//- @mouseenter="endDragLayer(o, $event)"
-				//- @mousedown="initDragLayer(o, $event)"
-				//- @mousemove="dragLayer(o, $event)"
-				//- @mouseleave="endDragLayer(o, $event)"
-				//- @mouseup="endDragLayer(o, $event)"
-				//- 
 	div.layer(
 		v-for="(layer, o) in layers"
 		:style="{pointerEvents: mapCtrl ? 'none' : 'auto'}"
 		:class="mapCtrl ? 'ctrl' : ''"
+		@touchstart="initDragLayer(o, $event)"
+		@touchmove="dragLayer(o, $event)"
+		@touchend="endDragLayer(o, $event)"
+		@mouseenter="endDragLayer(o, $event)"
+		@mousedown="initDragLayer(o, $event)"
+		@mousemove="dragLayer(o, $event)"
+		@mouseleave="endDragLayer(o, $event)"
+		@mouseup="endDragLayer(o, $event)"
+		
+
 		@click="switchMapCtrl"
 		)
 		a.layerDrop(
@@ -58,11 +59,11 @@ fieldset.lcontrol(style="padding:0;border:none;width:45px;min-inline-size:auto;"
 				style="pointer-events:none;",
 				:style="{height: 'calc(45px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )' }"
 				)
-					label(v-if="!isSafari" style="font-size: 8px;position:absolute;padding:1px 2px;color:#fff;font-weight:heavier;pointer-events:none;", 
+					label(v-if="!isSafari" style="font-size: 8px;position:absolute;padding:1px 2px;color:#fff;font-weight:heavier;pointer-events:none;z-index:2;", 
 						:for="'color'+k+'_'+j", 
 						v-text="(style.set[j]) + '–' + (!style.colors[j+1] ? style.max : style.set[j+1])")
 
-					input(v-if="!isSafari" :id="'color'+k+'_'+j", type="color", :value="c", @change="changeColorBucket(k, j, $event)", style="pointer-events:all;cursor:pointer;", 
+					input(v-if="!isSafari" :id="'color'+k+'_'+j", type="color", :value="c", @change="changeColorBucket(k, j, $event)", style="pointer-events:all;cursor:pointer;z-index:1;", 
 					:style="{height: 'calc(45px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )' }"
 					)
 					div.label.tb-font-xxs(v-if="isSafari" style="margin:0;font-size: 7px;position:absolute;padding:2px;color:#fff;font-weight:heavier;", 
