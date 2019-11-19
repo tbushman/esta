@@ -1,3 +1,5 @@
+- var selectLayers = true;
+
 div.maintitle.centerall#editor(v-cloak, :style="{'pointer-events':(mapActive && mapReady ? 'none' : 'auto')}")
 	div#inputs(v-if="(pu && pu !== '' && pu.properties.admin && type !== 'draw')", style="z-index:1;")
 		button.mapActive(v-if="!mapActive && loggedin && loggedin !== ''", v-on:click="activateMap()")
@@ -96,7 +98,20 @@ div#viewer(style="position:absolute;pointer-events: none;")
 		v-bind:height="wHeight+'px'",
 		style="pointer-events: none;"
 		)
-		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")
+		defs
+			linearGradient#barGradient(gradientTransform="rotate(90)")
+				stop(offset="20%" stop-color="var(--primary)")
+				stop(offset="50%" stop-color="rgba(255,255,255,0)")
+		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="url(#barGradient)")
+
+	//- svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px",
+	//- 	v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
+	//- 	, 
+	//- 	v-bind:width="wWidth +'px'",
+	//- 	v-bind:height="wHeight+'px'",
+	//- 	style="pointer-events: none;"
+	//- 	)
+	//- 	path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")
 	
 	table(width="100%", height="100%", v-if="doc && pu && pu.username === loggedin && type === 'draw'", style="position:fixed;top:0;background-color:var(--primary);")
 		tr

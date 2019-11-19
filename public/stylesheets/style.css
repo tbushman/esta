@@ -722,9 +722,18 @@ em {
   left: 45px;
   left: var(--thumbw);
 }
-.layerDrop > .row {
-  width: calc(100vw - calc(var(--thumbw) * 2));
+.layerDrop {
+ /* > .row, .legend.close { */
+ width: calc(100vw - 45px);
+  width: calc(100vw - var(--thumbw));
   pointer-events: auto;
+}
+.layerDrop > .tb-font-xxs, legend.tb-font-xxs {
+	padding: 0 0 0 2px; height:11px;height:calc(var(--thumbw) / 4);left:0;line-height:11px;line-height:calc(var(--thumbw) / 4);width:var(--thumbw);background-color:rgba(255,255,255,0);
+}
+.layerDrop > .row {
+	width: calc(100vw - 90px);
+	width: calc(100vw - calc(var(--thumbw) * 2));
 }
 .layerDrop > .row > span {
   padding: 0;
@@ -759,6 +768,9 @@ em {
 }
 .layerDrop input[type="color"]::-webkit-color-swatch-wrapper {
 	padding: 0;
+}
+.layerDrop .legend.close .tb-font-xs {
+	font-size:12px;line-height: 11px;line-height:calc(var(--thumbw) / 4));padding:0 2px 0 0;vertical-align:top;text-align:right;
 }
 /* fieldset {
   width: 45px!important;
@@ -1166,7 +1178,7 @@ breadcrumbs a {
 
 .leaflet-container {
 	font: 10px/1.2 "Helvetica Neue", Arial, Helvetica, sans-serif!important;
-	font: calc(var(--thumbw) / 5)/calc(var(--thumbw) / calc(var(--thumbw) / 1.2)) "Helvetica Neue", Arial, Helvetica, sans-serif!important;
+	/* font: calc(var(--thumbw) / 5.1)/calc(var(--thumbw) / calc(var(--thumbw) / 6)) "Helvetica Neue", Arial, Helvetica, sans-serif!important; */
 }
 
 .leaflet-pane > svg path {
@@ -1186,23 +1198,42 @@ breadcrumbs a {
 }
 
 .leaflet-right {
-	right: 48px!important;
-	right: calc(var(--thumbw) * 1.1 )!important;
+	
+	/* right: 48px!important;
+	right: calc(var(--thumbw) * 1.1 )!important; */
+	/* right: auto;
 	left: 48px!important;
-	left: calc(var(--thumbw) * 1.1 )!important;
+	left: var(--thumbw);
+	vertical-align: top;
+	overflow-y: visible;
+	height: auto; */
+	/* //calc(var(--thumbw) * 1.1 )!important; */
 }
 
 .leaflet-container .leaflet-bottom {
 	/* bottom: 48px!important;
 	bottom: calc(var(--thumbw) * 1.1 )!important; */
-	transform: rotate(270deg) translate(0, -4px);
-	transform-origin: left bottom;
 	
 }
 .leaflet-container .leaflet-control-attribution {
 	/* padding: 0!important; */
-	height: var(--thumbw);
-	/* background-color: rgba(); */
+	width: auto;
+	position: fixed;
+	bottom: 0;
+	left: 52px;
+	left: calc(var(--thumbw) * 1.1);
+	right: auto;
+	min-width: 50vh;
+	max-width: calc(100vh - 270);
+	max-width: calc(100vh - calc(var(--thumbw) * 6) - 18px); 
+	min-height: 48px;
+	min-height: calc(var(--thumbw) * 1.1);
+	max-height: 50px;
+	max-height: var(--thumbw);
+	transform: rotate(270deg);
+	transform-origin: left bottom;
+	margin: 10px 0 0 0!important;
+	float: left!important;
 }
 .mce-panel {
 	pointer-events: all!important;
@@ -1718,11 +1749,20 @@ del {
 	background-color: var(--highlight)!important;
 }
 
-@media (max-width: 400px) {
+@media (max-width: 419px) {
 	
 		
 }
-@media (min-width: 401px) {
+@media (min-width: 420px) {
+	.layerDrop {
+		width: 345px!important;
+	}
+	.layerDrop > .row {
+		width: 300px!important;
+	}
+	.dropdown {
+	width: 300px;
+	}
 	
 	.tb-10-m1 {
 		width: 100%;
@@ -1777,15 +1817,6 @@ del {
 }
 
 @media (min-width: 600px) {
-	.layerDrop {
-		width: 295px!important;
-	}
-	.layerDrop > .row {
-		width: 250px!important;
-	}
-	.dropdown {
-	width: 250px;
-	}
 
 	div.img > img {
 		

@@ -26,8 +26,9 @@ var mapFunctions = {
 		var thickness = (!thickness ? 50 : thickness);
 		var nw = (!self.wWidth ? window.innerWidth : self.wWidth);
 		var nh = (!self.wHeight ? window.innerHeight : self.wHeight);
+		var toolh = (thickness * 3) + (thickness * 2) + 18 
 		var m = (!self.pu ? 
-			"M"+(thickness)+",0H"+(nw)+"V"+(nh)+"H"+(thickness)+"V0z " :
+			"M"+(thickness)+",0H"+(nw)+"V"+(nh)+"H0V"+toolh+"H"+(thickness)+"V0z " :
 			"M"+(thickness)+","+(thickness)+"H"+(nw - thickness)+"V"+(nh - thickness)+"H"+(thickness)+"V"+(thickness)+"z "
 		)
 		var d;
@@ -189,7 +190,8 @@ var mapFunctions = {
 					self.viewerList = false;
 				}
 			} else {
-				console.log('wtaf')
+				self.viewerList = false;
+				self.geo = [];
 
 			}
 			if (buf) {
@@ -371,6 +373,7 @@ var mapFunctions = {
 		self.dragging.y = e.screenY;
 		setTimeout(function(){
 			if (!self.dragging.isDragging) {
+				e.preventDefault()
 				self.dragging.isDragging = false;
 			} else {
 				
@@ -380,15 +383,13 @@ var mapFunctions = {
 	dragLayer: function(i, e) {
 		var self = this;
 		if (self.dragging.isDragging) {
-			console.log(e)
 			self.dragging.y = e.clientY;
 			e.target.style.cursor = 'grabbing'
 			e.target.style.position = 'fixed';
-			e.target.style.left = 0;
 			e.target.style.top = self.dragging.y - 22 + 'px'
 			self.dragging.isDragging = true;
 		} else {
-			e.target.style.cursor = 'grab';
+			e.target.style.cursor = 'pointer';
 		}
 	},
 	endDragLayer: function(i, e) {
