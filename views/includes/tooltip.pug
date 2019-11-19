@@ -1,5 +1,5 @@
 p.tb-font-xs(v-if="geo && geo.length && geo.length > 0" v-text="geo.length + ' feature'+(geo.length > 1 ? 's' : '')+' at this location'" style="padding: 8px;display:inline-block;")
-a(href="#" @click="viewerList=false;geo=[];" style="padding: 8px;position:absolute;right:5px;left:auto;color:#555;") x
+a(v-cloak href="#" @click="viewerList=false;geo=[];" style="padding: 8px;position:absolute;right:5px;left:auto;color:#555;" :style="{display: !mapActive || !mapReady ? 'none' : 'inline-block'}") x
 ul(style="margin: 10px; padding:0;")
 	li(
 		v-for="(go, g) in geo", 

@@ -38,7 +38,7 @@ div.maintitle.centerall#editor(v-cloak, :style="{'pointer-events':(mapActive && 
 			span(v-text="'Save signature'")
 		button.mapActive(v-if="!mapActive", v-on:click="activateMap()")
 			span Make Map clickable
-		button.danger.mapActive(v-if="(mapActive && (loggedin && loggedin !== '') && (pu && pu !== ''))", class= mn, v-on:click="deactivateMap()")
+		button.danger.mapActive(v-if="(mapActive)", class= mn, v-on:click="deactivateMap()")
 			span(v-text="'Cancel'")
 		
 

@@ -23,7 +23,7 @@ var mapFunctions = {
 	},
 	dPathAttr: function() {
 		var self = this;
-		var thickness = (!thickness ? 50 : thickness);
+		var thickness = (!self.thickness ? 65 : self.thickness);
 		var nw = (!self.wWidth ? window.innerWidth : self.wWidth);
 		var nh = (!self.wHeight ? window.innerHeight : self.wHeight);
 		var toolh = (thickness * 3) + (thickness * 2) + 18 

@@ -14,7 +14,7 @@
     --quarternary: #124059;
     --quinary: #1f5575;
     --highlight: #36616c;
-    --thumbw: 45px;
+    --thumbw: 65px;
     --panelwper: 100%;
     --panelhper: 100%;
 }
@@ -226,7 +226,7 @@ blockquote, .blockquote {
 .legend {
   position: absolute;
   top: 0;
-  height: 45px;
+  height: 65px;
   height: var(--thumbw);
   width: 13px;
   /* width: var(--thumbw); */
@@ -243,7 +243,8 @@ blockquote, .blockquote {
           align-items: stretch;
 }
 .legend.res {
-  width: 13px;
+  width: 17px;
+	width: calc(var(--thumbw) / 4)
   /* display: flex; */
   /* flex-direction: column; */
   /* align-items: stretch; */
@@ -267,7 +268,7 @@ blockquote, .blockquote {
 }
 .legend.ctrl label, .legend.ctrl .label {
   display: inline-block;
-  width: 45px;
+  width: 65px;
   width: var(--thumbw);
 }
 .legend .res, .legend .row {
@@ -282,7 +283,7 @@ blockquote, .blockquote {
   display: none;
 }
 .legend.ctrl, .legend.ctrl > .ctrl {
-	width: 45px;
+	width: 65px;
   width: var(--thumbw);
 }
 
@@ -449,7 +450,7 @@ a span, a img {
 	font-size: 2rem;
 	font-weight: 400;
 	line-height: 2.2rem;
-	padding: 45px 0 0 0;
+	padding: 65px 0 0 0;
 	padding: var(--thumbw) 0 0 0;
 }
 
@@ -458,7 +459,7 @@ a span, a img {
 	font-size: 3rem;
 	font-weight: 400;
 	line-height: 3.1rem;
-	padding: 45px 0 0 0;
+	padding: 65px 0 0 0;
 	padding: var(--thumbw) 0 0 0;
 	color: #9e1f63;
 	color: var(--highlight);
@@ -582,7 +583,7 @@ em {
 	bottom: auto;
 	background-color: rgba(255,255,255,0);
 	z-index: 6;
-	max-height: calc(100% - calc(45px * 2));
+	max-height: calc(100% - calc(65px * 2));
 	max-height: calc(100% - calc(var(--thumbw) * 2));
 	/*min-height: 230px;*/
 	height: auto;
@@ -617,7 +618,7 @@ em {
 .mainmenu {
 	pointer-events: all;
 	cursor: pointer;
-	min-width: 45px;
+	min-width: 65px;
 	min-width: var(--thumbw);
 	min-height: 34px;
 	min-height: calc(var(--thumbw) - 11px);
@@ -666,7 +667,7 @@ em {
 }
 
 .drop {
-	height: 45px;
+	height: 65px;
 	height: var(--thumbw);
 	background-color: rgba(255,255,255,0);
 	display: inline-block;
@@ -675,11 +676,11 @@ em {
 	cursor: pointer;
 }
 .layerDrop {
-  height: 45px;
+  height: 65px;
 	height: var(--thumbw);
 	background-color: rgba(255,255,255,0);
 	display: inline-block;
-	width: 45px;
+	width: 65px;
   width: var(--thumbw);
 	pointer-events: auto;
 	cursor: pointer;
@@ -691,7 +692,7 @@ em {
 	display: none;
 	/* width: 0!important; */
 	padding: 0 0 0 0;
-	line-height: 45px;
+	line-height: 65px;
 	line-height: var(--thumbw);
 	pointer-events: none;
 	color: #9e1e62;
@@ -703,7 +704,7 @@ em {
 .layerDrop > span {
   padding: 0 0 0 0;
 	line-height: 45px;
-	line-height: var(--thumbw);
+	line-height: calc(var(--thumbw) - 20);
 	pointer-events: none;
   color: #000;
   color: var(--secondary);
@@ -719,12 +720,12 @@ em {
       -ms-flex-direction: column;
           flex-direction: column;
   position: absolute;
-  left: 45px;
+  left: 65px;
   left: var(--thumbw);
 }
 .layerDrop {
  /* > .row, .legend.close { */
- width: calc(100vw - 45px);
+ width: calc(100vw - 65px);
   width: calc(100vw - var(--thumbw));
   pointer-events: auto;
 }
@@ -734,6 +735,8 @@ em {
 .layerDrop > .row {
 	width: calc(100vw - 90px);
 	width: calc(100vw - calc(var(--thumbw) * 2));
+	min-height: 75px;
+	min-height: calc(var(--thumbw) + 10px);
 }
 .layerDrop > .row > span {
   padding: 0;
@@ -743,7 +746,7 @@ em {
 }
 .layer:hover .layerDrop > span {
   /* display: inline-block; */
-  /* width: calc(100% - (45px * 2));
+  /* width: calc(100% - (65px * 2));
   width: calc(100% - (calc(var(--thumbw) * 2))); */
 }
 
@@ -773,18 +776,18 @@ em {
 	font-size:12px;line-height: 11px;line-height:calc(var(--thumbw) / 4));padding:0 2px 0 0;vertical-align:top;text-align:right;
 }
 /* fieldset {
-  width: 45px!important;
+  width: 65px!important;
   width: var(--thumbw)!important;
 }
 
 fieldset:hover {
-  width: calc(50% - (45px * 2));
+  width: calc(50% - (65px * 2));
   width: calc(50% - (calc(var(--thumbw) * 2)));
   
 } */
 
 /* fieldset select {
-  width: 45px;
+  width: 65px;
   width: var(--thumbw);
 }
 
@@ -818,7 +821,7 @@ fieldset select:hover {
 	width: auto;
 } */
 /* .lcontrol:hover {
-	width: calc(45px * 2);
+	width: calc(65px * 2);
 	width: calc(var(--thumbw) * 2);
 } */
 
@@ -826,13 +829,13 @@ fieldset select:hover {
   width: 100%!important;
 }  */
 /* .lcontrol select option {
-  width: 45px;
+  width: 65px;
   width: var(--thumbw);
 }
 
 /* .lcontrol:hover select,  */
 /*.lcontrol:hover select option {
-  width: calc(50% - (45px * 2));
+  width: calc(50% - (65px * 2));
   width: calc(50% - (calc(var(--thumbw) * 2)));
 
 } */
@@ -886,7 +889,7 @@ font-size: 10px;
 	z-index: 4;
 	background-color: var(--primary);
 	display: block;
-	min-height: 45px;
+	min-height: 65px;
 	min-height: var(--thumbw);
 	margin: 0;
 	-webkit-box-shadow: 3px 3px 2px 1px rgba(0, 0, 0, .2);
@@ -945,7 +948,7 @@ font-size: 10px;
 	line-height: calc(var(--thumbw) * 1.5);
 }
 .submenu.drop.static > span, .submenu.drop.static > .ui > .fas, .qty {
-	line-height: 45px;
+	line-height: 65px;
 	line-height: var(--thumbw);
 	color: #000;
 	color: var(--secondary);
@@ -962,9 +965,9 @@ font-size: 10px;
 	color: var(--secondary);
 }
 .submenu.drop.static {
-	line-height: 45px;
+	line-height: 65px;
 	line-height: var(--thumbw);
-	min-height: 45px;
+	min-height: 65px;
 	min-height: var(--thumbw);
 }
 .dropdown.static > .submenu:last-child > span, .dropdown.static > .submenu:last-child > .ui > .fas {
@@ -1018,9 +1021,9 @@ font-size: 10px;
 }
 
 .ui.static {
-	width: 45px;
-	max-width: 45px;
-	min-width: 45px;
+	width: 65px;
+	max-width: 65px;
+	min-width: 65px;
 }
 /**/
 breadcrumbs, div.cell {
@@ -1052,7 +1055,7 @@ breadcrumbs a {
 	z-index: 1;
 	
 	pointer-events: all;
-	padding: 45px;
+	padding: 65px;
 	min-height: 100%;
 	position: relative;
 	display: block;
@@ -1193,7 +1196,7 @@ breadcrumbs a {
 }
 
 .leaflet-left {
-	left: 45px!important;
+	left: 65px!important;
 	left: var(--thumbw)!important;
 }
 
@@ -1221,13 +1224,13 @@ breadcrumbs a {
 	position: fixed;
 	bottom: 0;
 	left: 52px;
-	left: calc(var(--thumbw) * 1.1);
+	left: var(--thumbw);
 	right: auto;
 	min-width: 50vh;
 	max-width: calc(100vh - 270);
 	max-width: calc(100vh - calc(var(--thumbw) * 6) - 18px); 
 	min-height: 48px;
-	min-height: calc(var(--thumbw) * 1.1);
+	min-height: var(--thumbw);
 	max-height: 50px;
 	max-height: var(--thumbw);
 	transform: rotate(270deg);
@@ -1359,8 +1362,8 @@ a.img {
 	position: relative;
 	overflow: hidden;
 	width: 100%;
-  min-width: calc(45px * 3);
-  min-height: calc(45px * 3);
+  min-width: calc(65px * 3);
+  min-height: calc(65px * 3);
 }
 
 a.img img {
@@ -1512,7 +1515,7 @@ button span, a[role="button"] span {
     position: fixed;
     bottom: 3px;
     right: auto;
-    left: 45px;
+    left: 65px;
     z-index: 1;
 }
 button.mapActive {
@@ -1590,9 +1593,18 @@ a:hover header {
 	color: #555!important;
 	color: var(--quarternary)!important
 }
+.leaflet-touch .leaflet-bar {
+	border: 0px solid rgba(255,255,255,0)!important;
+}
+.leaflet-top .leaflet-control {
+	margin-top: 14px!important;
+}
 .leaflet-control-zoom-in, .leaflet-control-zoom-out {
-	padding: calc(45px / 8);
-	padding: calc(var(--thumbw) / 8)!important;
+	padding: calc(65px / 8);
+	padding: calc(var(--thumbw) / 4)!important;
+	width: calc(var(--thumbw) / 2)!important;
+	height: calc(var(--thumbw) / 2)!important;
+
 }
 
 
@@ -1709,7 +1721,7 @@ div.maintitle {
 	display: block; 
 	background-color: #fff; 
 	background-color: var(--primary);
-	padding: 45px; 
+	padding: 65px; 
 	pointer-events: auto;
 	min-height: 100vh;
 	/* min-height: auto!important; */
@@ -1755,10 +1767,15 @@ del {
 }
 @media (min-width: 420px) {
 	.layerDrop {
-		width: 345px!important;
+		width: 365px!important;
 	}
-	.layerDrop > .row {
+	.layerDrop > .row, .layerDrop .close {
 		width: 300px!important;
+	}
+	.layerDrop .close {
+		left: 65px!important;
+		left: var(--thumbw);
+		
 	}
 	.dropdown {
 	width: 300px;
