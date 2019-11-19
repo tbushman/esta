@@ -55,7 +55,7 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 				:class="!mapCtrl ? 'res' : 'ctrl' "
 				)
 				
-				div(v-if="style.colors && style.colors.length > 0", v-for="(c,j) in style.colors", :class="!mapCtrl ? 'res' : 'ctrl'", 
+				div(v-if="style.colors && style.colors.length > 0", v-for="(cl,j) in style.colors", :class="!mapCtrl ? 'res' : 'ctrl'", 
 				style="pointer-events:none;",
 				:style="{height: 'calc(65px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )' }"
 				)
@@ -63,7 +63,7 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 						:for="'color'+k+'_'+j", 
 						v-text="(style.set[j]) + '–' + (!style.colors[j+1] ? style.max : style.set[j+1])")
 
-					input(v-if="!isSafari" :id="'color'+k+'_'+j", type="color", :value="c", @change="changeColorBucket(k, j, $event)", style="pointer-events:all;cursor:pointer;z-index:1;", 
+					input(v-if="!isSafari" :id="'color'+k+'_'+j", type="color", :value="cl", @change="changeColorBucket(k, j, $event)", style="pointer-events:all;cursor:pointer;z-index:1;", 
 					:style="{height: 'calc(65px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )'}"
 					)
 					div.label.tb-font-xxs(v-if="isSafari" style="margin:0;font-size: 7px;position:absolute;padding:2px;color:#fff;font-weight:heavier;", 
@@ -71,7 +71,7 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 					div.color(v-if="isSafari")
 						div.field(style="margin: 0px; display: flex; margin-bottom: 5px;")
 							div(style="width: 100%;border: solid 1px rgba(0, 0, 0, 0.1); border-radius: 2px; display: inline-block;"
-								:style="{backgroundColor: c, height: 'calc(var(--thumbw) / '+style.colors.length+' )'}")
+								:style="{backgroundColor: cl, height: 'calc(var(--thumbw) / '+style.colors.length+' )'}")
 								
 
 
