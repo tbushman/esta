@@ -11,9 +11,9 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 		
 				span.tb-font-xs( v-text="'x'")
 
+				//- :style="{pointerEvents: mapCtrl ? 'none' : 'auto'}"
 	div.layer(
 		v-for="(layer, o) in layers"
-		:style="{pointerEvents: mapCtrl ? 'none' : 'auto'}"
 		:class="mapCtrl ? 'ctrl' : ''"
 		@touchstart="initDragLayer(o, $event)"
 		@touchmove="dragLayer(o, $event)"
@@ -28,10 +28,10 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 		@click="switchMapCtrl"
 		)
 		a.layerDrop(
-			style="display: flex;pointer-events:none;"
+			style="display: flex;"
 			)
 			.ui(
-				style="pointer-events:none;min-width:65px;min-width:var(--thumbw);margin:0;")
+				style="min-width:65px;min-width:var(--thumbw);margin:0;")
 
 				img(:src="(!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? (!layer.properties.media[0] ? '/images/publish_logo_sq.svg' : layer.properties.media[0].thumb) : layer.properties.media[layer.properties.media.length - 1].thumb)+'?version='+Math.random()", @error="'/images/publish_logo_sq.svg'", style="pointer-events: none;")
 			if (selectLayers)
@@ -50,20 +50,20 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 								option(v-for="(item,l) in layer.properties.keys", v-if="!isNaN(parseFloat(json[style.lid].features[0].properties[item])) && exclude.indexOf(item) === -1" v-text="item.replace(/^r_/, '').replace(/^el_/, '').split('_').join(' ')", :value="item", :selected="item === style.key")
 						span.tb-02-m0
 							input.tb-10-m0#buckets(type="number", min="1", max="11", style="margin:0;pointer-events:all;", :value="style.buckets", @change="numberColorBucket(style.lid, $event)", @blur="numberColorBucket(style.lid, $event)")
-
-			div.legend(style="pointer-events:none;", v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id", 
+			//style="pointer-events:none;", 
+			div.legend(v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id", 
 				:class="!mapCtrl ? 'res' : 'ctrl' "
 				)
 				
 				div(v-if="style.colors && style.colors.length > 0", v-for="(cl,j) in style.colors", :class="!mapCtrl ? 'res' : 'ctrl'", 
-				style="pointer-events:none;",
+				style="pointer-events:auto;",
 				:style="{height: 'calc(65px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )' }"
 				)
 					label(v-if="!isSafari" style="font-size: 8px;position:absolute;padding:1px 2px;color:#fff;font-weight:heavier;pointer-events:none;z-index:2;", 
 						:for="'color'+k+'_'+j", 
 						v-text="(style.set[j]) + '–' + (!style.colors[j+1] ? style.max : style.set[j+1])")
 
-					input(v-if="!isSafari" :id="'color'+k+'_'+j", type="color", :value="cl", @change="changeColorBucket(k, j, $event)", style="pointer-events:all;cursor:pointer;z-index:1;", 
+					input(v-if="!isSafari" :id="'color'+k+'_'+j", type="color", :value="cl", @change="changeColorBucket(k, j, $event)", style="pointer-events:all;z-index:1;", 
 					:style="{height: 'calc(65px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )'}"
 					)
 					div.label.tb-font-xxs(v-if="isSafari" style="margin:0;font-size: 7px;position:absolute;padding:2px;color:#fff;font-weight:heavier;", 

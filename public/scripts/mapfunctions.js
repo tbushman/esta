@@ -369,16 +369,20 @@ var mapFunctions = {
 	},
 	initDragLayer: function(i, e) {
 		var self = this;
-		self.dragging.isDragging = true;
-		self.dragging.y = e.screenY;
-		setTimeout(function(){
-			if (!self.dragging.isDragging) {
-				e.preventDefault()
-				self.dragging.isDragging = false;
-			} else {
-				
-			}
-		},1000)
+		if (!self.mapCtrl) {
+			self.dragging.isDragging = true;
+			self.dragging.y = e.screenY;
+			setTimeout(function(){
+				if (!self.dragging.isDragging) {
+					e.preventDefault()
+					self.dragging.isDragging = false;
+				} else {
+					
+				}
+			},1000)
+		} else {
+			return;
+		}
 	},
 	dragLayer: function(i, e) {
 		var self = this;
@@ -389,7 +393,7 @@ var mapFunctions = {
 			e.target.style.top = self.dragging.y - 22 + 'px'
 			self.dragging.isDragging = true;
 		} else {
-			e.target.style.cursor = 'pointer';
+			e.target.style.cursor = null;
 		}
 	},
 	endDragLayer: function(i, e) {
@@ -805,7 +809,12 @@ var mapFunctions = {
 		e.preventDefault()
 		var self = this;
 		var mapCtrl = self.mapCtrl;
-		self.mapCtrl = !mapCtrl;
+		if (!mapCtrl) {
+			self.mapCtrl = true;
+		} else {
+			return false;
+		}
+		// self.mapCtrl = !mapCtrl;
 		//- if (self.mapCtrl) {
 		//- 
 		//- }
