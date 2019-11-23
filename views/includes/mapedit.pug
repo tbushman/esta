@@ -8,8 +8,13 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 			)
 			span.tb-font-xxs(v-text="'layers'")
 			a.legend.close(v-if="mapCtrl" @click="mapCtrl = false" style="width:calc(100% - var(--thumbw));height:11px;height:calc(var(--thumbw) / 4);display:inline-block; left:auto;right:0;background-color:var(--primary);")
-		
-				span.tb-font-xs( v-text="'x'")
+				div(style="width: 12px; width: calc(var(--thumbw) / 4); height:12px; height: calc(var(--thumbw) / 4); right:0;position:absolute;")
+					svg(version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+						viewBox="0 0 14 14" style="enable-background:new 0 0 14 14;" xml:space="preserve")
+						g
+							polygon(style="fill:var(--secondary);" points="12.4,10 9.4,7 12.4,4 10,1.6 7,4.6 4,1.6 1.6,4 4.6,7 1.6,10 4,12.4 7,9.4 10,12.4 	")
+
+				//span.tb-font-xs( v-text="'x'")
 
 				//- :style="{pointerEvents: mapCtrl ? 'none' : 'auto'}"
 	div.layer(

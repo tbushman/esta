@@ -391,8 +391,6 @@ var mapFunctions = {
 					
 				}
 			},1000)
-		} else {
-			return;
 		}
 	},
 	dragLayer: function(i, e) {
@@ -401,6 +399,8 @@ var mapFunctions = {
 			self.dragging.y = e.clientY;
 			e.target.style.cursor = 'grabbing'
 			e.target.style.position = 'fixed';
+			e.target.style.height = '65px';
+			e.target.style.height = 'var(--thumbw)';
 			e.target.style.top = self.dragging.y - 22 + 'px'
 			self.dragging.isDragging = true;
 		} else {
