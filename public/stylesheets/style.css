@@ -688,7 +688,7 @@ em {
   white-space: normal;
 }
 
-.drop span {
+.drop > span {
 	display: none;
 	/* width: 0!important; */
 	padding: 0 0 0 0;
@@ -1512,13 +1512,17 @@ button span, a[role="button"] span {
     -webkit-box-align: stretch;
         -ms-flex-align: stretch;
             align-items: stretch;
-    position: fixed;
+    /* position: fixed; */
     top: 10px;
 		top: calc(var(--thumbw) - calc(var(--thumbw) * 0.8));
-		right: 10px;
-		right: calc(var(--thumbw) - calc(var(--thumbw) * 0.8));
+		/* right: ;
+		right: calc(var(--thumbw) - calc(var(--thumbw) * 0.8)); */
     z-index: 6;
-		margin-left: 10px;
+		margin: 0 auto;
+		left: 0;
+		right: 0;
+		/* width: 33%; */
+		height: calc(var(--thumbw) * 0.85);
 }
 button.mapActive {
   text-align: center;
@@ -1769,7 +1773,7 @@ del {
 }
 @media (min-width: 420px) {
 	.layerDrop {
-		width: 365px!important;
+		width: 65px!important;
 	}
 	.layerDrop > .row, .layerDrop .close {
 		width: 300px!important;

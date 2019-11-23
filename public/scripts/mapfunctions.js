@@ -125,9 +125,10 @@ var mapFunctions = {
 			return false
 		} 
 	},
-	filterViewerList: async function(ll1, ll2, feature, id, keys, vals, buf) {
+	filterViewerList: async function(ll1, ll2, feature, id/*, keys*/, vals, buf) {
 		var self = this;
 		var latlng = ll2;
+		// console.log(ll1, ll2, feature, id, vals, buf)
 		if (self.json[id]) {
 			var counter = 0;
 			self.geo = (!self.json[id].features ? [self.json[id]] : await self.json[id].features
@@ -149,6 +150,8 @@ var mapFunctions = {
 						}).addTo(self.map)
 						self.buf[counter] = bf;
 						counter++
+					} else {
+						// console.log(ll1, latlng);
 					}
 					return ll1.contains(latlng);
 				} else {
@@ -187,6 +190,7 @@ var mapFunctions = {
 				if (self.geo.length > 0) {
 					self.viewerList = true;
 				} else {
+					console.log('no geo?')
 					self.viewerList = false;
 				}
 			} else {
@@ -194,6 +198,11 @@ var mapFunctions = {
 				self.geo = [];
 
 			}
+			if (counter === 0) {
+				self.geo = [];
+				self.viewerList = false;
+			}
+
 			if (buf) {
 				setTimeout(function(){
 					buf.remove()
@@ -264,7 +273,9 @@ var mapFunctions = {
 		self.cZF = (self.map.getZoom() + self.zfactor);
 		if (!latlng) {
 			var bf = L.geoJSON(feature).addTo(self.map);
-			latlng = bf.getBounds().getCenter();
+			latlng = //self.map.latLngToContainerPoint(
+				bf.getBounds().getCenter()
+			//);
 			bf.remove()
 		}
 		var cp = self.map.latLngToContainerPoint(latlng);
@@ -280,18 +291,18 @@ var mapFunctions = {
 		var keys;
 		var vals;
 		if (!self.dataLayer._layers && self.lyr[id]) {
-			if (!self.lyr[id]._layers) {
-				keys = Array.from(Array(self.lyr[id]._latlngs.length).keys())
-			} else {
-				keys = Object.keys(self.lyr[id]._layers)
-			}
+			// if (!self.lyr[id]._layers) {
+			// 	keys = Array.from(Array(self.lyr[id]._latlngs.length).keys())
+			// } else {
+			// 	keys = Object.keys(self.lyr[id]._layers)
+			// }
 			vals = self.lyr[id];
 		} else {
 			vals = self.dataLayer;
-			keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
+			// keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
 		}
 		//- console.log(bounds, ll2, feature, id, keys, vals, buf)
-		self.filterViewerList(bounds, ll2, feature, id, keys, vals, buf)
+		self.filterViewerList(bounds, ll2, feature, id/*, keys*/, vals, buf)
 		
 		
 	},
@@ -475,7 +486,7 @@ var mapFunctions = {
 									var style = {fillColor:cl, color:cl, opacity: 0.8, fillOpacity: 0.6, radius: 8}
 									var circle = new L.CircleMarker(latlng, style)//, self.styleOf(ft, ft.geometry.type))
 										.on('click', function(){
-											return self.setView(ft, id, latlng)
+											self.setView(ft, id, latlng)
 										});
 									return circle;
 								}
