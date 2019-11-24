@@ -306,6 +306,24 @@ var mapFunctions = {
 		
 		
 	},
+	getFeatureColor: function(id, gpp) {
+		var self = this;
+		var thisLayer = self.doc.properties.layers.filter(function(lyr){
+			return lyr.lid === id
+		})[0]
+		var ind = thisLayer.set.filter(function(it, i){ 
+			var lr = thisLayer.set[i + 1]
+			if (!lr) {
+				return gpp <= it
+			} else {
+				return gpp >= it && gpp <= lr;
+			}
+			
+		})[0];
+		var i = thisLayer.set.indexOf(ind);
+		var color = thisLayer.colors[i];
+		return color;
+	},
 	determineLegend: function(item, style, ind, cb) {
 		var self = this;
 		var buckets = style.buckets;
