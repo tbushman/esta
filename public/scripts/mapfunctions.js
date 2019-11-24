@@ -138,6 +138,7 @@ var mapFunctions = {
 					var bff = L.geoJSON(ft).addTo(self.map);
 					latlng = bff.getBounds().getCenter();
 					bff.remove()
+					console.log(latlng, ll1)
 					if (ll1.contains(latlng)) {
 						ft.geometry.coordinates.reverse()
 						var bf = L.GeoJSON.geometryToLayer(ft, {
@@ -186,13 +187,8 @@ var mapFunctions = {
 
 				self.btn.x = (self.wWidth/2);
 				self.btn.y = (self.wHeight/2);
+				self.viewerList = true;
 
-				if (self.geo.length > 0) {
-					self.viewerList = true;
-				} else {
-					console.log('no geo?')
-					self.viewerList = false;
-				}
 			} else {
 				self.viewerList = false;
 				self.geo = [];
@@ -202,6 +198,12 @@ var mapFunctions = {
 				self.geo = [];
 				self.viewerList = false;
 			}
+			// if (self.geo.length > 0) {
+			// 	self.viewerList = true;
+			// } else {
+			// 	console.log('no geo?')
+			// 	self.viewerList = false;
+			// }
 
 			if (buf) {
 				setTimeout(function(){

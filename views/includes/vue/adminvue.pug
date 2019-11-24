@@ -374,14 +374,14 @@ script(type="text/javascript").
 				self.map.on('click', function(){
 					self.mapCtrl = false;
 				})
-				self.map.on('dragstart', function(e){
+				self.map.on('dragstart', function(){
 					var coord = self.lMarker.getLatLng();
 					var xy = self.map.latLngToContainerPoint(coord);
 					var x = xy.x;
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					self.viewerList = false;
+					//- self.viewerList = false;
 				});
 				self.map.on('movestart', function(){
 					var coord = self.lMarker.getLatLng();
@@ -390,7 +390,7 @@ script(type="text/javascript").
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					self.viewerList = false;
+					//- self.viewerList = false;
 				})
 				self.map.on('zoomstart', function(){
 					var coord = self.lMarker.getLatLng();
@@ -399,7 +399,7 @@ script(type="text/javascript").
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					self.viewerList = false;
+					//- self.viewerList = false;
 				})
 				
 				self.map.on('moveend', function(e){
@@ -411,9 +411,9 @@ script(type="text/javascript").
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					if (self.geo.length > 0) {
-						self.viewerList = true;
-					}
+					//- if (self.geo.length > 0) {
+					//- 	self.viewerList = true;
+					//- }
 				})
 				self.map.on('dragend', function(e) {
 					self.wWidth = window.innerWidth;
@@ -425,9 +425,9 @@ script(type="text/javascript").
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					if (self.geo.length > 0) {
-						self.viewerList = true;
-					}
+					//- if (self.geo.length > 0) {
+					//- 	self.viewerList = true;
+					//- }
 
 				})
 				self.map.on('zoomend', function(e) {
@@ -439,9 +439,9 @@ script(type="text/javascript").
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					if (self.geo.length > 0) {
-						self.viewerList = true;
-					}
+					//- if (self.geo.length > 0) {
+					//- 	self.viewerList = true;
+					//- }
 				
 				})
 				if (self.tinymce === ''  && $('#description')[0] && typeof tinymce === 'object') {
