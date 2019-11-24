@@ -38,7 +38,7 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 			.ui(
 				style="min-width:65px;min-width:var(--thumbw);margin:0;")
 
-				img(:src="(!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? (!layer.properties.media[0] ? '/images/publish_logo_sq.svg' : layer.properties.media[0].thumb) : layer.properties.media[layer.properties.media.length - 1].thumb)+'?version='+Math.random()", @error="'/images/publish_logo_sq.svg'", style="pointer-events: none;")
+				img(:src="(!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? (!layer.properties.media[0] ? '/images/publish_logo_sq.svg' : layer.properties.media[0].thumb) : layer.properties.media[layer.properties.media.length - 1].thumb)+'?version='+Math.random()", @error="$event.target.src = '/images/publish_logo_sq.svg'", style="pointer-events: none;")
 			if (selectLayers)
 				input(type="checkbox", :value="layer._id", :id="'layer_'+o", v-text="layer.properties.label", style="position:absolute;right:0;pointer-events:all;", @click="changeLayers(layer._id, $event)", :checked="(doc.properties.layers.map(function(item){return item.lid}).indexOf(layer._id) !== -1)")
 			span.row(style="pointer-events:none;", v-for="(style, k) in doc.properties.layers", v-if="style.lid === layer._id && mapCtrl")
@@ -90,7 +90,7 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 	div.slidedown(v-if="dropped.layers")
 		a.drop(v-for="(alayer, p) in availablelayers", v-if="(doc.properties.layers.map(function(item){return item.lid}).indexOf(alayer._id) === -1)" style="display: flex;width:65px;width:var(--thumbw);")
 			.ui(style="min-width:65px;min-width:var(--thumbw);margin:0;")
-				img(:src="(!alayer.properties.media[alayer.properties.media.length - 1] || !alayer.properties.media[alayer.properties.media.length - 1].thumb || alayer.properties.media[alayer.properties.media.length - 1].thumb === '' ? (!alayer.properties.media[0] ? '/images/publish_logo_sq.svg' : alayer.properties.media[0].thumb) : alayer.properties.media[alayer.properties.media.length - 1].thumb)+'?version='+Math.random()", @error="'/images/publish_logo_sq.svg'", style="pointer-events: none;")
+				img(:src="(!alayer.properties.media[alayer.properties.media.length - 1] || !alayer.properties.media[alayer.properties.media.length - 1].thumb || alayer.properties.media[alayer.properties.media.length - 1].thumb === '' ? (!alayer.properties.media[0] ? '/images/publish_logo_sq.svg' : alayer.properties.media[0].thumb) : alayer.properties.media[alayer.properties.media.length - 1].thumb)+'?version='+Math.random()", @error="$event.target.src = '/images/publish_logo_sq.svg'", style="pointer-events: none;")
 			
 			span.tb-font-m(v-text="alayer.properties.label", style="width:auto; padding-right: 15px; padding-left: 8px;")
 			if (selectLayers)

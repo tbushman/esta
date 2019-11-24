@@ -210,8 +210,8 @@ margin-right: var(--thumbw);
 overflow-y: hidden; 
 max-height: 33vh;
 max-height: calc(50vh - var(--thumbw));
-max-width: 40vw;
-max-width: calc(50vw - var(--thumbw));
+max-width: 50vw;
+/* max-width: calc(50vw - var(--thumbw)); */
 }
 .viewerlist > ul {
   overflow-y: scroll;
@@ -730,8 +730,8 @@ em {
 }
 .layerDrop {
  /* > .row, .legend.close { */
- width: calc(100vw - 65px);
-  width: calc(100vw - var(--thumbw));
+ 	max-width: calc(100vw - 65px);
+  max-width: calc(100vw - var(--thumbw));
   pointer-events: auto;
 }
 .layerDrop > .tb-font-xxs, legend.tb-font-xxs {
@@ -1782,7 +1782,7 @@ del {
 		width: 65px!important;
 	}
 	.layerDrop > .row, .layerDrop .close {
-		width: 300px!important;
+		/* width: 300px!important; */
 	}
 	.layerDrop .close {
 		left: 65px!important;
@@ -1847,6 +1847,10 @@ del {
 
 @media (min-width: 600px) {
 
+	.viewerlist {
+		max-width: 33vw;
+		max-width: calc(50vw - var(--thumbw));
+	}
 	div.img > img {
 		
 		-ms-transform: translate(-50%,-45%) scale(0.55);

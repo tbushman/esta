@@ -126,6 +126,36 @@ var baseFunctions = {
 			}
 		}
 	},
+	convertToRGB: function(hex) {
+		// Returns an Array of integers (length = 3) from an Array of Strings (length = 6)
+		var hx = hex.split('#')[1].split('');
+		var converted = [];
+		var alpha = ['A', 'B', 'C', 'D', 'E', 'F'];
+		hx.forEach(function(num, i) {
+			// if the argument is an alphabetical character, 
+			// convert it to an integer between 10 ('A') and 15 ('F')
+			if (isNaN(parseInt(num, 10))) {
+				num = 10 + alpha.indexOf(num.toUpperCase());
+			} else {
+				num = parseInt(num, 10);
+			}
+			// the Array hex.length is 6, consisting of three pairs of characters
+			// Multiply the first character's value by 16 to achieve base 16
+			if (i === 0 || i === 2 || i === 4) {
+				num = num * 16;
+			}
+	
+			converted.push(num);
+		});
+	
+		// First pair sum
+		var r = converted[0] + converted[1];
+		// Second pair sum
+		var g = converted[2] + converted[3];
+		// Third pair sum
+		var b = converted[4] + converted[5];
+		return [r, g, b];
+	},
 	sliderImg: function(int){
 		var self = this;
 		//- if ($('#slider')[0]) {

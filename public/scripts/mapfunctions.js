@@ -205,6 +205,9 @@ var mapFunctions = {
 
 			if (buf) {
 				setTimeout(function(){
+					if (self.buf && typeof self.buf.remove === 'function') {
+						self.buf.remove()
+					}
 					buf.remove()
 				},3000)
 			}
@@ -298,6 +301,7 @@ var mapFunctions = {
 			// }
 			vals = self.lyr[id];
 		} else {
+			console.log('clicking dataLayer')
 			vals = self.dataLayer;
 			// keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
 		}
@@ -314,7 +318,13 @@ var mapFunctions = {
 		var ind = thisLayer.set.filter(function(it, i){ 
 			var lr = thisLayer.set[i + 1]
 			if (!lr) {
-				return gpp <= it
+				if (gpp >= thisLayer.set[thisLayer.set.length-2] && gpp <= it) {
+					return true;
+				} else if (gpp >= it) {
+					return true;
+				} else {
+					return false;
+				}
 			} else {
 				return gpp >= it && gpp <= lr;
 			}
@@ -322,7 +332,11 @@ var mapFunctions = {
 		})[0];
 		var i = thisLayer.set.indexOf(ind);
 		var color = thisLayer.colors[i];
-		return color;
+		if (color) {
+			return color;
+		} else {
+			return thisLayer.colors[0]
+		}
 	},
 	determineLegend: function(item, style, ind, cb) {
 		var self = this;

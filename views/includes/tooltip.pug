@@ -1,5 +1,5 @@
 p.tb-font-xxs(v-if="geo && geo.length && geo.length > 0" v-text="geo.length + ' feature'+(geo.length > 1 ? 's' : '')+' at this location'" style="padding: 8px;display:inline-block;color:#555;")
-a(v-cloak href="#" @click="viewerList=false;geo=[];" style="padding: 8px;position:absolute;right:5px;left:auto;color:#555;" :style="{display: !mapActive || !mapReady ? 'none' : 'inline-block'}")
+a(v-cloak href="#" @click="geo=[];" style="padding: 8px;position:absolute;right:5px;left:auto;color:#555;" :style="{display: !mapActive || !mapReady ? 'none' : 'inline-block'}")
 	div(style="width: 12px; width: calc(var(--thumbw) / 4); height:12px; height: calc(var(--thumbw) / 4); right:0;position:absolute;")
 		svg(version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 			viewBox="0 0 14 14" style="enable-background:new 0 0 14 14;" xml:space="preserve")
@@ -16,14 +16,36 @@ ul(style="padding:0;")
 		@click="setView(go, go._id, null, $event)"
 		)
 		table(style="table-layout:fixed; margin-right: 25px;pointer-events:none;")
-			tr(v-for="(p, j) in Object.keys(go.properties)" v-if="go.properties[p] && go.properties[p] !== '' && ['STATEFP10','COUNTYFP10','BLKGRPCE10','INTPTLON10','INTPTLAT10','TRACTCE10','GEOID10', 'tessellate', 'visibility'].indexOf(p) === -1")
+		
+			tr(
+				v-for="(p, j) in Object.keys(go.properties)"
+				v-if="go.properties[p] && go.properties[p] !== '' && ['STATEFP10','COUNTYFP10','BLKGRPCE10','INTPTLON10','INTPTLAT10','TRACTCE10','GEOID10', 'tessellate', 'visibility'].indexOf(p) === -1"
+				:style=`
+				{
+					backgroundColor: (
+						doc.properties.layers.filter(function(lyr){
+							return lyr.lid === go._id
+						})[0].key === p 
+							? 
+								(
+									'rgba('+ 
+										convertToRGB(getFeatureColor(go._id, go.properties[p]))[0] +','+ 
+										convertToRGB(getFeatureColor(go._id, go.properties[p]))[1] +','+ 
+										convertToRGB(getFeatureColor(go._id, go.properties[p]))[2] +',0.2)' 
+								)
+							: 'rgba(255,255,255,0)'
+						)
+					}`
+				)
 				td(colspan="2", style="white-space:wrap;vertical-align:middle;")
 					p.tb-font-xxs(style="font-size:10px;padding:0 0 3px 0;margin:0;line-height:12px;line-height:calc(var(--thumbw) / 4);")
 						span(v-text="p.replace(/^r_/, '').replace(/^el_/, '').split('_').join(' ')+ ': '")
-				td(colspan="3")
-					p.tb-font-s(v-if="/name/i.test(p)" style="padding:0 0 3px 0;margin:0;line-height:16px;line-height:calc(var(--thumbw) / 4);")
+				td(colspan="3" v-if="/name/i.test(p)")
+					p.tb-font-s(style="padding:0 0 3px 0;margin:0;line-height:16px;line-height:calc(var(--thumbw) / 4);")
 						strong(v-text="go.properties[p]")
-					p.tb-font-m(v-else-if="doc.properties.layers.filter(function(lyr){return lyr.lid === go._id})[0].key === p" style="margin:0;padding:0;"
+				td(colspan="3" v-else-if="doc.properties.layers.filter(function(lyr){return lyr.lid === go._id})[0].key === p")
+					p.tb-font-m( style="margin:0;padding:0;"
 						:style='{color: getFeatureColor(go._id, go.properties[p])}')
 						strong(v-text="go.properties[p]")
-					p.tb-font-xs(v-else style="padding:0 0 3px 0;margin:0;color: #555;" v-text="go.properties[p]")
+				td(colspan="3" v-else)
+					p.tb-font-xs(style="padding:0 0 3px 0;margin:0;color: #555;" v-text="go.properties[p]")
