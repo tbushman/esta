@@ -133,7 +133,7 @@ script(type="text/javascript").
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					//- self.viewerList = false;
+					self.viewerList = false;
 				});
 				self.map.on('movestart', function(){
 					var coord = self.lMarker.getLatLng();
@@ -142,7 +142,7 @@ script(type="text/javascript").
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					//- self.viewerList = false;
+					self.viewerList = false;
 				})
 				self.map.on('zoomstart', function(){
 					var coord = self.lMarker.getLatLng();
@@ -151,7 +151,7 @@ script(type="text/javascript").
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					//- self.viewerList = false;
+					self.viewerList = false;
 				})
 				
 				self.map.on('moveend', function(e){
@@ -163,9 +163,9 @@ script(type="text/javascript").
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					//- if (self.geo.length > 0) {
-					//- 	self.viewerList = true;
-					//- }
+					if (self.geo.length > 0) {
+						self.viewerList = true;
+					}
 				})
 				self.map.on('dragend', function(e) {
 					self.wWidth = window.innerWidth;
@@ -177,9 +177,9 @@ script(type="text/javascript").
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					//- if (self.geo.length > 0) {
-					//- 	self.viewerList = true;
-					//- }
+					if (self.geo.length > 0) {
+						self.viewerList = true;
+					}
 
 				})
 				self.map.on('zoomend', function(e) {
@@ -191,9 +191,9 @@ script(type="text/javascript").
 					var y = xy.y;
 					self.dPath = self.dPathAttr()
 					self.setBtn(x, y);
-					//- if (self.geo.length > 0) {
-					//- 	self.viewerList = true;
-					//- }
+					if (self.geo.length > 0) {
+						self.viewerList = true;
+					}
 				
 				})
 

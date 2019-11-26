@@ -137,10 +137,10 @@ var mapFunctions = {
 				if (self.isPointCoords(ft.geometry.coordinates)) {
 					var bff = L.geoJSON(ft).addTo(self.map);
 					latlng = bff.getBounds().getCenter();
+					var lltcp = self.map.latLngToContainerPoint(latlng);
+					var cptll = self.map.containerPointToLatLng(lltcp);
 					bff.remove()
-					console.log(latlng, ll1)
-					if (ll1.contains(latlng)) {
-						ft.geometry.coordinates.reverse()
+					if (ll1.contains(cptll)) {
 						var bf = L.GeoJSON.geometryToLayer(ft, {
 							pointToLayer: function(ft, latlng) {
 								var style = {fillColor:'tomato', color:'tomato', opacity: 0.8, fillOpacity: 0.6, radius: 8, interactive: false}
@@ -152,9 +152,8 @@ var mapFunctions = {
 						self.buf[counter] = bf;
 						counter++
 					} else {
-						// console.log(ll1, latlng);
 					}
-					return ll1.contains(latlng);
+					return ll1.contains(cptll);
 				} else {
 					var bf = L.geoJSON(ft, {
 						style: function (feature) {
@@ -190,6 +189,7 @@ var mapFunctions = {
 				self.viewerList = true;
 
 			} else {
+				console.log(ll1, latlng)
 				self.viewerList = false;
 				self.geo = [];
 
@@ -206,10 +206,15 @@ var mapFunctions = {
 			// }
 
 			if (buf) {
+				if (self.buf && self.buf.length){
+					self.buf.forEach(function(b){
+						if (typeof b.remove === 'function') {
+							b.remove();
+						}
+					})
+				} 
 				setTimeout(function(){
-					if (self.buf && typeof self.buf.remove === 'function') {
-						self.buf.remove()
-					}
+					self.buf = [];
 					buf.remove()
 				},3000)
 			}
@@ -273,10 +278,15 @@ var mapFunctions = {
 				item.remove()
 			})
 		}
+		self.buf = [];
 		self.wWidth = window.innerWidth;
 		self.wHeight = window.innerHeight;
 		self.cZF = (self.map.getZoom() + self.zfactor);
 		if (!latlng) {
+			console.log('no latlng')
+			if (self.isPointCoords(feature.geometry.coordinates)) {
+				feature.geometry.coordinates.reverse();
+			}
 			var bf = L.geoJSON(feature).addTo(self.map);
 			latlng = //self.map.latLngToContainerPoint(
 				bf.getBounds().getCenter()
@@ -296,18 +306,11 @@ var mapFunctions = {
 		var keys;
 		var vals;
 		if (!self.dataLayer._layers && self.lyr[id]) {
-			// if (!self.lyr[id]._layers) {
-			// 	keys = Array.from(Array(self.lyr[id]._latlngs.length).keys())
-			// } else {
-			// 	keys = Object.keys(self.lyr[id]._layers)
-			// }
 			vals = self.lyr[id];
 		} else {
 			console.log('clicking dataLayer')
 			vals = self.dataLayer;
-			// keys = (!vals || !vals._layers ? Array.from(Array(self.dataLayer._latlngs.length).keys()) : Object.keys(vals._layers));
 		}
-		//- console.log(bounds, ll2, feature, id, keys, vals, buf)
 		self.filterViewerList(bounds, ll2, feature, id/*, keys*/, vals, buf)
 		
 		
