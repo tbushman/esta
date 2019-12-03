@@ -1245,6 +1245,8 @@ router.get('/', function(req, res, next){
 const iteratePlaces = (data, pathh) => {
 	return new Promise(async resolve => {
 		var jsonExists = await fs.existsSync(pathh);
+		console.log('jsonExists')
+		console.log(jsonExists)
 		const json = (!jsonExists ?
 			{ 
 				type: "FeatureCollection",
@@ -1256,8 +1258,6 @@ const iteratePlaces = (data, pathh) => {
 		var existing = (json.features && json.features.length > 0 ? json.features.map(function(f){return f.properties.label}) : [] )
 		var count = 0;
 		if (data) {
-			// console.log(data)
-			// var keys = Array.from(Array(data.length).keys());
 			
 			for (var k = 0; k < data.length; k++) {
 				count++
@@ -1265,17 +1265,15 @@ const iteratePlaces = (data, pathh) => {
 				var key = (!d.last_name ? '' : d.last_name.trim() +'');
 				var state = (!d.state ? 'Utah' : d.state.trim() +'');
 				var date = (!d.filing_date ? '' : d.filing_date.trim() +'');
-				// console.log(d.case_type, d["'case_type'"])
 				var casetype = (!d.case_type ? (!d["'case_type'"] ? '': d["'case_type'"].trim()) : d.case_type.trim() +'');
 				var partycode = (!d.party_code ? '' : d.party_code.trim() +'');
 				var locndescr = (!d.locn_descr ? '' : d.locn_descr.trim() +'');
 				var firstname = (!d.first_name || d.first_name === '' ? null : d.first_name.trim() +'')
-				if (existing.indexOf(key) !== -1) {
+				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)
+				if (match && existing.indexOf(key) !== -1) {
 					json.features[existing.indexOf(key)].properties.count++
 					json.features[existing.indexOf(key)].properties.dates.push(date)
-					// console.log(existing)
-					// console.log(json.features[existing.indexOf(key)])
-				} else if (!firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
+				} else if (match) {
 					await places(date, key, state).then(entryTransformed => {
 						// console.log(entryTransformed)
 						if (entryTransformed) {
@@ -1304,12 +1302,19 @@ const iteratePlaces = (data, pathh) => {
 
 const places = (date, key, state) => {
 	return new Promise(async resolve => {
-		var input = escape(key) + escape(' ') + escape(state);
+		var input = 
+		// escape(
+			key
+		// ) 
+		+ ' ' + 
+		// escape(
+			state
+		// );
 		await googleMaps.findPlace({
 			input: input,
 			inputtype: 'textquery',
 			language: 'en',
-			locationbias: 'circle:15000@40.680686,-111.9370777',
+			locationbias: 'circle:100000@40.680686,-111.9370777',
 			fields: [
 				'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
 				'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
@@ -1319,6 +1324,7 @@ const places = (date, key, state) => {
 			]
 		}, function (err, response) {
 			if (err) console.log(err)
+			// if (/(SOLARA)/g.test(key)) console.log(response)
 			if (response.json.candidates[0]) {
 				var ent = response.json.candidates[0];
 				const entryTransformed = {
@@ -2826,7 +2832,7 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json')/*, csrfProte
 		var json = JSON.parse(content);
 		await json.features.forEach(feat => {
 			if (feat.properties.dates) {
-				var dates = feat.properties.dates.split(':')[1].replace(')', '');
+				var dates = typeof feat.properties.dates === 'string' ? feat.properties.dates.split(':')[1].replace(')', '') : feat.properties.dates.join(',');
 				if (dates) {
 					feat.properties.dates = dates.split(',').join(', ')
 					
