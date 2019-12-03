@@ -2830,16 +2830,16 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json')/*, csrfProte
 			return console.log(err)
 		}
 		var json = JSON.parse(content);
-		await json.features.forEach(feat => {
-			if (feat.properties.dates) {
-				var dates = typeof feat.properties.dates === 'string' ? feat.properties.dates.split(':')[1].replace(')', '') : feat.properties.dates.join(',');
-				if (dates) {
-					feat.properties.dates = dates.split(',').join(', ')
-					
-				}
-				
-			}
-		})
+		// await json.features.forEach(feat => {
+		// 	if (feat.properties.dates) {
+		// 		var dates = typeof feat.properties.dates === 'string' ? feat.properties.dates.split(':')[1].replace(')', '') : feat.properties.dates.join(',');
+		// 		if (dates) {
+		// 			feat.properties.dates = dates.split(',').join(', ')
+		// 
+		// 		}
+		// 
+		// 	}
+		// })
 		var multiPolygon;
 		var type = 'MultiPolygon';
 		var keys;
