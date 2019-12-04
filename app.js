@@ -49,7 +49,7 @@ if (app.get('env') === 'production') {
 		app.disable('x-powered-by');
 		app.disable('Strict-Transport-Security');
 		//app.disable('Access-Control-Allow-Credentials');
-		res.cookie('SameSite', 'None');
+		res.cookie('site', 'cookie', {sameSite: 'None', secure: true});
 		res.set({
 			'Access-Control-Allow-Origin' : '*',
 			'Access-Control-Allow-Methods' : 'GET, POST, HEAD, OPTIONS',

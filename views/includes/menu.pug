@@ -12,10 +12,11 @@ each mn, k in menus
 
 		if (mn === 'static')
 			div.dropdown.static(v-cloak, style="float: left; left:14px; right:auto; display: flex;height:65px;overflow-y:hidden!important;")
-				
-				div.submenu.drop(v-if="doc && doc !== '' && "+mn === 'static'+"")
+				//- if (layers)
+				div.submenu.drop(v-if="layers && "+mn === 'static'+"")
 					include inputs.pug
-				a.submenu.drop(v-if="!doc || doc === ''" href="/", class= mn, style="max-height:65px;")
+					//- else
+				a.submenu.drop(v-else-if=""+mn !== 'static'+"" href="/", class= mn, style="max-height:65px;")
 					span esta.bli.sh
 		div.dropdown(v-cloak, class= mn, v-if=""+(mn === 'static')+" || dropped.drop")
 			

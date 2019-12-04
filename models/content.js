@@ -11,7 +11,8 @@ var Layer = new Schema({
 	key: String,
 	low: Number,
 	high: Number,
-	log: Boolean
+	log: Boolean,
+	th: Number
 })
 
 var schema = new Schema({

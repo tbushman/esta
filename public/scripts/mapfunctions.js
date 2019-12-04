@@ -397,11 +397,11 @@ var mapFunctions = {
 					set.push(distinct[ic*i]);
 				}
 			} else {
-				set = distinct;
+				set = (!distinct ? [] : distinct);
 			}
 			style.set = set;
 		} else {
-			style.set = distinct;
+			style.set = (!distinct ? [] : distinct);
 			style.buckets = distinct.length;
 			var inc = range / buckets;
 			style.inc = inc;
@@ -512,24 +512,34 @@ var mapFunctions = {
 					var ojson = L.geoJson(it, {
 						
 						onEachFeature:function(feature,layer){
+							var th = (!styl.th ? 1 : styl.th);
+							var ih = feature.properties[styl.key] && feature.properties[styl.key] > th;
 							var thisLayer = L.GeoJSON.geometryToLayer(feature, {
 								pointToLayer: function(ft, latlng) {
-									var thisVal = ft.properties[styl.key]
+									var thisVal = ft.properties[styl.key];
 									var cl = styl.colors.filter(function(color,i){
 										var mi = styl.set[i];
 										var ma = (!styl.colors[i+1] ? styl.max : styl.set[i+1]);
 										return (thisVal >= mi && thisVal <= ma)
 									})[0]
-									var style = {fillColor:cl, color:cl, opacity: 0.8, fillOpacity: 0.6, radius: 8}
+									var style = {fillColor:cl, color:cl, opacity: 0.8, fillOpacity: (ih ? 0.6 : 0.3), radius: 8, riseOnHover: true}
 									var circle = new L.CircleMarker(latlng, style)//, self.styleOf(ft, ft.geometry.type))
 										.on('click', function(){
 											self.setView(ft, id, latlng)
 										});
+									if (thisVal > th) ih = true;
 									return circle;
 								}
 
 							});
-							ljson.addLayer(thisLayer)
+							ljson.addLayer(thisLayer);
+							if (ih) {
+								setTimeout(function(){
+									thisLayer.bringToFront();
+								},1000)
+							} 
+
+							
 						}
 					})
 				} else {
@@ -689,7 +699,8 @@ var mapFunctions = {
 		} else {
 			$.get('/publishers/esta/json/json_'+key+'.json?v=1').then(async function(results){
 				if (results) {
-					var result = self.adjustedGeometryCoord(results);
+					var result = results;//self.adjustedGeometryCoord(results);
+					if (!result || result.features[0]) console.log(key)
 					var coords = (!result.features ? result.geometry.coordinates : result.features[0].geometry.coordinates)
 					//- var adj = (!result.features ? result.geometry.coordinates : result.features[0].geometry.coordinates);
 					//- var needsAdj = adj.length === 3;
@@ -799,14 +810,18 @@ var mapFunctions = {
 							self.dataLayer.options.interactive = false;
 						}
 						self.mapEdit = false;
-						await self.layers.forEach(function(item){
-							var k = item._id;
-							self.serverJson(false, k, function(latlng){
-								if (latlng && Object.keys(self.json).length >= self.layers.length) {
-									self.mapReady = true;
-								}
-							})
-						});
+						try {
+							await self.layers.forEach(function(item){
+								var k = item._id;
+								self.serverJson(false, k, function(latlng){
+									if (latlng && Object.keys(self.json).length >= self.layers.length) {
+										self.mapReady = true;
+									}
+								})
+							});
+						} catch(err) {
+							console.log(err)
+						}
 					}
 					if (self.availablelayers && self.availablelayers.length > 0) {
 						await self.availablelayers.forEach(function(item, i){

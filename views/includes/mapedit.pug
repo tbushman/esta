@@ -20,22 +20,23 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 	div.layer(
 		v-for="(layer, o) in layers"
 		:class="mapCtrl ? 'ctrl' : ''"
-		@touchstart="initDragLayer(o, $event)"
-		@touchmove="dragLayer(o, $event)"
-		@touchend="endDragLayer(o, $event)"
-		@mouseenter="endDragLayer(o, $event)"
-		@mousedown="initDragLayer(o, $event)"
-		@mousemove="dragLayer(o, $event)"
-		@mouseleave="endDragLayer(o, $event)"
-		@mouseup="endDragLayer(o, $event)"
-		
-
-		@click="switchMapCtrl"
 		)
 		a.layerDrop(
 			style="display: flex;"
 			)
 			.ui(
+				@touchstart="initDragLayer(o, $event)"
+				@touchmove="dragLayer(o, $event)"
+				@touchend="endDragLayer(o, $event)"
+				@mouseenter="endDragLayer(o, $event)"
+				@mousedown="initDragLayer(o, $event)"
+				@mousemove="dragLayer(o, $event)"
+				@mouseleave="endDragLayer(o, $event)"
+				@mouseup="endDragLayer(o, $event)"
+				
+
+				@click="switchMapCtrl"
+
 				style="min-width:65px;min-width:var(--thumbw);margin:0;")
 
 				img(:src="(!layer.properties.media[layer.properties.media.length - 1] || !layer.properties.media[layer.properties.media.length - 1].thumb || layer.properties.media[layer.properties.media.length - 1].thumb === '' ? (!layer.properties.media[0] ? '/images/publish_logo_sq.svg' : layer.properties.media[0].thumb) : layer.properties.media[layer.properties.media.length - 1].thumb)+'?version='+Math.random()", @error="$event.target.src = '/images/publish_logo_sq.svg'", style="pointer-events: none;")
