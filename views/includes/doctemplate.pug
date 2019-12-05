@@ -78,6 +78,6 @@ div#viewer(style="position:absolute;pointer-events: none;")
 					p.tb-10-m0 Sign Here 
 					
 				canvasc(
-					@update="(val, ts, can) => setSigData(0, val, ts, can)"
+					@update="function(val, ts, can) {setSigData(0, val, ts, can)}"
 					
 				)

@@ -125,13 +125,13 @@ var mapFunctions = {
 			return false
 		} 
 	},
-	filterViewerList: async function(ll1, ll2, feature, id/*, keys*/, vals, buf) {
+	filterViewerList:  function(ll1, ll2, feature, id/*, keys*/, vals, buf) {
 		var self = this;
 		var latlng = ll2;
 		// console.log(ll1, ll2, feature, id, vals, buf)
 		if (self.json[id]) {
 			var counter = 0;
-			self.geo = (!self.json[id].features ? [self.json[id]] : await self.json[id].features
+			self.geo = (!self.json[id].features ? [self.json[id]] :  self.json[id].features
 			.filter(function(ft, j){
 				ft._id = id
 				if (self.isPointCoords(ft.geometry.coordinates)) {
@@ -176,7 +176,7 @@ var mapFunctions = {
 				if (ll1._southWest) {
 					self.map.fitBounds(ll1);
 					var mark = L.latLngBounds(ll1).getCenter();
-					self.map.panTo(mark);
+					// self.map.panTo(mark);
 					self.lMarker.setLatLng(mark);
 				} else {
 					self.map.panTo(latlng);
@@ -225,7 +225,7 @@ var mapFunctions = {
 		var self = this;
 		var vals = self.lyr[feature._id]
 		$.get('/publishers/esta/json/json_'+feature._id+'.json')
-		.then(async function(json){
+		.then( function(json){
 			if (json.features){
 				return Object.keys(json.features[0])
 			}
@@ -598,12 +598,12 @@ var mapFunctions = {
 	numberColorBucket: function(lid, e) {
 		var self = this;
 		if (self.colorTimeout) clearTimeout(self.colorTimeout);
-		self.colorTimeout = setTimeout(async function(){
+		self.colorTimeout = setTimeout( function(){
 			var length = parseInt(e.target.value,10);
 			var item = self.json[lid];
 			if (item) {
 				var itemi = null;
-				var style = await self.doc.properties.layers.filter(function(it, i){
+				var style =  self.doc.properties.layers.filter(function(it, i){
 					if (it.lid === lid) {
 						itemi = i;
 						return true;
@@ -659,6 +659,10 @@ var mapFunctions = {
 		}
 		return coords;
 	},
+	geoNull: function() {
+		var self = this;
+		self.geo = []
+	},
 	adjustedGeometryCoord: function(feature) {
 		var self = this;
 		if (!feature.features) {
@@ -692,12 +696,12 @@ var mapFunctions = {
 				// currently modifying Leaflet source code directly to enable the custom icon to be captured in leaflet-image captures
 				// custom icon was otherwise crashing leaflet-image during map image captures .
 				self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
-				self.map.panTo(latlng)
-
+				// self.map.panTo(latlng)
+				// self.map.fitBounds(self.dataLayer.getBounds())
 			}
 			cb(latlng)
 		} else {
-			$.get('/publishers/esta/json/json_'+key+'.json?v=1').then(async function(results){
+			$.get('/publishers/esta/json/json_'+key+'.json?v=1').then( function(results){
 				if (results) {
 					var result = results;//self.adjustedGeometryCoord(results);
 					if (!result || result.features[0]) console.log(key)
@@ -708,7 +712,7 @@ var mapFunctions = {
 					//- var pointCoordsAdjusted = (!result.features ? (result.geometry.coordinates.length === 3 ? adj : result.geometry.coordinates) : (result.features[0].geometry.coordinates.length === 3 ? adj : result.features[0].geometry.coordinates))
 					var isPointCoords = self.isPointCoords(coords)
 					if (isDataLayer) {
-						self.dataLayer = await self.loadLayer(result);
+						self.dataLayer =  self.loadLayer(result);
 						self.map.addLayer(self.dataLayer);
 						
 
@@ -719,6 +723,9 @@ var mapFunctions = {
 						if (self.lyr[key].options) self.lyr[key].options.interactive = false;
 
 						if (isPointCoords) {
+							var bounds = self.lyr[key].getBounds();
+							self.map.fitBounds(bounds);
+
 							// console.log('isPointCoords');
 							// self.lyr[key].bringToFront()
 							// if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') {
@@ -739,8 +746,7 @@ var mapFunctions = {
 							latlng = self.lyr[key].getBounds().getCenter();
 							self.lMarker = L.marker(latlng, {/*icon:customIcon, */draggable: true, opacity: 0}).addTo(self.map);
 							if (isPointCoords) {
-								var bounds = self.lyr[key].getBounds();
-								self.map.fitBounds(bounds);
+								// self.map.panTo(latlng)
 								// self.lyr[key].bringToFront()
 								// setTimeout(()=>,500)
 								
@@ -749,7 +755,7 @@ var mapFunctions = {
 							// 	self.lyr[key].bringToBack()
 							// }
 						}
-
+						
 					}
 					
 
@@ -770,7 +776,7 @@ var mapFunctions = {
 		}
 	}
 	 /*Leaflet requires reversed geo-coordinate (lat, lng)*/,
-	loadMap: async function(cb) {
+	loadMap: function(cb) {
 		var self = this;
 		var dataLayer;
 		var dataCoords;
@@ -802,16 +808,16 @@ var mapFunctions = {
 		if (self.doc && self.doc !== '') {
 			// generate geographic points from data
 			var key = self.doc._id;
-			self.serverJson(true, key, async function(latlng){
+			self.serverJson(true, key, function(latlng){
 				if (self.doc.properties && self.doc.properties.title.str !== 'Geography') {
-					var keys = await self.doc.properties.layers.map(async function(item){return item.lid})
+					var keys =  self.doc.properties.layers.map(function(item){return item.lid})
 					if (self.layers && self.layers.length > 0) {
 						if (self.dataLayer.options) {
 							self.dataLayer.options.interactive = false;
 						}
 						self.mapEdit = false;
 						try {
-							await self.layers.forEach(function(item){
+							 self.layers.forEach(function(item){
 								var k = item._id;
 								self.serverJson(false, k, function(latlng){
 									if (latlng && Object.keys(self.json).length >= self.layers.length) {
@@ -824,7 +830,7 @@ var mapFunctions = {
 						}
 					}
 					if (self.availablelayers && self.availablelayers.length > 0) {
-						await self.availablelayers.forEach(function(item, i){
+						 self.availablelayers.forEach(function(item, i){
 							var key = item._id;
 							$.get('/publishers/esta/json/json_'+key+'.json?v=1').then(function(result){
 								if (result) {
@@ -875,7 +881,8 @@ var mapFunctions = {
 		if (!mapCtrl) {
 			self.mapCtrl = true;
 		} else {
-			return false;
+			self.mapCtrl = false;
+			// return false;
 		}
 		// self.mapCtrl = !mapCtrl;
 		//- if (self.mapCtrl) {
@@ -918,7 +925,7 @@ var mapFunctions = {
 		self.btn.y = y;
 
 	},
-	addLayer: async function(id, e) {
+	addLayer: function(id, e) {
 		console.log(id)
 		var self = this;
 		var tlrs = self.doc.properties.layers.filter(function(item){
@@ -936,29 +943,29 @@ var mapFunctions = {
 			style = tlrs;
 		}
 		var ind = null;
-		var thisAvailableLayer = await self.availablelayers.filter(function(item, i){
+		var thisAvailableLayer =  self.availablelayers.filter(function(item, i){
 			if (item._id === id) {
 				ind = i;
 			} 
 			return item._id === id
 		})[0];
-		var thisLayer = await self.layers.filter(function(item, i){
+		var thisLayer =  self.layers.filter(function(item, i){
 			return item._id === id
 		})[0];
 		if (!thisLayer && thisAvailableLayer) {
 			if (ind !== null && self.json[id]) {
 				self.availablelayers.splice(ind, 1);
 				self.layers.push(thisAvailableLayer);
-				await self.doc.properties.layers.push(style);
+				 self.doc.properties.layers.push(style);
 				self.layerAdd(id)
 			}
 		}
 	},
-	removeLayer: async function(id, e) {
+	removeLayer:  function(id, e) {
 		var self = this;
 		var keys = self.doc.properties.layers.map(function(item){return item.lid})
 		var ind = null;
-		var thisLayer = await self.layers.filter(function(item, i){
+		var thisLayer =  self.layers.filter(function(item, i){
 			if (item._id === id) {
 				ind = i;
 			} 

@@ -220,7 +220,7 @@ script(type="text/javascript").
 				mounted: function(){
 					var self = this;
 					self.signaturePad = new SignaturePad(self.$refs.canv, {
-						onEnd: async function() {
+						onEnd: function() {
 							self.$refs.canv.style['letter-spacing'] = '0px'
 							var ctx = self.$refs.canv.getContext('2d');
 							ctx.font = '12px serif';
@@ -350,13 +350,14 @@ script(type="text/javascript").
 				//- console.log(self.map.project(dataCoords), dataCoords);
 				//- console.log(self.lMarker.getLatLng());
 				//- console.log(self.map.latLngToLayerPoint(self.lMarker.getLatLng()))
+				self.map.panTo(dataCoords);
 				if (self.dataLayer && typeof self.dataLayer.bringToBack === 'function') {
 					//- self.layers.forEach(function(layer){
 					//- 	if (!self.isPointCoords(layer.geometry.coordinates)) {
 					//- 			self.lyr[layer._id].bringToBack()
 					//- 	}
 					//- })	
-					setTimeout(async function(){
+					setTimeout(function(){
 						Object.keys(self.json).forEach(function(key){
 							var result = self.json[key];
 							var coords = (!result.features ? result.geometry.coordinates : result.features[0].geometry.coordinates)

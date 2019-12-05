@@ -31,7 +31,7 @@ var baseFunctions = {
 
 		document.getElementById('editor').scrollIntoView();
 	},
-	activateMap: async function(){
+	activateMap: function(){
 		var self = this;
 		var mapActive = self.mapActive;
 		var mapEdit = self.mapEdit;
@@ -101,9 +101,9 @@ var baseFunctions = {
 			if (!self.accordions[n].length) {
 				if (!self.dat || self.dat === '') {
 				} else {
-					self.dat.forEach(async function(datas, i){
+					self.dat.forEach(function(datas, i){
 						if (i === n) {
-							self.accordions[n] = await datas.map(function(doc){return doc.index})
+							self.accordions[n] = datas.map(function(doc){return doc.index})
 						}
 					});
 					

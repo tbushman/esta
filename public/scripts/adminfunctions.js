@@ -70,17 +70,16 @@ var adminFunctions = {
 			url = url[0].url;
 			var type = 
 				e.target.value
-			$.getJSON(url).then(async function(json){
-				await console.log(json)
+			$.getJSON(url).then(function(json){
 				self.newDoc.placetype = type;
-				self.newDoc.tempGeo = await json.features;
+				self.newDoc.tempGeo = json.features;
 				if (type === 'Nation' && self.newDoc.tiind === 0) {
 					self.newDoc.tempGeo = [self.newDoc.tempGeo[0]];
 					self.getGpo();
 				}
 				console.log(self.newDoc.tempGeo)
 			})
-			.catch((err)=>console.log(err))
+			.catch(function(err){console.log(err)})
 		}
 		
 	},
@@ -292,7 +291,7 @@ var adminFunctions = {
 			processData: false,
 			contentType: false
 			
-		}).done((result) => {
+		}).done(function(result) {
 			console.log(result)
 			
 		}).fail(function (xhr, status) {

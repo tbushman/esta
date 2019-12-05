@@ -743,6 +743,10 @@ em {
 	min-height: 75px;
 	min-height: calc(var(--thumbw) + 10px);
 }
+.layerDrop .close {
+	width: calc(100vw - 90px);
+	width: calc(100vw - calc(var(--thumbw) * 2));
+}
 .layerDrop > .row > span {
   padding: 0;
 }

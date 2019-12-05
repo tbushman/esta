@@ -108,7 +108,7 @@ script(type="text/javascript").
 					//- 			self.lyr[layer._id].bringToBack()
 					//- 	}
 					//- })	
-					setTimeout(async function(){
+					setTimeout(function(){
 						Object.keys(self.json).forEach(function(key){
 							var result = self.json[key];
 							var coords = (!result.features ? result.geometry.coordinates : result.features[0].geometry.coordinates)
@@ -123,6 +123,7 @@ script(type="text/javascript").
 					}, 1000)
 				
 				} 
+				self.map.panTo(dataCoords);
 				self.map.on('click', function(){
 					self.mapCtrl = false;
 				})
