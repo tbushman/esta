@@ -281,9 +281,9 @@ var adminFunctions = {
 	},
 	handleGmapsFile: function(id, e) {
 		var self = this;
-		self.file = e.target.files[0];
+		// self.files = e.target.files;
 		var formData = new FormData();
-		formData.append('csv', self.file);
+		formData.append('csv', e.target.files);
 		$.ajax({
 			url: '/loadgmaps/'+self.doc._id+'',
 			method: 'POST',

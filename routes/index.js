@@ -1271,8 +1271,13 @@ const iteratePlaces = (data, pathh) => {
 				var firstname = (!d.first_name || d.first_name === '' ? null : d.first_name.trim() +'')
 				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)
 				if (match && existing.indexOf(key) !== -1) {
-					json.features[existing.indexOf(key)].properties.count++
-					json.features[existing.indexOf(key)].properties.dates.push(date)
+					json.features[existing.indexOf(key)].properties.count++;
+					json.features[existing.indexOf(key)].properties.dates += date;
+					// if (!json.features[existing.indexOf(key)].properties.dates) {
+					// 	console.log(json.features[existing.indexOf(key)].properties)
+					// } else {
+					// 	json.features[existing.indexOf(key)].properties.dates.push(date)
+					// }
 				} else if (match) {
 					await places(date, key, state).then(entryTransformed => {
 						// console.log(entryTransformed)
@@ -1349,42 +1354,106 @@ const places = (date, key, state) => {
 	})
 }
 
-router.post('/loadgmaps/:id', uploadmedia.single('csv'), parseForm/*, csrfProtection*/, async function(req, res, next){
-	var outputPath = url.parse(req.url).pathname;
-	console.log(outputPath)
-	const content = await fs.readFileSync(req.file.path, 'utf8');
-	var p = ''+publishers+'/pu/publishers/esta/json';
-	fs.access(p, async function(err) {
-		if (err && err.code === 'ENOENT') {
-			await mkdirp(p, function(err){
-				if (err) {
-					console.log("err", err);
-				}
-			})
+async function saveJsonDb(json, id, cb) {
+	var multiPolygon;
+	var type = 'MultiPolygon';
+	var keys;
+	if (json.features && json.features.length) {
+		// console.log(json.features[0].geometry)
+		keys = Object.keys(json.features[0].properties);
+		if (json.features[0] && json.features[0].geometry.type === 'Point') {
+			type = 'MultiPoint'
 		}
-		var pathh = await path.join(p, '/json_'+req.params.id+'.json');
-		let csv = null;
-		const data = await d3.csvParse(content);
-		// console.log(data)
-		await iteratePlaces(data, pathh).then((json) => {
-			console.log(json)
-			if (!json || json.features.length === 0 || json[0] === {} ) {
-				return next(new Error('didn\'t work'))
+		// console.log(type)
+		multiPolygon = await json.features.map(function(ft){
+			if (!Array.isArray(ft.geometry.coordinates[0])) {
+				return [ft.geometry.coordinates[0], ft.geometry.coordinates[1]];
 			} else {
-				fs.writeFile(pathh, JSON.stringify(json), function(err){
+				return ft.geometry.coordinates[0];
+			}
+		})
+	} else {
+		if (json[0].geometry) {
+			keys = Object.keys(json[0].properties)
+			multiPolygon = json[0].geometry.coordinates;
+		} else if (json.geometry) {
+			keys = Object.keys(json.properties)
+			multiPolygon = json.geometry.coordinates
+		}
+	} 
+	var geo = {
+		type: type,
+		coordinates: multiPolygon
+	}
+	// console.log(multiPolygon)
+	var set = {$set:{}};
+	var key1 = 'geometry';
+	var key2 = 'properties.keys'
+	set.$set[key1] = geo;
+	set.$set[key2] = keys;
+	ContentDB.findOneAndUpdate({_id: id}, set, {safe: true, new:true}, function(err, doc){
+		if (err) {
+			cb(err)
+		} else {
+			cb(null)
+		}
+	})
+}
+
+async function importMany(files, id, cb){
+	var p = ''+publishers+'/pu/publishers/esta/json';
+	var pathh = await path.join(p, '/json_'+id+'.json');
+	await files.forEach(async(file) => {
+		const content = await fs.readFileSync(file.path, 'utf8');
+		fs.access(p, async function(err) {
+			if (err && err.code === 'ENOENT') {
+				await mkdirp(p, function(err){
 					if (err) {
-						return next(err)
-					} else {
-						return res.status(200).send(json);
-						// return res.redirect('/loadgmaps')
+						console.log("err", err);
 					}
 				})
 			}
+			// let csv = null;
+			const data = await d3.csvParse(content);
+			// console.log(data)
+			await iteratePlaces(data, pathh).then((json) => {
+				console.log(json)
+				if (!json || json.features.length === 0 || json[0] === {} ) {
+					// return next(new Error('didn\'t work'))
+					return cb(new Error('didn\'t work'))
+				} else {
+					saveJsonDb(json, id, function(err){
+						if (err) return cb(err)
+						fs.writeFile(pathh, JSON.stringify(json), function(err){
+							if (err) {
+								return cb(err)
+							} 
+							// else {
+							// 	return cb(json)//res.status(200).send(json);
+							// 	// res.redirect('/list/'+req.params.id+'/null')
+							// 
+							// 	// return res.redirect('/loadgmaps')
+							// }
+						})
+					})
+					
+				}
+				
+			})
+			.catch(err => cb(err))
 			
-		})
-		.catch(err => res.status(400).send(err))
-		
-	});
+		});
+	})
+	cb(null)
+}
+
+router.post('/loadgmaps/:id', uploadmedia.array('csv'), parseForm/*, csrfProtection*/, async function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+	importMany(req.files, req.params.id, function(err, json){
+		if (err) return next(err);
+		return res.status(200).send(json);
+	})
 })
 
 router.get('/home', getDat, ensureCurly, function(req, res, next){
