@@ -286,6 +286,8 @@ var mapFunctions = {
 			console.log('no latlng')
 			if (self.isPointCoords(feature.geometry.coordinates)) {
 				feature.geometry.coordinates.reverse();
+			} else {
+				console.log(feature)
 			}
 			var bf = L.geoJSON(feature).addTo(self.map);
 			latlng = //self.map.latLngToContainerPoint(

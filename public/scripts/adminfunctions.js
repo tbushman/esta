@@ -283,21 +283,31 @@ var adminFunctions = {
 		var self = this;
 		// self.files = e.target.files;
 		var formData = new FormData();
-		formData.append('csv', e.target.files);
-		$.ajax({
-			url: '/loadgmaps/'+self.doc._id+'',
-			method: 'POST',
-			data: formData,
-			processData: false,
-			contentType: false
-			
-		}).done(function(result) {
-			console.log(result)
-			
-		}).fail(function (xhr, status) {
-			console.log(xhr, status)
-			alert(status);
-		})
+		console.log(e.target.files[0])
+		var files = e.target.files;
+		var count = 0;
+		for (var i = 0; i < files.length; i++) {
+			formData.append('csv', files[i])
+			// self.files.push(files[i]);
+			count++;
+		}
+		if (count === files.length) {
+			$.ajax({
+				url: '/loadgmaps/'+self.doc._id+'/csv',
+				method: 'POST',
+				data: formData,
+				processData: false,
+				contentType: false
+				
+			}).done(function(result) {
+				console.log(result)
+				
+			}).fail(function (xhr, status) {
+				console.log(xhr, status)
+				alert(status);
+			})
+		}
+		
 	},
 	handleFile: function(did, index) {
 		var self = this;

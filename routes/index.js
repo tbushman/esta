@@ -345,7 +345,7 @@ var storage = multer.diskStorage({
 		if (req.params.type === 'png') {
 			cb(null, 'img_' + req.params.counter + '.png')
 		} else if (req.params.type === 'csv') {
-			cb(null, 'csv_' + req.params.id + '_temp.csv')
+			cb(null, 'csv_' + req.params.id + '_' + Date.now()+ '_temp.csv')
 		} else if (req.params.type === 'txt') {
 			cb(null, 'txt_' + Date.now() + '.txt')
 		} else if (req.params.type === 'docx') {
@@ -1242,25 +1242,16 @@ router.get('/', function(req, res, next){
 // 	})
 // })
 
-const iteratePlaces = (data, pathh) => {
+const iteratePlaces = (data, pathh, json) => {
 	return new Promise(async resolve => {
 		var jsonExists = await fs.existsSync(pathh);
-		console.log('jsonExists')
-		console.log(jsonExists)
-		const json = (!jsonExists ?
-			{ 
-				type: "FeatureCollection",
-				name: "Evictions_SLC",
-				crs: { type: "name", properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-				features: [] 
-			} : await JSON.parse(fs.readFileSync(pathh, 'utf8'))
-		);
-		var existing = (json.features && json.features.length > 0 ? json.features.map(function(f){return f.properties.label}) : [] )
 		var count = 0;
+		let newJson = json;
 		if (data) {
 			
+			console.log('matching records')
 			for (var k = 0; k < data.length; k++) {
-				count++
+				let existing = (newJson.features && newJson.features.length > 0 ? await newJson.features.map(function(f){return f.properties.label}) : [] )
 				var d = data[k]
 				var key = (!d.last_name ? '' : d.last_name.trim() +'');
 				var state = (!d.state ? 'Utah' : d.state.trim() +'');
@@ -1271,27 +1262,30 @@ const iteratePlaces = (data, pathh) => {
 				var firstname = (!d.first_name || d.first_name === '' ? null : d.first_name.trim() +'')
 				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)
 				if (match && existing.indexOf(key) !== -1) {
-					json.features[existing.indexOf(key)].properties.count++;
-					json.features[existing.indexOf(key)].properties.dates += date;
-					// if (!json.features[existing.indexOf(key)].properties.dates) {
-					// 	console.log(json.features[existing.indexOf(key)].properties)
-					// } else {
-					// 	json.features[existing.indexOf(key)].properties.dates.push(date)
-					// }
+					newJson.features[existing.indexOf(key)].properties.count++;
+					newJson.features[existing.indexOf(key)].properties.dates.push(date)
 				} else if (match) {
-					await places(date, key, state).then(entryTransformed => {
-						// console.log(entryTransformed)
+					if (/(SOLARA)/g.test(key)) {
+						console.log(existing, key)
+					}
+					await places(date, key, state).then(async entryTransformed => {
 						if (entryTransformed) {
-							json.features.push(entryTransformed)
+							if (existing.indexOf(key) === -1) {
+								await existing.push(key)
+							}
+							await newJson.features.push(entryTransformed)
+						} else {
+							console.log(key, ', ', date)
 						}
 					})
 					.catch(err => {
-						console.log(json)
+						console.log(newJson)
 						console.log(err)
 					})
 				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
-					console.log(firstname, key)
 				}
+				count++
+
 			}
 			
 			
@@ -1299,7 +1293,9 @@ const iteratePlaces = (data, pathh) => {
 			console.log('wtf no data')
 		}
 		if (count === data.length) {
-			resolve(json)
+			resolve(newJson)
+		} else {
+			console.log('blrgh')
 		}
 	})
 
@@ -1309,10 +1305,10 @@ const places = (date, key, state) => {
 	return new Promise(async resolve => {
 		var input = 
 		// escape(
-			key
+			key.replace(/\s(LP$|LLC$)/, '')
 		// ) 
 		+ ' ' + 
-		// escape(
+		// // escape(
 			state
 		// );
 		await googleMaps.findPlace({
@@ -1354,104 +1350,109 @@ const places = (date, key, state) => {
 	})
 }
 
-async function saveJsonDb(json, id, cb) {
-	var multiPolygon;
-	var type = 'MultiPolygon';
-	var keys;
-	if (json.features && json.features.length) {
-		// console.log(json.features[0].geometry)
-		keys = Object.keys(json.features[0].properties);
-		if (json.features[0] && json.features[0].geometry.type === 'Point') {
-			type = 'MultiPoint'
+const saveJsonDb = async (json, id) => {
+	return new Promise(async (resolve, reject) => {
+		var multiPolygon;
+		var type = 'MultiPolygon';
+		var keys;
+		if (json.features && json.features.length) {
+			// console.log(json.features[0].geometry)
+			keys = Object.keys(json.features[0].properties);
+			if (json.features[0] && json.features[0].geometry.type === 'Point') {
+				type = 'MultiPoint'
+			}
+			// console.log(type)
+			multiPolygon = await json.features.map(function(ft){
+				if (!Array.isArray(ft.geometry.coordinates[0])) {
+					return [ft.geometry.coordinates[0], ft.geometry.coordinates[1]];
+				} else {
+					return ft.geometry.coordinates[0];
+				}
+			})
+		} else {
+			if (json[0].geometry) {
+				keys = Object.keys(json[0].properties)
+				multiPolygon = json[0].geometry.coordinates;
+			} else if (json.geometry) {
+				keys = Object.keys(json.properties)
+				multiPolygon = json.geometry.coordinates
+			}
+		} 
+		var geo = {
+			type: type,
+			coordinates: multiPolygon
 		}
-		// console.log(type)
-		multiPolygon = await json.features.map(function(ft){
-			if (!Array.isArray(ft.geometry.coordinates[0])) {
-				return [ft.geometry.coordinates[0], ft.geometry.coordinates[1]];
+		// console.log(multiPolygon)
+		var set = {$set:{}};
+		var key1 = 'geometry';
+		var key2 = 'properties.keys'
+		set.$set[key1] = geo;
+		set.$set[key2] = keys;
+		ContentDB.findOneAndUpdate({_id: id}, set, {safe: true, new:true}, function(err, doc){
+			if (err) {
+				reject(err)
 			} else {
-				return ft.geometry.coordinates[0];
+				resolve(json)
 			}
 		})
-	} else {
-		if (json[0].geometry) {
-			keys = Object.keys(json[0].properties)
-			multiPolygon = json[0].geometry.coordinates;
-		} else if (json.geometry) {
-			keys = Object.keys(json.properties)
-			multiPolygon = json.geometry.coordinates
-		}
-	} 
-	var geo = {
-		type: type,
-		coordinates: multiPolygon
-	}
-	// console.log(multiPolygon)
-	var set = {$set:{}};
-	var key1 = 'geometry';
-	var key2 = 'properties.keys'
-	set.$set[key1] = geo;
-	set.$set[key2] = keys;
-	ContentDB.findOneAndUpdate({_id: id}, set, {safe: true, new:true}, function(err, doc){
-		if (err) {
-			cb(err)
-		} else {
-			cb(null)
-		}
 	})
+
 }
 
-async function importMany(files, id, cb){
+const importMany = async (files, id, cb) => {
 	var p = ''+publishers+'/pu/publishers/esta/json';
 	var pathh = await path.join(p, '/json_'+id+'.json');
-	await files.forEach(async(file) => {
-		const content = await fs.readFileSync(file.path, 'utf8');
-		fs.access(p, async function(err) {
-			if (err && err.code === 'ENOENT') {
-				await mkdirp(p, function(err){
-					if (err) {
-						console.log("err", err);
-					}
-				})
-			}
-			// let csv = null;
+	console.log('how many files')
+	console.log(files.length)
+	var jsonExists = await fs.existsSync(pathh);
+	const json = (!jsonExists ?
+		{ 
+			type: "FeatureCollection",
+			name: "Evictions_SLC",
+			crs: { type: "name", properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+			features: [] 
+		} : await JSON.parse(fs.readFileSync(pathh, 'utf8'))
+	);
+	let newJson = json;
+	let count = 0;
+	fs.access(p, async function(err) {
+		if (err && err.code === 'ENOENT') {
+			await mkdirp(p, function(err){
+				if (err) {
+					console.log("err", err);
+				}
+			})
+		}
+
+		await files.forEach(async(file) => {
+			const content = await fs.readFileSync(file.path, 'utf8');
 			const data = await d3.csvParse(content);
-			// console.log(data)
-			await iteratePlaces(data, pathh).then((json) => {
-				console.log(json)
-				if (!json || json.features.length === 0 || json[0] === {} ) {
-					// return next(new Error('didn\'t work'))
+			console.log('data length');
+			console.log(data.length)
+			await iteratePlaces(data, pathh, newJson).then(async (js) => {
+				if (!js || js.features.length === 0 || js[0] === {} ) {
 					return cb(new Error('didn\'t work'))
 				} else {
-					saveJsonDb(json, id, function(err){
-						if (err) return cb(err)
-						fs.writeFile(pathh, JSON.stringify(json), function(err){
-							if (err) {
-								return cb(err)
-							} 
-							// else {
-							// 	return cb(json)//res.status(200).send(json);
-							// 	// res.redirect('/list/'+req.params.id+'/null')
-							// 
-							// 	// return res.redirect('/loadgmaps')
-							// }
-						})
+					newJson = await saveJsonDb(js, id).then(async j => {
+						await fs.writeFileSync(pathh, JSON.stringify(j))
+						count++
+						return j
 					})
-					
+					.catch(err => cb(err))
 				}
-				
-			})
-			.catch(err => cb(err))
-			
+			}).catch(err => cb(err))
 		});
+		cb(null, newJson)
+
 	})
-	cb(null)
 }
 
-router.post('/loadgmaps/:id', uploadmedia.array('csv'), parseForm/*, csrfProtection*/, async function(req, res, next){
+router.post('/loadgmaps/:id/:type', uploadmedia.array('csv'), parseForm/*, csrfProtection*/, async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	importMany(req.files, req.params.id, function(err, json){
 		if (err) return next(err);
+		console.log(req.files, json)
 		return res.status(200).send(json);
 	})
 })
