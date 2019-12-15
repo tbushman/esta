@@ -30,7 +30,7 @@ p
 		input.block.spacer.success.tb-07-m0#geojson(:id="'lyr_'+doc._id", @change="handleGeoJson($event)", type="file", style="padding: 18px;color:#fff;")
 		input.block.spacer.tb-10-m0(name="credit", title="Credit for this data source", :value="doc.properties.credit")
 		label.text-uppercase(for="csv" v-text="'upload csv'")
-		input.form-control#csv(@change="handleGmapsFile('5d2904a7b4aef770a18a2b24', $event)" type="file" style="min-height: 52px;" multiple)
+		input.form-control#csv(@change="handleGmapsFile(doc._id, $event)" type="file" style="min-height: 52px;" multiple)
 
 	//- div(v-else-if="doc.properties.title.str !== 'Geography' && mapActive")
 	//- 	include mapedit.pug

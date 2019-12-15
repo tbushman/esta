@@ -362,9 +362,10 @@ script(type="text/javascript").
 							if (self.json) {
 								Object.keys(self.json).forEach(function(key){
 									var result = self.json[key];
-									var coords = (!result.features ? result.geometry.coordinates : result.features[0].geometry.coordinates)
+									console.log(result)
+									var coords = (!result.features || result.features.length === 0 ? result.geometry.coordinates : result.features[0].geometry.coordinates)
 									var isPointCoords = self.isPointCoords(coords);
-									if (isPointCoords) {
+									if (isPointCoords && self.lyr[key]) {
 										self.lyr[key].bringToFront()
 									}
 								})
@@ -372,7 +373,7 @@ script(type="text/javascript").
 						
 							self.dataLayer.bringToBack();
 							self.tileLayer.bringToBack();
-							
+							self.mapReady = true;
 						}, 1000)
 					
 					} 

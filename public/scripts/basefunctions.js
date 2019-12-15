@@ -36,6 +36,7 @@ var baseFunctions = {
 		var mapActive = self.mapActive;
 		var mapEdit = self.mapEdit;
 		self.mapReady = false;
+		console.log(mapActive)
 		if (!mapActive) {
 			self.mapActive = true;
 			document.getElementById('viewer').scrollIntoView();

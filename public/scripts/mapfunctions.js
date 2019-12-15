@@ -345,6 +345,27 @@ var mapFunctions = {
 			return thisLayer.colors[0]
 		}
 	},
+	getStyle: function(p, go) {
+		var self = this;
+		var l = self.doc.properties.layers.filter(function(lyr) { return lyr.lid === go._id})[0];
+		return l;
+	},
+	getAttributeColor: function(p, go) {
+		var self = this;
+		var rgbaColor = 
+		(
+			self.getStyle.key === p 
+				? 
+					(
+						'rgba('+ 
+							self.convertToRGB(self.getFeatureColor(go._id, go.properties[p]))[0] +','+ 
+							self.convertToRGB(self.getFeatureColor(go._id, go.properties[p]))[1] +','+ 
+							self.convertToRGB(self.getFeatureColor(go._id, go.properties[p]))[2] +',0.2)' 
+					)
+				: 'rgba(255,255,255,0)'
+			)
+		return rgbaColor;
+	},
 	determineLegend: function(item, style, ind, cb) {
 		var self = this;
 		var buckets = style.buckets;

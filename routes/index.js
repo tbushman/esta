@@ -782,7 +782,7 @@ function ensureContent(req, res, next) {
 }
 
 function getLayers(req, res, next) {
-	ContentDB.findById(req.params.id).lean().exec(async function(err, doc){
+	ContentDB.findOne({_id: req.params.id}).lean().exec(async function(err, doc){
 		if (err) {
 			return next(err)
 		}

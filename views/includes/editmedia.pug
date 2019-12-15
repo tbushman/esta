@@ -1,11 +1,11 @@
 div.tb-10-m0
 	//div(style="visibility: hidden;")
-	input(v-bind:id="'inputthumb'+img.index", v-bind:name="'thumb'+img.index", v-bind:value="img.thumb", type="hidden")
-	input(v-bind:id="'inputimg'+img.index", v-bind:name="'img'+img.index", v-bind:value="img.image", type="hidden")
-	input(v-bind:id="'orientation'+img.index", v-bind:name="'orientation'+img.index", v-bind:value="img.orientation", type="hidden")
-	canvas(v-bind:id="'canvas'+img.index", style="display: none;")
-	img(v-bind:id="'return'+img.index", v-bind:src="img.image+'?version='+Math.random(100).toFixed(0)", style="display:none;")
-	//input(class="featuredimg", v-bind:id="'featured'+img.index", v-bind:name="'img'+img.index+'_featured'", v-bind:value="img.featured", type="hidden")
+	input(:id="'inputthumb'+img.index", :name="'thumb'+img.index", :value="img.thumb", type="hidden")
+	input(:id="'inputimg'+img.index", :name="'img'+img.index", :value="img.image", type="hidden")
+	input(:id="'orientation'+img.index", :name="'orientation'+img.index", :value="img.orientation", type="hidden")
+	canvas(:id="'canvas'+img.index", style="display: none;")
+	img(:id="'return'+img.index", :src="img.image+'?version='+Math.random(100).toFixed(0)", style="display:none;")
+	//input(class="featuredimg", :id="'featured'+img.index", :name="'img'+img.index+'_featured'", :value="img.featured", type="hidden")
 
 	//- div.row
 	//- 	div.tb-04-m0.tb-02-m3
@@ -13,28 +13,28 @@ div.tb-10-m0
 	//- 
 	//- 	div.tb-06-m0.tb-08-m3
 	//- 		div.row
-	//- 			//- label(v-bind:for="'img'+img.index+'_name'") Image Title
-	//- 			input.tb-font-s(type="text", v-bind:name="'img'+img.index+'_name'", v-bind:id="'img'+img.index+'_name'", v-bind:value="img.name" disabled)
+	//- 			//- label(:for="'img'+img.index+'_name'") Image Title
+	//- 			input.tb-font-s(type="text", :name="'img'+img.index+'_name'", :id="'img'+img.index+'_name'", :value="img.name" disabled)
 	div.row
 		div.tb-10-m0.tb-02-m3
 			div.row(style="height: auto;")
-				span.img(v-bind:id="img.index", v-bind:name="doc._id", style="height:150px;")
-					img(v-bind:id="'view'+img.index", v-bind:src="img.image+'?version='+Math.random(100).toFixed()")
+				span.img(:id="img.index", :name="doc._id", style="height:150px;")
+					img(:id="'view'+img.index", :src="img.image+'?version='+Math.random(100).toFixed()")
 			
 		div.tb-10-m0.tb-06-m3.shift-00
 			div.row
-				label(v-bind:for="'img'+img.index+'_caption'") Image Caption
-				textarea.tb-font-s(type="text", v-bind:name="'img'+img.index+'_caption'", v-bind:id="'img'+img.index+'_caption'", v-text="img.caption")
-				//label(v-bind:for="'img'+img.index+'_postscript'") Caption postscript
-				//input(type="text", v-bind:name="'img'+img.index+'_postscript'", v-bind:id="'img'+img.index+'_postscript'", value="img.postscript")
+				label(:for="'img'+img.index+'_caption'") Image Caption
+				textarea.tb-font-s(type="text", :name="'img'+img.index+'_caption'", :id="'img'+img.index+'_caption'", v-text="img.caption")
+				//label(:for="'img'+img.index+'_postscript'") Caption postscript
+				//input(type="text", :name="'img'+img.index+'_postscript'", :id="'img'+img.index+'_postscript'", value="img.postscript")
 		div.tb-10-m0.tb-02-m3.shift-00
 			div.row
 				//- div.tb-10-m0
 				label.block(for="media") Switch out image:
-				input.block.spacer.success(v-bind:id="'media_'+img.index", v-on:change="handleFile(doc._id,img.index)", v-bind:class="'editmedia@'+img.index", type="file", style="padding: 18px;color:#fff;")
+				input.block.spacer.success(:id="'media_'+img.index", @change="handleFile(doc._id,img.index)", :class="'editmedia@'+img.index", type="file", style="padding: 18px;color:#fff;")
 				//- div.tb-10-m0
-				label.block(v-bind:for="'deletemedia_'+img.index")
-				a.danger.block.spacer(role="button", v-on:click="deleteMedia(img.index)", v-bind:id="'deletemedia_'+img.index")
+				label.block(:for="'deletemedia_'+img.index")
+				a.danger.block.spacer(role="button", @click="deleteMedia(img.index)", :id="'deletemedia_'+img.index")
 					span Delete Media
 	div.row
 		hr

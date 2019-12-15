@@ -13,9 +13,11 @@ each mn, k in menus
 		if (mn === 'static')
 			div.dropdown.static(v-cloak, style="float: left; left:14px; right:auto; display: flex;height:65px;overflow-y:hidden!important;")
 				//- if (layers)
-				div.submenu.drop(v-if="layers && "+mn === 'static'+"")
-					include inputs.pug
-					//- else
+				if (doc && doc !== '')
+					div.submenu.drop
+						// (v-if="layers && "+mn === 'static'+"")
+						include inputs.pug
+						//- else
 				a.submenu.drop(v-else-if=""+mn !== 'static'+"" href="/", class= mn, style="max-height:65px;")
 					span esta.bli.sh
 		div.dropdown(v-cloak, class= mn, v-if=""+(mn === 'static')+" || dropped.drop")
@@ -54,7 +56,7 @@ each mn, k in menus
 				select#gpoapi(v-if="newDoc.placetype && newDoc.placetype === 'Nation' && gpo", @change="setXmlId($event)")
 					option(value="null", v-text="'None'", v-bind:selected="!newDoc.chtitle")
 					option(v-for="(ct, l) in gpo.packages", v-text="ct.title", :value="l")
-				input(v-if="!gpo", type="text", id="chtitle", v-model="newDoc.chtitle")
+				input(v-if="!gpo", type="text", id="chtitle", v-model="newDoc.chtitle", placeholder="petition title" required)
 				a(role="button", title="Create", :href="'/api/new/'+newDoc.placetype+'/'+newDoc.place+'/'+newDoc.tiind+'/'+newDoc.chind+'/'+newDoc.secind+'/'+encodeURIComponent(newDoc.chtitle)+'/'+(!newDoc.xmlid ? undefined : newDoc.xmlid)+''", style="margin-bottom: 50px") Create
 				p &nbsp
 			a.submenu.drop(v-if="loggedin && doc && pu && pu !== '' && pu.properties.admin", class= mn, title="Export", :href="'/api/exportword/'+doc._id+''")

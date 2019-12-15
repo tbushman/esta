@@ -20,33 +20,18 @@ ul(style="padding:0;")
 			tr(
 				v-for="(p, j) in Object.keys(go.properties)"
 				v-if="go.properties[p] && go.properties[p] !== '' && ['STATEFP10','COUNTYFP10','BLKGRPCE10','INTPTLON10','INTPTLAT10','TRACTCE10','GEOID10', 'tessellate', 'visibility'].indexOf(p) === -1"
-				:style=`
-				{
-					backgroundColor: (
-						doc.properties.layers.filter(function(lyr){
-							return lyr.lid === go._id
-						})[0].key === p 
-							? 
-								(
-									'rgba('+ 
-										convertToRGB(getFeatureColor(go._id, go.properties[p]))[0] +','+ 
-										convertToRGB(getFeatureColor(go._id, go.properties[p]))[1] +','+ 
-										convertToRGB(getFeatureColor(go._id, go.properties[p]))[2] +',0.2)' 
-								)
-							: 'rgba(255,255,255,0)'
-						)
-					}`
+				:style=`{ backgroundColor: getAttributeColor(p, go)}`
 				)
-				td(colspan="2", v-if="/name/i.test(p) || doc.properties.layers.filter(function(lyr){return lyr.lid === go._id})[0].key === p", style="white-space:wrap;vertical-align:middle;")
+				td(colspan="1", width="45px", v-if="/name/i.test(p) || getStyle(p, go).key === p", style="white-space:wrap;vertical-align:middle;")
 					p.tb-font-xxs(style="font-size:10px;padding:0 0 3px 0;margin:0;line-height:12px;line-height:calc(var(--thumbw) / 4);")
 						span(v-text="p.replace(/^r_/, '').replace(/^el_/, '').split('_').join(' ')+ ': '")
-				td(colspan="2", v-else-if="geo.length === 1", style="white-space:wrap;vertical-align:middle;")
+				td(colspan="1", width="45px", v-else-if="geo.length === 1", style="white-space:wrap;vertical-align:middle;")
 					p.tb-font-xxs(style="font-size:10px;padding:0 0 3px 0;margin:0;line-height:12px;line-height:calc(var(--thumbw) / 4);")
 						span(v-text="p.replace(/^r_/, '').replace(/^el_/, '').split('_').join(' ')+ ': '")
 				td(colspan="3" v-if="/name/i.test(p)")
 					p.tb-font-s(style="padding:0 0 3px 0;margin:0;line-height:16px;line-height:calc(var(--thumbw) / 4);")
 						strong(v-text="go.properties[p]")
-				td(colspan="3" v-else-if="doc.properties.layers.filter(function(lyr){return lyr.lid === go._id})[0].key === p")
+				td(colspan="3" v-else-if="getStyle(p, go).key === p")
 					p.tb-font-m( style="margin:0;padding:0;"
 						:style='{color: getFeatureColor(go._id, go.properties[p])}')
 						strong(v-text="go.properties[p]")

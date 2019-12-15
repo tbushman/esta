@@ -3,7 +3,7 @@
 div.maintitle.centerall#editor(v-cloak, :style="{'pointer-events':(mapActive && mapReady ? 'none' : 'auto')}")
 	div.chapter
 		section.row(v-if="doc")
-			a(v-bind:href="'/'", style="pointer-events:all;")
+			a(:href="'/'", style="pointer-events:all;")
 				div.table(aid:table="table", aid:trows="2" aid:tcols="2", aid5:tablestyle="entry")
 					div.cell(aid:table="cell", aid:crows="1", aid:ccols="1", aid:cellstyle="head", style="display:block;")
 						header.row.tb-font-l Title 
@@ -24,7 +24,7 @@ div.maintitle.centerall#editor(v-cloak, :style="{'pointer-events':(mapActive && 
 				
 
 			div.row(v-if="loggedin && loggedin !=='' && pu && pu.properties.admin", style="padding-top:20px;")
-				form.row.form.headrule(v-bind:id="'form_'+doc.index", enctype="multipart/form-data", method="POST", v-bind:action="'/api/editcontent/'+doc._id", name="editform")
+				form.row.form.headrule(:id="'form_'+doc.index", enctype="multipart/form-data", method="POST", :action="'/api/editcontent/'+doc._id", name="editform")
 					input(type="hidden", name="_csrf", value= csrfToken)
 					input(type="hidden", :value="JSON.stringify(doc.properties.layers)", name="layers")
 
@@ -36,13 +36,13 @@ div.maintitle.centerall#editor(v-cloak, :style="{'pointer-events':(mapActive && 
 
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px"
 		,
-		v-bind:viewBox="'0 0 ' + wWidth +' '+ (wHeight)", v-bind:style="{'enable-background':'new 0 0 ' + wWidth + ' ' + (wHeight) +'', 'display': 'block', 'margin': '0 auto'}", xml:space="preserve"
+		:viewBox="'0 0 ' + wWidth +' '+ (wHeight)", :style="{'enable-background':'new 0 0 ' + wWidth + ' ' + (wHeight) +'', 'display': 'block', 'margin': '0 auto'}", xml:space="preserve"
 		, 
-		v-bind:width="wWidth +'px'",
-		v-bind:height="(wHeight)+'px'",
+		:width="wWidth +'px'",
+		:height="(wHeight)+'px'",
 		style="position:absolute;top:0;pointer-events:fill;display:inline-block;left:0;z-index:-1;"
 		)
-		path(style="pointer-events: all; overflow-y: scroll;", v-bind:d="'M0,0v'+(wHeight)+'h'+wWidth+'V0H0L0,0z'", fill="var(--primary)")
+		path(style="pointer-events: all; overflow-y: scroll;", :d="'M0,0v'+(wHeight)+'h'+wWidth+'V0H0L0,0z'", fill="var(--primary)")
 
 div#viewer(style="position:absolute;pointer-events: none;")
 
@@ -50,26 +50,26 @@ div#viewer(style="position:absolute;pointer-events: none;")
 		include mapedit.pug
 	include viewerlist.pug
 	svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px",
-		v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
+		:viewBox="'0 0 ' + wWidth +' '+ wHeight", :style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
 		, 
-		v-bind:width="wWidth +'px'",
-		v-bind:height="wHeight+'px'",
+		:width="wWidth +'px'",
+		:height="wHeight+'px'",
 		style="pointer-events: none;"
 		)
 		defs
 			linearGradient#barGradient(gradientTransform="rotate(90)")
 				stop(offset="20%" stop-color="var(--primary)")
 				stop(offset="50%" stop-color="rgba(255,255,255,0)")
-		path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="url(#barGradient)")
+		path(:style="{'pointer-events':'all'}", :d="dPath", fill="url(#barGradient)")
 
 	//- svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px",
-	//- 	v-bind:viewBox="'0 0 ' + wWidth +' '+ wHeight", v-bind:style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
+	//- 	:viewBox="'0 0 ' + wWidth +' '+ wHeight", :style="{'position': 'relative','enable-background':'new 0 0 ' + wWidth + ' ' + wHeight +'', 'display': 'block', 'margin': '0 auto', 'pointer-events':'none'}", xml:space="preserve"
 	//- 	, 
-	//- 	v-bind:width="wWidth +'px'",
-	//- 	v-bind:height="wHeight+'px'",
+	//- 	:width="wWidth +'px'",
+	//- 	:height="wHeight+'px'",
 	//- 	style="pointer-events: none;"
 	//- 	)
-	//- 	path(v-bind:style="{'pointer-events':'all'}", v-bind:d="dPath", fill="var(--primary)")
+	//- 	path(:style="{'pointer-events':'all'}", :d="dPath", fill="var(--primary)")
 	
 	table(width="100%", height="100%", v-if="doc && pu && pu.username === loggedin && type === 'draw'", style="position:fixed;top:0;background-color:var(--primary);")
 		tr

@@ -216,7 +216,7 @@ var adminFunctions = {
 		self.signatureToBlob(function(blob){
 			
 			fd.append('img', blob);
-			fd.append('_csrf', '#{csrfToken}');
+			fd.append('_csrf', self.csrfToken);
 			fd.append('ts', self.ts);
 
 			var uploadurl = '/sig/uploadsignature/'+self.doc._id+'/'+self.pu._id+'';
