@@ -9,8 +9,8 @@ div.grid-right
 				div.tb-10-m0.input-field
 					label.ms-Label Full Name
 					input.ms-TextField-field(type="text", name="givenName", id="givenName", aria-required="true", @blur="checkNameValidity('givenName', '\d!@#$%^*()+=-[]\\\';,./{}|\<>?:', 'Alphabetic characters only, please', $event)", required, style="margin: 0 0 5px 0;", 
-						v-model="pu.properties.givenName"
-						
+						v-model="pu.properties.givenName",
+						autocomplete="name"
 						)
 					//:value="(pu && pu.username === loggedin ? pu.properties.givenName : '')"
 					//- a.btn.waves-effect.waves-light(role="button", @click="") Check availability
@@ -21,25 +21,27 @@ div.grid-right
 				div.tb-10-m0.input-field
 					//div.tb-10-m0.input-field
 					label.ms-Label Address 1
-					input.ms-TextField-field(type="text", name="address1", id="address1", :value="(pu && pu !== '' && pu.properties ? pu.properties.address1 : '')")
+					input.ms-TextField-field(type="text", name="address1", id="address1", :value="(pu && pu !== '' && pu.properties ? pu.properties.address1 : '')", autocomplete="shipping street-address address-line1")
 				
 				div.tb-10-m0.input-field
 					//div.tb-10-m0.input-field
 					label.ms-Label Address 2
-					input.ms-TextField-field(type="text", name="address2", id="address2", :value="(pu && pu !== '' && pu.properties ? pu.properties.address2 : '')")
+					input.ms-TextField-field(type="text", name="address2", id="address2", :value="(pu && pu !== '' && pu.properties ? pu.properties.address2 : '')", autocomplete="shipping street-address address-line2")
 				
 				div.tb-10-m0.input-field
 					//div.tb-10-m0.input-field
 					label.ms-Label City
-					input.ms-TextField-field(type="text", name="city", id="city", :value="(pu && pu !== '' && pu.properties ? pu.properties.city : '')")
+					input.ms-TextField-field(type="text", name="city", id="city", :value="(pu && pu !== '' && pu.properties ? pu.properties.city : '')", autocomplete="shipping locality address-level2")
 				div.tb-10-m0.input-field
 					//div.tb-10-m0.input-field
 					label.ms-Label State
-					input.ms-TextField-field(type="text", name="state", id="state", :value="(pu && pu !== '' && pu.properties ? pu.properties.state : '')")
+					input.ms-TextField-field(type="text", name="state", id="state", :value="(pu && pu !== '' && pu.properties ? pu.properties.state : '')", autocomplete="shipping region address-level1")
 				div.tb-10-m0.input-field
 					label.ms-Label(v-text="'The ZIP code you vote from'")
-					input.ms-TextField-field(type="number", name="zip", id="zip", aria-required="true", required, 
-						:value="(pu && pu !== '' && pu.properties ? pu.properties.zip : '')")
+					input.ms-TextField-field(type="number", name="zip", id="zip", aria-required="true", 
+						:value="(pu && pu !== '' && pu.properties ? pu.properties.zip : '')",
+						autocomplete="shipping postal-code",
+						required) 
 				
 
 				//div.tb-10-m0.input-field
@@ -93,7 +95,9 @@ div.grid-right
 					//- :disabled="(pu && pu !== '' && pu.username === loggedin)", 
 					input.ms-TextField-field.is-required(
 						type="text", name="username", maxlength="40", id="username", aria-required="true", 
-						@blur="checkNameValidity('username', '\s!@#$%^*()+=-[]\\\';,./{}|\<>?:', 'Alpha-numeric characters only, please', $event)", required)
+						@blur="checkNameValidity('username', '\s!@#$%^*()+=-[]\\\';,./{}|\<>?:', 'Alpha-numeric characters only, please', $event)",
+						autocomplete="username",
+						required)
 						//- div.tb-10-m0.input-field
 						//- 	label.ms-Label(for="languages") Language
 						//- 		datalist#theselanguages
@@ -112,12 +116,13 @@ div.grid-right
 					input.ms-TextField-field.is-required(type="email", name="email", id="email", aria-required="true", 
 						:value="(pu && pu !== '' && pu.username === loggedin ? pu.email : '')",
 						:placeholder="(pu && pu !== '' && pu.username === loggedin ? pu.email : '')",
+						autocomplete="email",
 						required
 						)
 				div.tb-10-m0.input-field.is-required(v-if="(pu && pu !== '' && pu.username !== loggedin)")
 					label.ms-Label Password
 					//- :disabled="(pu && pu !== '' && pu.username === loggedin)", 
 					input.ms-TextField-field.is-required(
-						type="password", name="password", aria-required="true", required)
+						type="password", name="password", aria-required="true", autocomplete="new-password", required)
 				p
 				button.btn.waves-effect.waves-light#submitregister(type="submit", :ariaDescription="(menu === 'register' ? 'Register' : 'Submit')", v-text="(menu === 'register' ? 'Register' : 'Submit')")

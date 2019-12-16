@@ -388,6 +388,7 @@ var adminFunctions = {
 	checkImage: function(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype) {
 		var self = this;
 		if (h > maxHeight || w > maxWidth) {
+			console.log('bigger')
 			self.reSize(img, can, w, h, maxWidth, maxHeight, imgindex, imgtype)
 		} else {
 			if (imgtype === 'map') {
@@ -475,8 +476,8 @@ var adminFunctions = {
 		ctx.drawImage(img, 0, 0, w, h);
 		self.uploadBlob(img, can, imgindex, function(){
 			var can = $('#canvas'+imgindex+'')[0];
-			var maxWidth = 250 ;
-			var maxHeight = 250 ;
+			var maxWidth = 400 ;
+			var maxHeight = 400 ;
 			var w = img.width;
 			var h = img.height;
 

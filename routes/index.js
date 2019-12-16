@@ -1613,7 +1613,8 @@ router.post('/register', function(req, res, next) {
 });
 
 router.get('/login', function(req, res, next){
-
+	var referrer = req.get('Referrer');
+	req.session.referrer = referrer;
 	return res.render('login', { 
 		user: req.user,
 		csrfToken: req.csrfToken(),
@@ -1624,10 +1625,10 @@ router.get('/login', function(req, res, next){
 router.post('/login', passport.authenticate('local', {
 	failureRedirect: '/login'
 }), function(req, res, next) {
-
 	req.session.userId = req.user._id;
 	req.session.loggedin = req.user.username;
-	res.redirect('/');		
+	var referrer = req.session.referrer || '/'
+	res.redirect(referrer);		
 });
 
 /*router.get('/auth/googledrive', passport.authenticate('google', {scope: 'https://www.googleapis.com/auth/drive'}), function(req, res, next){

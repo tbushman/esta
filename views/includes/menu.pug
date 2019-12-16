@@ -20,7 +20,7 @@ each mn, k in menus
 						//- else
 				a.submenu.drop(v-else-if=""+mn !== 'static'+"" href="/", class= mn, style="max-height:65px;")
 					span esta.bli.sh
-		div.dropdown(v-cloak, class= mn, v-if=""+(mn === 'static')+" || dropped.drop")
+		div.dropdown(v-cloak, class= mn, v-if="dropped.drop || "+(mn === 'static')+"", :style="{display: (dropped.drop || "+(mn === 'static')+" ? 'block' : 'none')}")
 			
 			a.submenu.drop(class= mn, :class="((/home/gi).test(menu) ? 'active' : '')", href="/")
 				if (mn !== 'static')
@@ -44,7 +44,7 @@ each mn, k in menus
 
 				label(for="doctype") Type of document
 				select#doctype(style="pointer-events: all;", @change="changeDocType($event)", name="tiind", v-model="newDoc.tiind")
-					option(value="null", v-text="'None'", v-bind:selected="!newDoc.tiind")
+					option(value="null", v-text="'None'", :selected="!newDoc.tiind")
 					option(v-for="(tp, j) in tis", v-text="tp.name", :value="j", :selected="newDoc.tiind === j")
 
 				input(type="hidden", :value="newDoc.tiind")
@@ -54,9 +54,9 @@ each mn, k in menus
 					label(for="placetype") Search Document Title
 					input(type="text", title="search GPO", @change="filterGpo($event)", v-text="'Search Bills'")
 				select#gpoapi(v-if="newDoc.placetype && newDoc.placetype === 'Nation' && gpo", @change="setXmlId($event)")
-					option(value="null", v-text="'None'", v-bind:selected="!newDoc.chtitle")
+					option(value="null", v-text="'None'", :selected="!newDoc.chtitle")
 					option(v-for="(ct, l) in gpo.packages", v-text="ct.title", :value="l")
-				input(v-if="!gpo", type="text", id="chtitle", v-model="newDoc.chtitle", placeholder="petition title" required)
+				input(v-if="!gpo", type="text", v-model="newDoc.chtitle", placeholder="petition title" required)
 				a(role="button", title="Create", :href="'/api/new/'+newDoc.placetype+'/'+newDoc.place+'/'+newDoc.tiind+'/'+newDoc.chind+'/'+newDoc.secind+'/'+encodeURIComponent(newDoc.chtitle)+'/'+(!newDoc.xmlid ? undefined : newDoc.xmlid)+''", style="margin-bottom: 50px") Create
 				p &nbsp
 			a.submenu.drop(v-if="loggedin && doc && pu && pu !== '' && pu.properties.admin", class= mn, title="Export", :href="'/api/exportword/'+doc._id+''")

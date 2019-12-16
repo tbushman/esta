@@ -2,6 +2,9 @@ extends layout
 block page
 	- var menu = 'login'
 block content
+	script(type="text/javascript", src="/scripts/basefunctions.js")
+	script(type="text/javascript", src="/scripts/mapfunctions.js")
+	script(type="text/javascript", src="/scripts/adminfunctions.js")
 	div#vue
 		include includes/menu.pug
 		.container
@@ -18,10 +21,10 @@ block content
 
 									div
 										label(for="username") Username
-										input(type="text", name="username", id="username")
+										input(type="text", name="username", id="username", autocomplete="username")
 									div
 										label(for="password") Password
-										input(type="password", name="password", id="password")
+										input(type="password", name="password", id="password", autocomplete="current-password")
 									p
 									button.tb-10-m0.tb-03-m2.block(type="submit", ariaDescription="Log in")
 										span Log in
@@ -46,3 +49,5 @@ block content
 										span Google
 
 								#info #{info}
+	
+	include includes/vue/basic.pug

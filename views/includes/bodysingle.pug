@@ -17,12 +17,12 @@ div.cell.tb-07-m0.tb-font-s(
 	span(v-html="doc.properties.description")
 div.cell.tb-03-m0(aid:table="cell", aid:crows="1", aid:ccols="1", aid5:cellstyle="imgs")
 
-	a.img(v-if="doc.properties !== undefined", v-for="img in doc.properties.media", v-bind:href="'/list/'+doc._id+'/null'")
+	a.img(v-if="doc.properties !== undefined", v-for="img in doc.properties.media", :href="img.image", target="_blank")
 		div.breadcrumbs.tb-font-xxs(v-text="img.caption", aid:pstyle="breadcrumbs", style="position: absolute;")
-		img(v-bind:src="img.image+'?version='+doc.__v", v-bind:alt="(img.caption !== 'Sample caption' ? img.caption : '' )")
+		img(:src="img.image+'?version='+doc.__v", :alt="(img.caption !== 'Sample caption' ? img.caption : '' )")
 
 div.cell.tb-11-m0(v-if="doc.properties.diffs.length > 0")
 	label.tb-11-m0(for="diff", v-text="'Revision timeline'", style="margin-top:20px;")
-	select#diff(style="pointer-events: all;", v-on:change="changeDiff($event)")
-		option(value="null", v-text="'Latest'", v-bind:selected="!dfi")
+	select#diff(style="pointer-events: all;", @change="changeDiff($event)")
+		option(value="null", v-text="'Latest'", :selected="!dfi")
 		option(v-if="doc.properties.diffs", v-for="(date, k) in doc.properties.diffs", :selected="dfi === k", :value="k", v-text="(date.user.uname + ' | ' + moment(date.date).format('YYYY-MM-DD hh:mm:ss'))")
