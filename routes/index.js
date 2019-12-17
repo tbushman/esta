@@ -1536,7 +1536,7 @@ router.get('/auth/slack/callback',
 	// console.log(req.user)
 		req.session.userId = req.user._id;
 		req.session.loggedin = req.user.username;
-		return res.redirect('/sig/editprofile');
+		return res.redirect('/sig/admin');
 });
 
 router.get('/register', function(req, res, next){
@@ -1627,7 +1627,7 @@ router.post('/login', passport.authenticate('local', {
 }), function(req, res, next) {
 	req.session.userId = req.user._id;
 	req.session.loggedin = req.user.username;
-	var referrer = req.session.referrer || '/'
+	var referrer = '/sig/admin'//req.session.referrer || '/'
 	res.redirect(referrer);		
 });
 
