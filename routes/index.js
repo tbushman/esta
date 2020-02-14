@@ -1248,26 +1248,37 @@ const iteratePlaces = (data, pathh, json) => {
 		var count = 0;
 		let newJson = json;
 		if (data) {
-			
+			// console.log(data)
 			console.log('matching records')
+			const dkeys = Object.keys(data[0])
+			console.log(dkeys)
 			for (var k = 0; k < data.length; k++) {
-				let existing = (newJson.features && newJson.features.length > 0 ? await newJson.features.map(function(f){return f.properties.label}) : [] )
 				var d = data[k]
-				var key = (!d.last_name ? '' : d.last_name.trim() +'');
-				var state = (!d.state ? 'Utah' : d.state.trim() +'');
-				var date = (!d.filing_date ? '' : d.filing_date.trim() +'');
-				var casetype = (!d.case_type ? (!d["'case_type'"] ? '': d["'case_type'"].trim()) : d.case_type.trim() +'');
-				var partycode = (!d.party_code ? '' : d.party_code.trim() +'');
-				var locndescr = (!d.locn_descr ? '' : d.locn_descr.trim() +'');
-				var firstname = (!d.first_name || d.first_name === '' ? null : d.first_name.trim() +'')
+				let existing = (newJson.features && newJson.features.length > 0 ? await newJson.features.map(function(f){return f.properties.label}) : [] )
+				let casetype;
+				dkeys.forEach(dk => {
+					switch(dk) {
+						case '﻿case_type': 
+							casetype = d[dk].trim()+'';
+							break;
+						
+						default:
+					}
+				})
+				const key = (!d['last_name'] && !d.last_name ? null : d['last_name'].trim() +'')
+				const state = (!d.state ? 'Utah' : d.state.trim() +'');
+				const date = (!d.filing_date ? '' : d.filing_date.trim() +'');
+				const partycode = (!d.party_code ? '' : d.party_code.trim() +'');
+				const locndescr = (!d.locn_descr ? '' : d.locn_descr.trim() +'');
+				const firstname = (!d.first_name || d.first_name === '' ? null : d.first_name)
 				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)
 				if (match && existing.indexOf(key) !== -1) {
 					newJson.features[existing.indexOf(key)].properties.count++;
 					newJson.features[existing.indexOf(key)].properties.dates.push(date)
 				} else if (match) {
-					if (/(SOLARA)/g.test(key)) {
-						console.log(existing, key)
-					}
+					// if (/(SOLARA)/g.test(key)) {
+					// 	console.log(existing, key)
+					// }
 					await places(date, key, state).then(async entryTransformed => {
 						if (entryTransformed) {
 							if (existing.indexOf(key) === -1) {
@@ -1283,6 +1294,10 @@ const iteratePlaces = (data, pathh, json) => {
 						console.log(err)
 					})
 				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
+					// console.log(d)
+				} else {
+					
+					// console.log(key, state, date, casetype, partycode, locndescr, firstname)
 				}
 				count++
 
@@ -1293,6 +1308,7 @@ const iteratePlaces = (data, pathh, json) => {
 			console.log('wtf no data')
 		}
 		if (count === data.length) {
+			console.log('finished importing '+pathh)
 			resolve(newJson)
 		} else {
 			console.log('blrgh')
@@ -1350,7 +1366,7 @@ const places = (date, key, state) => {
 	})
 }
 
-const saveJsonDb = async (json, id) => {
+const saveJsonDb = async (json, id, uri) => {
 	return new Promise(async (resolve, reject) => {
 		var multiPolygon;
 		var type = 'MultiPolygon';
@@ -1388,10 +1404,15 @@ const saveJsonDb = async (json, id) => {
 		var key2 = 'properties.keys'
 		set.$set[key1] = geo;
 		set.$set[key2] = keys;
-		ContentDB.findOneAndUpdate({_id: id}, set, {safe: true, new:true}, function(err, doc){
+		ContentDB.findOneAndUpdate({_id: id}, set, {safe: true, new:true}, async function(err, doc){
 			if (err) {
 				reject(err)
 			} else {
+				if (uri && uri.indexOf('records/weeklyreports/current/filings/Week_') !== -1) {
+					await ContentDB.findOneAndUpdate({_id: id}, {$set: {'properties.credit': uri}}, {safe: true, new:true}).then(doc=>doc).catch(err=>next(err))
+				} else {
+					await ContentDB.findOneAndUpdate({_id: id}, {$set: {'properties.credit': ''}}, {safe: true, new:true}).then(doc=>doc).catch(err=>next(err))
+				}
 				resolve(json)
 			}
 		})
@@ -1425,15 +1446,15 @@ const importMany = async (files, id, cb) => {
 		}
 
 		await files.forEach(async(file) => {
-			const content = await fs.readFileSync(file.path, 'utf8');
-			const data = await d3.csvParse(content);
+			const content = await fs.readFileSync(file.path, 'utf16le');
+			const data = await d3.tsvParse(content);
 			console.log('data length');
 			console.log(data.length)
 			await iteratePlaces(data, pathh, newJson).then(async (js) => {
 				if (!js || js.features.length === 0 || js[0] === {} ) {
 					return cb(new Error('didn\'t work'))
 				} else {
-					newJson = await saveJsonDb(js, id).then(async j => {
+					newJson = await saveJsonDb(js, id, null).then(async j => {
 						await fs.writeFileSync(pathh, JSON.stringify(j))
 						count++
 						return j
@@ -1810,39 +1831,73 @@ router.get('/viewmap/:id', getLayers, async function(req, res, next){
 	})
 })
 
-router.post('/utahcourts', async function(req, res, next){
-	// const fetch = require('node-fetch');
-	// const courtData = await require('d3').csv('https://www.utcourts.gov/records/weeklyreports/current/filings/Week_27-Filing_Report-2019.csv', function(csv){
-	// 	console.log(csv);
-	// 	return csv.toString()
-	// })
-	// Week 27 = 7/1/2019
-	// Week 28 = 7/8/2019
-	const courtData = await require('request-promise')({
-		uri: 'https://www.utcourts.gov/records/weeklyreports/current/filings/Week_27-Filing_Report-2019.csv',//'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/layers?f=json',//,//'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2010/MapServer/'+code+'?f=json',
-		encoding: 'utf8'
-	})
-	.then(async function(result){
-		const courtData = await require('d3').csvParse(result/*.toString()*/, function(d){
-			console.log(Object.keys(d.toString()))
-			var keys = Object.keys(d);
-			keys.forEach(function(key){
-				console.log(JSON.parse(d.toString()))
-				// console.log(d.toString[key])
-			})
-			return d.toString()
-			// return keys
+router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+	const doc = await Content.findOne({_id: req.params.id}).then(doc=>doc).catch(err=>next(err));
+	const id = req.params.id;
+	if (req.params.latestweek && !isNaN(+req.params.latestweek)) {
+		let latestWeek = req.params.latestweek;
+		let lw = parseInt(req.params.latestweek, 10) + 1;
+		if (lw < 10) {
+			latestWeek = '0'+lw
+		} else {
+			latestWeek = ''+lw
+		}
+		const courtUri = `https://www.utcourts.gov/records/weeklyreports/current/filings/Week_${latestWeek}-Filing_Report-${new Date().getFullYear()}.csv`
+		// const fetch = require('node-fetch');
+		console.log(courtUri)
+		// const data = await d3.tsv(courtUri, d => d);
+		const data = await require('request-promise')({
+			uri: courtUri,
+			// resolveWithFullResponse: true,
+			// encoding: null
+			encoding: 'utf16le'
 		})
-		return courtData
-	})
-	.catch(function(err){
-		console.log(err)
-	});
-	if (courtData) {
-		// console.log(censusData.toString())
-		return res.status(200).send(courtData)
+		.then(async result => {
+			const dc = await d3.tsvParse(result.toString('utf16le'));
+			return dc
+		})
+		//  function(result){
+		// 
+		// })
+		.catch(function(err){
+			console.log(err)
+		});
+		if (data) {
+			console.log('data length');
+			console.log(data.length);
+			var p = ''+publishers+'/pu/publishers/esta/json';
+			var pathh = await path.join(p, '/json_'+req.params.id+'.json');
+			var jsonExists = await fs.existsSync(pathh);
+			const json = (!jsonExists ?
+				{ 
+					type: "FeatureCollection",
+					name: "Evictions_SLC",
+					crs: { type: "name", properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+					features: [] 
+				} : await JSON.parse(fs.readFileSync(pathh, 'utf8'))
+			);
+			let newJson = json;
+			await iteratePlaces(data, pathh, newJson).then(async (js) => {
+				if (!js || js.features.length === 0 || js[0] === {} ) {
+					// console.log(js, data)
+					return next(new Error('didn\'t work'))
+				} else {
+					newJson = await saveJsonDb(js, id, courtUri).then(async j => {
+						await fs.writeFileSync(pathh, JSON.stringify(j))
+						return j
+					})
+					.catch(err => next(err))
+				}
+			}).catch(err => next(err));
+			return res.status(200).send(newJson);
+		} else {
+			return next(new Error('no data at that url'))
+		}
+
 	} else {
-		return next(new Error('no data at that url'))
+		return next(new Error('no data yet'))
 	}
 })
 

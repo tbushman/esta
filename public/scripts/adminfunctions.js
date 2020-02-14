@@ -279,6 +279,9 @@ var adminFunctions = {
 			cb()
 		})
 	},
+	// handleCourtData: function() {
+	// 
+	// },
 	handleGmapsFile: function(id, e) {
 		var self = this;
 		// self.files = e.target.files;

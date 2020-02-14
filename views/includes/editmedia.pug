@@ -4,7 +4,7 @@ div.tb-10-m0
 	input(:id="'inputimg'+img.index", :name="'img'+img.index", :value="img.image", type="hidden")
 	input(:id="'orientation'+img.index", :name="'orientation'+img.index", :value="img.orientation", type="hidden")
 	canvas(:id="'canvas'+img.index", style="display: none;")
-	img(:id="'return'+img.index", :src="img.image+'?version='+Math.random(100).toFixed(0)", style="display:none;")
+	img(:id="'return'+img.index", :src="img.image+'?version='+Math.random(100).toFixed(1)", style="display:none;")
 	//input(class="featuredimg", :id="'featured'+img.index", :name="'img'+img.index+'_featured'", :value="img.featured", type="hidden")
 
 	//- div.row
@@ -19,7 +19,7 @@ div.tb-10-m0
 		div.tb-10-m0.tb-02-m3
 			div.row(style="height: auto;")
 				span.img(:id="img.index", :name="doc._id", style="height:150px;")
-					img(:id="'view'+img.index", :src="img.image+'?version='+Math.random(100).toFixed()")
+					img(:id="'view'+img.index", :src="img.image+'?version='+Math.random(100).toFixed(1)")
 			
 		div.tb-10-m0.tb-06-m3.shift-00
 			div.row

@@ -303,8 +303,8 @@ var uri = process.env.DEVDB;
 // if (mongoose.connection.readyState === 0) {
 	var promise = mongoose.connect(uri, {
 		// native_parser: true,
-		useMongoClient: true,
-		// useNewUrlParser: true, useUnifiedTopology: true
+		// useMongoClient: true,
+		useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false
 	}/*, {authMechanism: 'ScramSHA1'}*/);
 	promise.then(function(){
 		console.log('connected esta')
