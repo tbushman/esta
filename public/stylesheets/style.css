@@ -141,7 +141,7 @@ fieldset.lcontrol {
 }
 
 #vue {
-	pointer-events: all;
+	/* pointer-events: all; */
   width: 100vw;
   height: 100vh;
 }
