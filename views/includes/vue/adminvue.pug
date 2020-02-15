@@ -486,14 +486,15 @@ script(type="text/javascript").
 					$.post('/utahcourts/' + self.doc._id + '/' +latestWeek +'', function(err, doc) {
 						console.log(doc)
 					})
-				} else {
-					//temporary
-					if (self.doc && self.doc !== '') {
-						$.post('/utahcourts/' + self.doc._id + '/04', function(err, doc) {
-							console.log(doc)
-						})
-					}
 				}
+				//-  else {
+				//- 	//temporary
+				//- 	if (self.doc && self.doc !== '') {
+				//- 		$.post('/utahcourts/' + self.doc._id + '/04', function(err, doc) {
+				//- 			console.log(doc)
+				//- 		})
+				//- 	}
+				//- }
 
 			})
 		},
