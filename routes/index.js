@@ -1247,7 +1247,7 @@ const iteratePlaces = (data, pathh, json) => {
 		var jsonExists = await fs.existsSync(pathh);
 		var count = 0;
 		let newJson = json;
-		if (data) {
+		if (data && Array.isArray(data) && data.length > 0) {
 			// console.log(data)
 			console.log('matching records')
 			const dkeys = Object.keys(data[0])
@@ -1305,10 +1305,12 @@ const iteratePlaces = (data, pathh, json) => {
 			
 			
 		} else {
-			console.log('wtf no data')
+			// console.log('wtf no data')
 		}
 		if (count === data.length) {
-			console.log('finished importing '+pathh)
+			if (data.length > 0) {
+				console.log('finished importing '+pathh)
+			}
 			resolve(newJson)
 		} else {
 			console.log('blrgh')
@@ -1448,18 +1450,21 @@ const importMany = async (files, id, cb) => {
 		await files.forEach(async(file) => {
 			const content = await fs.readFileSync(file.path, 'utf16le');
 			const data = await d3.tsvParse(content);
-			console.log('data length');
-			console.log(data.length)
+			// console.log('data length');
+			// console.log(data.length)
 			await iteratePlaces(data, pathh, newJson).then(async (js) => {
 				if (!js || js.features.length === 0 || js[0] === {} ) {
 					return cb(new Error('didn\'t work'))
 				} else {
-					newJson = await saveJsonDb(js, id, null).then(async j => {
-						await fs.writeFileSync(pathh, JSON.stringify(j))
-						count++
-						return j
-					})
-					.catch(err => cb(err))
+					console.log(js.features);
+					if (js.features.length > 0) {
+						newJson = await saveJsonDb(js, id, null).then(async j => {
+							await fs.writeFileSync(pathh, JSON.stringify(j))
+							count++
+							return j
+						})
+						.catch(err => cb(err))
+					}
 				}
 			}).catch(err => cb(err))
 		});
@@ -1833,7 +1838,7 @@ router.get('/viewmap/:id', getLayers, async function(req, res, next){
 
 router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
-	console.log(outputPath)
+	// console.log(outputPath)
 	const doc = await Content.findOne({_id: req.params.id}).then(doc=>doc).catch(err=>next(err));
 	const id = req.params.id;
 	if (req.params.latestweek && !isNaN(+req.params.latestweek)) {
@@ -1846,7 +1851,7 @@ router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
 		}
 		const courtUri = `https://www.utcourts.gov/records/weeklyreports/current/filings/Week_${latestWeek}-Filing_Report-${new Date().getFullYear()}.csv`
 		// const fetch = require('node-fetch');
-		console.log(courtUri)
+		// console.log(courtUri)
 		// const data = await d3.tsv(courtUri, d => d);
 		const data = await require('request-promise')({
 			uri: courtUri,
@@ -1855,8 +1860,13 @@ router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
 			encoding: 'utf16le'
 		})
 		.then(async result => {
-			const dc = await d3.tsvParse(result.toString('utf16le'));
-			return dc
+			// conole.log(result.toString())
+			if (/\W/.test(result.toString('utf16l3')[0])) {
+				const dc = await d3.tsvParse(result.toString('utf16le'));
+				return dc
+			} else {
+				return null;
+			}
 		})
 		//  function(result){
 		// 
@@ -1865,8 +1875,8 @@ router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
 			console.log(err)
 		});
 		if (data) {
-			console.log('data length');
-			console.log(data.length);
+			// console.log('data length');
+			// console.log(data.length);
 			var p = ''+publishers+'/pu/publishers/esta/json';
 			var pathh = await path.join(p, '/json_'+req.params.id+'.json');
 			var jsonExists = await fs.existsSync(pathh);
@@ -1884,11 +1894,13 @@ router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
 					// console.log(js, data)
 					return next(new Error('didn\'t work'))
 				} else {
-					newJson = await saveJsonDb(js, id, courtUri).then(async j => {
-						await fs.writeFileSync(pathh, JSON.stringify(j))
-						return j
-					})
-					.catch(err => next(err))
+					if (js.features.length > 0) {
+						newJson = await saveJsonDb(js, id, courtUri).then(async j => {
+							await fs.writeFileSync(pathh, JSON.stringify(j))
+							return j
+						})
+						.catch(err => next(err))
+					}
 				}
 			}).catch(err => next(err));
 			return res.status(200).send(newJson);

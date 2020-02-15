@@ -1,103 +1,98 @@
-- var menus = [ 'static', '' ]
+//- - var menus = [ 'static', '' ]
+//- 
+//- each mn, k in menus
+div.menu(:class="res ? '' : 'static'")
+	a.mainmenu(v-if="res", title="Menu", style="pointer-events: auto;", @click="drop('drop', $event)")
+		
+		svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px", width="30.1px", height="25px", viewBox="0 0 30.1 28", style="enable-background:new 0 0 30.1 28; padding: 0 0 0 8px;", xml:space="preserve")
+			path(style="fill:#000;", d="M1.103,4.464c-0.606,0-1.1-0.493-1.1-1.1v-2.3c0-0.606,0.493-1.1,1.1-1.1h27.893  c0.607,0,1.1,0.494,1.1,1.1v2.3c0,0.606-0.492,1.1-1.1,1.1H1.103z")
+			path(style="fill:#000;", d="M1.103,16.464c-0.606,0-1.1-0.493-1.1-1.1v-2.3c0-0.606,0.493-1.101,1.1-1.101h27.893  c0.607,0,1.1,0.494,1.1,1.101v2.3c0,0.606-0.492,1.1-1.1,1.1H1.103z")
+			path(style="fill:#000;", d="M1.103,27.962c-0.606,0-1.1-0.494-1.1-1.1v-2.301c0-0.605,0.493-1.1,1.1-1.1h27.893  c0.607,0,1.1,0.494,1.1,1.1v2.301c0,0.605-0.492,1.1-1.1,1.1H1.103z")
 
-each mn, k in menus
-	div.menu(class= mn)
-		a.mainmenu(class= mn, title="Menu", style="pointer-events: auto;", @click="drop('drop', $event)")
+
+	div.dropdown.static(v-cloak, style="float: left; left:14px; right:auto; display: inline-block;height:65px;min-height:65px;overflow-y:hidden!important;")
+		if (doc && doc !== '')
+			div.submenu.drop(:class="res ? '' : 'static'", style="display:inline-block;")
+				include inputs.pug
 			
-			svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px", width="30.1px", height="25px", viewBox="0 0 30.1 28", style="enable-background:new 0 0 30.1 28; padding: 0 0 0 8px;", xml:space="preserve")
-				path(style="fill:#000;", d="M1.103,4.464c-0.606,0-1.1-0.493-1.1-1.1v-2.3c0-0.606,0.493-1.1,1.1-1.1h27.893  c0.607,0,1.1,0.494,1.1,1.1v2.3c0,0.606-0.492,1.1-1.1,1.1H1.103z")
-				path(style="fill:#000;", d="M1.103,16.464c-0.606,0-1.1-0.493-1.1-1.1v-2.3c0-0.606,0.493-1.101,1.1-1.101h27.893  c0.607,0,1.1,0.494,1.1,1.101v2.3c0,0.606-0.492,1.1-1.1,1.1H1.103z")
-				path(style="fill:#000;", d="M1.103,27.962c-0.606,0-1.1-0.494-1.1-1.1v-2.301c0-0.605,0.493-1.1,1.1-1.1h27.893  c0.607,0,1.1,0.494,1.1,1.1v2.301c0,0.605-0.492,1.1-1.1,1.1H1.103z")
+			a.submenu.drop(v-if="res" href="/", :class="res ? '' : 'static'", style="max-height:65px;display:inline-block;")
+				span esta.bli.sh
+		else
+			a.submenu.drop(v-if="res" href="/", :class="res ? '' : 'static'", style="max-height:65px;display:inline-block;")
+				span esta.bli.sh
+	//- :style="{display: (dropped.drop && res ? 'block' : (!res ? 'flex' : 'none'))}"
+	div.dropdown(v-cloak, :class="res ? '' : 'static'", v-if="dropped.drop || !res")
+		
+		a.submenu.drop(:class="((/home/gi).test(menu) ? 'active' : '')", href="/")
+			.ui(v-if="res")
+				svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
+					title home
+					polygon(points="0.5 479.5 0.5 203.23 240 0.66 479.5 203.23 479.5 479.5 0.5 479.5")
+					path(d="M240,1.31,479,203.46V479H1V203.46L240,1.31M240,0,0,203V480H480V203L240,0Z")
+			span.tb-font-m Home
+		
+		a.submenu.drop(v-if="loggedin && pu && pu !== '' && pu.properties.admin", :class="res ? '' : 'static'", title="New", @click="drop('new', $event)")
+			.ui(v-if="res")
+				svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
+					title New
+					polygon(points="479 152.03 327.48 152.03 327.48 0.5 152.03 0.5 152.03 152.03 0.5 152.03 0.5 327.48 152.03 327.48 152.03 479 327.48 479 327.48 327.48 479 327.48 479 152.03")
+			span.tb-font-m New
+		
+		div.slidedown(v-if="loggedin && pu && pu !== '' && pu.properties.admin && dropped.new", :class="res ? '' : 'static'")
+			include menu/jurisdiction.pug
 
+			label(for="doctype") Type of document
+			select#doctype(style="pointer-events: all;", @change="changeDocType($event)", name="tiind", v-model="newDoc.tiind")
+				option(value="null", v-text="'None'", :selected="!newDoc.tiind")
+				option(v-for="(tp, j) in tis", v-text="tp.name", :value="j", :selected="newDoc.tiind === j")
 
-		if (mn === 'static')
-			div.dropdown.static(v-cloak, style="float: left; left:14px; right:auto; display: flex;height:65px;overflow-y:hidden!important;")
-				//- if (layers)
-				if (doc && doc !== '')
-					div.submenu.drop
-						// (v-if="layers && "+mn === 'static'+"")
-						include inputs.pug
-						//- else
-				a.submenu.drop(v-else-if=""+mn !== 'static'+"" href="/", class= mn, style="max-height:65px;")
-					span esta.bli.sh
-		div.dropdown(v-cloak, class= mn, v-if="dropped.drop || "+(mn === 'static')+"", :style="{display: (dropped.drop || "+(mn === 'static')+" ? 'block' : 'none')}")
-			
-			a.submenu.drop(class= mn, :class="((/home/gi).test(menu) ? 'active' : '')", href="/")
-				if (mn !== 'static')
-					.ui
-						svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
-							title home
-							polygon(points="0.5 479.5 0.5 203.23 240 0.66 479.5 203.23 479.5 479.5 0.5 479.5")
-							path(d="M240,1.31,479,203.46V479H1V203.46L240,1.31M240,0,0,203V480H480V203L240,0Z")
-				span.tb-font-m Home
-			
-			a.submenu.drop(v-if="loggedin && pu && pu !== '' && pu.properties.admin", class= mn, title="New", @click="drop('new', $event)")
-				if (mn !== 'static')
-					.ui
-						svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
-							title New
-							polygon(points="479 152.03 327.48 152.03 327.48 0.5 152.03 0.5 152.03 152.03 0.5 152.03 0.5 327.48 152.03 327.48 152.03 479 327.48 479 327.48 327.48 479 327.48 479 152.03")
-				span.tb-font-m New
-			
-			div.slidedown(v-if="loggedin && pu && pu !== '' && pu.properties.admin && dropped.new", class= mn)
-				include menu/jurisdiction.pug
+			input(type="hidden", :value="newDoc.tiind")
+			input(type="hidden", :value="newDoc.chind")
+			input(type="hidden", :value="newDoc.xmlid")
+			p(v-if="newDoc.placetype && newDoc.placetype === 'Nation' && gpo")
+				label(for="placetype") Search Document Title
+				input(type="text", title="search GPO", @change="filterGpo($event)", v-text="'Search Bills'")
+			select#gpoapi(v-if="newDoc.placetype && newDoc.placetype === 'Nation' && gpo", @change="setXmlId($event)")
+				option(value="null", v-text="'None'", :selected="!newDoc.chtitle")
+				option(v-for="(ct, l) in gpo.packages", v-text="ct.title", :value="l")
+			input(v-if="!gpo", type="text", v-model="newDoc.chtitle", placeholder="petition title" required)
+			a(role="button", title="Create", :href="'/api/new/'+newDoc.placetype+'/'+newDoc.place+'/'+newDoc.tiind+'/'+newDoc.chind+'/'+newDoc.secind+'/'+encodeURIComponent(newDoc.chtitle)+'/'+(!newDoc.xmlid ? undefined : newDoc.xmlid)+''", style="margin-bottom: 50px") Create
+			p &nbsp
+		a.submenu.drop(v-if="loggedin && doc && pu && pu !== '' && pu.properties.admin", :class="res ? '' : 'static'", title="Export", :href="'/api/exportword/'+doc._id+''")
+			.ui(v-if="res")
+				svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
+					title Export
+					rect(x="0.5" y="119.5" width="479" height="66")
+					path(d="M479,120v65H1V120H479m1-1H0v67H480V119Z")
+					polygon(points="0.5 276.77 0.5 240.5 479.5 240.5 479.5 276.77 240 479.35 0.5 276.77")
+					path(d="M479,241v35.54L240,478.69,1,276.54V241H479m1-1H0v37L240,480,480,277V240Z")
+					rect(x="0.5" y="0.5" width="479" height="64")
+					path(d="M479,1V64H1V1H479m1-1H0V65H480V0Z")
+			span.tb-font-m Export
 
-				label(for="doctype") Type of document
-				select#doctype(style="pointer-events: all;", @change="changeDocType($event)", name="tiind", v-model="newDoc.tiind")
-					option(value="null", v-text="'None'", :selected="!newDoc.tiind")
-					option(v-for="(tp, j) in tis", v-text="tp.name", :value="j", :selected="newDoc.tiind === j")
+		a.submenu.drop(:class="((/profile/gi).test(menu) ? 'active' : '')", v-if="loggedin && loggedin !== ''", href="/sig/editprofile", title="View and edit your profile")
+			.ui(v-if="res")
+				svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
+					title Profile
+					path(d="M.5,479.5V.5h479v479Zm375-77h27V77.5H77.5v325h24.09V321.58l81.68-69.08-.42-.39a82.37,82.37,0,1,1,111.39,0l-.42.39,81.68,69.08Z")
+					path(d="M479,1V479H1V1H479M77,403h25.09V321.82l81.07-68.58.86-.73-.83-.77a81.87,81.87,0,1,1,110.71,0l-.84.77.87.73L375,321.82V403h28V77H77V403M480,0H0V480H480V0ZM78,402V78H402V402H376V321.35l-81.42-68.87a82.87,82.87,0,1,0-112.07,0l-81.42,68.87V402Z")
+			span.tb-font-m Profile
 
-				input(type="hidden", :value="newDoc.tiind")
-				input(type="hidden", :value="newDoc.chind")
-				input(type="hidden", :value="newDoc.xmlid")
-				p(v-if="newDoc.placetype && newDoc.placetype === 'Nation' && gpo")
-					label(for="placetype") Search Document Title
-					input(type="text", title="search GPO", @change="filterGpo($event)", v-text="'Search Bills'")
-				select#gpoapi(v-if="newDoc.placetype && newDoc.placetype === 'Nation' && gpo", @change="setXmlId($event)")
-					option(value="null", v-text="'None'", :selected="!newDoc.chtitle")
-					option(v-for="(ct, l) in gpo.packages", v-text="ct.title", :value="l")
-				input(v-if="!gpo", type="text", v-model="newDoc.chtitle", placeholder="petition title" required)
-				a(role="button", title="Create", :href="'/api/new/'+newDoc.placetype+'/'+newDoc.place+'/'+newDoc.tiind+'/'+newDoc.chind+'/'+newDoc.secind+'/'+encodeURIComponent(newDoc.chtitle)+'/'+(!newDoc.xmlid ? undefined : newDoc.xmlid)+''", style="margin-bottom: 50px") Create
-				p &nbsp
-			a.submenu.drop(v-if="loggedin && doc && pu && pu !== '' && pu.properties.admin", class= mn, title="Export", :href="'/api/exportword/'+doc._id+''")
-				if (mn !== 'static')
-					.ui
-						svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
-							title Export
-							rect(x="0.5" y="119.5" width="479" height="66")
-							path(d="M479,120v65H1V120H479m1-1H0v67H480V119Z")
-							polygon(points="0.5 276.77 0.5 240.5 479.5 240.5 479.5 276.77 240 479.35 0.5 276.77")
-							path(d="M479,241v35.54L240,478.69,1,276.54V241H479m1-1H0v37L240,480,480,277V240Z")
-							rect(x="0.5" y="0.5" width="479" height="64")
-							path(d="M479,1V64H1V1H479m1-1H0V65H480V0Z")
-				span.tb-font-m Export
-
-			a.submenu.drop(class= mn, :class="((/profile/gi).test(menu) ? 'active' : '')", v-if="loggedin && loggedin !== ''", href="/sig/editprofile", title="View and edit your profile")
-				if (mn !== 'static')
-					.ui
-						svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
-							title Profile
-							path(d="M.5,479.5V.5h479v479Zm375-77h27V77.5H77.5v325h24.09V321.58l81.68-69.08-.42-.39a82.37,82.37,0,1,1,111.39,0l-.42.39,81.68,69.08Z")
-							path(d="M479,1V479H1V1H479M77,403h25.09V321.82l81.07-68.58.86-.73-.83-.77a81.87,81.87,0,1,1,110.71,0l-.84.77.87.73L375,321.82V403h28V77H77V403M480,0H0V480H480V0ZM78,402V78H402V402H376V321.35l-81.42-68.87a82.87,82.87,0,1,0-112.07,0l-81.42,68.87V402Z")
-				span.tb-font-m Profile
-
-			a.submenu.drop(v-if="!loggedin", class= mn, href="/login")
-				if (mn !== 'static')
-					.ui
-						svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
-							title login
-							path(d="M.5,479.5V.5h479v479Zm158.59-77a181.77,181.77,0,0,0,161.82,0H402.5V320.91a181.77,181.77,0,0,0,0-161.82V77.5H320.91a181.77,181.77,0,0,0-161.82,0H77.5v81.59a181.77,181.77,0,0,0,0,161.82V402.5Z")
-							path(d="M479,1V479H1V1H479M159,77H77v82a182.24,182.24,0,0,0,0,162v82h82a182.24,182.24,0,0,0,162,0h82V321a182.24,182.24,0,0,0,0-162V77H321a182.24,182.24,0,0,0-162,0M480,0H0V480H480V0ZM78,402V320.79a181.26,181.26,0,0,1,0-161.58V78h81.21a181.26,181.26,0,0,1,161.58,0H402v81.21a181.26,181.26,0,0,1,0,161.58V402H320.79a181.26,181.26,0,0,1-161.58,0Z")
-							circle(cx="240" cy="240" r="84.5")
-							path(d="M240,156a84,84,0,1,1-84,84,84.09,84.09,0,0,1,84-84m0-1a85,85,0,1,0,85,85,85,85,0,0,0-85-85Z")
-				span.tb-font-m(v-text="'Login'")
-			a.submenu.drop(v-if="loggedin", class= mn, href="/logout")
-				if (mn !== 'static')
-					.ui
-						svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
-							title logout
-							path(d="M.5,479.5V.5h479v479Zm77-77h325V77.5H77.5Z")
-							path(d="M479,1V479H1V1H479M77,403H403V77H77V403M480,0H0V480H480V0ZM78,402V78H402V402Z")
-				span.tb-font-m Logout
-			//- div(v-if="doc && doc !== '' && "+mn === 'static'+"")
-			//- 	include inputs.pug
+		a.submenu.drop(v-if="!loggedin", :class="res ? '' : 'static'", href="/login")
+			.ui(v-if="res")
+				svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
+					title login
+					path(d="M.5,479.5V.5h479v479Zm158.59-77a181.77,181.77,0,0,0,161.82,0H402.5V320.91a181.77,181.77,0,0,0,0-161.82V77.5H320.91a181.77,181.77,0,0,0-161.82,0H77.5v81.59a181.77,181.77,0,0,0,0,161.82V402.5Z")
+					path(d="M479,1V479H1V1H479M159,77H77v82a182.24,182.24,0,0,0,0,162v82h82a182.24,182.24,0,0,0,162,0h82V321a182.24,182.24,0,0,0,0-162V77H321a182.24,182.24,0,0,0-162,0M480,0H0V480H480V0ZM78,402V320.79a181.26,181.26,0,0,1,0-161.58V78h81.21a181.26,181.26,0,0,1,161.58,0H402v81.21a181.26,181.26,0,0,1,0,161.58V402H320.79a181.26,181.26,0,0,1-161.58,0Z")
+					circle(cx="240" cy="240" r="84.5")
+					path(d="M240,156a84,84,0,1,1-84,84,84.09,84.09,0,0,1,84-84m0-1a85,85,0,1,0,85,85,85,85,0,0,0-85-85Z")
+			span.tb-font-m(v-text="'Login'")
+		a.submenu.drop(v-if="loggedin", :class="res ? '' : 'static'", href="/logout")
+			.ui(v-if="res")
+				svg(xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480")
+					title logout
+					path(d="M.5,479.5V.5h479v479Zm77-77h325V77.5H77.5Z")
+					path(d="M479,1V479H1V1H479M77,403H403V77H77V403M480,0H0V480H480V0ZM78,402V78H402V402Z")
+			span.tb-font-m Logout
+		//- div(v-if="doc && doc !== '' && "+mn === 'static'+"")
+		//- 	include inputs.pug

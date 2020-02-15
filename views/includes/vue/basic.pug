@@ -59,7 +59,7 @@ script(type="text/javascript").
 				dataLayer: '',
 				lMarker: '',
 				thickness: 65,
-				res: (window.innerWidth < 600),
+				res: this.isResponsive(),
 				dPath: this.dPathAttr(),
 				tinymce: '',
 				dfi: 0,
@@ -252,6 +252,7 @@ script(type="text/javascript").
 				var int = 8000;
 				self.sliderImg(int)
 			}
+			self.res = self.isResponsive()
 
 		},
 		beforeDestroy: function(){

@@ -1,6 +1,9 @@
 var baseFunctions = {
 	isResponsive: function() {
-		return (window.innerWidth < 600)
+		var self = this;
+		if (self.wWidth) {
+			return (self.wWidth < 600)
+		}
 	},
 	parseObj: function(obj) {
 		if (!obj) return '';
@@ -16,6 +19,7 @@ var baseFunctions = {
 	},
 	resizeFrame: function(e) {
 		var self = this;
+		self.res = self.isResponsive();
 		self.dPath = self.dPathAttr()
 		self.wWidth = window.innerWidth;
 		self.wHeight = window.innerHeight;
