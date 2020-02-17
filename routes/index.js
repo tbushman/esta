@@ -1860,8 +1860,8 @@ router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
 			encoding: 'utf16le'
 		})
 		.then(async result => {
-			// conole.log(result.toString())
-			if (/\W/.test(result.toString('utf16l3')[0])) {
+			console.log(courtUri, result.toString()[1], /\W/.test(result.toString('utf16l3')[1]))
+			if (!/\W/.test(result.toString('utf16l3')[1])) {
 				const dc = await d3.tsvParse(result.toString('utf16le'));
 				return dc
 			} else {
