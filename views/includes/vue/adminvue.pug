@@ -365,7 +365,7 @@ script(type="text/javascript").
 							if (self.json) {
 								Object.keys(self.json).forEach(function(key){
 									var result = self.json[key];
-									console.log(result)
+									//- console.log(result)
 									var coords = (!result.features || result.features.length === 0 ? result.geometry.coordinates : result.features[0].geometry.coordinates)
 									var isPointCoords = self.isPointCoords(coords);
 									if (isPointCoords && self.lyr[key]) {
@@ -460,9 +460,9 @@ script(type="text/javascript").
 		beforeDestroy: function(){
 			//TODO clearTimout
 			var self = this;
-			clearInterval(self.sliderInterval);
-			clearTimeout(self.sliderTimeout1);
-			clearTimeout(self.sliderTimeout2)
+			if (self.sliderInterval) clearInterval(self.sliderInterval);
+			if (self.sliderTimeout1) clearTimeout(self.sliderTimeout1);
+			if (self.sliderTimeout2) clearTimeout(self.sliderTimeout2)
 			if (self.colorTimeout) clearTimeout(self.colorTimeout);
 			window.removeEventListener('resize', self.resizeFrame)
 
