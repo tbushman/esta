@@ -1,0 +1,37 @@
+div.submenu.drop(v-if="doc && doc !== ''", :class="res ? '' : 'static'", style="display:inline-block;")
+	input(type="text" @keypress="searchThis" :style="{width: (!searchReady ? '100%' : (wWidth / 2) - 65 + 'px')}")
+div.slidedown(v-if="searchResults && searchResults.length > 0", :style="{width: (wWidth / 2) - 65 + 'px'}" style="background-color: #fff;pointer-events: auto; top: 65px; top: var(--thumbw); position: absolute; max-height: calc(60vh - 65px); max-height: calc(60vh - var(--thumbw)); min-height: calc(65px * 3); min-height: calc(var(--thumbw) * 3); overflow: scroll;")
+	ul(style="height:100%;pointer-events:auto;", v-for="(alayer, p) in layers")
+		//- @mouseover="highlightFeature(se)",
+		//- @mouseleave="unHighlightFeature(se)",
+		li
+			p.tb-font-xxs
+				strong(v-text="alayer.properties.label")
+		li(v-for="(se, g) in searchResults", 
+		v-if="se._id === alayer._id",
+		style="padding-bottom:4px;cursor:pointer;",
+		:style="{'background-color': (g % 2 === 0 ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0)')}",
+		@click="setFocus(se, se._id, $event)"
+		)
+			table(style="table-layout:fixed; margin-right: 25px;pointer-events:none;")
+			
+				//- :style=`{ backgroundColor: getAttributeColor(p, se)}`
+				tr(
+					v-for="(p, j) in Object.keys(se.properties)"
+					v-if="se.properties[p] && se.properties[p] !== '' && ['STATEFP10','COUNTYFP10','BLKGRPCE10','INTPTLON10','INTPTLAT10','TRACTCE10','GEOID10', 'tessellate', 'visibility'].indexOf(p) === -1"
+					)
+					td(colspan="1", width="45px", v-if="/name/i.test(p) || getStyle(p, se).key === p", style="white-space:wrap;vertical-align:middle;")
+						p.tb-font-xxs(style="font-size:10px;padding:0 0 3px 0;margin:0;line-height:12px;line-height:calc(var(--thumbw) / 4);")
+							span(v-text="p.replace(/^r_/, '').replace(/^el_/, '').split('_').join(' ')+ ': '")
+					td(colspan="1", width="45px", v-else-if="se.length === 1", style="white-space:wrap;vertical-align:middle;")
+						p.tb-font-xxs(style="font-size:10px;padding:0 0 3px 0;margin:0;line-height:12px;line-height:calc(var(--thumbw) / 4);")
+							span(v-text="p.replace(/^r_/, '').replace(/^el_/, '').split('_').join(' ')+ ': '")
+					td(colspan="3" v-if="/name/i.test(p)")
+						p.tb-font-s(style="padding:0 0 3px 0;margin:0;line-height:16px;line-height:calc(var(--thumbw) / 4);")
+							strong(v-text="se.properties[p]")
+					td(colspan="3" v-else-if="getStyle(p, se).key === p")
+						p.tb-font-m( style="margin:0;padding:0;"
+							:style='{color: getFeatureColor(se._id, se.properties[p])}')
+							strong(v-text="se.properties[p]")
+					td(colspan="3" v-else-if="se.length === 1")
+						p.tb-font-xs(style="padding:0 0 3px 0;margin:0;color: #555;" v-text="se.properties[p]")

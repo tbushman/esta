@@ -14,6 +14,9 @@ script(type="text/javascript").
 		el: '#vue',
 		data: function data(){
 			return {
+				searchReady: false,
+				searchResults: [],
+
 				dragging: {isDragging: false, y: 0},
 				dropped: {drop: false, layers: false, new: false},
 				isSafari: /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification)),
@@ -481,7 +484,8 @@ script(type="text/javascript").
 					});
 				}
 				var latestWeek = (!self.doc || !self.doc.properties.credit || self.doc.properties.credit === '' || self.doc.properties.credit.indexOf('records/weeklyreports/current/filings/Week_') === -1 ? null : +(self.doc.properties.credit.split('current/filings/Week_')[1].split('-Filing_Report')[0]))
-				
+				console.log('latestWeek')
+				console.log(latestWeek)
 				if (latestWeek) {
 					$.post('/utahcourts/' + self.doc._id + '/' +latestWeek +'', function(err, doc) {
 						console.log(doc)

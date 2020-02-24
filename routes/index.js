@@ -787,10 +787,26 @@ function getLayers(req, res, next) {
 			return next(err)
 		}
 		if (doc && doc.properties.layers) {
-			var layerids = await doc.properties.layers.map(function(layer){return layer.lid}) || [];
+			var count = 0;
+			var layerids = await doc.properties.layers.map(function(layer){
+				if (layer) {return layer.lid} else {count++;return}}).filter(function(layer){return layer !== undefined}) || [];
+			// console.log(layerids, doc.properties.layers)
 			ContentDB.find({_id: {$in:layerids}}).lean().exec(function(err, data){
 				if (err) {
 					return next(err)
+				}
+				if (count > 0) {
+					var styles = doc.properties.layers.filter(function(lr){return lr !== null && lr !== undefined});
+					// console.log(count)
+					var pull = {$set:{}};
+					var key = 'properties.layers';
+					pull.$set[key] = styles
+					ContentDB.findOneAndUpdate({_id:doc._id}, pull, {safe: true, new: true}, function(err, doc){
+						if (err) {
+							return next(err)
+						}
+						// console.log(doc.properties.layers)
+					})
 				}
 				req.layers = data;
 				return next();
@@ -819,7 +835,7 @@ function getGeo(req, res, next) {
 			}
 			var reqpos = (req.session && req.session.position ? req.session.position : null)
 			await data.filter(async function(dc){
-				var keys = (!doc.properties.layers ? [] : doc.properties.layers.map(function(item){return item.lid}))
+				var keys = (!doc.properties.layers ? [] : doc.properties.layers.map(function(item){if (item) return item.lid}))
 
 				if (keys.indexOf(dc._id) === -1) {
 					return false;
@@ -1728,6 +1744,36 @@ router.get('/logout', function(req, res, next) {
 	})	
 });
 
+router.get('/search', function(req, res, next) {
+	return res.status(404).send(new Error('not found no params'))
+})
+router.post('/search', function(req, res, next) {
+	return res.status(404).send(new Error('not found no params'))
+})
+
+router.post('/search/:term', async function(req, res, next){
+	// var outputPath = url.parse(req.url).pathname;
+	const term = decodeURIComponent(req.params.term);
+	
+	if (term === '' || term === ' ') return res.status(404).send(new Error('not found no params'))
+	
+	var regex = new RegExp(term, 'gi');
+
+	const data = await ContentDB
+	.find({'properties.label': { $regex: regex }})
+	.then(data => data)
+	.catch(err => console.log(err))
+	
+	
+	const data2 = await ContentDB.find({'properties.title.str': { $regex: regex }}).then(doc=>doc).catch(err=>console.log(err));
+
+	if (data2.length === 0 && data.length === 0) {
+		return res.status(404).send(new Error('no docs'))
+	}
+
+	const ret = [...data, ...data2];
+	return res.json(ret)
+})
 
 /*router.post('/api/importdoc/:type/:fileid', uploadmedia.single('doc'), function(req, res, next){
 	fs.readFile(req.file.path, 'utf8', function (err, content) {

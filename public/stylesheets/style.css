@@ -590,8 +590,8 @@ em {
 	bottom: auto;
 	background-color: rgba(255,255,255,0);
 	z-index: 6;
-	max-height: calc(100% - calc(65px * 2));
-	max-height: calc(100% - calc(var(--thumbw) * 2));
+	/* max-height: calc(100% - calc(65px * 2));
+	max-height: calc(100% - calc(var(--thumbw) * 2)); */
 	/*min-height: 230px;*/
 	height: auto;
 	right: auto;
@@ -655,7 +655,8 @@ em {
 	background-color: #fff;
 	-webkit-box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
 	        box-shadow: -1px 3px 2px 1px rgba(0, 0, 0, .2);
-	height: calc(100% - 100px);
+  /* height: calc(60vh - 65px);
+  height: calc(60vh - var(--thumbw)); */
 	overflow-y: hidden;
 	overflow-x: hidden;
 	position: fixed;
@@ -899,7 +900,8 @@ font-size: 10px;
 	position: absolute;
 	z-index: 4;
 	background-color: var(--primary);
-	display: block;
+	display: flex;
+  justify-content: space-between;
 	min-height: 65px;
 	min-height: var(--thumbw);
 	margin: 0;
@@ -912,7 +914,6 @@ font-size: 10px;
 	display: none;
 }
 .dropdown.static {
-	display: none;
 	visibility: visible;
 	left: 0;
 	right: 0;
@@ -920,18 +921,21 @@ font-size: 10px;
 	padding-top: 0;
 	position: static;
 	background-color: rgba(255,255,255,0);
-	max-height: 100%;
-	position: fixed;
+	min-height: 100%;
+	/* position: fixed; */
 	-webkit-box-shadow: none;
 	        box-shadow: none;
-	margin: 0 auto;
+	/* margin: 0 auto; */
 	-webkit-box-pack: center;
 	    -ms-flex-pack: center;
 	        justify-content: center;
 	width: auto;
 	left: auto;
 	right: 33px;
-	min-height: calc(100% - 40px);
+  display: flex;
+  justify-content: flex-end;
+  /* max-height: calc(100vh - 65px);
+  max-height: calc(100vh - var(--thumbw)); */
 }
 .submenu.static {
 	display: inline-block!important;
@@ -939,6 +943,17 @@ font-size: 10px;
 }
 .submenu.static.active span {
 	font-weight: 600;
+}
+.dropdown.static.left {
+  left:14px;
+  right:auto;
+  display: flex;
+  justify-content: flex-start;
+  /* max-height: calc(60vh - 65px);
+  max-height: calc(60vh - var(--thumbw)); */
+  min-height:65px;
+  min-height:var(--thumbw);
+  overflow-y:hidden!important;
 }
 .dropdown.static > .submenu {
 	width: auto;

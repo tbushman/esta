@@ -269,6 +269,86 @@ var mapFunctions = {
 			})
 		}
 	},
+	filterByTerm: function(term, id) {
+		var self = this;
+		var searchResults = !self.json[id].features ? 
+		[self.json[id]] : 
+		self.json[id].features
+		.filter(function(ft, j){
+			ft._id = id
+			var rx = new RegExp(term, 'gi');
+			var keys = Object.keys(ft.properties);
+			var count = 0;
+			keys.forEach(function(key){
+				var val = ft.properties[key] + ''
+				if (rx.test(val)) {
+					count++
+				}
+			})
+			return count > 0;
+			// return ft._id === id
+		})
+		return searchResults
+	},
+	initSearch: function() {
+		var self = this;
+		self.searchReady = true;
+		self.searchResults = [];
+	},
+	searchThis: function(e) {
+		var self = this;
+		var term = e.target.value;
+		console.log(term);
+		var jks = Object.keys(self.json);
+		if (term !== '' && term !== ' ' && term.length > 1) {
+			var r1 = self.filterByTerm(term, jks[0]);
+			console.log(r1)
+			jks.forEach(function(jk, i){
+				if (i > 0) {
+					r1.concat(self.filterByTerm(term, jk))
+				}
+			})
+
+			self.searchResults = r1
+				
+			
+			// $.post('/search/'+encodeURIComponent(term)+'').then(function(response){
+			// 	console.log(response)
+			// 	if (Array.isArray(response) && response.length > 0) {
+			// 		self.searchResults = response
+			// 	} else {
+			// 		self.searchResults = []
+			// 	}
+			// })
+		}
+	},
+	setFocus: function(feature, id, e) {
+		e.preventDefault();
+		var self = this;
+		self.activateMap();
+		self.geo = [];
+		if (self.json[id]) {
+			var counter = 0;
+			
+			var bf = L.geoJSON(feature).addTo(self.map);
+			var latlng = bf.getBounds().getCenter()
+			bf.remove()
+			self.map.fitBounds(bf.getBounds());
+			self.lMarker.setLatLng(latlng);
+			setTimeout(function(){
+				var xy = self.map.latLngToContainerPoint(latlng);
+				var x = xy.x;
+				var y = xy.y;
+				self.dPath = self.dPathAttr()
+				self.setBtn(x, y);
+				self.geo = [feature]
+				self.viewerList = true;
+				self.searchResults = [];
+				self.searchReady = false;
+			}, 1000)
+		}
+		
+	},
 	//- arrayEqArray(arr1, arr2)
 	setView: function(feature, id, latlng, e){
 		var self = this;
@@ -290,9 +370,7 @@ var mapFunctions = {
 				console.log(feature)
 			}
 			var bf = L.geoJSON(feature).addTo(self.map);
-			latlng = //self.map.latLngToContainerPoint(
-				bf.getBounds().getCenter()
-			//);
+			latlng = bf.getBounds().getCenter()
 			bf.remove()
 		}
 		var cp = self.map.latLngToContainerPoint(latlng);
@@ -431,11 +509,15 @@ var mapFunctions = {
 			
 			
 		}
-		for (var i = colors.length; i < style.set.length; i++) {
-			style.colors.push(self.c[i]) 
+		console.log(style)
+		if (style.set) {
+			for (var i = colors.length; i < style.set.length; i++) {
+				style.colors.push(self.c[i]) 
+			}
+			
 		}
 		style.isInt = count === 0;
-		self.doc.properties.layers[ind] = style;
+		if (style) self.doc.properties.layers[ind] = style;
 		cb(item, style)
 	},
 	initDragLayer: function(i, e) {
@@ -523,6 +605,7 @@ var mapFunctions = {
 			
 			return item.lid === id
 		})[0]);
+		console.log(style)
 		if (item.features && item.features[0]) {
 
 			self.determineLegend(item, style, ind, function(it, styl){
@@ -938,7 +1021,7 @@ var mapFunctions = {
 		self.btn.y = y;
 
 	},
-	addLayer: async function(id, e) {
+	addLayer: function(id, e) {
 		console.log(id)
 		var self = this;
 		var tlrs = self.doc.properties.layers.filter(function(item){
@@ -956,20 +1039,27 @@ var mapFunctions = {
 			style = tlrs;
 		}
 		var ind = null;
-		var thisAvailableLayer = await self.availablelayers.filter(function(item, i){
+		var thisAvailableLayer = self.availablelayers.filter(function(item, i){
 			if (item._id === id) {
 				ind = i;
 			} 
 			return item._id === id
 		})[0];
-		var thisLayer = await self.layers.filter(function(item, i){
+		var thisLayer = self.layers.filter(function(item, i){
 			return item._id === id
 		})[0];
+		// console.log(thisLayer, thisAvailableLayer)
 		if (!thisLayer && thisAvailableLayer) {
 			if (ind !== null && self.json[id]) {
 				self.availablelayers.splice(ind, 1);
+				console.log(style)
+				if (style) self.doc.properties.layers.push(style);
+				var styles = 
+				self.doc.properties.layers.filter(function(k){return k !== undefined});
+				self.doc.properties.layers = styles;
 				self.layers.push(thisAvailableLayer);
-				await self.doc.properties.layers.push(style);
+				var layers = self.layers.filter(function(k){return k !== undefined});
+				self.layers = layers;
 				self.layerAdd(id)
 			}
 		}
@@ -1002,6 +1092,8 @@ var mapFunctions = {
 	},
 	changeLayers: function(id, e) {
 		var self = this;
+		// console.log('checked')
+		// console.log(e.target.checked)
 		if (e.target.checked) {
 			self.addLayer(id, e)
 		} else {

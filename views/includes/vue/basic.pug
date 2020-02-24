@@ -8,6 +8,9 @@ script(type="text/javascript").
 		el: '#vue',
 		data: function data(){
 			return {
+				searchReady: false,
+				searchResults: [],
+
 				dragging: {isDragging: false, y: 0},
 				dropped: {drop: false, layers: false, new: false},
 				initbounds: null,

@@ -6,9 +6,14 @@ a(v-cloak href="#" @click="geoNull" style="padding: 8px;position:absolute;right:
 			g
 				polygon(style="fill:var(--secondary);" points="12.4,10 9.4,7 12.4,4 10,1.6 7,4.6 4,1.6 1.6,4 4.6,7 1.6,10 4,12.4 7,9.4 10,12.4 	")
 
-ul(style="padding:0;")
+ul(style="padding:0;", v-for="(alayer, p) in layers")
+	
+	
+
+
 	li(
 		v-for="(go, g) in geo", 
+		v-if="go._id === alayer._id",
 		style="padding-bottom:4px;cursor:pointer;",
 		:style="{'background-color': (g % 2 === 0 ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0)')}",
 		@mouseover="highlightFeature(go)",
@@ -16,7 +21,10 @@ ul(style="padding:0;")
 		@click="setView(go, go._id, null, $event)"
 		)
 		table(style="table-layout:fixed; margin-right: 25px;pointer-events:none;")
-		
+			tr
+				td(colspan="4")
+					p.tb-font-xxs
+						strong(v-text="alayer.properties.label")
 			tr(
 				v-for="(p, j) in Object.keys(go.properties)"
 				v-if="go.properties[p] && go.properties[p] !== '' && ['STATEFP10','COUNTYFP10','BLKGRPCE10','INTPTLON10','INTPTLAT10','TRACTCE10','GEOID10', 'tessellate', 'visibility'].indexOf(p) === -1"

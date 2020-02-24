@@ -1,6 +1,7 @@
 //- - var menus = [ 'static', '' ]
 //- 
 //- each mn, k in menus
+//:style="{maxHeight: (res ? 'auto' : 'calc(60vh - 65px)'), maxHeight: (res ? 'auto' : 'calc(60vh - var(--thumbw))')}"
 div.menu(:class="res ? '' : 'static'")
 	a.mainmenu(v-if="res", title="Menu", style="pointer-events: auto;", @click="drop('drop', $event)")
 		
@@ -10,16 +11,17 @@ div.menu(:class="res ? '' : 'static'")
 			path(style="fill:#000;", d="M1.103,27.962c-0.606,0-1.1-0.494-1.1-1.1v-2.301c0-0.605,0.493-1.1,1.1-1.1h27.893  c0.607,0,1.1,0.494,1.1,1.1v2.301c0,0.605-0.492,1.1-1.1,1.1H1.103z")
 
 
-	div.dropdown.static(v-cloak, style="float: left; left:14px; right:auto; display: inline-block;height:65px;min-height:65px;overflow-y:hidden!important;")
+	div.dropdown.static.left(v-cloak)
 		if (doc && doc !== '')
 			div.submenu.drop(:class="res ? '' : 'static'", style="display:inline-block;")
 				include inputs.pug
-			
+			//- include search.pug
 			a.submenu.drop(v-if="res" href="/", :class="res ? '' : 'static'", style="max-height:65px;display:inline-block;")
 				span esta.bli.sh
 		else
 			a.submenu.drop(v-if="res" href="/", :class="res ? '' : 'static'", style="max-height:65px;display:inline-block;")
 				span esta.bli.sh
+					
 	//- :style="{display: (dropped.drop && res ? 'block' : (!res ? 'flex' : 'none'))}"
 	div.dropdown(v-cloak, :class="res ? '' : 'static'", v-if="dropped.drop || !res")
 		
