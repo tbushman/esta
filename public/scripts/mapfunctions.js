@@ -597,13 +597,16 @@ var mapFunctions = {
 		var ind = null;
 		var style = (!id ? {buckets:1,colors:['#fff']} : self.doc.properties.layers
 		.map(function(item, i){
-			if (item.lid === id) {
+			if (item && item.lid === id) {
 				ind = i;
 			}
 			return item;
 		}).filter(function(item){
-			
-			return item.lid === id
+			if (item) {
+				return item.lid === id
+			} else {
+				return false;
+			}
 		})[0]);
 		console.log(style)
 		if (item.features && item.features[0]) {
@@ -704,7 +707,7 @@ var mapFunctions = {
 			if (item) {
 				var itemi = null;
 				var style = await self.doc.properties.layers.filter(function(it, i){
-					if (it.lid === lid) {
+					if (it && it.lid === lid) {
 						itemi = i;
 						return true;
 					} else {
@@ -1112,6 +1115,26 @@ var mapFunctions = {
 				self.lyr[self.doc.properties.layers[ind].lid] = self.loadLayer(self.json[self.doc.properties.layers[ind].lid], self.doc.properties.layers[ind].lid)
 			} 
 		});
+	},
+	resetMap: function(viewerList) {
+		var self = this;
+		self.wWidth = window.innerWidth;
+		self.wHeight = window.innerHeight;
+		var coord = self.lMarker.getLatLng();
+		var xy = self.map.latLngToContainerPoint(coord);
+		var x = xy.x;
+		var y = xy.y;
+		self.dPath = self.dPathAttr()
+		self.setBtn(x, y);
+		if (viewerList) {
+			if (self.geo.length > 0) {
+				self.viewerList = true;
+			}
+		} else {
+			self.viewerList = false;
+		}
+		self.searchResults = [];
+		self.searchReady = false;
 	},
 	getClip: function() { 
 		var self = this;

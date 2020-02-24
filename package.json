@@ -23,7 +23,7 @@
     "@tinymce/tinymce-vue": "^1.1.2",
     "async": "^2.6.3",
     "async-indesign-script": "^1.0.4",
-    "aws-sdk": "^2.619.0",
+    "aws-sdk": "^2.624.0",
     "body-parser": "^1.19.0",
     "connect-mongo": "^3.2.0",
     "connect-mongodb-session": "^2.3.1",
@@ -52,7 +52,7 @@
     "mkdirp": "^0.5.1",
     "moment": "^2.24.0",
     "mongodb": "^3.5.3",
-    "mongoose": "^5.9.1",
+    "mongoose": "^5.9.2",
     "mongoose-geojson-schema": "^2.1.5",
     "multer": "^1.4.2",
     "node-htmldiff": "^0.9.3",
@@ -83,7 +83,7 @@
     "nock": "^10.0.6",
     "nodemon": "^1.19.4",
     "selenium-webdriver": "^3.6.0",
-    "superagent": "^5.2.1",
+    "superagent": "^5.2.2",
     "supertest": "^4.0.2"
   }
 }

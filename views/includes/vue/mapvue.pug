@@ -131,73 +131,23 @@ script(type="text/javascript").
 					self.mapCtrl = false;
 				})
 				self.map.on('dragstart', function(){
-					var coord = self.lMarker.getLatLng();
-					var xy = self.map.latLngToContainerPoint(coord);
-					var x = xy.x;
-					var y = xy.y;
-					self.dPath = self.dPathAttr()
-					self.setBtn(x, y);
-					self.viewerList = false;
+					self.resetMap(false);
 				});
 				self.map.on('movestart', function(){
-					var coord = self.lMarker.getLatLng();
-					var xy = self.map.latLngToContainerPoint(coord);
-					var x = xy.x;
-					var y = xy.y;
-					self.dPath = self.dPathAttr()
-					self.setBtn(x, y);
-					self.viewerList = false;
+					self.resetMap(false);
 				})
 				self.map.on('zoomstart', function(){
-					var coord = self.lMarker.getLatLng();
-					var xy = self.map.latLngToContainerPoint(coord);
-					var x = xy.x;
-					var y = xy.y;
-					self.dPath = self.dPathAttr()
-					self.setBtn(x, y);
-					self.viewerList = false;
+					self.resetMap(false);
 				})
 				
 				self.map.on('moveend', function(e){
-					self.wWidth = window.innerWidth;
-					self.wHeight = window.innerHeight;
-					var coord = self.lMarker.getLatLng();
-					var xy = self.map.latLngToContainerPoint(coord);
-					var x = xy.x;
-					var y = xy.y;
-					self.dPath = self.dPathAttr()
-					self.setBtn(x, y);
-					if (self.geo.length > 0) {
-						self.viewerList = true;
-					}
+					self.resetMap(true)
 				})
 				self.map.on('dragend', function(e) {
-					self.wWidth = window.innerWidth;
-					self.wHeight = window.innerHeight;
-					var coord = self.lMarker.getLatLng();
-					var xy = self.map.latLngToContainerPoint(coord);
-					var x = xy.x;
-					var y = xy.y;
-					self.dPath = self.dPathAttr()
-					self.setBtn(x, y);
-					if (self.geo.length > 0) {
-						self.viewerList = true;
-					}
-
+					self.resetMap(true)
 				})
 				self.map.on('zoomend', function(e) {
-					self.wWidth = window.innerWidth;
-					self.wHeight = window.innerHeight;
-					var coord = self.lMarker.getLatLng();
-					var xy = self.map.latLngToContainerPoint(coord);
-					var x = xy.x;
-					var y = xy.y;
-					self.dPath = self.dPathAttr()
-					self.setBtn(x, y);
-					if (self.geo.length > 0) {
-						self.viewerList = true;
-					}
-				
+					self.resetMap(true)
 				})
 
 			})
