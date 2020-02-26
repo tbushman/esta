@@ -791,7 +791,7 @@ function getLayers(req, res, next) {
 			var layerids = await doc.properties.layers.map(function(layer){
 				if (layer) {return layer.lid} else {count++;return}}).filter(function(layer){return layer !== undefined}) || [];
 			// console.log(layerids, doc.properties.layers)
-			ContentDB.find({_id: {$in:layerids}}).lean().exec(function(err, data){
+			ContentDB.find({_id: {$in:layerids}}).lean().sort({'geometry.type':1}).exec(function(err, data){
 				if (err) {
 					return next(err)
 				}
@@ -829,7 +829,7 @@ function getGeo(req, res, next) {
 		if (err) {
 			return next(err)
 		}
-		ContentDB.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: {type: doc.geometry.type, coordinates: doc.geometry.coordinates}}} }).lean().exec(async function(err, data){
+		ContentDB.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: {type: doc.geometry.type, coordinates: doc.geometry.coordinates}}} }).lean().sort({'geometry.type':1}).exec(async function(err, data){
 			if (err) {
 				return next(err)
 			}

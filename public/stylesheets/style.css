@@ -743,13 +743,13 @@ em {
 	padding: 0 0 0 2px; height:11px;height:calc(var(--thumbw) / 4);left:0;line-height:11px;line-height:calc(var(--thumbw) / 4);width:var(--thumbw);background-color:rgba(255,255,255,0);
 }
 .layerDrop > .row {
-	width: calc(100vw - 90px);
+	width: calc(100vw - 130px);
 	width: calc(100vw - calc(var(--thumbw) * 2));
 	min-height: 75px;
 	min-height: calc(var(--thumbw) + 10px);
 }
 .layerDrop .close {
-	width: calc(100vw - 90px);
+	width: calc(100vw - 130px);
 	width: calc(100vw - calc(var(--thumbw) * 2));
 }
 .layerDrop > .row > span {
@@ -1987,6 +1987,14 @@ del {
 	.tb-01-m3 {
 		width: 10%;
 	}
+  .layerDrop > .row {
+  	width: calc(50vw - 130px);
+  	width: calc(50vw - calc(var(--thumbw) * 2));
+  }
+  .layerDrop .close {
+  	width: calc(50vw - 130px);
+  	width: calc(50vw - calc(var(--thumbw) * 2));
+  }
 }
 
 @media (min-width: 1000px) {
