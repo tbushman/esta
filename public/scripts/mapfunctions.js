@@ -624,8 +624,8 @@ var mapFunctions = {
 					var ojson = L.geoJson(it, {
 						
 						onEachFeature:function(feature,layer){
-							var th = (!styl.th ? (!styl.set || styl.set.length === 1 ? 1 : styl.set[1]) : styl.th);
-							var ih = feature.properties[styl.key] && feature.properties[styl.key] > th;
+							var th = (!styl.th ? (!styl.set || styl.set.length === 1 ? 1 : styl.set[1]) : +styl.th);
+							var ih = feature.properties[styl.key] && +feature.properties[styl.key] > th;
 							var thisLayer = L.GeoJSON.geometryToLayer(feature, {
 								pointToLayer: function(ft, latlng) {
 									var thisVal = ft.properties[styl.key];
@@ -634,7 +634,7 @@ var mapFunctions = {
 										var ma = (!styl.colors[i+1] ? styl.max : styl.set[i+1]);
 										return (thisVal >= mi && thisVal <= ma)
 									})[0]
-									var style = {fillColor:cl, color:cl, opacity: 0.8, fillOpacity: 0.6, radius: 8, riseOnHover: true}
+									var style = {fillColor:cl, color:cl, opacity: 0.8, fillOpacity: 0.6, radius: 8, riseOnHover: true, pane: (ih ? 'markerPane' : 'overlayPane')}
 									var circle = new L.CircleMarker(latlng, style)//, self.styleOf(ft, ft.geometry.type))
 										.on('click', function(){
 											self.setView(ft, id, latlng)
@@ -807,7 +807,7 @@ var mapFunctions = {
 			}
 			cb(latlng)
 		} else {
-			$.get('/publishers/esta/json/json_'+key+'.json?v=1').then(async function(results){
+			$.get('/publishers/esta/json/json_'+key+'.json?v='+Math.random()).then(async function(results){
 				if (results) {
 					var result = results;//self.adjustedGeometryCoord(results);
 					// if (!result || result.features[0]) console.log(key)
