@@ -18,7 +18,7 @@ ul(style="padding:0;", v-for="(alayer, p) in layers")
 		:style="{'background-color': (g % 2 === 0 ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0)')}",
 		@mouseover="highlightFeature(go)",
 		@mouseleave="unHighlightFeature(go)",
-		@click="setView(go, go._id, null, $event)"
+		@click="setFocus(go, go._id, $event)"
 		)
 		table(style="table-layout:fixed; margin-right: 25px;pointer-events:none;")
 			tr

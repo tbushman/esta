@@ -243,7 +243,7 @@ var mapFunctions = {
 			})
 		}
 		if (self.isPointCoords(go.geometry.coordinates)) {
-			go.geometry.coordinates.reverse()
+			// go.geometry.coordinates.reverse()
 		}
 		self.buf.push(!self.isPointCoords(go.geometry.coordinates) ? 
 			L.geoJSON(go, {
@@ -363,14 +363,16 @@ var mapFunctions = {
 		self.wHeight = window.innerHeight;
 		self.cZF = (self.map.getZoom() + self.zfactor);
 		if (!latlng) {
-			console.log('no latlng')
+			// console.log('no latlng')
 			if (self.isPointCoords(feature.geometry.coordinates)) {
-				feature.geometry.coordinates.reverse();
+				// feature.geometry.coordinates.reverse();
+				// console.log(feature.geometry.coordinates)
 			} else {
-				console.log(feature)
+				// console.log(feature)
 			}
 			var bf = L.geoJSON(feature).addTo(self.map);
 			latlng = bf.getBounds().getCenter()
+			// console.log(latlng)
 			bf.remove()
 		}
 		var cp = self.map.latLngToContainerPoint(latlng);
