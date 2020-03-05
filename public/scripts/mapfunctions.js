@@ -464,25 +464,30 @@ var mapFunctions = {
 		var thisKey = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
 		style.key = thisKey;
 		var count = 0;
-		var distinct = [];
+		var distinct = []
 		var vals = item.features.map(function(feature){
 			if (feature.properties[thisKey] !== parseInt(feature.properties[thisKey], 10) || isNaN(parseInt(feature.properties[thisKey]))) {
 				// register non-integer value
 				count++
 			}
-			if (!isNaN(parseInt(feature.properties[thisKey],10))) {
+			if (!isNaN(+(feature.properties[thisKey],10))) {
 				if (distinct.indexOf(parseInt(feature.properties[thisKey], 10)) === -1) {
 					distinct.push(parseInt(feature.properties[thisKey], 10));
 				}
-				return parseInt(feature.properties[thisKey], 10)
+				var val = parseInt(feature.properties[thisKey], 10)
+				return val;
 			} else {
 				var val = /(yes|true)/i.test(feature.properties[thisKey]) ? 1 : 0;
 				if (distinct.indexOf(val) === -1) {
-					distinct.push(val)
+					distinct.push(val);
 				}
+
 				return val;
 			}
+		}).filter(function(val){
+			return (distinct.indexOf(val) === -1)
 		});
+		console.log(distinct)
 		distinct.sort(function(a, b){
 			return a - b;
 		});
@@ -667,7 +672,7 @@ var mapFunctions = {
 								var thisVal = parseFloat(
 									feature.properties[styl.key]
 								)
-								return (thisVal >= mi && thisVal < ma)
+								return (thisVal >= mi && thisVal <= ma)
 							})[0]
 							thisLayer.setStyle({fillColor:color, color:color, opacity: 0.8, fillOpacity: 0.5})
 							thisLayer.on('click', function(e){
