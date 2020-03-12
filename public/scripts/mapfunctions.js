@@ -298,11 +298,11 @@ var mapFunctions = {
 	searchThis: function(e) {
 		var self = this;
 		var term = e.target.value;
-		console.log(term);
+		// console.log(term);
 		var jks = Object.keys(self.json);
 		if (term !== '' && term !== ' ' && term.length > 1) {
 			var r1 = self.filterByTerm(term, jks[0]);
-			console.log(r1)
+			// console.log(r1)
 			jks.forEach(function(jk, i){
 				if (i > 0) {
 					r1.concat(self.filterByTerm(term, jk))
@@ -487,7 +487,7 @@ var mapFunctions = {
 		}).filter(function(val){
 			return (distinct.indexOf(val) === -1)
 		});
-		console.log(distinct)
+		// console.log(distinct)
 		distinct.sort(function(a, b){
 			return a - b;
 		});
