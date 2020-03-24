@@ -310,17 +310,17 @@ var storage = multer.diskStorage({
 
 			}
 		}
-				
+		// TODO change to fs.mkdir or mkdirp update which uses Promises
 		fs.access(p, function(err) {
 			if (err && err.code === 'ENOENT') {
-				mkdirp(p, function(err){
+				fs.mkdir(p, function(err){
 					if (err) {
 						console.log("err", err);
 					}
 					if (q) {
 						fs.access(q, function(err){
 							if (err && err.code === 'ENOENT') {
-								mkdirp(q, function(err){
+								fs.mkdir(q, function(err){
 									if (err) {
 										console.log("err", err);
 									}
@@ -1089,7 +1089,7 @@ function ensureApiTokens(req, res, next){
 function mkdirpIfNeeded(p, cb){
 	fs.access(p, function(err) {
 		if (err && err.code === 'ENOENT') {
-			mkdirp(p, function(err){
+			fs.mkdir(p, function(err){
 				if (err) {
 					console.log("err", err);
 				} else {
@@ -1456,7 +1456,7 @@ const importMany = async (files, id, cb) => {
 	let count = 0;
 	fs.access(p, async function(err) {
 		if (err && err.code === 'ENOENT') {
-			await mkdirp(p, function(err){
+			await fs.mkdir(p, function(err){
 				if (err) {
 					console.log("err", err);
 				}
@@ -2679,7 +2679,7 @@ router.get('/api/exportword/:id', async function(req, res, next){
 							
 					await fs.access(p, async function(err) {
 						if (err && err.code === 'ENOENT') {
-							await mkdirp(p, function(err){
+							await fs.mkdir(p, function(err){
 								if (err) {
 									console.log("err", err);
 								}
@@ -2776,7 +2776,7 @@ router.get('/list/:id/:index', getLayers, getGeo, async function(req, res, next)
 			var xmlpath = ''+publishers+'/pu/publishers/esta/xml/';
 			var xmlfolder = await fs.existsSync(xmlpath);
 			if (!xmlfolder) {
-				await mkdirp(xmlpath, function(err){
+				await fs.mkdir(xmlpath, function(err){
 					if (err){
 						console.log(err)
 					}
