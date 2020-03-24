@@ -1128,7 +1128,7 @@ router.get('/style', /*resetLayers/*,*/ ensureStyle/**/, function(req, res, next
 
 router.get('/runtests', function(req, res, next){
 	req.session.importgdrive = false;
-	let chromedriver = require('chromedriver');
+	// let chromedriver = require('chromedriver');
 	var mocha = require('mocha');
 	var assert = require('chai').assert;
 	let webdriver = require('selenium-webdriver'),

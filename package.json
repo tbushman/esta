@@ -75,7 +75,6 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "chromedriver": "^80.0.1",
     "cross-env": "^5.2.1",
     "expect": "^24.9.0",
     "jest": "^25.1.0",
