@@ -2,7 +2,7 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 	legend.tb-font-xxs(style="height:11px;height:calc(var(--thumbw) / 4);padding-inline-start:0;") search
 	div.layer(:class="searchReady ? 'ctrl' : ''")
 		a.layerDrop(style="display:flex;")
-			.ui(@click="initSearch")
+			.ui(v-if="!searchReady" @click="initSearch")
 				img(v-if="!searchReady", src="/images/icons/search.svg")
 			span(v-if="searchReady", style="left:0;")
 				include search.pug

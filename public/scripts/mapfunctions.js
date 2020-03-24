@@ -450,33 +450,43 @@ var mapFunctions = {
 		var self = this;
 		var buckets = style.buckets;
 		var colors = style.colors;
+		// get object keys corresponding with Number values
 		var theseKeys = Object.keys(item.features[0].properties).filter(function(it){
 			
 			return self.exclude.indexOf(it) === -1 && !isNaN(parseInt(item.features[0].properties[it], 10))
 		})
+		// if no number values, get boolean-type values
 		if (theseKeys.length === 0) {
 			theseKeys = Object.keys(item.features[0].properties).filter(function(it){
 				return self.exclude.indexOf(it) === -1 && /(yes|no|true|false)/i.test(item.features[0].properties[it])
 			})
-			// console.log(item.features[0].properties);
 		}
-		// self.layers[ind].properties.keys = theseKeys;
-		var thisKey = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
-		style.key = thisKey;
+		// get new key
+		style.key = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
+		var thisKey = style.key;
+		// instantiate count of non-integer values
 		var count = 0;
 		var distinct = []
 		var vals = item.features.map(function(feature){
-			if (feature.properties[thisKey] !== parseInt(feature.properties[thisKey], 10) || isNaN(parseInt(feature.properties[thisKey]))) {
+			if (typeof feature.properties[thisKey] === 'string' && !feature.properties[thisKey].length) {
+				
+			} else
+			if (isNaN(+(feature.properties[thisKey])) ) {
 				// register non-integer value
+				console.log(feature.properties[thisKey])
 				count++
 			}
-			if (!isNaN(+(feature.properties[thisKey],10))) {
-				if (distinct.indexOf(parseInt(feature.properties[thisKey], 10)) === -1) {
-					distinct.push(parseInt(feature.properties[thisKey], 10));
+			// if feature's value at 'thisKey' is a number
+			if (!isNaN(parseFloat(feature.properties[thisKey]))) {
+				var val = parseFloat(feature.properties[thisKey])
+				// if distinct array doesn't already contain this number
+				if (distinct.indexOf(val) === -1) {
+					// push it
+					distinct.push(val);
 				}
-				var val = parseInt(feature.properties[thisKey], 10)
 				return val;
 			} else {
+				// if feature's value at 'thisKey' is boolean-ish, change to 1 (true) or 0 (false)
 				var val = /(yes|true)/i.test(feature.properties[thisKey]) ? 1 : 0;
 				if (distinct.indexOf(val) === -1) {
 					distinct.push(val);
@@ -484,18 +494,17 @@ var mapFunctions = {
 
 				return val;
 			}
-		}).filter(function(val){
-			return (distinct.indexOf(val) === -1)
-		});
-		// console.log(distinct)
+		})
 		distinct.sort(function(a, b){
 			return a - b;
 		});
+		console.log(distinct)
 		var min = distinct[0];
 		var max = distinct[distinct.length-1];
 		var range = max - min;
 		style.min = min;
 		style.max = max;
+		// console.log(feature.properties[thisKey])
 		if (count === 0) {
 			style.inc = null;
 			var set = [];
@@ -509,19 +518,16 @@ var mapFunctions = {
 			}
 			style.set = set;
 		} else {
+			console.log(item.features[0].properties[thisKey])
 			style.set = distinct;
-			style.buckets = distinct.length;
 			var inc = range / buckets;
 			style.inc = inc;
-			
-			
+			style.buckets = buckets;
 		}
-		// console.log(style)
 		if (style.set) {
 			for (var i = colors.length; i < style.set.length; i++) {
 				style.colors.push(self.c[i]) 
 			}
-			
 		}
 		style.isInt = count === 0;
 		if (style) self.doc.properties.layers[ind] = style;
@@ -1132,9 +1138,10 @@ var mapFunctions = {
 		var self = this;
 		var ind = null;
 		var key = e.target.value;
-		var thisLayer = self.doc.properties.layers.forEach(function(item, i){
+		self.doc.properties.layers.forEach(function(item, i){
+			console.log(item)
 			if (ind) return;
-			if (item.lid === id) {
+			if (item && item.lid === id) {
 				ind = i;
 				self.doc.properties.layers[ind].key = key
 				self.lyr[self.doc.properties.layers[ind].lid] = self.loadLayer(self.json[self.doc.properties.layers[ind].lid], self.doc.properties.layers[ind].lid)
