@@ -40,7 +40,7 @@ div.menu(:class="res ? '' : 'static'")
 					polygon(points="479 152.03 327.48 152.03 327.48 0.5 152.03 0.5 152.03 152.03 0.5 152.03 0.5 327.48 152.03 327.48 152.03 479 327.48 479 327.48 327.48 479 327.48 479 152.03")
 			span.tb-font-m New
 		
-		div.slidedown(v-if="loggedin && pu && pu !== '' && pu.properties.admin && dropped.new", :class="res ? '' : 'static'")
+		div.slidedown(v-if="loggedin && pu && pu !== '' && pu.properties.admin && dropped.new", :class="res ? '' : 'static'" :style="{'min-height': (res ? '180px' : '420px'), top: 'var(--thumbw)'}")
 			include menu/jurisdiction.pug
 
 			label(for="doctype") Type of document

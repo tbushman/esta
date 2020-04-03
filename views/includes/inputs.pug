@@ -3,9 +3,10 @@
 div#inputs(v-if="(loggedin && loggedin !== '' && pu && pu !== '' && pu.properties.admin && type !== 'draw' && doc && doc !== '')")
 	button.success.mapActive(@click="initSig", title="Sign", v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length === 0 && doc.properties.title.str !== 'Geography' && doc.properties.title.str !== 'Environmental Impact Statement')")
 		span(v-text="(type === 'draw' ? 'Done signing' : 'Sign to indicate support')")
-	button.success.mapActive(v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length > 0)", href="#", title="Save", id="save", aria-labelledby="continue", 
-		@click="saveSignature()")
-		span(v-text="'Save signature'")
+	button.success.mapActive(v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length > 0)", title="Save", id="save", aria-labelledby="continue", 
+		@click="saveSignature()"
+		style="pointer-events:all;")
+		span(v-text="'Save signature'" style="pointer-events:none;")
 	button.mapActive(v-if="!mapActive", @click="activateMap()", :disabled="!mapReady")
 		span Edit Map
 	
@@ -18,9 +19,10 @@ div#inputs(v-if="(loggedin && loggedin !== '' && pu && pu !== '' && pu.propertie
 div#inputs(v-else-if="(loggedin && loggedin !== '' && type !== 'draw' && doc && doc !== '')")
 	button.success.mapActive(@click="initSig", title="Sign", v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length === 0 && doc.properties.title.str !== 'Geography' && doc.properties.title.str !== 'Environmental Impact Statement')")
 		span(v-text="(type === 'draw' ? 'Done signing' : 'Sign to indicate support')")
-	button.success.mapActive(v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length > 0)", href="#", title="Save", id="save", aria-labelledby="continue", 
-		@click="saveSignature()")
-		span(v-text="'Save signature'")
+	button.success.mapActive(v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length > 0)", title="Save", id="save", aria-labelledby="continue", 
+		@click="saveSignature()"
+		style="pointer-events:all;")
+		span(v-text="'Save signature'" style="pointer-events:none;")
 	button.mapActive(v-if="!mapActive", @click="activateMap()", :disabled="!mapReady")
 		span Make Map clickable
 	button.danger.mapActive(v-if="mapActive", class= mn, @click="deactivateMap()", :disabled="!mapReady")
@@ -29,18 +31,20 @@ div#inputs(v-else-if="(loggedin && loggedin !== '' && type !== 'draw' && doc && 
 div#inputs(v-else-if="(loggedin && loggedin !== '' && type === 'draw' && doc && doc !== '')")
 	button.success.mapActive(@click="initSig", title="Sign", v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length === 0 && doc.properties.title.str !== 'Geography' && doc.properties.title.str !== 'Environmental Impact Statement')")
 		span(v-text="(type === 'draw' ? 'Done signing' : 'Sign to indicate support')")
-	button.success.mapActive(v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length > 0)", href="#", title="Save", id="save", aria-labelledby="continue", 
-		@click="saveSignature()")
-		span(v-text="'Save signature'")
+	button.success.mapActive(v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length > 0)", title="Save", id="save", aria-labelledby="continue", 
+		@click="saveSignature()"
+		style="pointer-events:all;")
+		span(v-text="'Save signature'" style="pointer-events:none;")
 	button.danger.mapActive(class= mn, @click="deactivateMap()")
 		span(v-text="'Cancel'")
 
 div#inputs(v-else-if="((!loggedin || loggedin === '' || !pu || !pu.properties.admin) && type !== 'draw'  && doc && doc !== '')")
 	button.success.mapActive(@click="initSig", title="Sign", v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length === 0 && doc.properties.title.str !== 'Geography' && doc.properties.title.str !== 'Environmental Impact Statement')")
 		span(v-text="(type === 'draw' ? 'Done signing' : 'Sign to indicate support')")
-	button.success.mapActive(v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length > 0)", href="#", title="Save", id="save", aria-labelledby="continue", 
-		@click="saveSignature()")
-		span(v-text="'Save signature'")
+	button.success.mapActive(v-if="(signable && doc && pu && pu.username === loggedin && unsigned && ts.length > 0)", title="Save", id="save", aria-labelledby="continue", 
+		@click="saveSignature()"
+		style="pointer-events:all;")
+		span(v-text="'Save signature'" style="pointer-events:none;")
 	button.mapActive(v-if="!mapActive", @click="activateMap()", :disabled="!mapReady")
 		span Make Map clickable
 	button.danger.mapActive(v-if="(mapActive)", class= mn, @click="deactivateMap()", :disabled="!mapReady")

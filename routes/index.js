@@ -278,8 +278,8 @@ function geoLocate(ip, zoom, cb) {
 
 var storage = multer.diskStorage({
 	
-	destination: function (req, file, cb) {
-		var p, q;
+	destination: async function (req, file, cb) {
+		var p, q = null;
 		if (!req.params.type) {
 			p = ''+publishers+'/pu/publishers/esta/signatures/'+req.params.did+'/'+req.params.puid+''
 		} else {
@@ -311,34 +311,43 @@ var storage = multer.diskStorage({
 			}
 		}
 		// TODO change to fs.mkdir or mkdirp update which uses Promises
-		fs.access(p, function(err) {
-			if (err && err.code === 'ENOENT') {
-				fs.mkdir(p, {recursive: true}, function(err){
-					if (err) {
-						console.log("err", err);
-					}
-					if (q) {
-						fs.access(q, function(err){
-							if (err && err.code === 'ENOENT') {
-								fs.mkdir(q, {recursive: true}, function(err){
-									if (err) {
-										console.log("err", err);
-									}
-									cb(null, p)
-								})
-							} else {
-								cb(null, p)
-							}
-						})
-					} else {
-						cb(null, p)
-					}
-					
-				})
-			} else {
-				cb(null, p)
-			}
-		})
+		const existsP = await fs.existsSync(p);
+		if (!existsP) {
+			await mkdirp(p).then(made=>console.log(made)).catch(err=>next(err));
+		}
+		const existsQ = await fs.existsSync(q);
+		if (!existsQ && q) {
+			await mkdirp(q).then(made=>console.log(made)).catch(err=>next(err));
+		}
+		cb(null, p);
+		// fs.access(p, function(err) {
+		// 	if (err && err.code === 'ENOENT') {
+		// 		fs.mkdir(p, {recursive: true}, function(err){
+		// 			if (err) {
+		// 				console.log("err", err);
+		// 			}
+		// 			if (q) {
+		// 				fs.access(q, function(err){
+		// 					if (err && err.code === 'ENOENT') {
+		// 						fs.mkdir(q, {recursive: true}, function(err){
+		// 							if (err) {
+		// 								console.log("err", err);
+		// 							}
+		// 							cb(null, p)
+		// 						})
+		// 					} else {
+		// 						cb(null, p)
+		// 					}
+		// 				})
+		// 			} else {
+		// 				cb(null, p)
+		// 			}
+		// 
+		// 		})
+		// 	} else {
+		// 		cb(null, p)
+		// 	}
+		// })
 		
 	},
 	filename: function (req, file, cb) {
@@ -3178,7 +3187,7 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 			} else {
 				places = usstates;
 				var chk = await ContentDB.find({'properties.chapter.str': 'Jurisdiction: '+ places[placeind].properties.name}).then(function(doc){return doc}).catch(function(err){return console.log(err)});
-				console.log(chk)
+				// console.log(chk)
 				if (isNaN(chind) || !arr[tiind].chapter[chind]) {
 					chnd = (!chk || chk.length ===  0 ? 0 : chk[0].properties.chapter.ind);
 				} else {
