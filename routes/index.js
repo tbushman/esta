@@ -313,14 +313,14 @@ var storage = multer.diskStorage({
 		// TODO change to fs.mkdir or mkdirp update which uses Promises
 		fs.access(p, function(err) {
 			if (err && err.code === 'ENOENT') {
-				fs.mkdir(p, function(err){
+				fs.mkdir(p, {recursive: true}, function(err){
 					if (err) {
 						console.log("err", err);
 					}
 					if (q) {
 						fs.access(q, function(err){
 							if (err && err.code === 'ENOENT') {
-								fs.mkdir(q, function(err){
+								fs.mkdir(q, {recursive: true}, function(err){
 									if (err) {
 										console.log("err", err);
 									}
@@ -1089,7 +1089,7 @@ function ensureApiTokens(req, res, next){
 function mkdirpIfNeeded(p, cb){
 	fs.access(p, function(err) {
 		if (err && err.code === 'ENOENT') {
-			fs.mkdir(p, function(err){
+			fs.mkdir(p, {recursive: true}, function(err){
 				if (err) {
 					console.log("err", err);
 				} else {
@@ -1124,9 +1124,10 @@ function getDocxBlob(now, doc, sig, cb){
 
 router.get('/style', /*resetLayers/*,*/ ensureStyle/**/, function(req, res, next){
 	return res.redirect('/')
-})
+});
 
 router.get('/runtests', function(req, res, next){
+	
 	req.session.importgdrive = false;
 	// let chromedriver = require('chromedriver');
 	var mocha = require('mocha');
@@ -1456,7 +1457,7 @@ const importMany = async (files, id, cb) => {
 	let count = 0;
 	fs.access(p, async function(err) {
 		if (err && err.code === 'ENOENT') {
-			await fs.mkdir(p, function(err){
+			await fs.mkdir(p, {recursive: true}, function(err){
 				if (err) {
 					console.log("err", err);
 				}
@@ -2679,7 +2680,7 @@ router.get('/api/exportword/:id', async function(req, res, next){
 							
 					await fs.access(p, async function(err) {
 						if (err && err.code === 'ENOENT') {
-							await fs.mkdir(p, function(err){
+							await fs.mkdir(p, {recursive: true}, function(err){
 								if (err) {
 									console.log("err", err);
 								}
@@ -2776,7 +2777,7 @@ router.get('/list/:id/:index', getLayers, getGeo, async function(req, res, next)
 			var xmlpath = ''+publishers+'/pu/publishers/esta/xml/';
 			var xmlfolder = await fs.existsSync(xmlpath);
 			if (!xmlfolder) {
-				await fs.mkdir(xmlpath, function(err){
+				await fs.mkdir(xmlpath, {recursive: true}, function(err){
 					if (err){
 						console.log(err)
 					}
