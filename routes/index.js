@@ -2228,13 +2228,15 @@ router.get('/user/getgeo', async function(req, res, next){
 })
 
 router.post('/user/getgeo/:lat/:lng/:zip', async function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
 	var lat = parseFloat(req.params.lat);
 	var lng = parseFloat(req.params.lng);
 	var coordinates, lnglat;
 	if (!lat || lat === 'null') {
 		if (req.params.zip && req.params.zip !== 'null') {
 			var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
-			var zipcode = JSON.parse(zipcodes).features.filter(function(zip){
+			var zipcode = await JSON.parse(zipcodes).features.filter(function(zip){
 				return (parseInt(zip.properties['ZCTA5CE10'], 10) === parseInt(pu.properties.zip, 10))
 			});
 			if (zipcode.length === 0) {
