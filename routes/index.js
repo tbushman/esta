@@ -1592,6 +1592,20 @@ router.get('/auth/slack/callback',
 });
 
 router.get('/register', function(req, res, next){
+	res.cookie('XSRF-TOKEN', req.csrfToken())
+	// var str = pug.renderFile(path.join(__dirname, '../views/includes/profile/puedit.pug'), {
+	// 	doctype: 'xml',
+	// 	csrfToken: req.csrfToken(),
+	// 	menu: !req.session.menu ? 'register' : req.session.menu,
+	// 	appURL: req.app.locals.appURL,
+	// 	info: 'Welcome'
+	// });
+	// return res.render('register', {
+	// 	menu: !req.session.menu ? 'register' : req.session.menu,
+	// 	appURL: req.app.locals.appURL,
+	// 	info: 'Welcome',
+	// 	str: str
+	// });
 	return res.render('register', { csrfToken: req.csrfToken(), menu: 'register' } );
 })
 

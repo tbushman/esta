@@ -1,4 +1,5 @@
-const expect = require('expect');
+const chai = require('chai');
+// const expect = require('expect');
 const path = require('path');
 const nock = require('nock');
 const request = require('supertest');
@@ -10,6 +11,7 @@ const config = require('../config/index.js');
 const pug = require('pug');
 const Vue = require('vue');
 const { PublisherTest, ContentTest, SignatureTest } = require('../models/index.js');
+const { expect } = chai;
 // const {
 //   matcherHint,
 //   MatcherHintOptions
@@ -25,8 +27,6 @@ if (mockSnapshotsExist) {
 const nockBack = nock.back;
 nockBack.fixtures = path.join(__dirname, '.', '__nock-fixtures__');
 
-// const { CartTest, UserTest, PublisherTest, OrderTest, ContentTest  } = require('./utils/testmodels');
-
 var recording = config.recordenv;//process.env.RECORD_ENV;
 var testing = config.testenv;//process.env.TEST_ENV;
 console.log(testing, recording);
@@ -37,34 +37,58 @@ if (testing === undefined) {
 nockBack.setMode('record');
 
 describe('API calls', () => {
-  let key, gp, agent, cs = null;
+  let key, agent, csrf = null, header = null;
   // eslint-disable-next-line no-undef
-  beforeAll(async(done) => {
+  before(async() => {
     nock.enableNetConnect('127.0.0.1');
-    await app.listen(8686, () => {
+    await app.listen(config.port, () => {
       console.log('connected');
-      // agent = request.agent(app);
+      agent = request.agent(app);
       // agent.get('/').expect(200, done)
       // console.log(agent)
-      done()
     })
   }, 5000);
   beforeEach(async() => {
-    nockBack.setMode('record');
-    nock.enableNetConnect('127.0.0.1');
+    await nockBack.setMode('record');
+    await nock.enableNetConnect('127.0.0.1');
   });
   afterEach(async() => {
     // this ensures that consecutive tests don't use the snapshot created
     // by a previous test
     // await ContentTest.deleteMany({}).catch(err => console.log(err));
-    nockBack.setMode('wild');
-    nock.cleanAll();
+    await nockBack.setMode('wild');
+    await nock.cleanAll();
   });
-  afterAll((done) => {
-    console.log('disconnecting');
-    app.close(); 
-    setImmediate(done);
+  after((done) => {
+
   });
+
+  key = 'should get a header';
+  it(key, async () => {
+    const snapKey = ('API calls '+key+' 1');
+    const { nockDone } = await nockBack(
+      'editContent.header.json'
+    );
+    // const { getAuthCode } = authMiddleware;
+    nock.enableNetConnect('127.0.0.1');
+    header = (!mockSnapshots ? null : mockSnapshots[snapKey]);
+  
+    if (!recording) {
+      expect(header).to.matchSnapshot();
+      nockDone()
+  
+    } else {
+      await agent
+      .get('/')
+      .expect(302)
+      .expect('Location', '/home')
+      .then((res)=>{
+        header = res.header;
+        expect(header).to.matchSnapshot();
+      })
+      nockDone()
+    }
+  })
 
   // key = 'should get all data';
   // test(key, async() => {
@@ -115,31 +139,34 @@ describe('API calls', () => {
   // }, 5000)
   
   key = 'registration page should contain a csrf token';
-  test(key, async() => {
+  it(key, async() => {
     const snapKey = ('API calls '+key+' 1');
     const { nockDone } = await nockBack(
       'pu.initAdminUser.json'
     );
     nock.enableNetConnect('127.0.0.1');
-    let csrf = (!mockSnapshots ? null : mockSnapshots[snapKey]);
+    csrf = (!mockSnapshots ? null : mockSnapshots[snapKey]);
     
     if (!recording) {
-      expect(csrf).toMatchSnapshot();
+      expect(csrf).to.matchSnapshot();
       nockDone()
 
     } else {
-      await request(app)
+      await agent
       .get('/register')
       .expect(200)
       .then(async(res)=>{
-        const csf = res.header['set-cookie'].filter((item) => {
-            console.log(item, /(\_csrf=)/.test(item))
-            return /(\_csrf=)/.test(item)
-          })[0].split('_csrf=')[1].split(';')[0];
+        // const csf = res.header['xsrf-token']
+        const cookie = res.header['set-cookie'];
+        console.log(res.header)
+        const csf = cookie.filter((item) => {
+            console.log(item, /(XSRF\-TOKEN=)/i.test(item))
+            return /(XSRF\-TOKEN=)/.test(item)
+          })[0].split('XSRF-TOKEN=')[1].split(';')[0];
         if (!csf) throw new Error('missing csrf token');
-        expect(csf).toMatchSnapshot();
+        expect(csf).to.matchSnapshot();
         
-        request(app)
+        await agent
         .post('/register')
         .set('Cookie', cookies(res))
         .send({
@@ -159,153 +186,11 @@ describe('API calls', () => {
         })
         .catch((err) => console.log(err))
       })
-      
-      
-      
-      
-      // let cs = null;
-      // let rescookies = null;
-      // cs = await agent.get('/register/')
-      // .then(async (res) => {
-      //   const csf = res.header['set-cookie'].filter((item) => {
-      //       console.log(item, /(\_csrf=)/.test(item))
-      //       return /(\_csrf=)/.test(item)
-      //     })[0].split('_csrf=')[1].split(';')[0];
-      //   if (!csf) throw new Error('missing csrf token');
-      //   expect(csf).toMatchSnapshot();
-      //   agent.attachCookies(res);
-      //   cs = csf;
-      // });
       nockDone()
-      
-      
-      
-      // .expect(async (res) => {
-      //   // console.log(res.header)
-      //   const csf = res.header['set-cookie'].filter((item) => {
-      //       console.log(item, /(\_csrf=)/.test(item))
-      //       return /(\_csrf=)/.test(item)
-      //     })[0].split('_csrf=')[1].split(';')[0];
-      //   if (!csf) throw new Error('missing csrf token');
-      //   cs = csf;
-      //   rescookies = res
-      //   agent.attachCookies(res)
-      // })
-      // .then(async (res) => {
-      //   // console.log(res)
-      //   // const cs = await res.header['set-cookie'].filter((item) => {
-      //   //     // console.log(item, /(\_csrf=)/.test(item))
-      //   //     return /(\_csrf=)/.test(item)
-      //   //   })[0].split('_csrf=')[1].split(';')[0];
-      //   // console.log(cs)
-      //   expect(cs).toMatchSnapshot();
-      //   console.log(cookies(res))
-      //   console.log(cookies(rescookies))
-      //   return agent
-      //     .post('/register')
-      //     // .set('Set-Cookie', res.header['set-cookie'].join(''))
-      //     .send({
-      //       _csrf: cs,
-      //       givenName: 'Tracey Bushman',
-      //       zip: '90210',
-      //       username: 'tbushman',
-      //       password: 'password',
-      //       email: 'tracey.bushman@gmail.com'
-      //     })
-      //     .expect(302)
-      //     .expect('Location', '/sig/admin')
-      //     .then((res) => /*console.log(res)*/
-      //     {
-      //       console.log('k')
-      //     })
-      //     .catch((err) => console.log(err))
-      // })
-      //   cs = csf;
-      //   rescookies = res;
-      //   console.log(csf)
-      //   expect(csf).toMatchSnapshot();
-      // 
-      // })
-      
     }
-    
   });
-  // key = 'should add an admin user';
-  // test(key, async() => {
-  //   const snapKey = ('API calls '+key+' 1');
-  //   const { nockDone } = await nockBack(
-  //     'pu.addAdminUser.json'
-  //   );
-  //   nock.enableNetConnect('127.0.0.1');
-  //   if (cs) {
-  //     const pu = await agent
-  //       .post('/register')
-  //       // .set('Set-Cookie', res.header['set-cookie'].join(''))
-  //       .send({
-  //         _csrf: cs,
-  //         givenName: 'Tracey Bushman',
-  //         zip: '90210',
-  //         username: 'tbushman',
-  //         password: 'password',
-  //         email: 'tracey.bushman@gmail.com'
-  //       })
-  //       .expect(302)
-  //       .expect('Location', '/sig/admin')
-  //       .then((res) => /*console.log(res)*/
-  //       {
-  //         console.log('k')
-  // 
-  //       })
-  //       .catch((err) => console.log(err))
-  //       expect(pu).toMatchSnapshot();
-  //   }
-  //   nockDone()
-
-  //   const pu = (
-  //     !recording ? 
-  //     await new Mock(snapKey).dat : 
-  //     await agent
-  //       .post('/register')
-  //       .send({
-  //         _csrf: cs,
-  //         givenName: 'Tracey Bushman',
-  //         zip: '90210',
-  //         username: 'tbushman',
-  //         password: 'password'
-  //       })
-  //       .then((data) => data).catch((err) => err)
-  //   );
-  //   expect(pu).toMatchSnapshot();
-  //   nockDone()
-  // })
-
 })
-  //     // .then((res) => {
-  //     // })
-  //   if (!mockSnapshotsExist && !csurf) csurf = mockSnapshots[csrfKey];
-  // 
-  //   console.log(csurf)
-  //   const { nockDone } = await nockBack(
-  //     'pu.addAdminUser.json'
-  //   );
-  //   nock.enableNetConnect('127.0.0.1');
-  //   const pu = (
-  //     !recording ? 
-  //     await new Mock(snapKey).dat : 
-  //     await agent
-  //       .post('/register')
-  //       .send({
-  //         _csrf: csurf,
-  //         givenName: 'Tracey Bushman',
-  //         zip: '90210',
-  //         username: 'tbushman',
-  //         password: 'password'
-  //       })
-  //       .then((data) => data).catch((err) => err)
-  //   );
-  //   expect(pu).toMatchSnapshot();
-  //   nockDone()
-  // })
+
   // key = 'should add a user via manual registration';
   // key = 'should add a user via slack';
   // key = 'should add an admin user via slack';

@@ -46,7 +46,8 @@ const config = {
 	testenv: envVars.TEST_ENV,
 	recordenv: envVars.RECORD_ENV,
 	accessKeyId: envVars.AWS_KEY_ID,
-	secretAccessKey: envVars.AWS_SECRET
+	secretAccessKey: envVars.AWS_SECRET,
+	port: envVars.PORT
 };
 
 module.exports = config;

@@ -1,5 +1,6 @@
 estadb
 .env
+*/.env
 node_modules
 test/setup.js
 __nock-fixtures__/
