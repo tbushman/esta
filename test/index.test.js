@@ -18,10 +18,10 @@ const { expect } = chai;
 // } = require('jest-matcher-utils');
 // const domJSON = require('domjson');
 const mockSnapshotsExist = fs.existsSync(
-  path.join(__dirname, '.', '__snapshots__', 'index.test.js.snap'));
+  path.join(__dirname, '.', '__snapshots__', 'index.test.js.mocha-snapshot'));
 let mockSnapshots = null;
 if (mockSnapshotsExist) {
-  mockSnapshots = require(path.join(__dirname, '.', '__snapshots__', 'index.test.js.snap'));
+  mockSnapshots = require(path.join(__dirname, '.', '__snapshots__', 'index.test.js.mocha-snapshot'));
 }
 
 const nockBack = nock.back;
@@ -37,7 +37,7 @@ if (testing === undefined) {
 nockBack.setMode('record');
 
 describe('API calls', () => {
-  let key, agent, csrf = null, header = null;
+  let key, agent, csrf = null, header = null, ck = null, user = null;
   // eslint-disable-next-line no-undef
   before(async() => {
     nock.enableNetConnect('127.0.0.1');
@@ -55,19 +55,19 @@ describe('API calls', () => {
   afterEach(async() => {
     // this ensures that consecutive tests don't use the snapshot created
     // by a previous test
-    // await ContentTest.deleteMany({}).catch(err => console.log(err));
     await nockBack.setMode('wild');
     await nock.cleanAll();
   });
-  after((done) => {
-
+  after(async () => {
+    // await ContentTest.deleteMany({}).catch(err => console.log(err));
+    await PublisherTest.deleteMany({}).catch(err => console.log(err));
   });
 
   key = 'should get a header';
   it(key, async () => {
     const snapKey = ('API calls '+key+' 1');
     const { nockDone } = await nockBack(
-      'editContent.header.json'
+      'app.header.json'
     );
     // const { getAuthCode } = authMiddleware;
     nock.enableNetConnect('127.0.0.1');
@@ -89,56 +89,8 @@ describe('API calls', () => {
       nockDone()
     }
   })
-
-  // key = 'should get all data';
-  // test(key, async() => {
-  //   const snapKey = ('API calls '+key+' 1');
-  //   let snap = (!mockSnapshotsExist ? null : mockSnapshots[snapKey]
-  //   );
-  //   const { nockDone } = await nockBack(
-  //     'pu.getAll.json'
-  //   );
-  //   nock.enableNetConnect('127.0.0.1');
-  //   const pu = (
-  //     !recording ? 
-  //     await new Mock(snapKey).dat : 
-  //     await agent
-  //       .get('/')
-  //       .then((data) => data).catch((err) => err)
-  //   );
-  //   if (!snap) {
-  //     console.log('no snp')
-  //     expect(pu).toMatchSnapshot();
-  //   } else {
-  //     console.log(data)
-  //     expect(pu).toMatchSnapshot();
-  //   }
-  //   nockDone();
-  //   if (!recording) {
-  //     expect(pu).toHaveBeenCalled();
-  //   }
-  // }, 5000);
-  // key = 'should initiate getting csrf';
-  // test(key, async() => {
-  //   const snapKey = ('API calls '+key+' 1');
-  //   const snap = (!mockSnapshotsExist ? null : mockSnapshots[snapKey]);
-  //   const register = await agent.get('/register/')
-  //   // .header['set-cookie'].filter((item) => {
-  //   //   return /(\_csrf=)/.test(item)
-  //   // })[0].split('_csrf=')[1].split(';')[0];
-  //   const { nockDone } = await nockBack(
-  //     'pu.initCsrf.json'
-  //   );
-  //   nock.enableNetConnect('127.0.0.1');
-  //   const csrf = register.header['set-cookie'].filter((item) => {
-  //       return /(\_csrf=)/.test(item)
-  //     })[0].split('_csrf=')[1].split(';')[0];
-  //   expect(csrf).toMatchSnapshot();
-  //   nockDone();
-  //   console.log(csrf)
-  // }, 5000)
   
-  key = 'registration page should contain a csrf token';
+  key = 'registration page should get and post a well-configured csrf token when creating a user';
   it(key, async() => {
     const snapKey = ('API calls '+key+' 1');
     const { nockDone } = await nockBack(
@@ -179,16 +131,74 @@ describe('API calls', () => {
         })
         .expect(302)
         .expect('Location', '/sig/admin')
-        .then((res) => /*console.log(res)*/
+        .then(async(res) => /*console.log(res)*/
         {
           console.log('k')
-
+          ck = await res.headers['set-cookie']
         })
         .catch((err) => console.log(err))
       })
       nockDone()
     }
   });
+  
+  key = 'Should get all users';
+  it(key, async () => {
+    const snapKey = ('API calls '+key+' 1');
+    const { nockDone } = await nockBack(
+      'pu.getUser.json'
+    );
+    nock.enableNetConnect('127.0.0.1');
+    users = (!mockSnapshots ? null : mockSnapshots[snapKey]);
+    
+    if (!recording) {
+      expect(users).to.matchSnapshot();
+      nockDone()
+
+    } else {
+      await agent
+      .post('/api/users')
+      // .expect(302)
+      // .expect('Location', '/')
+      .then(async res => {
+        // console.log(res)
+        expect(res).to.matchSnapshot();
+        // await agent
+        // .get('/sig/admin')
+        // // .set('cookie', ck)
+        // .expect(302)
+        // .expect('Location', `/pu/getgeo/${res[0]._id}`)
+        // .then(async res => {
+        //   await agent
+        //   .post('/')
+        // })
+      })
+      .catch(err => console.log(err))
+      // console.log(ck)
+      
+      nockDone()
+      
+    }
+  })
+  
+  // key = 'Should delete a user';
+  // it(key, () => {
+  //   const snapKey = ('API calls '+key+' 1');
+  //   const { nockDone } = await nockBack(
+  //     'pu.deleteUser.json'
+  //   );
+  //   nock.enableNetConnect('127.0.0.1');
+  //   csrf = (!mockSnapshots ? null : mockSnapshots[snapKey]);
+  // 
+  //   if (!recording) {
+  //     expect(csrf).to.matchSnapshot();
+  //     nockDone()
+  // 
+  //   } else {
+  // 
+  //   }
+  // })
+
 })
 
   // key = 'should add a user via manual registration';
@@ -243,11 +253,11 @@ describe('API calls', () => {
 // https://facebook.github.io/jest/
 
 
-function cookie (res, name) {
-  return res.headers['set-cookie'].filter(function (cookies) {
-    return cookies.split('=')[0] === name
-  })[0]
-}
+// function cookie (res, name) {
+//   return res.headers['set-cookie'].filter(function (cookies) {
+//     return cookies.split('=')[0] === name
+//   })[0]
+// }
 function cookies (res) {
   return res.headers['set-cookie'].map(function (cookies) {
     return cookies.split(';')[0]
