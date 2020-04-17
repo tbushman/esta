@@ -282,7 +282,7 @@ app.use(function (req, res, next) {
 
 // function csrfCookie
 
-app.get(/^(\/|\/register$|\/login$|\/api\/new|\/api\/editcontent)/, csrfProtection);
+app.get(/^(\/|\/register$|\/login$|\/api\/new|\/api\/editcontent|\/sig\/editprofile)/, csrfProtection);
 // ensure multer parses before csrf
 app.post(/^(\/register$|\/login$|\/api\/editcontent|\/sig\/editprofile)/, upload.array(), parseBody, csrfProtection);
 app.post(/^(\/diff)/, upload.array(), parseBody);

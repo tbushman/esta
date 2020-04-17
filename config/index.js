@@ -47,7 +47,8 @@ const config = {
 	recordenv: envVars.RECORD_ENV,
 	accessKeyId: envVars.AWS_KEY_ID,
 	secretAccessKey: envVars.AWS_SECRET,
-	port: envVars.PORT
+	port: envVars.PORT, 
+	admin: envVars.ADMIN
 };
 
 module.exports = config;

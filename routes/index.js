@@ -417,6 +417,7 @@ router.get('/register', function(req, res, next){
 })
 
 router.post('/register', function(req, res, next) {
+	res.cookie('XSRF-TOKEN', req.csrfToken())
 	var langs = [];
 	// googleTranslate.getSupportedLanguages(function(err, languageCodes) {
 	// 
@@ -437,7 +438,7 @@ router.post('/register', function(req, res, next) {
 				return next(err)
 			}
 			var admin;
-			if (process.env.ADMIN.split(',').indexOf(req.body.username) !== -1) {
+			if (process.env.ADMIN.split(/(\,\s{0,5})/).indexOf(req.body.username) !== -1) {
 				admin = true;
 			} else {
 				admin = false;
@@ -486,6 +487,7 @@ router.post('/register', function(req, res, next) {
 });
 
 router.get('/login', function(req, res, next){
+	res.cookie('XSRF-TOKEN', req.csrfToken())
 	var referrer = req.get('Referrer');
 	req.session.referrer = referrer;
 	return res.render('login', { 
@@ -1131,7 +1133,8 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 				if (err) {
 					return next(err)
 				} else if (pu) {
-					return res.status(200).send('/sig/editprofile')
+					const referrer = (!req.get('Referrer') ? '/sig/editprofile' : req.get('Referrer'))
+					return res.status(200).send(referrer)
 				} else {
 					return res.redirect('/')
 				}
@@ -1380,6 +1383,7 @@ router.post('/sig/uploadsignature/:did/:puid', ifExistsReturn, uploadmedia.singl
 
 router.get('/sig/editprofile', function(req, res, next){
 // console.log('bleh')
+	res.cookie('XSRF-TOKEN', req.csrfToken())
 	ContentDB.find({}).lean().sort({'properties.time.end': 1}).exec(function(err, data){
 		if (err) {return next(err)}
 		PublisherDB.findOne({_id: req.session.userId}, async function(err, pu){
@@ -1414,7 +1418,7 @@ router.get('/sig/editprofile', function(req, res, next){
 router.post('/sig/editprofile', function(req, res, next){
 	var body = req.body;
 	var username = req.user.username;
-// console.log(body)
+console.log(body)
 	asynk.waterfall([
 		function(next) {
 		// console.log(req.user._id)
@@ -1453,21 +1457,21 @@ router.post('/sig/editprofile', function(req, res, next){
 					return next(err)
 				}
 				var keys = Object.keys(body);
-				keys.splice(Object.keys(body).indexOf('avatar'), 1);
+				// keys.splice(Object.keys(body).indexOf('avatar'), 1);
 				var puKeys = Object.keys(PublisherDB.schema.paths);
-				// console.log(keys, puKeys)
+				console.log(keys, puKeys)
 				for (var j in puKeys) {
 					var set = {$set:{}};
 					var key;
 					for (var i in keys) {
 						body[keys[i]] = (!isNaN(parseInt(body[keys[i]], 10)) ? ''+body[keys[i]] +'' : body[keys[i]] );
 						if (puKeys[j].split('.')[0] === 'properties') {
-							if (puKeys[j].split('.')[1] === keys[i]) {
+							if (puKeys[j].split('.')[1] === keys[i] && keys[i] !== 'avatar') {
 								key = 'properties.'+ keys[i];
 								set.$set[key] = body[keys[i]];
 							}
 						} else {
-							if (puKeys[j] === keys[i]) {
+							if (puKeys[j] === keys[i] && keys[i] !== 'avatar') {
 								key = keys[i]
 								set.$set[key] = body[keys[i]];
 							} else {
@@ -1817,7 +1821,7 @@ router.post('/api/users', (req, res, next) => {
 		if (err) {
 			return next(err)
 		}
-		console.log(users)
+		// console.log(users)
 		return res.status(200).send(users)
 	})
 })

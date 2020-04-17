@@ -76,8 +76,8 @@ function ensureLocation(req, res, next) {
 		else if (pu.geometry && pu.geometry.coordinates.length) {
 			return next()
 		} else {
-			const referrer = req.get('Referrer');
-			if (pu.properties.zip && pu.properties.zip !== '' && /(\/sig\/admin)/gi.test(referrer)) {
+			// const referrer = req.get('Referrer');
+			if (pu.properties.zip && pu.properties.zip !== ''/* && /(\/sig\/admin)/gi.test(referrer)*/) {
 				return next()
 			}
 			return res.redirect('/pu/getgeo/'+pu._id+'')
@@ -407,20 +407,43 @@ function ensureAdmin(req, res, next) {
 		return res.redirect('/login')
 	}
 	//req.session.userId = req.user._id;
-	PublisherDB.findOne({_id: req.session.userId}, function(err, pu){
+	const userId = (!req.session || !req.session.userId ? (!req.user ? null : req.user._id ) : req.session.userId);
+	PublisherDB.findOne({_id: userId}, async function(err, pu){
 		if (err) {
 			return next(err)
 		}
-		
+		// console.log(pu)
+		const referrer = (!req.get('Referrer') ? null : req.get('Referrer'));
+		if (!referrer) {
+			if (!pu) {
+				return res.redirect('/login');
+			}
+			// TODO checkadminlist middleware
+			if (!pu.properties.admin) {
+				const isAdmin = config.admin.split(/,\s{0,5}/).indexOf(pu.username) !== -1;
+				if (isAdmin) {
+					const adminPublisher = await PublisherDB.findOneAndUpdate({_id: userId}, {$set: {'properties.admin': true}}).then(doc=>doc).catch(err=>next(err))
+					req.user = adminPublisher;
+					req.session.loggedin = req.user.username;
+					return next()
+				} else {
+					return res.redirect('/')
+				}
+			} else {
+				req.user = pu;
+				req.session.loggedin = req.user.username;
+				return next()
+			}
+		}
 		if (pu && pu.properties.admin) {
-			req.publisher = Publisher;
+			// req.publisher = Publisher;
 			req.user = pu;
 			req.session.loggedin = req.user.username;
 			return next();
 		} else {
 			// req.publisher = Publisher;
 			req.session.loggedin = null;
-			return res.redirect('/')
+			return res.redirect(referrer)
 		}
 	})
 }

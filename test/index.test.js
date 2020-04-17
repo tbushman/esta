@@ -36,16 +36,28 @@ if (testing === undefined) {
 }
 nockBack.setMode('record');
 
+function getCsrf(res) {
+  const cookie = res.header['set-cookie'];
+  // console.log(res.header)
+  const csf = cookie.filter((item) => {
+      // console.log(item, /(XSRF\-TOKEN=)/i.test(item))
+      return /(XSRF\-TOKEN=)/.test(item)
+    })[0].split('XSRF-TOKEN=')[1].split(';')[0];
+  if (!csf) throw new Error('missing csrf token');
+  return csf;
+}
+
 describe('API calls', () => {
-  let key, agent, csrf = null, header = null, ck = null, user = null;
+  let key, agent, csrf = null, header = null, ck = null, user, users = null;
   // eslint-disable-next-line no-undef
   before(async() => {
     nock.enableNetConnect('127.0.0.1');
-    await app.listen(config.port, () => {
+    await app.listen(config.port, async() => {
       console.log('connected');
       agent = request.agent(app);
       // agent.get('/').expect(200, done)
       // console.log(agent)
+      // await PublisherTest.deleteMany({}).catch(err => console.log(err));
     })
   }, 5000);
   beforeEach(async() => {
@@ -108,14 +120,7 @@ describe('API calls', () => {
       .get('/register')
       .expect(200)
       .then(async(res)=>{
-        // const csf = res.header['xsrf-token']
-        const cookie = res.header['set-cookie'];
-        console.log(res.header)
-        const csf = cookie.filter((item) => {
-            console.log(item, /(XSRF\-TOKEN=)/i.test(item))
-            return /(XSRF\-TOKEN=)/.test(item)
-          })[0].split('XSRF-TOKEN=')[1].split(';')[0];
-        if (!csf) throw new Error('missing csrf token');
+        const csf = getCsrf(res);
         expect(csf).to.matchSnapshot();
         
         await agent
@@ -131,11 +136,6 @@ describe('API calls', () => {
         })
         .expect(302)
         .expect('Location', '/sig/admin')
-        .then(async(res) => /*console.log(res)*/
-        {
-          console.log('k')
-          ck = await res.headers['set-cookie']
-        })
         .catch((err) => console.log(err))
       })
       nockDone()
@@ -157,29 +157,84 @@ describe('API calls', () => {
 
     } else {
       await agent
-      .post('/api/users')
-      // .expect(302)
-      // .expect('Location', '/')
+      .get('/login')
       .then(async res => {
-        // console.log(res)
-        expect(res).to.matchSnapshot();
-        // await agent
-        // .get('/sig/admin')
-        // // .set('cookie', ck)
-        // .expect(302)
-        // .expect('Location', `/pu/getgeo/${res[0]._id}`)
-        // .then(async res => {
-        //   await agent
-        //   .post('/')
-        // })
+        const csf = await getCsrf(res);
+        await agent
+        .post('/login')
+        .set('Cookie', cookies(res))
+        .send({
+          _csrf: csf,
+          username: 'tbushman',
+          password: 'password'
+        })
+        .then(async res => {
+          await agent
+          .post('/api/users')
+          .then(async res => {
+            // await agent
+            // .post(`/pu/getgeo/null/null/${res.body[0].properties.zip}`)
+            // cb(null, res.body);
+            expect(res.body).to.matchSnapshot();
+            users = res.body;
+          })
+        })
       })
-      .catch(err => console.log(err))
-      // console.log(ck)
-      
+      .catch(err => cb(err))
       nockDone()
-      
     }
   })
+
+  key = 'Should edit a user';
+  it(key, async () => {
+    const snapKey = ('API calls '+key+' 1');
+    const { nockDone } = await nockBack(
+      'pu.editUser.json'
+    );
+    nock.enableNetConnect('127.0.0.1');
+  
+    if (!recording) {
+      user = (!mockSnapshots ? null : mockSnapshots[snapKey]);
+      expect(user).to.matchSnapshot();
+      nockDone()
+  
+    } else {
+      user = (!users || users.length === 0 ? user : users[0]);
+      expect(user).to.not.equal(null);
+      await agent
+      .get('/sig/editprofile')
+      .expect(200)
+      .then(async res => {
+        await agent
+        .post('/api/users')
+        .then(async result => {
+          const csf = getCsrf(res)
+          await agent
+          .post('/sig/editprofile')
+          .set('Cookie', cookies(res))
+          .send({
+            _csrf: csf,
+            zip: '00000',
+            email: 'tbushman@pu.bli.sh'
+          })
+          .expect(302)
+          .then(async res => {
+            await agent
+            .post('/api/users')
+            .then(async res => {
+              expect(res.body[0]).to.not.equal(undefined);
+              expect(res.body[0].email).to.equal('tbushman@pu.bli.sh')
+              expect(res.body).to.matchSnapshot();
+            })
+          })
+          .catch((err) => console.log(err))
+        })
+        
+      })
+      nockDone()
+    }
+  })
+  
   
   // key = 'Should delete a user';
   // it(key, () => {
