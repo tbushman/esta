@@ -1826,14 +1826,21 @@ router.post('/api/users', (req, res, next) => {
 	})
 })
 
-router.get('/api/gpo', function(req, res, next){
+router.get('/api/gpo/:start/:end', function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	console.log(outputPath)
+	var startdate = (!req.params.start ? moment().utc().format() : moment(req.params.start, 'YYYY-MM-DD').utc().format());
+	var enddate = (!req.params.end ? moment().utc().format() : moment(req.params.end, 'YYYY-MM-DD').utc().format());
 	require('request-promise')({
-		uri: 'https://api.govinfo.gov/collections/BILLS/'+moment().subtract('1', 'years').utc().format()+'?offset=0&pageSize=1000&api_key='+process.env.GPOKEY,
-		encoding: null
+		uri: 'https://api.govinfo.gov/collections/BILLS/'+startdate/*.subtract('3', 'months')*/+'/'+enddate+'/?offset=0&pageSize=100&api_key='+process.env.GPOKEY,
+		encoding: 'utf8'
 	}).then(function(result){
-		return res.status(200).send(result)
+		console.log(result.toString())
+		return res.status(200).send(result.toString())
 	})
 	.catch(function(err){
+		console.log('err')
+		console.log(err.toString().data)
 		return next(err)
 	})
 })
