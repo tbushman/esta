@@ -13,7 +13,9 @@ var adminFunctions = {
 		var self = this;
 		var start = document.getElementById('startdate').value;
 		var end = document.getElementById('enddate').value;
-		$.get(
+		// if (!start || !end) return;
+		console.log(start, end)
+		$.post(
 			'/api/gpo/'+start+'/'+end
 		)
 		.then(function(data){
@@ -35,6 +37,7 @@ var adminFunctions = {
 	filterGpo: function(e) {
 		var self = this;
 		if (e.target.value === '' || !self.gpo) {
+			console.log('no gpo')
 			return self.getGpo();
 		}
 		var gpo = self.gpo.packages;

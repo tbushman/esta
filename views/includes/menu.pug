@@ -40,7 +40,7 @@ div.menu(:class="res ? '' : 'static'")
 					polygon(points="479 152.03 327.48 152.03 327.48 0.5 152.03 0.5 152.03 152.03 0.5 152.03 0.5 327.48 152.03 327.48 152.03 479 327.48 479 327.48 327.48 479 327.48 479 152.03")
 			span.tb-font-m New
 		
-		div.slidedown(v-if="loggedin && pu && pu !== '' && pu.properties.admin && dropped.new", :class="res ? '' : 'static'" :style="{'min-height': (res ? '180px' : '500px'), top: 'var(--thumbw)'}")
+		div.slidedown(v-if="loggedin && pu && pu !== '' && pu.properties.admin && dropped.new", :class="res ? '' : 'static'" :style="{'min-height': (res ? '180px' : '520px'), top: 'var(--thumbw)'}")
 			include menu/jurisdiction.pug
 
 			label(for="doctype") Type of document
@@ -54,10 +54,10 @@ div.menu(:class="res ? '' : 'static'")
 			p.row(v-if="newDoc.placetype === 'Nation'")
 				div.tb-05-m0
 					label(for="startdate")
-					input(type="text" id="startdate" placeholder="Start date in format 'YYYY-MM-DD'" @blur="filterGpo")
+					input(type="text" id="startdate" placeholder="'YYYY-MM-DD'" @blur="filterGpo")
 				div.tb-05-m0
 					label(for="enddate")
-					input(type="text" id="enddate" placeholder="End date in format 'YYYY-MM-DD'" @blur="filterGpo")
+					input(type="text" id="enddate" placeholder="'YYYY-MM-DD'" @blur="filterGpo")
 			p(v-if="newDoc.placetype && newDoc.placetype === 'Nation' && gpo")
 				label(for="placetype") Search Document Title
 				input(type="text", title="search GPO", @change="filterGpo", v-text="'Search Bills'")

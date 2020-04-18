@@ -48,7 +48,7 @@ function getCsrf(res) {
 }
 
 describe('API calls', () => {
-  let key, agent, csrf = null, header = null, ck = null, user, users = null;
+  let key, agent, csrf = null, header = null, ck = null, user, users = null, doc;
   // eslint-disable-next-line no-undef
   before(async() => {
     nock.enableNetConnect('127.0.0.1');
@@ -57,6 +57,7 @@ describe('API calls', () => {
       agent = request.agent(app);
       // agent.get('/').expect(200, done)
       // console.log(agent)
+      await ContentTest.deleteMany({}).catch(err => console.log(err));
       // await PublisherTest.deleteMany({}).catch(err => console.log(err));
     })
   }, 5000);
@@ -71,7 +72,7 @@ describe('API calls', () => {
     await nock.cleanAll();
   });
   after(async () => {
-    // await ContentTest.deleteMany({}).catch(err => console.log(err));
+    await ContentTest.deleteMany({}).catch(err => console.log(err));
     await PublisherTest.deleteMany({}).catch(err => console.log(err));
   });
 
@@ -235,7 +236,66 @@ describe('API calls', () => {
     }
   })
   
+  key = 'should add a document via congress.gov';
+  it(key, async() => {
+    const snapKey = ('API calls '+key+' 1');
+    const { nockDone } = await nockBack(
+      'pu.editUser.json'
+    );
+    nock.enableNetConnect(/(api\.govinfo\.gov|127\.0\.0\.1)/);
+  // host => host.includes('api.govinfo.gov' || '127.0.0.1')
+    if (!recording) {
+      doc = (!mockSnapshots ? null : mockSnapshots[snapKey]);
+      expect(doc).to.matchSnapshot();
+      nockDone()
   
+    } else {
+      await agent
+      .get('/login')
+      .then(async res => {
+        const csf = await getCsrf(res);
+        await agent
+        .post('/login')
+        .set('Cookie', cookies(res))
+        .send({
+          _csrf: csf,
+          username: 'tbushman',
+          password: 'password'
+        })
+        .then(async res => {
+          let start, end;
+          await agent
+          .post('/api/gpo/'+start+'/'+end)
+          .expect(200)
+          .then(async res => {
+            // console.log(res)
+            expect(res.body).to.not.equal(null)
+            start = '2020-02-05';
+            end = '2020-02-08';
+            await agent
+            .post('/api/gpo/'+start+'/'+end)
+            .expect(200)
+            .then(async res => {
+              // console.log(res)
+              const result = JSON.parse(res.text);
+              // console.log(result)
+              const gpo = result.packages.filter(item => {
+                return item.packageId === 'BILLS-116hres835ih'
+              })[0];
+              expect(gpo).to.not.equal(undefined);
+              const url = `/api/new/Nation/0/0/115/undefined/${encodeURIComponent(gpo.title.replace('.', ''))}/BILLS-116hres835ih`;
+              console.log(url)
+              await agent
+              .get(url)
+              .expect(302)
+              .catch(err => console.log(err))
+            })
+            // "'/api/new/'+newDoc.placetype+'/'+newDoc.place+'/'+newDoc.tiind+'/'+newDoc.chind+'/'+newDoc.secind+'/'+encodeURIComponent(newDoc.chtitle)+'/'+(!newDoc.xmlid ? undefined : newDoc.xmlid)+''"
+          })
+        })
+      })
+    }
+  })
   // key = 'Should delete a user';
   // it(key, () => {
   //   const snapKey = ('API calls '+key+' 1');

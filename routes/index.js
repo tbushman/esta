@@ -1826,16 +1826,18 @@ router.post('/api/users', (req, res, next) => {
 	})
 })
 
-router.get('/api/gpo/:start/:end', function(req, res, next){
+router.post('/api/gpo/:start/:end', function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
-	var startdate = (!req.params.start ? moment().utc().format() : moment(req.params.start, 'YYYY-MM-DD').utc().format());
-	var enddate = (!req.params.end ? moment().utc().format() : moment(req.params.end, 'YYYY-MM-DD').utc().format());
+	// console.log(req.params.start, req.params.end)
+	console.log(+req.params.start.split('-')[0], isNaN(+req.params.start.split('-')[0]))
+	var startdate = (!req.params.start || req.params.start === 'undefined' || isNaN(+req.params.start.split('-')[0]) ? moment().utc().format() : moment(req.params.start, 'YYYY-MM-DD').utc().format());
+	var enddate = (!req.params.end || req.params.end === 'undefined' || isNaN(+req.params.end.split('-')[0]) ? moment().utc().format() : moment(req.params.end, 'YYYY-MM-DD').utc().format());
 	require('request-promise')({
 		uri: 'https://api.govinfo.gov/collections/BILLS/'+startdate/*.subtract('3', 'months')*/+'/'+enddate+'/?offset=0&pageSize=100&api_key='+process.env.GPOKEY,
 		encoding: 'utf8'
 	}).then(function(result){
-		console.log(result.toString())
+		// console.log(result.toString())
 		return res.status(200).send(result.toString())
 	})
 	.catch(function(err){
@@ -2015,8 +2017,11 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 						xmlurl = 'https://api.govinfo.gov/packages/BILLS-116hres109ih/xml'
 					} else {
 						console.log('wtafff?')
+						console.log(req.params.xmlid)
 						var chobj = usleg.filter(function(l){
-							return (req.params.xmlid.split('BILLS-')[1].split(/(\d{0,4})/)[2] === l.code)
+							console.log(req.params.xmlid.split('BILLS-')[1].split(/\d/).filter(item=>isNaN(+item) && item !== ''))
+							const codes = req.params.xmlid.split('BILLS-')[1].split(/\d/).filter(item=>isNaN(+item) && item !== '');
+							return (codes[0] === l.code)
 						})[0];
 						snd = parseInt(req.params.xmlid.split(chobj.code)[1].split(/\D/)[0], 10) - 1;//arr[tiind].chapter[chind].section[secind].ind;
 						chtitle = (!chobj ? arr[0].chapter[0].name : chobj.name);
