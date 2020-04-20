@@ -38,6 +38,9 @@ var parseForm = bodyParser.urlencoded({ extended: false });
 const PublisherDB = (!testenv ? Publisher : PublisherTest);
 const ContentDB = (!testenv ? Content : ContentTest);
 const SignatureDB = (!testenv ? Signature : SignatureTest);
+const { getBundle, ifExistsReturn, ensureSequentialSectionInd, ensureLocation, ensureCurly, rmFile, ensureStyle, resetLayers, getLayers, getGeo, ensureContent, getDat, ensureAuthenticated, ensureAdmin, ensureApiTokens, ensureGpo } = require('../config/middleware');
+const {isJurisdiction, usleg, tis, geoLocate, storage, uploadmedia, removeExtras, curly, renameEachImgDir, emptyDirs, getDat64, tokenHandler, mkdirpIfNeeded, getDocxBlob, iteratePlaces, places, saveJsonDb, importMany } = require('../config/helpers');
+
 dotenv.load();
 var upload = multer({fieldSize: 25 * 1024 * 1024});
 marked.setOptions({
@@ -58,1202 +61,6 @@ const googleMaps = require('@google/maps').createClient({
 
 
 
-var isJurisdiction = async function isJurisdiction(reqpos, doc, pu, cb) {
-	var lat, lng;
-	var gtype, gcoords;
-	if (!pu) {
-		// console.log(req.session)
-		if (!reqpos) {
-			return cb(null)
-		} else {
-			gtype = 'Point';
-			gcoords = [reqpos.lng, reqpos.lat]
-		}
-	}
-	//  else {
-	// 	pu = await PublisherDB.findOne({_id: pu._id}).lean().exec(async function(err, pubr){
-	// 		if (err) {
-	// 			return cb(err)
-	// 		}
-	// 		return pubr;
-	// 	})
-	// 	.catch(function(err){
-	// 		console.log(err)
-	// 	});
-	// }
-	else if (
-		// !gcoords 
-		!pu.geometry || !pu.geometry.type || pu.geometry.coordinates.length === 0
-	) {
-		gtype = 'MultiPolygon'
-		if (!pu || !pu.sig[pu.sig.length-1]) {
-		// console.log(pu)
-			
-			var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
-			var zipcoden; 
-			if (pu && pu.properties.zip) {
-				zipcoden = pu.properties.zip;
-			}
-			else if (pu && pu.properties.place && !isNaN(parseInt(pu.properties.place, 10))) {
-				zipcoden = pu.properties.place;
-			} else {
-				return cb(null)
-			}
-			var zipcode = await JSON.parse(zipcodes).features.filter(function(zip){
-				return (
-					zip.properties['ZCTA5CE10']
-					=== 
-					zipcoden
-					)
-			});
-		// console.log('zipcode')
-		// console.log(zipcode)
-			
-			if (zipcode.length === 0) return cb(null);
-			lat = parseFloat(zipcode[0].properties["INTPTLAT10"]);
-			lng = parseFloat(zipcode[0].properties["INTPTLON10"]);
-			gcoords = 
-				[[[[lng,lat],[(lng+.00001),lat],[(lng+.00001),(lat+.00001)],[lng,(lat+.00001)],[lng,lat]]]]
-			
-		} else {
-			var ts = (!pu || !pu.sig ? null : pu.sig[pu.sig.length-1].ts);
-			if (!ts) {
-				return cb(null)
-			}
-			var pos = ts.split('G/')[0];
-			pos = pos.split(',');
-			pos.forEach(function(l){
-				return parseFloat(l)
-			})
-			
-			gcoords = 
-				[[[[pos[1], pos[0]],[(pos[1]+.00001),pos[0]],[(pos[1]+.00001),(pos[0]+.00001)],[pos[1],(pos[0]+.00001)],[pos[1],pos[0]]]]]
-		}
-	} else {
-		gtype = 'MultiPolygon';
-		if (!pu || !pu.geometry) return cb(null);
-		gcoords = pu.geometry.coordinates;
-	}
-	if (!gcoords || gcoords.length === 0) {
-	// console.log(gcoords)
-		cb(null)
-	} else {
-	// console.log(gcoords)
-		ContentDB.findOne({_id: doc._id, geometry: {$geoIntersects: {$geometry: {type: gtype, coordinates: gcoords}}}}).lean().exec(function(err, doc){
-			if (err) {
-				console.log(err)
-				cb(null)
-			} else {
-				if (!err && !doc) {
-					cb(false);
-				} else {
-					cb(true);
-				}
-			}
-			
-		})
-	}
-}
-
-const usleg =  [
-	{code: 'hconres', name: 'House Concurrent Resolution (H. Con.Res.)'},
-	{code: 'hjres', name: 'House Joint Resolution (H.J. Res.)'},
-	{code: 'hr', name: 'House Bill (H.R.)'},
-	{code: 'hres', name: 'House Simple Resolution (H. Res.)'},
-	{code: 's', name: 'Senate Bill (S.)'},
-	{code: 'sconres', name: 'Senate Concurrent Resolution (S. Con. Res.)'},
-	{code: 'sjres', name: 'Senate Joint Resolution (S.J. Res.)'},
-	{code: 'sres', name: 'Senate Simple Resolution (S.)'},
-	{code: 's', name: 'Senate Bill (S. Res.)'}
-]
-
-const tis = 
-// TODO use gpo API to populate tis[0]
-//{
-	/*bill: [
-		'House Simple Resolution (H. Res.)',
-		'House Concurrent Resolution (H. Con. Res.)',
-		'House Joint Resolution (H.J. Res.)',
-		'House Bill (H.R.)',
-		'Senate Bill (S.)',
-		'Senate Concurrent Resolution (S. Con. Res.)',
-		'Senate Joint Resolution (S.J. Res.)',
-		'Senate Simple Resolution (S. Res.)'
-	],*/
-	// title: 
-	[
-		{
-			ind: 0,
-			name: 'in support of legislation',
-			code: 'BILLS-',
-			chapter: [
-				{
-					ind: 115,
-					name: 'United States Congress',
-					code: 'hres',
-					section: [
-						{
-							ind: 108,
-							name: 'House Simple Resolution (H. Res.)',
-							code: 'ih'
-						}
-					]
-				}
-			]
-		},
-		{
-			ind: 1,
-			name: 'in Solidarity',
-			chapter: [
-				{
-					ind: 0,
-					name: 'Jurisdiction'
-				}
-			]
-		},
-		{
-			ind: 2,
-			name: 'Candidate for Public Office',
-			chapter: [
-				{
-					ind: 0,
-					name: 'Jurisdiction'
-				}
-			]
-		},
-		{
-			ind: 3,
-			name: 'Environmental Impact Statement',
-			chapter: [
-				{
-					ind: 0,
-					name: 'Jurisdiction'
-				}
-			]
-		},
-		{
-			ind: 4,
-			name: 'Geography',
-			chapter: [
-				{
-					ind: 0,
-					name: 'Jurisdiction'
-				}
-			]
-		}
-	]
-
-function geoLocate(ip, zoom, cb) {
-	var ping = spawn('ping', [ip]);
-	ping.stdout.on('data', function(d){
-		console.log(d)
-	})
-	var arp = spawn('arp', ['-a']);
-	var mac;
-	arp.stdout.on('data', function(dat){
-		dat += '';
-		dat = dat.split('\n');
-		mac = dat[0].split(' ')[3];
-	})
-	var params = {
-		wifiAccessPoints: [{
-			macAddress: ''+mac+'',
-			signalStrength: -65,
-			signalToNoiseRatio: 40
-		}]
-	};
-	geolocation(params, function(err, data) {
-		console.log(data)
-		if (err) {
-			console.log(err)
-			position = null;
-			// position = {lat: 40.7608, lng: -111.8910, zoom: zoom };
-		} else {
-			position = { lng: data.location.lng, lat: data.location.lat, zoom: zoom };	
-		}
-		cb(position);
-	
-	})
-}
-
-var storage = multer.diskStorage({
-	
-	destination: async function (req, file, cb) {
-		var p, q = null;
-		if (!req.params.type) {
-			p = ''+publishers+'/pu/publishers/esta/signatures/'+req.params.did+'/'+req.params.puid+''
-		} else {
-			if (req.params.type === 'png') {
-				p = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+''
-				q = ''+publishers+'/pu/publishers/esta/images/thumbs/'+req.params.index+''
-
-			} else if (req.params.type === 'csv') {
-				p = ''+publishers+'/pu/publishers/esta/csv/'+req.params.id+''
-				q = ''+publishers+'/pu/publishers/esta/csv/thumbs/'+req.params.id+''
-				
-			} else if (req.params.type === 'txt') {
-				p = ''+publishers+'/pu/publishers/esta/txt'
-				q = ''+publishers+'/pu/publishers/esta/txt/thumbs'
-			} else if (req.params.type === 'doc') {
-				var os = require('os');
-				p = os.tmpdir() + '/gdoc';
-				q = ''+publishers+'/pu/publishers/esta/tmp';
-			} else if (req.params.type === 'docx') {
-				p = ''+publishers+'/pu/publishers/esta/docx'
-				q = null;//''+publishers+'/pu/publishers/esta/word/thumbs'
-			} else if (req.params.type === 'json') {
-				p = ''+publishers+'/pu/publishers/esta/json';
-				q = null;
-			} else {
-				p = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+''
-				q = ''+publishers+'/pu/publishers/esta/images/thumbs/'+req.params.index+''
-
-			}
-		}
-		// TODO change to fs.mkdir or mkdirp update which uses Promises
-		const existsP = await fs.existsSync(p);
-		if (!existsP) {
-			await mkdirp(p).then(made=>console.log(made)).catch(err=>next(err));
-		}
-		const existsQ = await fs.existsSync(q);
-		if (!existsQ && q) {
-			await mkdirp(q).then(made=>console.log(made)).catch(err=>next(err));
-		}
-		cb(null, p);
-		// fs.access(p, function(err) {
-		// 	if (err && err.code === 'ENOENT') {
-		// 		fs.mkdir(p, {recursive: true}, function(err){
-		// 			if (err) {
-		// 				console.log("err", err);
-		// 			}
-		// 			if (q) {
-		// 				fs.access(q, function(err){
-		// 					if (err && err.code === 'ENOENT') {
-		// 						fs.mkdir(q, {recursive: true}, function(err){
-		// 							if (err) {
-		// 								console.log("err", err);
-		// 							}
-		// 							cb(null, p)
-		// 						})
-		// 					} else {
-		// 						cb(null, p)
-		// 					}
-		// 				})
-		// 			} else {
-		// 				cb(null, p)
-		// 			}
-		// 
-		// 		})
-		// 	} else {
-		// 		cb(null, p)
-		// 	}
-		// })
-		
-	},
-	filename: function (req, file, cb) {
-		if (req.params.type === 'png') {
-			cb(null, 'img_' + req.params.counter + '.png')
-		} else if (req.params.type === 'csv') {
-			cb(null, 'csv_' + req.params.id + '_' + Date.now()+ '_temp.csv')
-		} else if (req.params.type === 'txt') {
-			cb(null, 'txt_' + Date.now() + '.txt')
-		} else if (req.params.type === 'docx') {
-			cb(null, 'docx_'+Date.now()+'.docx')
-		} else if (req.params.type === 'json') {
-			cb(null, 'json_'+req.params.id+'.json')
-		} else if (!req.params.type){
-			cb(null, 'img_'+req.params.did+'_'+req.params.puid+'.png')
-		}
-  }
-});
-var uploadmedia = multer({ storage: storage, limits: { fieldSize: 25 * 1024 * 1024 }});
-
-var removeExtras = function(str){
-	var desc = null;
-	if (str) {
-		desc = str.trim()
-			.replace(/\u2028/g, '  \n  \n')
-			.replace(/(\v)/g, '   \n  \n')
-			.replace(/(<br>)/g, '  \n')
-	}
-	return desc;
-}
-
-var curly = function(str){
-	if (!str || typeof str.replace !== 'function'){
-		return ''
-	} else {
-		return str
-		.replace(/(\s)'(\w)/g,'$1&lsquo;$2')
-		.replace(/(\w)'(\s)/g,'$1&rsquo;$2')
-		.replace(/(\s)"(\w)/g,'$1&ldquo;$2')
-		.replace(/(\w)"(\s)/g,'$1&rdquo;$2')
-		.replace(/(\w\.)"/g, "$1&rdquo;")     // Closing doubles
-		.replace(/\u2018/g, "&lsquo;")
-		.replace(/\u2019/g, "&rsquo;")
-		.replace(/\u201c/g, "&ldquo;")
-		.replace(/\u201d/g, "&rdquo;")
-		.replace(/[“]/g, "&ldquo;")
-		.replace(/[”]/g, "&rdquo;")
-		.replace(/[’]/g, "&rsquo;")
-		.replace(/[‘]/g, "&lsquo;")
-		.replace(/([a-z])&lsquo([a-z])/ig, '$1&rsquo;$2')
-	}
-}
-
-// function ensureCorrectAbsPath(req, res, next){
-// 	ContentDB.update({''})
-// }
-async function getBundle(req, res, next) {
-	req.vuefile = null;
-	var vuepath = path.join(__dirname, '../public/scripts/main.js');
-	var exists = await fs.existsSync(vuepath);
-	if (exists) {
-		req.vuefile = await require(vuepath)
-	}
-	return next();
-}
-
-async function ifExistsReturn(req, res, next) {
-	var path = ''+publishers+'/pu/publishers/esta/signatures/'+req.params.did+'/'+req.params.puid+'/img_'+req.params.did+'_'+req.params.puid+'.png';
-	var exists = await fs.existsSync(path);
-	if (exists) {
-		return res.redirect('/list/'+req.params.id+'/'+null);
-	}
-	return next();
-}
-
-function ensureSequentialSectionInd(req, res, next){
-	ContentDB.find({}).lean().sort({'properties.section.ind':1}).exec(async function(err, data){
-		if (err){
-			console.log('no data')
-		}
-		var count = -1
-		await data.forEach(async function(doc, i){
-			const dc = await ContentDB.findOne({_id:doc._id, 'properties.title.str': 'Geography', 'properties.chapter.str': 'Jurisdiction: Utah'}).then(function(d){return d}).catch(function(err){console.log(err)});
-			if (dc) {
-				count++;
-				await ContentDB.findOneAndUpdate({_id:dc._id}, {$set:{'properties.section.ind': count, 'properties.chapter.ind': 0}}, {safe:true, upsert:false, new:true}).then(function(d){
-					console.log('ok')
-				})
-				.catch(function(err){
-					console.log(err);
-				})
-			}
-			// ContentDB.findOneAndUpdate({_id:doc._id, 'properties.chapter.str': 'Jurisdiction: Utah'}, {$set:{'properties.section.ind': count}}, {safe:true, upsert:false, new:true}, function(err, dc){
-			// 	if (err){
-			// 		console.log('')
-			// 	}
-			// 	if (dc) {
-			// 		count++;
-			// 	}
-			// })
-		})
-		return next();
-	})
-}
-
-function ensureLocation(req, res, next) {
-	PublisherDB.findOne({_id: req.user._id}).lean().exec(async function(err, pu){
-		if (err) {
-			return next(err)
-		}
-		if (!pu) {
-			return res.redirect('/login')
-		}
-		else if (pu.geometry && pu.geometry.coordinates.length) {
-			return next()
-		} else {
-			return res.redirect('/pu/getgeo/'+pu._id+'')
-			// var zipcodes = await fs.readFileSync(''+path.join(__dirname, '/..')+'/public/json/us_zcta.json', 'utf8');
-			// var zipcode = JSON.parse(zipcodes).features.filter(function(zip){
-			// 	return (parseInt(zip.properties['ZCTA5CE10'], 10) === parseInt(pu.properties.zip, 10))
-			// });
-			// if (zipcode.length === 0) {
-			// 	console.log('blg')
-			//  return res.redirect('/pu/getgeo/'+pu._id+'');
-			// }
-			// lat = parseFloat(zipcode[0].properties["INTPTLAT10"]);
-			// lng = parseFloat(zipcode[0].properties["INTPTLON10"]);
-			// var geometry = {
-			// 	type: 'MultiPolygon',
-			// 	coordinates: [[[[lng,lat],[(lng+.00001),lat],[(lng+.00001),(lat+.00001)],[lng,(lat+.00001)],[lng,lat]]]]
-			// }
-			// console.log(geometry)
-			// PublisherDB.findOneAndUpdate({_id: req.user._id}, {$set:{geometry:geometry}}, {new:true, safe:true}, function(err, pu){
-			// 	if (err) {
-			// 		return next(err)
-			// 	} else {
-			// 		if (!pu) {
-			// 			if (req.isAuthenticated()) {
-			// 				return res.redirect('/pu/getgeo/'+req.user._id+'')
-			// 			} else {
-			// 				return res.redirect('/login')
-			// 			}
-			// 		} else {
-			// 			return next()
-			// 		}
-			// 	}
-			// 
-			// })
-		}
-	})
-}
-
-function rmFile(req, res, next) {
-	var imgp = ''+publishers+'/pu/publishers/esta/images/full/'+req.params.index+'/'+'img_' + req.params.counter + '.png';
-	var thumbp = ''+publishers+'/pu/publishers/esta/images/thumbs/'+req.params.index+'/'+'thumb_' + req.params.counter + '.png';
-	//console.log(imgp, thumbp)
-	var options = {nonull:true,nodir:true}
-	var p = glob.sync(imgp, options)[0];
-	var q = glob.sync(thumbp, options)[0];
-	fs.pathExists(q, function(err, exists){
-		if (err) {
-			console.log(err)
-		}
-		if (exists) {
-			fs.pathExists(p, function(err, exists2){
-				if (err) {
-					console.log(err)
-				}
-				if (exists2) {
-					fs.remove(p, function(e){
-						if (e) {
-							console.log(e)
-						}
-						fs.remove(q, function(e){
-							if (e) {
-								console.log(e)
-							}
-							next()
-						})
-					})	
-				} else {
-					next();
-				}
-			})
-			
-		} else {
-			next();
-		}
-	})
-}
-function renameEachImgDir(data, direction, indexes, oldInd, next) {
-	
-	asynk.waterfall([
-		
-		function(cb) {
-			var qs = [];
-			var count = 0;
-			
-			for (let i of indexes) {
-				switch(direction){
-					case 'none':
-						break;
-					case 'decrement':
-						i--;
-						break;
-					case 'increment':
-						i++;
-						break;
-					default:
-						break;
-				}
-			
-				var doc = data[count];
-				
-				for (var j = 0; j < doc.properties.media.length; j++) {
-					j = parseInt(j, 10);
-					var q1 = {
-						query: {_id: doc._id},
-						key: 'image',
-						index: i,
-						ind: j,
-						//key: 'properties.media.$.image',
-						image: '/publishers/esta/images/full/'+i+'/img_'+j+'.png'
-					}
-					qs.push(q1);
-					var q2 = {
-						query: {_id: doc._id},
-						key: 'thumb',
-						index: i,
-						ind: j,
-						//key: 'properties.media.$.thumb',
-						image: '/publishers/esta/images/thumbs/'+i+'/thumb_'+j+'.png'
-					}
-					qs.push(q2);
-					var q3 = {
-						query: {_id: doc._id},
-						key: 'thumb_abs',
-						index: i,
-						ind: j,
-						//key: 'properties.media.$.thumb',
-						image: ''+publishers+'/pu/publishers/esta/images/thumbs/'+i+'/thumb_'+j+'.png'
-					}
-					qs.push(q3);
-					var q4 = {
-						query: {_id: doc._id},
-						key: 'image_abs',
-						index: i,
-						ind: j,
-						//key: 'properties.media.$.thumb',
-						image: ''+publishers+'/pu/publishers/esta/images/full/'+i+'/img_'+j+'.png'
-					}
-					qs.push(q4);
-					
-				}
-				var oldImgDir = ''+publishers+'/pu/publishers/esta/images/full/'+(oldInd ? oldInd : doc.index)+'';
-				var oldThumbDir = ''+publishers+'/pu/publishers/esta/images/thumbs/'+(oldInd ? oldInd : doc.index)+'';
-				var newImgDir = ''+publishers+'/pu/publishers/esta/images/full/'+i+'';
-				var newThumbDir = ''+publishers+'/pu/publishers/esta/images/thumbs/'+i+'';
-				if (fs.existsSync(oldImgDir)) {
-					fs.moveSync(oldImgDir, newImgDir, { overwrite: true });
-					fs.moveSync(oldThumbDir, newThumbDir, { overwrite: true });
-				}
-				count++;
-			}
-			cb(null, qs)
-		},
-		function(qs, cb) {
-			asynk.eachSeries(qs, function(q, nxt){
-				ContentDB.findOne(q.query, function(err, doc){
-					if (err) {
-						nxt(err)
-					}
-					if (doc) {
-						doc.properties.media[q.ind][q.key] = q.image;
-						doc.save(function(err){
-							if (err) {
-								nxt(err)
-							} else {
-								nxt(null)
-							}
-						})
-					} else {
-						nxt(null)
-					}
-				})
-			}, function(err){
-				if(err) {
-					cb(err)
-				} else {
-					cb(null)
-				}
-			})
-		}
-	], function(err) {
-		if (err) {
-			return next(err) 
-		}
-		return next();
-	})
-	
-}
-
-// https://gist.github.com/liangzan/807712/8fb16263cb39e8472d17aea760b6b1492c465af2
-function emptyDirs(index, next) {
-	var p = ''+publishers+'/pu/publishers/esta/images/full/'+index+'';
-	var q = ''+publishers+'/pu/publishers/esta/images/thumbs/'+index+'';
-	fs.emptyDir(p, function(err){
-		if (err) {
-			return next(err)
-		}
-		fs.emptyDir(q, function(err) {
-			if (err) {
-				return next(err)
-			}
-			next()
-		})
-	})
-}
-
-
-function ensureCurly(req, res, next) {
-	ContentDB.find({}, function(err, data) {
-		if (err){
-			return next(err)
-		}
-		if (data.length === 0) {
-			return res.redirect('/api/new/'+'Nation'+'/'+0+'/'+0+'/'+115+'/'+108+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal./'+null+'')
-		}
-		data.forEach(function(doc){
-			//console.log(doc.index)
-			doc.properties.description = (!doc.properties.description ? null : curly(doc.properties.description));
-			doc.properties.media.forEach(function(media){
-				media.name = media.name ? curly(media.name) : null;
-				media.caption = (!media.caption ? null : curly(media.caption));
-			})
-			doc.save(function(err){
-				if (err) {
-					return next(err)
-				}
-			})
-		})
-		return next()
-	})
-}
-
-async function resetLayers(req, res, next) {
-	Content.update({}, {$set:{'properties.layers':[]}}, {multi:true}).exec(async function(err, data){
-		if (err) {
-			return next(err)
-		}
-		var set1 = {$set:{}};
-		var set2 = {$set:{}};
-		var set3 = {$set:{}};
-		var key1 = 'properties.layers';
-		set1.$set[key1] = ["5ccb69789ee39e92a59cf784","5ccb7c371c1f45935f9d79fa","5ccfde4c20005f195e68ff67"];
-		set2.$set[key1] = ["5d0b271f42c7bc8c6e755d0b"];
-		set3.$set[key1] = ["5ccfde4c20005f195e68ff67","5d0b271f42c7bc8c6e755d0b"];
-		Content.findOneAndUpdate({_id: '5cf989b465bd382260a16722'}, set1).exec((err,doc)=>{
-			if (err){return next(err)}
-			Content.findOneAndUpdate({_id: '5d2904a7b4aef770a18a2b24'}, set2).exec((err,doc)=>{
-				if (err){return next(err)}
-				console.log('ok')
-				Content.findOneAndUpdate({_id: '5ccb694f9ee39e92a59cf782'}, set3).exec((err,doc)=>{
-					if (err){return next(err)}
-					return next()
-				
-				})
-			})
-			
-		})
-	})
-}
-
-function ensureStyle(req, res, next) {
-	Content.find({}).lean().exec(function(err, data){
-		if (err) {
-			return next(err)
-		}
-		var color = require('randomcolor');
-		data.forEach(async function(doc){
-			var durl = ''+publishers+'/pu/publishers/esta/json/json_'+doc._id+'.json';
-			var dexist = await fs.existsSync(durl);
-			// var djson = null;
-			if (dexist) {
-				const djson = await fs.readFileSync(durl, 'utf8');
-				if (djson) {
-					var keys = Object.keys(JSON.parse(djson).features[0].properties)
-					await Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.keys': keys}}).then((doc)=>console.log('ok')).catch((err)=>next(err));
-				}
-			}
-			if (doc.properties.layers.length > 0 && typeof doc.properties.layers[0] === 'string') {
-				
-				
-				const arr = (doc.properties.layers.length > 0 ? 
-					doc.properties.layers.map(function(layer){
-						var lurl = ''+publishers+'/pu/publishers/esta/json/json_'+layer+'.json';
-						var lexist = fs.existsSync(lurl);
-						// var ljson = null;
-						if (lexist) {
-							const ljson = fs.readFileSync(lurl, 'utf8');
-							if (ljson) {
-								var keys = Object.keys(JSON.parse(ljson).features[0].properties)
-								return {
-									lid: layer,
-									buckets: 1,
-									colors: [color()],
-									key: keys[0]
-								}
-							}
-							
-						}
-					}) : []
-				);
-				// const arr = //JSON.parse(JSON.stringify(
-				// 	layers
-				//))
-				// doc.properties.layers = layers;
-				Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.layers':arr}}).then((doc)=>console.log('ok')).catch((err)=>next(err));
-				// doc.save(function(err){
-				// 	if (err){
-				// 		return next(err)
-				// 	}
-				// })
-			}
-		});
-		return next();
-	})
-}
-
-function ensureContent(req, res, next) {
-	ContentDB.find({}).sort( { index: 1 } ).exec(function(err, data){
-		if (err) {
-			return next(err)
-		}
-		if (data.length === 0) {
-			return res.redirect('/api/new/'+'Nation'+'/'+0+'/'+0+'/'+115+'/'+108+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal./'+null+'')
-		} else {
-			return next()
-		}
-	});
-}
-
-function getLayers(req, res, next) {
-	ContentDB.findOne({_id: req.params.id}).lean().exec(async function(err, doc){
-		if (err) {
-			return next(err)
-		}
-		if (doc && doc.properties.layers) {
-			var count = 0;
-			var layerids = await doc.properties.layers.map(function(layer){
-				if (layer) {return layer.lid} else {count++;return}}).filter(function(layer){return layer !== undefined}) || [];
-			// console.log(layerids, doc.properties.layers)
-			ContentDB.find({_id: {$in:layerids}}).lean().sort({'geometry.type':1}).exec(function(err, data){
-				if (err) {
-					return next(err)
-				}
-				if (count > 0) {
-					var styles = doc.properties.layers.filter(function(lr){return lr !== null && lr !== undefined});
-					// console.log(count)
-					var pull = {$set:{}};
-					var key = 'properties.layers';
-					pull.$set[key] = styles
-					ContentDB.findOneAndUpdate({_id:doc._id}, pull, {safe: true, new: true}, function(err, doc){
-						if (err) {
-							return next(err)
-						}
-						// console.log(doc.properties.layers)
-					})
-				}
-				req.layers = data;
-				return next();
-
-			})
-		} else {
-			return next()
-		}
-		// const layers = layerids.map(async function(id){
-		// 	const d = await ContentDB.findOne({_id:id}).lean().then((doc) =>doc).catch((err)=>next(err));
-		// 	return d;
-		// });
-		// console.log(layers)
-		// req.layers = layers;
-	})
-}
-
-function getGeo(req, res, next) {
-	ContentDB.findOne({_id:req.params.id}).lean().exec(async function(err, doc){
-		if (err) {
-			return next(err)
-		}
-		ContentDB.find({'properties.title.str': 'Geography', geometry: {$geoIntersects: {$geometry: {type: doc.geometry.type, coordinates: doc.geometry.coordinates}}} }).lean().sort({'geometry.type':1}).exec(async function(err, data){
-			if (err) {
-				return next(err)
-			}
-			var reqpos = (req.session && req.session.position ? req.session.position : null)
-			await data.filter(async function(dc){
-				var keys = (!doc.properties.layers ? [] : doc.properties.layers.map(function(item){if (item) return item.lid}))
-
-				if (keys.indexOf(dc._id) === -1) {
-					return false;
-				} else {
-					const isJ = await isJurisdiction(reqpos, dc, req.user, function(jd){
-						if (jd === null) {
-							return false; 
-						} else {
-							return jd;
-						}
-						// return res.redirect('/user/getgeo');
-					});
-					return isJ;
-				}
-			})
-			req.availablelayers = data;
-			return next()
-		})
-	})
-}
-
-function getDat(req, res, next){
-	asynk.waterfall([
-		function(cb){
-			ContentDB.distinct('properties.title.ind', function(err, tdistinct){
-				if (err) {
-					cb(err)
-				}
-				var dat = []; 
-				if (tdistinct.length === 0) {
-					if (req.isAuthenticated() && req.user.properties.admin) {
-						return res.redirect('/api/new/Nation/'+0+'/'+0+'/'+115+'/'+108+'/Recognizing%20the%20duty%20of%20the%20Federal%20Government%20to%20create%20a%20Green%20New%20Deal./'+null+'')
-					} else {
-						return res.redirect('/login')
-					}
-				}
-				tdistinct.forEach(function(td, i){
-					ContentDB.find({'properties.title.ind': parseInt(td,10)}).lean().exec(function(err, distinct){
-						if (err) {
-							return cb(err)
-						}
-						
-						dat[i] = distinct;
-						
-					})
-				})
-			// console.log(dat)
-				cb(null, dat)
-			})
-		}
-	], function(err, dat){
-		if (err) {
-			return next(err)
-		}
-		req.dat = dat;
-		return next()
-	})
-}
-
-
-function getDat64(next){
-	asynk.waterfall([
-		function(cb){
-			var dat = []
-			ContentDB.distinct('properties.chapter.ind', function(err, distinct){
-				if (err) {
-					return next(err)
-				}
-				if (distinct.length === 0) {
-					ContentDB.find({}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
-						if (err) {
-							return next(err)
-						}
-						data = data.sort(function(a,b){
-							if (parseInt(a.properties.section.ind,10) < parseInt(b.properties.section.ind, 10)) {
-								return -1;
-							} else {
-								return 1;
-							}
-						})
-						data.forEach(function(doc){
-							if (doc.properties !== undefined) {
-								if (doc.properties.media.length > 0) {
-									doc.properties.media.forEach(function(img){
-										var imageAsBase64 = fs.readFileSync(''+publishers+'/pu'+img.image, 'base64')
-										img.image = 'data:image/png;base64,'+imageAsBase64
-									})
-								}
-							}
-						})
-						dat.push(data)
-						cb(null, dat)
-					})
-				} else {
-					distinct.sort();
-
-					asynk.forEach(
-						distinct,
-						function(key, callback){
-							ContentDB.find({'properties.chapter.ind':key}).sort({index: 1, 'properties.section.ind':1}).lean().exec(function(err, data){
-								if (err) {
-									console.log(err)
-								}
-								//console.log(data)
-								//if (data.length === 0) return;
-								if (data.length > 0) {
-									data = data.sort(function(a,b){
-										if (parseInt(a.properties.section.ind,10) < parseInt(b.properties.section.ind, 10)) {
-											return -1;
-										} else {
-											return 1;
-										}
-									})
-									data.forEach(function(doc){
-										if (doc.properties !== undefined) {
-											if (doc.properties.media.length > 0) {
-												doc.properties.media.forEach(function(img){
-													var imageAsBase64 = fs.readFileSync(''+publishers+'/pu'+img.image, 'base64')
-													img.image = 'data:image/png;base64,'+imageAsBase64
-												})
-											}
-										}
-									})
-									dat.push(data)
-								}
-								callback();
-							})
-							
-						},
-						function(err){
-							if (err) {
-								cb(err)
-							}
-							cb(null, dat)
-						}
-					)
-				}
-			})
-		}
-	], function(err, dat) {
-		if (err) {
-			console.log(err)
-		}
-		//console.log(dat)
-		dat = dat.sort(function(a,b){
-			//console.log(a[0].properties.chapter.ind)
-			if (parseInt(a[0].properties.chapter.ind, 10) < parseInt(b[0].properties.chapter.ind, 10)) {
-				return -1
-			} else {
-				return 1
-			}
-		})
-		next(dat)
-	})
-}
-
-function ensureAuthenticated(req, res, next) {
-	// console.log(req.isAuthenticated())
-	if (req.isAuthenticated()) {
-		req.session.userId = req.user._id;
-		req.session.loggedin = req.user.username;
-		return next();
-	}
-	return res.redirect('/login');
-}
-
-function ensureAdmin(req, res, next) {
-	//console.log(req.isAuthenticated())
-	if (!req.isAuthenticated()) {
-		return res.redirect('/login')
-	}
-	//req.session.userId = req.user._id;
-	PublisherDB.findOne({_id: req.session.userId}, function(err, pu){
-		if (err) {
-			return next(err)
-		}
-		
-		if (pu && pu.properties.admin) {
-			req.publisher = Publisher;
-			req.user = pu;
-			req.session.loggedin = req.user.username;
-			return next();
-		} else {
-			// req.publisher = Publisher;
-			req.session.loggedin = null;
-			return res.redirect('/')
-		}
-	})
-}
-
-function tokenHandler(authClient, next) {
-	
-	authClient.getToken(authCode).then(function(resp){
-		if (resp.tokens) {
-			next(null, resp.tokens)
-		} else {
-			next(new Error('no tokens'))
-		}
-	});
-	
-}
-
-function ensureApiTokens(req, res, next){
-	var OAuth2 = google.auth.OAuth2;
-
-	var authClient = new OAuth2(process.env.GOOGLE_OAUTH_CLIENTID, process.env.GOOGLE_OAUTH_SECRET, (process.env.NODE_ENV === 'production' ? process.env.GOOGLE_CALLBACK_URL : process.env.GOOGLE_CALLBACK_URL_DEV));
-	/*if (!req.user) {
-		return res.redirect('/login')
-	}*/
-	PublisherDB.findOne({_id: req.session.userId}, function(err, pu){
-		if (err) {
-			return next(err)
-		}
-		if (!pu) {
-			return res.redirect('/logout')
-		}
-		if (!pu.properties.admin) {
-			return res.redirect('/')
-		}
-		authClient.setCredentials({
-			refresh_token: pu.garefresh,
-			access_token: pu.gaaccess
-		});
-		google.options({auth:authClient})
-		authClient.refreshAccessToken()
-		.then(function(response){
-			if (!response.tokens && !response.credentials) {
-				return res.redirect('/login');
-  		}
-			var tokens = response.tokens || response.credentials;
-			PublisherDB.findOneAndUpdate({_id: req.user._id}, {$set:{garefresh:tokens.refresh_token, gaaccess:tokens.access_token}}, {safe:true,new:true}, function(err, pub){
-				if (err) {
-					return next(err)
-				}
-				if (req.session.importdrive) {
-					req.session.gp = {
-						google_key: process.env.GOOGLE_KEY,
-						scope: ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.file'],
-						//google_clientid: process.env.GOOGLE_OAUTH_CLIENTID,
-						access_token: pub.gaaccess,
-						picker_key: process.env.GOOGLE_PICKER_KEY
-					}
-					req.session.authClient = true;
-				}
-				return next()
-			})
-		})
-	})
-}
-
-function mkdirpIfNeeded(p, cb){
-	fs.access(p, function(err) {
-		if (err && err.code === 'ENOENT') {
-			fs.mkdir(p, {recursive: true}, function(err){
-				if (err) {
-					console.log("err", err);
-				} else {
-					cb()
-				}
-			})
-		} else {
-			cb()
-		}
-	})
-	
-}
-
-function getDocxBlob(now, doc, sig, cb){
-	var pugpath = path.join(__dirname, '../views/includes/exportword.pug');
-	sig.forEach(function(si){
-		var imageAsBase64 = fs.readFileSync(''+publishers+'/pu'+si.image, 'base64')
-		si.image = 'data:image/png;base64,'+imageAsBase64
-	})
-	var str = pug.renderFile(pugpath, {
-		md: require('marked'),
-		moment: require('moment'),
-		doctype: 'strict',
-		hrf: '/publishers/esta/word/'+now+'.docx',
-		doc: doc,
-		sig: sig
-	});
-	var docx = 
-	HtmlDocx.asBlob(str);
-  cb(docx)
-}
-
-router.get('/style', /*resetLayers/*,*/ ensureStyle/**/, function(req, res, next){
-	return res.redirect('/')
-});
-
-router.get('/runtests', function(req, res, next){
-	
-	req.session.importgdrive = false;
-	// let chromedriver = require('chromedriver');
-	var mocha = require('mocha');
-	var assert = require('chai').assert;
-	let webdriver = require('selenium-webdriver'),
-		By = webdriver.By,
-		until = webdriver.until,
-		test = webdriver.testing;
-	var driver = new webdriver.Builder().
-		withCapabilities(webdriver.Capabilities.chrome()).build();
-	//ContentDB.remove
-		/*driver.get('http://'+process.env.DEVAPPURL+'');
-		driver.wait(
-	  	until.elementLocated(webdriver.By.css('#description')),
-			12000
-		).then(function(){
-			driver.findElement(webdriver.By.css('#description')).click();
-		})
-				
-
-		driver.findElement(webdriver.By.name('description')).sendKeys('simple programmer');
-		driver.wait(
-	  	until.elementLocated(webdriver.By.id('submit_0')),
-	  	12000
-	  )
-	  .then(function(){
-			driver.findElement(webdriver.By.css('#submit_0')).click();
-			return res.render('test', {
-				info: 'ok'
-			})
-		}, function(err) {
-			return next(err)
-		});*/
-		/*
-		driver.wait(
-			until.elementLocated(webdriver.By.css('#vue')),
-			12000
-		).then(function(el){
-			//console.log(el.getAttribute('innerHTML'))
-			var captures;
-			/*ContentDB.find({}, function(err, data) {
-				if (err) {
-					return next(err)
-				}
-				/*var input = pug.renderFile(path.join(__dirname, '../views/publish.pug'), {
-					doctype: 'xml',
-					menu: !req.session.menu ? 'view' : req.session.menu,
-					data: data,
-					doc: data[0]/*,
-					diff: str
-				});
-				var rx = /^(\w(?:[-:\w]*\w)?)/
-				//var rx = /^(\w[-:\w]*)(\/?)/
-				while (input.length) {
-					if (!rx.exec(input)) {
-						input = input.substr(1)
-					} else {
-						captures = rx.exec(input);
-						input = input.substr(captures[0].length)
-						//console.log(input)
-						console.log(captures)
-					}
-				}
-			})
-			*/
-			//driver.executeScript('return arguments[0].innerHTML;', el).then(function(ele){
-				//	console.log(input)
-				//el.getInnerHtml().then(function(input){
-				//var input = ele;
-				//console.log(/^(\w[-:\w]*)(\/?)/.exec(input))
-				//console.log(!/^(\w[-:\w]*)(\/?)/.exec(input))
-				
-				/*do {
-					if (!/^(\w[-:\w]*)(\/?)/.exec(input)) {
-						input = input.substr(1)
-						//console.log(input)
-				  }	else {
-						captures = /^(\w[-:\w]*)(\/?)/.exec(input);
-						input = input.substr(captures[0].length)
-						console.log(input)
-						console.log(captures)
-			  		//this.consume(captures[0].length);
-			  		/*var tok, name = captures[1];
-			  		if (':' == name[name.length - 1]) {
-			  	  	name = name.slice(0, -1);
-			  	  	tok = this.tok('tag', name);
-			  	  	this.defer(this.tok(':'));
-			  	  	while (' ' == this.input[0]) this.input = this.input.substr(1);
-				  	} else {
-				  	  tok = this.tok('tag', name);
-				  	}
-				  	tok.selfClosing = !! captures[2];
-						if (captures[2]) {
-							console.log('closing tag')
-							console.log(captures[2])
-						}
-				  	//return tok;
-						/*assert.isTrue(
-							//.test
-						)
-					}*/
-				//} while (!/^(\w[-:\w]*)(\/?)/.exec(input));
-			//})
-
-			
-			
-		//})
-		
-		//driver.quit();
-	
-})
-
-function ensureGpo(req, res, next) {
-	req.session.gpo = process.env.GPOKEY;
-	return next()
-}
-
 router.all(/^\/((api|import|export).*)/, ensureAdmin/*, ensureApiTokens*/);
 
 router.get(/(.*)/, ensureGpo/*, ensureSequentialSectionInd*/)
@@ -1268,236 +75,6 @@ router.get('/', function(req, res, next){
 // 	})
 // })
 
-const iteratePlaces = (data, pathh, json) => {
-	return new Promise(async resolve => {
-		var jsonExists = await fs.existsSync(pathh);
-		var count = 0;
-		let newJson = json;
-		if (data && Array.isArray(data) && data.length > 0) {
-			// console.log(data)
-			console.log('matching records')
-			const dkeys = Object.keys(data[0])
-			console.log(dkeys)
-			for (var k = 0; k < data.length; k++) {
-				var d = data[k]
-				let existing = (newJson.features && newJson.features.length > 0 ? await newJson.features.map(function(f){return f.properties.label}) : [] )
-				let casetype;
-				dkeys.forEach(dk => {
-					switch(dk) {
-						case '﻿case_type': 
-							casetype = d[dk].trim()+'';
-							break;
-						
-						default:
-					}
-				})
-				const key = (!d['last_name'] && !d.last_name ? null : d['last_name'].trim() +'')
-				const state = (!d.state ? 'Utah' : d.state.trim() +'');
-				const date = (!d.filing_date ? '' : d.filing_date.trim() +'');
-				const partycode = (!d.party_code ? '' : d.party_code.trim() +'');
-				const locndescr = (!d.locn_descr ? '' : d.locn_descr.trim() +'');
-				const firstname = (!d.first_name || d.first_name === '' ? null : d.first_name)
-				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)
-				if (match && existing.indexOf(key) !== -1) {
-					newJson.features[existing.indexOf(key)].properties.count++;
-					newJson.features[existing.indexOf(key)].properties.dates.push(date)
-				} else if (match) {
-					// if (/(SOLARA)/g.test(key)) {
-					// 	console.log(existing, key)
-					// }
-					await places(date, key, state).then(async entryTransformed => {
-						if (entryTransformed) {
-							if (existing.indexOf(key) === -1) {
-								await existing.push(key)
-							}
-							await newJson.features.push(entryTransformed)
-						} else {
-							console.log(key, ', ', date)
-						}
-					})
-					.catch(err => {
-						console.log(newJson)
-						console.log(err)
-					})
-				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
-					// console.log(d)
-				} else {
-					
-					// console.log(key, state, date, casetype, partycode, locndescr, firstname)
-				}
-				count++
-
-			}
-			
-			
-		} else {
-			// console.log('wtf no data')
-		}
-		if (count === data.length) {
-			if (data.length > 0) {
-				console.log('finished importing '+pathh)
-			}
-			resolve(newJson)
-		} else {
-			console.log('blrgh')
-		}
-	})
-
-}
-
-const places = (date, key, state) => {
-	return new Promise(async resolve => {
-		var input = 
-		// escape(
-			key.replace(/\s(LP$|LLC$)/, '')
-		// ) 
-		+ ' ' + 
-		// // escape(
-			state
-		// );
-		await googleMaps.findPlace({
-			input: input,
-			inputtype: 'textquery',
-			language: 'en',
-			locationbias: 'circle:100000@40.680686,-111.9370777',
-			fields: [
-				'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
-				'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
-				'geometry/viewport/northeast/lat', 'geometry/viewport/northeast/lng',
-				'geometry/viewport/southwest', 'geometry/viewport/southwest/lat',
-				'geometry/viewport/southwest/lng', 'name'
-			]
-		}, function (err, response) {
-			if (err) console.log(err)
-			// if (/(SOLARA)/g.test(key)) console.log(response)
-			if (response.json.candidates[0]) {
-				var ent = response.json.candidates[0];
-				const entryTransformed = {
-					type: 'Feature',
-					geometry: {
-						type: 'Point',
-						coordinates: [ent.geometry.location.lng, ent.geometry.location.lat]
-					},
-					properties: {
-						dates: [date],
-						state: state,
-						label: key,
-						name: ent.name,
-						count: 1
-					}
-				}
-				resolve(entryTransformed)
-			} else {
-				resolve(null)
-			}
-		}) 
-	})
-}
-
-const saveJsonDb = async (json, id, uri) => {
-	return new Promise(async (resolve, reject) => {
-		var multiPolygon;
-		var type = 'MultiPolygon';
-		var keys;
-		if (json.features && json.features.length) {
-			// console.log(json.features[0].geometry)
-			keys = Object.keys(json.features[0].properties);
-			if (json.features[0] && json.features[0].geometry.type === 'Point') {
-				type = 'MultiPoint'
-			}
-			// console.log(type)
-			multiPolygon = await json.features.map(function(ft){
-				if (!Array.isArray(ft.geometry.coordinates[0])) {
-					return [ft.geometry.coordinates[0], ft.geometry.coordinates[1]];
-				} else {
-					return ft.geometry.coordinates[0];
-				}
-			})
-		} else {
-			if (json[0].geometry) {
-				keys = Object.keys(json[0].properties)
-				multiPolygon = json[0].geometry.coordinates;
-			} else if (json.geometry) {
-				keys = Object.keys(json.properties)
-				multiPolygon = json.geometry.coordinates
-			}
-		} 
-		var geo = {
-			type: type,
-			coordinates: multiPolygon
-		}
-		// console.log(multiPolygon)
-		var set = {$set:{}};
-		var key1 = 'geometry';
-		var key2 = 'properties.keys'
-		set.$set[key1] = geo;
-		set.$set[key2] = keys;
-		ContentDB.findOneAndUpdate({_id: id}, set, {safe: true, new:true}, async function(err, doc){
-			if (err) {
-				reject(err)
-			} else {
-				if (uri && uri.indexOf('records/weeklyreports/current/filings/Week_') !== -1) {
-					await ContentDB.findOneAndUpdate({_id: id}, {$set: {'properties.credit': uri}}, {safe: true, new:true}).then(doc=>doc).catch(err=>next(err))
-				} else {
-					await ContentDB.findOneAndUpdate({_id: id}, {$set: {'properties.credit': ''}}, {safe: true, new:true}).then(doc=>doc).catch(err=>next(err))
-				}
-				resolve(json)
-			}
-		})
-	})
-
-}
-
-const importMany = async (files, id, cb) => {
-	var p = ''+publishers+'/pu/publishers/esta/json';
-	var pathh = await path.join(p, '/json_'+id+'.json');
-	console.log('how many files')
-	console.log(files.length)
-	var jsonExists = await fs.existsSync(pathh);
-	const json = (!jsonExists ?
-		{ 
-			type: "FeatureCollection",
-			name: "Evictions_SLC",
-			crs: { type: "name", properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-			features: [] 
-		} : await JSON.parse(fs.readFileSync(pathh, 'utf8'))
-	);
-	let newJson = json;
-	let count = 0;
-	fs.access(p, async function(err) {
-		if (err && err.code === 'ENOENT') {
-			await fs.mkdir(p, {recursive: true}, function(err){
-				if (err) {
-					console.log("err", err);
-				}
-			})
-		}
-
-		await files.forEach(async(file) => {
-			const content = await fs.readFileSync(file.path, 'utf16le');
-			const data = await d3.tsvParse(content);
-			// console.log('data length');
-			// console.log(data.length)
-			await iteratePlaces(data, pathh, newJson).then(async (js) => {
-				if (!js || js.features.length === 0 || js[0] === {} ) {
-					return cb(new Error('didn\'t work'))
-				} else {
-					console.log(js.features);
-					if (js.features.length > 0) {
-						newJson = await saveJsonDb(js, id, null).then(async j => {
-							await fs.writeFileSync(pathh, JSON.stringify(j))
-							count++
-							return j
-						})
-						.catch(err => cb(err))
-					}
-				}
-			}).catch(err => cb(err))
-		});
-		cb(null, newJson)
-
-	})
-}
 
 router.post('/loadgmaps/:id/:type', uploadmedia.array('csv'), parseForm/*, csrfProtection*/, async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
@@ -1610,6 +187,7 @@ router.get('/register', function(req, res, next){
 })
 
 router.post('/register', function(req, res, next) {
+	res.cookie('XSRF-TOKEN', req.csrfToken())
 	var langs = [];
 	// googleTranslate.getSupportedLanguages(function(err, languageCodes) {
 	// 
@@ -1630,7 +208,7 @@ router.post('/register', function(req, res, next) {
 				return next(err)
 			}
 			var admin;
-			if (process.env.ADMIN.split(',').indexOf(req.body.username) !== -1) {
+			if (process.env.ADMIN.split(/(\,\s{0,5})/).indexOf(req.body.username) !== -1) {
 				admin = true;
 			} else {
 				admin = false;
@@ -1679,6 +257,7 @@ router.post('/register', function(req, res, next) {
 });
 
 router.get('/login', function(req, res, next){
+	res.cookie('XSRF-TOKEN', req.csrfToken())
 	var referrer = req.get('Referrer');
 	req.session.referrer = referrer;
 	return res.render('login', { 
@@ -2189,7 +768,7 @@ router.get('/sig/admin', function(req, res, next) {
 	var outputPath = url.parse(req.url).pathname;
 	console.log(outputPath)
 	if (process.env.ADMIN.split(',').indexOf(req.user.username) !== -1) {
-		PublisherDB.findOneAndUpdate({_id: req.session.userId}, {$set:{admin: true}}, function(err, pu){
+		PublisherDB.findOneAndUpdate({_id: req.session.userId}, {$set:{admin: true}}, {new: true}, function(err, pu){
 			if (err) {
 				return next(err)
 			}
@@ -2324,7 +903,8 @@ router.post('/pu/getgeo/:lat/:lng/:zip', async function(req, res, next){
 				if (err) {
 					return next(err)
 				} else if (pu) {
-					return res.status(200).send('/sig/editprofile')
+					const referrer = (!req.get('Referrer') ? '/sig/editprofile' : req.get('Referrer'))
+					return res.status(200).send(referrer)
 				} else {
 					return res.redirect('/')
 				}
@@ -2573,6 +1153,7 @@ router.post('/sig/uploadsignature/:did/:puid', ifExistsReturn, uploadmedia.singl
 
 router.get('/sig/editprofile', function(req, res, next){
 // console.log('bleh')
+	res.cookie('XSRF-TOKEN', req.csrfToken())
 	ContentDB.find({}).lean().sort({'properties.time.end': 1}).exec(function(err, data){
 		if (err) {return next(err)}
 		PublisherDB.findOne({_id: req.session.userId}, async function(err, pu){
@@ -2646,7 +1227,7 @@ router.post('/sig/editprofile', function(req, res, next){
 					return next(err)
 				}
 				var keys = Object.keys(body);
-				keys.splice(Object.keys(body).indexOf('avatar'), 1);
+				// keys.splice(Object.keys(body).indexOf('avatar'), 1);
 				var puKeys = Object.keys(PublisherDB.schema.paths);
 				// console.log(keys, puKeys)
 				for (var j in puKeys) {
@@ -2655,12 +1236,12 @@ router.post('/sig/editprofile', function(req, res, next){
 					for (var i in keys) {
 						body[keys[i]] = (!isNaN(parseInt(body[keys[i]], 10)) ? ''+body[keys[i]] +'' : body[keys[i]] );
 						if (puKeys[j].split('.')[0] === 'properties') {
-							if (puKeys[j].split('.')[1] === keys[i]) {
+							if (puKeys[j].split('.')[1] === keys[i] && keys[i] !== 'avatar') {
 								key = 'properties.'+ keys[i];
 								set.$set[key] = body[keys[i]];
 							}
 						} else {
-							if (puKeys[j] === keys[i]) {
+							if (puKeys[j] === keys[i] && keys[i] !== 'avatar') {
 								key = keys[i]
 								set.$set[key] = body[keys[i]];
 							} else {
@@ -3004,15 +1585,42 @@ router.get('/menu/:tiind/:chiind', function(req, res, next){
 // router.get('/point/:id/:lat/:lng', function(req, res, next){
 // 
 // })
+router.post('/api/data', (req, res, next) => {
+	ContentDB.find({}).lean().exec((err, data) => {
+		if (err) {
+			return next(err)
+		}
+		return res.status(200).send(data)
+	})
+})
 
-router.get('/api/gpo', function(req, res, next){
+router.post('/api/users', (req, res, next) => {
+	PublisherDB.find({}).lean().exec((err, users) => {
+		if (err) {
+			return next(err)
+		}
+		// console.log(users)
+		return res.status(200).send(users)
+	})
+})
+
+router.post('/api/gpo/:start/:end', function(req, res, next){
+	var outputPath = url.parse(req.url).pathname;
+	// console.log(outputPath)
+	// console.log(req.params.start, req.params.end)
+	// console.log(+req.params.start.split('-')[0], isNaN(+req.params.start.split('-')[0]))
+	var startdate = (!req.params.start || req.params.start === 'undefined' || isNaN(+req.params.start.split('-')[0]) ? moment().utc().format() : moment(req.params.start, 'YYYY-MM-DD').utc().format());
+	var enddate = (!req.params.end || req.params.end === 'undefined' || isNaN(+req.params.end.split('-')[0]) ? moment().utc().format() : moment(req.params.end, 'YYYY-MM-DD').utc().format());
 	require('request-promise')({
-		uri: 'https://api.govinfo.gov/collections/BILLS/'+moment().subtract('1', 'years').utc().format()+'?offset=0&pageSize=1000&api_key='+process.env.GPOKEY,
-		encoding: null
+		uri: 'https://api.govinfo.gov/collections/BILLS/'+startdate/*.subtract('3', 'months')*/+'/'+enddate+'/?offset=0&pageSize=100&api_key='+process.env.GPOKEY,
+		encoding: 'utf8'
 	}).then(function(result){
-		return res.status(200).send(result)
+		// console.log(result.toString())
+		return res.status(200).send(result.toString())
 	})
 	.catch(function(err){
+		console.log('err')
+		console.log(err.toString().data)
 		return next(err)
 	})
 })
@@ -3107,7 +1715,7 @@ router.post('/api/importjson/:id/:type', uploadmedia.single('json')/*, csrfProte
 router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', async function(req, res, next){
 	req.session.importgdrive = false;
 	var outputPath = url.parse(req.url).pathname;
-	console.log(outputPath)
+	// console.log(outputPath)
 	// var csrf = req.csrfToken();
 	const arr = tis;
 	var usstates = //await //JSON.stringify(
@@ -3129,20 +1737,20 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 		var chind = parseInt(req.params.chind,10);
 		var secind = parseInt(req.params.secind,10);
 		if (isNaN(chind)) {
-			if (isNaN(secind)) {
-				
-			} else {
-				console.log('q has no chapter but has section?')
-
-			}
+			// if (isNaN(secind)) {
+			// 
+			// } else {
+			// 	console.log('q has no chapter but has section?')
+			// 
+			// }
 			query = {'properties.title.ind': tiind}
 		} else {
-			if (isNaN(secind)) {
-				console.log('q has chapter but has no section?')
-				
-			} else {
-				
-			}
+			// if (isNaN(secind)) {
+			// 	// console.log('q has chapter but has no section?')
+			// 
+			// } else {
+			// 
+			// }
 			query = {'properties.title.ind': tiind, 'properties.chapter.ind': chind}
 		}
 		ContentDB.find(query, async function(err, chunk){
@@ -3186,9 +1794,12 @@ router.get('/api/new/:placetype/:place/:tiind/:chind/:secind/:stitle/:xmlid', as
 						chtitle = arr[0].chapter[0].name;
 						xmlurl = 'https://api.govinfo.gov/packages/BILLS-116hres109ih/xml'
 					} else {
-						console.log('wtafff?')
+						// console.log('wtafff?')
+						// console.log(req.params.xmlid)
 						var chobj = usleg.filter(function(l){
-							return (req.params.xmlid.split('BILLS-')[1].split(/(\d{0,4})/)[2] === l.code)
+							// console.log(req.params.xmlid.split('BILLS-')[1].split(/\d/).filter(item=>isNaN(+item) && item !== ''))
+							const codes = req.params.xmlid.split('BILLS-')[1].split(/\d/).filter(item=>isNaN(+item) && item !== '');
+							return (codes[0] === l.code)
 						})[0];
 						snd = parseInt(req.params.xmlid.split(chobj.code)[1].split(/\D/)[0], 10) - 1;//arr[tiind].chapter[chind].section[secind].ind;
 						chtitle = (!chobj ? arr[0].chapter[0].name : chobj.name);

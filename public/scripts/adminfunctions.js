@@ -11,11 +11,15 @@ var adminFunctions = {
 	},
 	getGpo: function() {
 		var self = this;
-		$.get(
-			'/api/gpo'
+		var start = document.getElementById('startdate').value;
+		var end = document.getElementById('enddate').value;
+		// if (!start || !end) return;
+		console.log(start, end)
+		$.post(
+			'/api/gpo/'+start+'/'+end
 		)
 		.then(function(data){
-			//- console.log(data)
+			console.log(data)
 			self.gpo = JSON.parse(data);
 		})
 		.catch(function(err){
@@ -32,14 +36,16 @@ var adminFunctions = {
 	},
 	filterGpo: function(e) {
 		var self = this;
-		if (e.target.value === '') {
+		if (e.target.value === '' || !self.gpo) {
+			console.log('no gpo')
 			return self.getGpo();
 		}
 		var gpo = self.gpo.packages;
 		gpo = gpo.filter(function(g){
+			var rx = new RegExp(e.target.value, 'gi')
 			return new RegExp(e.target.value).test(g.title)
 		})
-		//- console.log(gpo)
+		console.log(gpo)
 		if (gpo && gpo.length > 0) {
 			self.gpo.packages = gpo;
 		}
@@ -75,7 +81,7 @@ var adminFunctions = {
 				self.newDoc.tempGeo = json.features;
 				if (type === 'Nation' && self.newDoc.tiind === 0) {
 					self.newDoc.tempGeo = [self.newDoc.tempGeo[0]];
-					self.getGpo();
+					// self.getGpo();
 				}
 				console.log(self.newDoc.tempGeo)
 			})
