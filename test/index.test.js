@@ -55,10 +55,9 @@ describe('API calls', () => {
     await app.listen(config.port, async() => {
       console.log('connected');
       agent = request.agent(app);
+      await ContentTest.deleteMany({}).catch(err => console.log(err));
       // agent.get('/').expect(200, done)
       // console.log(agent)
-      await ContentTest.deleteMany({}).catch(err => console.log(err));
-      // await PublisherTest.deleteMany({}).catch(err => console.log(err));
     })
   }, 5000);
   beforeEach(async() => {
@@ -236,11 +235,11 @@ describe('API calls', () => {
     }
   })
   
-  key = 'should add a document via congress.gov';
+  key = 'should add a document via congress\.gov';
   it(key, async() => {
     const snapKey = ('API calls '+key+' 1');
     const { nockDone } = await nockBack(
-      'pu.editUser.json'
+      'content.addDocInSupportOfLegislation.json'
     );
     nock.enableNetConnect(/(api\.govinfo\.gov|127\.0\.0\.1)/);
   // host => host.includes('api.govinfo.gov' || '127.0.0.1')
@@ -268,7 +267,6 @@ describe('API calls', () => {
           .post('/api/gpo/'+start+'/'+end)
           .expect(200)
           .then(async res => {
-            // console.log(res)
             expect(res.body).to.not.equal(null)
             start = '2020-02-05';
             end = '2020-02-08';
@@ -276,26 +274,42 @@ describe('API calls', () => {
             .post('/api/gpo/'+start+'/'+end)
             .expect(200)
             .then(async res => {
-              // console.log(res)
               const result = JSON.parse(res.text);
-              // console.log(result)
               const gpo = result.packages.filter(item => {
                 return item.packageId === 'BILLS-116hres835ih'
               })[0];
               expect(gpo).to.not.equal(undefined);
               const url = `/api/new/Nation/0/0/115/undefined/${encodeURIComponent(gpo.title.replace('.', ''))}/BILLS-116hres835ih`;
-              console.log(url)
               await agent
               .get(url)
               .expect(302)
+              .then(async res => {
+                await agent
+                .post('/api/data')
+                .expect(200)
+                .then(async res => {
+                  expect(res.body).to.matchSnapshot()
+                })
+                // ContentTest.find({}, {properties: 1}).lean().exec((err, data)=>{
+                //   console.log(data)
+                //   expect(data).to.not.equal(null)
+                //   expect(data).to.matchSnapshot()
+                //   doc = data[0]
+                // })
+              })
               .catch(err => console.log(err))
             })
             // "'/api/new/'+newDoc.placetype+'/'+newDoc.place+'/'+newDoc.tiind+'/'+newDoc.chind+'/'+newDoc.secind+'/'+encodeURIComponent(newDoc.chtitle)+'/'+(!newDoc.xmlid ? undefined : newDoc.xmlid)+''"
           })
         })
-      })
+      });
+      nockDone()
     }
-  })
+  }).timeout(5000)
+  // key = 'should get all documents';
+  // it(key, async() => {
+  // 
+  // })
   // key = 'Should delete a user';
   // it(key, () => {
   //   const snapKey = ('API calls '+key+' 1');

@@ -638,5 +638,236 @@ function getDocxBlob(now, doc, sig, cb){
   cb(docx)
 }
 
-module.exports = {isJurisdiction, usleg, tis, geoLocate, storage, uploadmedia, removeExtras, curly, renameEachImgDir, emptyDirs, getDat64, tokenHandler, mkdirpIfNeeded, getDocxBlob}
+const iteratePlaces = (data, pathh, json) => {
+	return new Promise(async resolve => {
+		var jsonExists = await fs.existsSync(pathh);
+		var count = 0;
+		let newJson = json;
+		if (data && Array.isArray(data) && data.length > 0) {
+			// console.log(data)
+			console.log('matching records')
+			const dkeys = Object.keys(data[0])
+			console.log(dkeys)
+			for (var k = 0; k < data.length; k++) {
+				var d = data[k]
+				let existing = (newJson.features && newJson.features.length > 0 ? await newJson.features.map(function(f){return f.properties.label}) : [] )
+				let casetype;
+				dkeys.forEach(dk => {
+					switch(dk) {
+						case '﻿case_type': 
+							casetype = d[dk].trim()+'';
+							break;
+						
+						default:
+					}
+				})
+				const key = (!d['last_name'] && !d.last_name ? null : d['last_name'].trim() +'')
+				const state = (!d.state ? 'Utah' : d.state.trim() +'');
+				const date = (!d.filing_date ? '' : d.filing_date.trim() +'');
+				const partycode = (!d.party_code ? '' : d.party_code.trim() +'');
+				const locndescr = (!d.locn_descr ? '' : d.locn_descr.trim() +'');
+				const firstname = (!d.first_name || d.first_name === '' ? null : d.first_name)
+				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)
+				if (match && existing.indexOf(key) !== -1) {
+					newJson.features[existing.indexOf(key)].properties.count++;
+					newJson.features[existing.indexOf(key)].properties.dates.push(date)
+				} else if (match) {
+					// if (/(SOLARA)/g.test(key)) {
+					// 	console.log(existing, key)
+					// }
+					await places(date, key, state).then(async entryTransformed => {
+						if (entryTransformed) {
+							if (existing.indexOf(key) === -1) {
+								await existing.push(key)
+							}
+							await newJson.features.push(entryTransformed)
+						} else {
+							console.log(key, ', ', date)
+						}
+					})
+					.catch(err => {
+						console.log(newJson)
+						console.log(err)
+					})
+				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
+					// console.log(d)
+				} else {
+					
+					// console.log(key, state, date, casetype, partycode, locndescr, firstname)
+				}
+				count++
+
+			}
+			
+			
+		} else {
+			// console.log('wtf no data')
+		}
+		if (count === data.length) {
+			if (data.length > 0) {
+				console.log('finished importing '+pathh)
+			}
+			resolve(newJson)
+		} else {
+			console.log('blrgh')
+		}
+	})
+
+}
+
+const places = (date, key, state) => {
+	return new Promise(async resolve => {
+		var input = 
+		// escape(
+			key.replace(/\s(LP$|LLC$)/, '')
+		// ) 
+		+ ' ' + 
+		// // escape(
+			state
+		// );
+		await googleMaps.findPlace({
+			input: input,
+			inputtype: 'textquery',
+			language: 'en',
+			locationbias: 'circle:100000@40.680686,-111.9370777',
+			fields: [
+				'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
+				'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
+				'geometry/viewport/northeast/lat', 'geometry/viewport/northeast/lng',
+				'geometry/viewport/southwest', 'geometry/viewport/southwest/lat',
+				'geometry/viewport/southwest/lng', 'name'
+			]
+		}, function (err, response) {
+			if (err) console.log(err)
+			// if (/(SOLARA)/g.test(key)) console.log(response)
+			if (response.json.candidates[0]) {
+				var ent = response.json.candidates[0];
+				const entryTransformed = {
+					type: 'Feature',
+					geometry: {
+						type: 'Point',
+						coordinates: [ent.geometry.location.lng, ent.geometry.location.lat]
+					},
+					properties: {
+						dates: [date],
+						state: state,
+						label: key,
+						name: ent.name,
+						count: 1
+					}
+				}
+				resolve(entryTransformed)
+			} else {
+				resolve(null)
+			}
+		}) 
+	})
+}
+
+const saveJsonDb = async (json, id, uri) => {
+	return new Promise(async (resolve, reject) => {
+		var multiPolygon;
+		var type = 'MultiPolygon';
+		var keys;
+		if (json.features && json.features.length) {
+			// console.log(json.features[0].geometry)
+			keys = Object.keys(json.features[0].properties);
+			if (json.features[0] && json.features[0].geometry.type === 'Point') {
+				type = 'MultiPoint'
+			}
+			// console.log(type)
+			multiPolygon = await json.features.map(function(ft){
+				if (!Array.isArray(ft.geometry.coordinates[0])) {
+					return [ft.geometry.coordinates[0], ft.geometry.coordinates[1]];
+				} else {
+					return ft.geometry.coordinates[0];
+				}
+			})
+		} else {
+			if (json[0].geometry) {
+				keys = Object.keys(json[0].properties)
+				multiPolygon = json[0].geometry.coordinates;
+			} else if (json.geometry) {
+				keys = Object.keys(json.properties)
+				multiPolygon = json.geometry.coordinates
+			}
+		} 
+		var geo = {
+			type: type,
+			coordinates: multiPolygon
+		}
+		// console.log(multiPolygon)
+		var set = {$set:{}};
+		var key1 = 'geometry';
+		var key2 = 'properties.keys'
+		set.$set[key1] = geo;
+		set.$set[key2] = keys;
+		ContentDB.findOneAndUpdate({_id: id}, set, {safe: true, new:true}, async function(err, doc){
+			if (err) {
+				reject(err)
+			} else {
+				if (uri && uri.indexOf('records/weeklyreports/current/filings/Week_') !== -1) {
+					await ContentDB.findOneAndUpdate({_id: id}, {$set: {'properties.credit': uri}}, {safe: true, new:true}).then(doc=>doc).catch(err=>next(err))
+				} else {
+					await ContentDB.findOneAndUpdate({_id: id}, {$set: {'properties.credit': ''}}, {safe: true, new:true}).then(doc=>doc).catch(err=>next(err))
+				}
+				resolve(json)
+			}
+		})
+	})
+
+}
+
+const importMany = async (files, id, cb) => {
+	var p = ''+publishers+'/pu/publishers/esta/json';
+	var pathh = await path.join(p, '/json_'+id+'.json');
+	console.log('how many files')
+	console.log(files.length)
+	var jsonExists = await fs.existsSync(pathh);
+	const json = (!jsonExists ?
+		{ 
+			type: "FeatureCollection",
+			name: "Evictions_SLC",
+			crs: { type: "name", properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+			features: [] 
+		} : await JSON.parse(fs.readFileSync(pathh, 'utf8'))
+	);
+	let newJson = json;
+	let count = 0;
+	fs.access(p, async function(err) {
+		if (err && err.code === 'ENOENT') {
+			await fs.mkdir(p, {recursive: true}, function(err){
+				if (err) {
+					console.log("err", err);
+				}
+			})
+		}
+
+		await files.forEach(async(file) => {
+			const content = await fs.readFileSync(file.path, 'utf16le');
+			const data = await d3.tsvParse(content);
+			// console.log('data length');
+			// console.log(data.length)
+			await iteratePlaces(data, pathh, newJson).then(async (js) => {
+				if (!js || js.features.length === 0 || js[0] === {} ) {
+					return cb(new Error('didn\'t work'))
+				} else {
+					console.log(js.features);
+					if (js.features.length > 0) {
+						newJson = await saveJsonDb(js, id, null).then(async j => {
+							await fs.writeFileSync(pathh, JSON.stringify(j))
+							count++
+							return j
+						})
+						.catch(err => cb(err))
+					}
+				}
+			}).catch(err => cb(err))
+		});
+		cb(null, newJson)
+
+	})
+}
+
+module.exports = {isJurisdiction, usleg, tis, geoLocate, storage, uploadmedia, removeExtras, curly, renameEachImgDir, emptyDirs, getDat64, tokenHandler, mkdirpIfNeeded, getDocxBlob, iteratePlaces, places, saveJsonDb, importMany }
 

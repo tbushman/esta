@@ -9,9 +9,9 @@ if (mockSnapshotsExist) {
 }
 class Mock {
   constructor(key) {
-    this.dat = jest.fn(() => {
+    this.dat = () => {
       Promise.resolve(!mockSnapshots ? [] : mockSnapshots[key])
-    })
+    }
   }
 }
 module.exports = Mock;
