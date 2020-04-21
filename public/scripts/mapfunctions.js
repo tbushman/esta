@@ -131,6 +131,7 @@ var mapFunctions = {
 		// console.log(ll1, ll2, feature, id, vals, buf)
 		if (self.json[id]) {
 			var counter = 0;
+			self.geo = (!self.geo ? [] : self.geo);
 			self.geo = (!self.json[id].features ? [self.json[id]] : await self.json[id].features
 			.filter(function(ft, j){
 				ft._id = id
@@ -394,6 +395,7 @@ var mapFunctions = {
 			console.log('clicking dataLayer')
 			vals = self.dataLayer;
 		}
+		
 		self.filterViewerList(bounds, ll2, feature, id/*, keys*/, vals, buf)
 		
 		
@@ -445,6 +447,7 @@ var mapFunctions = {
 					)
 				: 'rgba(255,255,255,0)'
 			)
+		console.log(rgbaColor)
 		return rgbaColor;
 	},
 	determineLegend: function(item, style, ind, cb) {
