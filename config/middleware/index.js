@@ -181,7 +181,7 @@ function ensureCurly(req, res, next) {
 }
 
 async function resetLayers(req, res, next) {
-	Content.update({}, {$set:{'properties.layers':[]}}, {multi:true}).exec(async function(err, data){
+	ContentDB.update({}, {$set:{'properties.layers':[]}}, {multi:true}).exec(async function(err, data){
 		if (err) {
 			return next(err)
 		}
@@ -192,12 +192,12 @@ async function resetLayers(req, res, next) {
 		set1.$set[key1] = ["5ccb69789ee39e92a59cf784","5ccb7c371c1f45935f9d79fa","5ccfde4c20005f195e68ff67"];
 		set2.$set[key1] = ["5d0b271f42c7bc8c6e755d0b"];
 		set3.$set[key1] = ["5ccfde4c20005f195e68ff67","5d0b271f42c7bc8c6e755d0b"];
-		Content.findOneAndUpdate({_id: '5cf989b465bd382260a16722'}, set1).exec((err,doc)=>{
+		ContentDB.findOneAndUpdate({_id: '5cf989b465bd382260a16722'}, set1).exec((err,doc)=>{
 			if (err){return next(err)}
-			Content.findOneAndUpdate({_id: '5d2904a7b4aef770a18a2b24'}, set2).exec((err,doc)=>{
+			ContentDB.findOneAndUpdate({_id: '5d2904a7b4aef770a18a2b24'}, set2).exec((err,doc)=>{
 				if (err){return next(err)}
 				console.log('ok')
-				Content.findOneAndUpdate({_id: '5ccb694f9ee39e92a59cf782'}, set3).exec((err,doc)=>{
+				ContentDB.findOneAndUpdate({_id: '5ccb694f9ee39e92a59cf782'}, set3).exec((err,doc)=>{
 					if (err){return next(err)}
 					return next()
 				
@@ -209,7 +209,7 @@ async function resetLayers(req, res, next) {
 }
 
 function ensureStyle(req, res, next) {
-	Content.find({}).lean().exec(function(err, data){
+	ContentDB.find({}).lean().exec(function(err, data){
 		if (err) {
 			return next(err)
 		}
@@ -222,7 +222,7 @@ function ensureStyle(req, res, next) {
 				const djson = await fs.readFileSync(durl, 'utf8');
 				if (djson) {
 					var keys = Object.keys(JSON.parse(djson).features[0].properties)
-					await Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.keys': keys}}).then((doc)=>console.log('ok')).catch((err)=>next(err));
+					await ContentDB.findOneAndUpdate({_id: doc._id}, {$set:{'properties.keys': keys}}).then((doc)=>console.log('ok')).catch((err)=>next(err));
 				}
 			}
 			if (doc.properties.layers.length > 0 && typeof doc.properties.layers[0] === 'string') {
@@ -252,7 +252,7 @@ function ensureStyle(req, res, next) {
 				// 	layers
 				//))
 				// doc.properties.layers = layers;
-				Content.findOneAndUpdate({_id: doc._id}, {$set:{'properties.layers':arr}}).then((doc)=>console.log('ok')).catch((err)=>next(err));
+				ContentDB.findOneAndUpdate({_id: doc._id}, {$set:{'properties.layers':arr}}).then((doc)=>console.log('ok')).catch((err)=>next(err));
 				// doc.save(function(err){
 				// 	if (err){
 				// 		return next(err)

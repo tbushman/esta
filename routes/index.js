@@ -485,6 +485,7 @@ router.get('/viewmap/:id', getLayers, async function(req, res, next){
 	})
 })
 
+
 router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
 	// console.log(outputPath)
