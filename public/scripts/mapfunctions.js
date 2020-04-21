@@ -453,7 +453,7 @@ var mapFunctions = {
 		// get object keys corresponding with Number values
 		var theseKeys = Object.keys(item.features[0].properties).filter(function(it){
 			
-			return self.exclude.indexOf(it) === -1 && !isNaN(parseInt(item.features[0].properties[it], 10))
+			return self.exclude.indexOf(it) === -1 && +(item.features[0].properties[it]) === item.features[0].properties[it] 
 		})
 		// if no number values, get boolean-type values
 		if (theseKeys.length === 0) {
@@ -461,9 +461,14 @@ var mapFunctions = {
 				return self.exclude.indexOf(it) === -1 && /(yes|no|true|false)/i.test(item.features[0].properties[it])
 			})
 		}
+		if (theseKeys.length === 0) {
+			theseKeys = ['source']
+			style.key = 'source';
+		}
 		// get new key
 		style.key = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
 		var thisKey = style.key;
+		console.log(thisKey)
 		// instantiate count of non-integer values
 		var count = 0;
 		var distinct = []
@@ -473,7 +478,13 @@ var mapFunctions = {
 			} else
 			if (isNaN(+(feature.properties[thisKey])) ) {
 				// register non-integer value
-				console.log(feature.properties[thisKey])
+				// console.log(feature.properties[thisKey])
+				var val = feature.properties[thisKey]
+				// if distinct array doesn't already contain this number
+				if (distinct.indexOf(val) === -1) {
+					// push it
+					distinct.push(val);
+				}
 				count++
 			}
 			// if feature's value at 'thisKey' is a number
@@ -495,6 +506,7 @@ var mapFunctions = {
 				return val;
 			}
 		})
+		
 		distinct.sort(function(a, b){
 			return a - b;
 		});
@@ -519,10 +531,10 @@ var mapFunctions = {
 			style.set = set;
 		} else {
 			console.log(item.features[0].properties[thisKey])
-			style.set = distinct;
-			var inc = range / buckets;
+			style.set = distinct.filter(item=>isNaN(parseFloat(item)));
+			var inc = 1;
 			style.inc = inc;
-			style.buckets = buckets;
+			style.buckets = style.set.length;
 		}
 		if (style.set) {
 			for (var i = colors.length; i < style.set.length; i++) {

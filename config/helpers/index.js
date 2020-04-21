@@ -2,7 +2,9 @@ require('dotenv').config();
 const asynk = require('async');
 const url = require('url');
 const fs = require('fsxt');
+const d3 = require('d3');
 const glob = require("glob");
+var {google} = require('googleapis');
 const path = require('path');
 const multer = require('multer');
 const mkdirp = require('mkdirp');
@@ -13,6 +15,9 @@ const { Publisher, Content, Signature, PublisherTest, ContentTest, SignatureTest
 const PublisherDB = (!testenv ? Publisher : PublisherTest);
 const ContentDB = (!testenv ? Content : ContentTest);
 const SignatureDB = (!testenv ? Signature : SignatureTest);
+const googleMaps = require('@google/maps').createClient({
+  key: process.env.GOOGLE_MAPS_KEY
+});
 
 const isJurisdiction = async function isJurisdiction(reqpos, doc, pu, cb) {
 	var lat, lng;
@@ -638,44 +643,65 @@ function getDocxBlob(now, doc, sig, cb){
   cb(docx)
 }
 
-const iteratePlaces = (data, pathh, json) => {
+const iteratePlaces = (data, pathh, json, isUTEviction) => {
 	return new Promise(async resolve => {
 		var jsonExists = await fs.existsSync(pathh);
 		var count = 0;
 		let newJson = json;
+		const fileType = isUTEviction ? 'utf16le' : 'utf8'
+		const nameKey = isUTEviction ? 'last_name' : 'name'
+		const dateKey = isUTEviction ? 'filing_date' : null;
+		const partyKey = isUTEviction ? 'party_code' : null;
+		const locnKey = isUTEviction ? 'locn_descr' : null;
+		const firstnameKey = isUTEviction ? 'first_name' : null;
+		console.log(fileType, nameKey, dateKey, partyKey, locnKey, firstnameKey);
+		
 		if (data && Array.isArray(data) && data.length > 0) {
 			// console.log(data)
 			console.log('matching records')
 			const dkeys = Object.keys(data[0])
 			console.log(dkeys)
 			for (var k = 0; k < data.length; k++) {
-				var d = data[k]
+				var d = data[k];
+				if (!isUTEviction) {
+					var nkeys = Object.keys(d)[0].split(',');
+					var nvals = Object.values(d)[0].split(',');
+					var obj = {}
+					nkeys.forEach((key, i)=> {
+						obj[key] = nvals[i]
+					})
+					d = obj;
+				}
+				console.log(d, d.name, d[nameKey])
 				let existing = (newJson.features && newJson.features.length > 0 ? await newJson.features.map(function(f){return f.properties.label}) : [] )
-				let casetype;
+				let casetype = null;
 				dkeys.forEach(dk => {
 					switch(dk) {
 						case '﻿case_type': 
 							casetype = d[dk].trim()+'';
 							break;
-						
+				
 						default:
 					}
 				})
-				const key = (!d['last_name'] && !d.last_name ? null : d['last_name'].trim() +'')
+				const key = (!d[nameKey] ? null : d[nameKey].trim() +'')
 				const state = (!d.state ? 'Utah' : d.state.trim() +'');
-				const date = (!d.filing_date ? '' : d.filing_date.trim() +'');
-				const partycode = (!d.party_code ? '' : d.party_code.trim() +'');
-				const locndescr = (!d.locn_descr ? '' : d.locn_descr.trim() +'');
+				const date = (!d[dateKey] ? '' : d[dateKey].trim() +'');
+				const partycode = (!d[partyKey] ? '' : d[partyKey].trim() +'');
+				const locndescr = (!d[locnKey] ? '' : d[locnKey].trim() +'');
 				const firstname = (!d.first_name || d.first_name === '' ? null : d.first_name)
+				const source = (!d.source ? null : d.source);
+				const address = (!d.address ? null : d.address);
+				
 				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)
 				if (match && existing.indexOf(key) !== -1) {
 					newJson.features[existing.indexOf(key)].properties.count++;
 					newJson.features[existing.indexOf(key)].properties.dates.push(date)
-				} else if (match) {
+				} else if (!isUTEviction || match) {
 					// if (/(SOLARA)/g.test(key)) {
 					// 	console.log(existing, key)
 					// }
-					await places(date, key, state).then(async entryTransformed => {
+					await places(date, key, state, isUTEviction, source, address).then(async entryTransformed => {
 						if (entryTransformed) {
 							if (existing.indexOf(key) === -1) {
 								await existing.push(key)
@@ -692,7 +718,7 @@ const iteratePlaces = (data, pathh, json) => {
 				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
 					// console.log(d)
 				} else {
-					
+				
 					// console.log(key, state, date, casetype, partycode, locndescr, firstname)
 				}
 				count++
@@ -715,11 +741,15 @@ const iteratePlaces = (data, pathh, json) => {
 
 }
 
-const places = (date, key, state) => {
+const places = (date, key, state, isUTEviction, source, address) => {
 	return new Promise(async resolve => {
+		if (!key) {
+			resolve(null)
+		}
+
 		var input = 
 		// escape(
-			key.replace(/\s(LP$|LLC$)/, '')
+			(!key ? '' : key.replace(/\s(LP$|LLC$)/, ''))
 		// ) 
 		+ ' ' + 
 		// // escape(
@@ -742,7 +772,7 @@ const places = (date, key, state) => {
 			// if (/(SOLARA)/g.test(key)) console.log(response)
 			if (response.json.candidates[0]) {
 				var ent = response.json.candidates[0];
-				const entryTransformed = {
+				const entryEviction = {
 					type: 'Feature',
 					geometry: {
 						type: 'Point',
@@ -755,7 +785,24 @@ const places = (date, key, state) => {
 						name: ent.name,
 						count: 1
 					}
-				}
+				};
+				const entryMoratorium = {
+					type: 'Feature',
+					geometry: {
+						type: 'Point',
+						coordinates: [ent.geometry.location.lng, ent.geometry.location.lat]
+					},
+					properties: {
+						state: state,
+						label: key,
+						name: ent.name,
+						source: source,
+						address: address 
+					}
+				};
+				const entryTransformed = (!isUTEviction ? 
+					entryMoratorium : entryEviction
+				)
 				resolve(entryTransformed)
 			} else {
 				resolve(null)
@@ -821,13 +868,18 @@ const saveJsonDb = async (json, id, uri) => {
 const importMany = async (files, id, cb) => {
 	var p = ''+publishers+'/pu/publishers/esta/json';
 	var pathh = await path.join(p, '/json_'+id+'.json');
+	const doc = await ContentDB.findOne({_id:id}).then(doc=>doc).catch(err=>cb(err));
+	// console.log(doc)
+	const fileName = doc.properties.label.replace(/\s/g, '_').replace(/\W/g, '');
+	const isUTEviction = !/(moratorium)/gi.test(fileName);
+	const fileType = isUTEviction ? 'utf16le' : 'utf8'
 	console.log('how many files')
 	console.log(files.length)
 	var jsonExists = await fs.existsSync(pathh);
 	const json = (!jsonExists ?
 		{ 
 			type: "FeatureCollection",
-			name: "Evictions_SLC",
+			name: fileName,
 			crs: { type: "name", properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" } },
 			features: [] 
 		} : await JSON.parse(fs.readFileSync(pathh, 'utf8'))
@@ -844,11 +896,11 @@ const importMany = async (files, id, cb) => {
 		}
 
 		await files.forEach(async(file) => {
-			const content = await fs.readFileSync(file.path, 'utf16le');
+			const content = await fs.readFileSync(file.path, fileType);
 			const data = await d3.tsvParse(content);
 			// console.log('data length');
 			// console.log(data.length)
-			await iteratePlaces(data, pathh, newJson).then(async (js) => {
+			await iteratePlaces(data, pathh, newJson, isUTEviction).then(async (js) => {
 				if (!js || js.features.length === 0 || js[0] === {} ) {
 					return cb(new Error('didn\'t work'))
 				} else {
