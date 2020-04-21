@@ -1,7 +1,7 @@
 div.submenu.drop(v-if="doc && doc !== ''", :class="res ? '' : 'static'", style="display:inline-block;")
 	input(type="text" @keydown="searchThis" :style="{width: (!searchReady ? '100%' : (wWidth / 2) - 65 + 'px')}")
 div.slidedown(v-if="searchResults && searchResults.length > 0", :style="{width: (wWidth / 2) - 65 + 'px'}" style="background-color: #fff;pointer-events: auto; top: 65px; top: var(--thumbw); position: absolute; max-height: calc(60vh - 65px); max-height: calc(60vh - var(--thumbw)); min-height: calc(65px * 3); min-height: calc(var(--thumbw) * 3); overflow: scroll;")
-	ul(style="height:100%;pointer-events:auto;", v-for="(alayer, p) in layers")
+	ul(style="height:100%;pointer-events:auto;", v-for="(alayer, p) in layers" v-if="alayer")
 		//- @mouseover="highlightFeature(se)",
 		//- @mouseleave="unHighlightFeature(se)",
 		li
