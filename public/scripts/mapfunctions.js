@@ -299,7 +299,7 @@ var mapFunctions = {
 		var self = this;
 		var term = e.target.value;
 		// console.log(term);
-		var jks = self.layers.map(function(lr){return lr._id});//Object.keys(self.json);
+		var jks = self.layers.map(function(lr){if(lr) { return lr._id } else {return});//Object.keys(self.json);
 		if (term !== '' && term !== ' ' && term.length > 1) {
 			var r1 = self.filterByTerm(term, jks[0]);
 			// console.log(r1)
