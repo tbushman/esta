@@ -46,6 +46,9 @@ if (app.get('env') === 'production') {
 	app.use(cors());
 	app.options('*', cors());
 	app.use(function(req, res, next) {
+		app.locals.env = process.env.NODE_ENV
+		app.locals.appURL = (process.env.NODE_ENV === 'production' ? 'esta.bli.sh' : 'localhost:'+process.env.PORT+'')
+
 		app.disable('x-powered-by');
 		app.disable('Strict-Transport-Security');
 		//app.disable('Access-Control-Allow-Credentials');
@@ -137,7 +140,6 @@ function(accessToken, refreshToken, profile, done) {
 }));
 
 app.locals.appTitle = 'esta.bli.sh';
-app.locals.appURL = (process.env.NODE_ENV === 'production' ? 'esta.bli.sh' : 'localhost:'+process.env.PORT+'')
 app.locals.moment = require('moment');
 app.locals.pug = require('pug');
 marked.setOptions({

@@ -654,6 +654,7 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 		const partyKey = isUTEviction ? 'party_code' : null;
 		const locnKey = isUTEviction ? 'locn_descr' : null;
 		const firstnameKey = isUTEviction ? 'first_name' : null;
+		const caseNumKey = isUTEviction ? 'case_num' : null;
 		console.log(fileType, nameKey, dateKey, partyKey, locnKey, firstnameKey);
 		
 		if (data && Array.isArray(data) && data.length > 0) {
@@ -672,7 +673,7 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 					})
 					d = obj;
 				}
-				console.log(d, d.name, d[nameKey])
+				// console.log(d, d.name, d[nameKey])
 				let existing = (newJson.features && newJson.features.length > 0 ? await newJson.features.map(function(f){return f.properties.label}) : [] )
 				let casetype = null;
 				dkeys.forEach(dk => {
@@ -692,16 +693,18 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 				const firstname = (!d.first_name || d.first_name === '' ? null : d.first_name)
 				const source = (!d.source ? null : d.source);
 				const address = (!d.address ? null : d.address);
+				const casenum = (!d[caseNumKey] ? null : d[caseNumKey])
 				
 				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)
 				if (match && existing.indexOf(key) !== -1) {
 					newJson.features[existing.indexOf(key)].properties.count++;
 					newJson.features[existing.indexOf(key)].properties.dates.push(date)
+					newJson.features[existing.indexOf(key)].properties.cases.push(casenum)
 				} else if (!isUTEviction || match) {
 					// if (/(SOLARA)/g.test(key)) {
 					// 	console.log(existing, key)
 					// }
-					await places(date, key, state, isUTEviction, source, address).then(async entryTransformed => {
+					await places(date, key, state, isUTEviction, source, address, casenum).then(async entryTransformed => {
 						if (entryTransformed) {
 							if (existing.indexOf(key) === -1) {
 								await existing.push(key)
@@ -716,7 +719,7 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 						console.log(err)
 					})
 				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
-					// console.log(d)
+					console.log(d.first_name, d[nameKey])
 				} else {
 				
 					// console.log(key, state, date, casetype, partycode, locndescr, firstname)
@@ -741,7 +744,7 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 
 }
 
-const places = (date, key, state, isUTEviction, source, address) => {
+const places = (date, key, state, isUTEviction, source, address, casenum) => {
 	return new Promise(async resolve => {
 		if (!key) {
 			resolve(null)
@@ -759,7 +762,7 @@ const places = (date, key, state, isUTEviction, source, address) => {
 			input: input,
 			inputtype: 'textquery',
 			language: 'en',
-			locationbias: 'circle:100000@40.680686,-111.9370777',
+			locationbias: 'circle:500000@40.680686,-111.9370777',
 			fields: [
 				'formatted_address', 'geometry', 'geometry/location', 'geometry/location/lat',
 				'geometry/location/lng', 'geometry/viewport', 'geometry/viewport/northeast',
@@ -783,7 +786,8 @@ const places = (date, key, state, isUTEviction, source, address) => {
 						state: state,
 						label: key,
 						name: ent.name,
-						count: 1
+						count: 1,
+						cases: [casenum]
 					}
 				};
 				const entryMoratorium = {

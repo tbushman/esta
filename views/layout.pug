@@ -11,8 +11,12 @@ html
 		link(rel="stylesheet", href="/stylesheets/style.css?version=2")
 		link(rel="stylesheet", href="/stylesheets/leaflet.css")
 		link(rel="stylesheet", href="/stylesheets/leaflet.draw.css")
+		if (env && env === 'production')
+			script(type="text/javascript", src="/scripts/vue.min.js")
+		else
+			script(type="text/javascript", src="/scripts/vue.js")
+			
 		//- link(href="https://api.tiles.mapbox.com/mapbox.js/v2.1.6/mapbox.css")
-		script(type="text/javascript", src="/scripts/vue.js")
 		script(type="text/javascript", src="/scripts/jquery.min.js")
 		script(type="text/javascript", src="/scripts/jquery-ui.min.js")
 		script(type="text/javascript", src="/scripts/moment-with-locales.min.js")
