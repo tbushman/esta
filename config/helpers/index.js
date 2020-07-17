@@ -655,13 +655,13 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 		const locnKey = isUTEviction ? 'locn_descr' : null;
 		const firstnameKey = isUTEviction ? 'first_name' : null;
 		const caseNumKey = isUTEviction ? 'case_num' : null;
-		console.log(fileType, nameKey, dateKey, partyKey, locnKey, firstnameKey);
+		// console.log(fileType, nameKey, dateKey, partyKey, locnKey, firstnameKey);
 		
 		if (data && Array.isArray(data) && data.length > 0) {
 			// console.log(data)
 			console.log('matching records')
 			const dkeys = Object.keys(data[0])
-			console.log(dkeys)
+			// console.log(dkeys)
 			for (var k = 0; k < data.length; k++) {
 				var d = data[k];
 				if (!isUTEviction) {
@@ -715,11 +715,11 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 						}
 					})
 					.catch(err => {
-						console.log(newJson)
-						console.log(err)
+						// console.log(newJson)
+						// console.log(err)
 					})
 				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
-					console.log(d.first_name, d[nameKey])
+					console.log(d.first_name, d[nameKey], date)
 				} else {
 				
 					// console.log(key, state, date, casetype, partycode, locndescr, firstname)
@@ -908,7 +908,7 @@ const importMany = async (files, id, cb) => {
 				if (!js || js.features.length === 0 || js[0] === {} ) {
 					return cb(new Error('didn\'t work'))
 				} else {
-					console.log(js.features);
+					// console.log(js.features);
 					if (js.features.length > 0) {
 						newJson = await saveJsonDb(js, id, null).then(async j => {
 							await fs.writeFileSync(pathh, JSON.stringify(j))
