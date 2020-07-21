@@ -74,7 +74,50 @@ router.get('/', function(req, res, next){
 // 		csrfToken: req.csrfToken()
 // 	})
 // })
-
+router.post('/loadculturalartifacts'/*, uploadmedia.single('pdf'), parseForm*/, async(req, res, next) => {
+	const file = fs.readfile('/');
+	const pdfreader = require('pdfreader');//req.file;
+	new pdfreader.PdfReader().parseFileItems("CV_ErhanYasar.pdf", function(
+		err,
+		item
+	) {
+		if (!item || item.page) {
+			// end of file, or page
+			printRows();
+			console.log("PAGE:", item.page);
+			rows = {}; // clear rows for next page
+		} else if (item.text) {
+			// accumulate text items into rows object, per line
+			(rows[item.y] = rows[item.y] || []).push(item.text);
+		}
+	});
+	// const dkeys = Object.keys(data[0])
+	// // console.log(dkeys)
+	// for (var k = 0; k < data.length; k++) {
+	// 	var d = data[k];
+	// 	if (!isUTEviction) {
+	// 		var nkeys = Object.keys(d)[0].split(',');
+	// 		var nvals = Object.values(d)[0].split(',');
+	// 		var obj = {}
+	// 		nkeys.forEach((key, i)=> {
+	// 			obj[key] = nvals[i]
+	// 		})
+	// 		d = obj;
+	// 	}
+	// 	console.log(d);
+	// }
+	// const content = await fs.readFileSync(file.path, fileType);
+	// const data = await d3.tsvParse(content);
+	// 
+	// const data = await require('request-promise')({
+	// 	uri: uri,
+	// 	// resolveWithFullResponse: true,
+	// 	// encoding: null
+	// 	// encoding: 'utf16le'
+	// })
+	// .then(async result => {})
+	// .catch(err=>next(err));
+})
 
 router.post('/loadgmaps/:id/:type', uploadmedia.array('csv'), parseForm/*, csrfProtection*/, async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
