@@ -711,7 +711,7 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 							}
 							await newJson.features.push(entryTransformed)
 						} else {
-							console.log(key, ', ', date)
+							console.log(key, ',', date, ',', casenum)
 						}
 					})
 					.catch(err => {
@@ -719,7 +719,7 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 						// console.log(err)
 					})
 				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
-					console.log(d.first_name, d[nameKey], date)
+					console.log(d.first_name, ',', d[nameKey], ',', date, ',', casenum)
 				} else {
 				
 					// console.log(key, state, date, casetype, partycode, locndescr, firstname)
