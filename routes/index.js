@@ -78,13 +78,15 @@ router.get('/', function(req, res, next){
 router.get('/loadculturalartifacts'/*, uploadmedia.single('pdf'), parseForm*/, async(req, res, next) => {
 	const pdfreader = require('pdfreader');//req.file;
 	const url = path.join(__dirname, '../..', 'pdf', 'Data Recovery Excavations at 42Dv2.pdf');
+	const out = path.join(__dirname, '../..', 'pdf', 'Data Recovery Excavations at 42Dv2.txt')
 	let rows = {};
 	var table = new pdfreader.TableParser();
 	let isTable = false;
-	const nbCols = 6;
-	const cellPadding = 40; // each cell is padded to fit 40 characters
-	const columnQuantitizer = item => parseFloat(item.x) >= 20;
-	 
+	let tableTitle = null;
+	let nbCols = 0;
+	const cellPadding = 100; // each cell is padded to fit 40 characters
+	const columnQuantitizer = item => parseFloat(item.x) >= 70;
+	let str = ''
 	const padColumns = (array, nb) =>
 		Array.apply(null, { length: nb }).map((val, i) => array[i] || []);
 	// .. because map() skips undefined elements
@@ -92,7 +94,7 @@ router.get('/loadculturalartifacts'/*, uploadmedia.single('pdf'), parseForm*/, a
 	const mergeCells = cells =>
 		(cells || [])
 			.map(cell => cell.text)
-			.join("") // merge cells
+			.join("\t ") // merge cells
 			.substr(0, cellPadding)
 			.padEnd(cellPadding, " "); // padding
 
@@ -104,22 +106,46 @@ router.get('/loadculturalartifacts'/*, uploadmedia.single('pdf'), parseForm*/, a
 				.join(" | ")
 		)
 		.join("\n");
-	function printRows() {
-	  Object.keys(rows) // => array of y-positions (type: float)
-	    .sort((y1, y2) => parseFloat(y1) - parseFloat(y2)) // sort float positions
-	    .forEach(y => console.log((rows[y] || []).join("")));
-	}
+	// function printRows() {
+	//   Object.keys(rows) // => array of y-positions (type: float)
+	//     .sort((y1, y2) => parseFloat(y1) - parseFloat(y2)) // sort float positions
+	//     .forEach(y => console.log((rows[y] || []).join("")));
+	// }
 	new pdfreader.PdfReader().parseFileItems(url, async(
 		err,
 		item
 	) => {
+		
 		if (!item || item.page) {
 			// end of file, or page
 			// printRows();
+			// let tstr = ''
+			// if (table && table.rows && item && table.rows[item.y] ) {
+			// 	tstr = table.rows[item.y].false.map(p => p.text.trim()).join('\t')
+			// 	console.log(table.rows[item.y].false)
+			// } else {
+			// 
+			// }
+			// const 
+			// nbCols = (!item || !table.rows[item.y] || !table.rows[item.y].false ? 1 : table.rows[item.y].false).length;
+			
+			// const printout = '' + (!tableTitle ? '' : tableTitle) + '\n  '+
+			// 	tstr
+			// 	// renderMatrix(table.getMatrix(), nbCols);
+			// 
+			// str += '\r  '+ printout;
 			// console.log(renderMatrix(table.getMatrix()));
 			// console.log("PAGE:", item.page);
 			rows = {}; // clear rows for next page
 			table = new pdfreader.TableParser(); // new/clear table for next page
+			isTable = false;
+			tableTitle = null;
+			if (!item) {
+				await fs.writeFileSync(out, str, {
+					encoding: 'utf8'
+				})
+			}
+			// console.log(str);
 		} else if (item.text) {
 			// accumulate text items into rows object, per line
 			(rows[item.y] = rows[item.y] || []).push(item.text);
@@ -127,15 +153,46 @@ router.get('/loadculturalartifacts'/*, uploadmedia.single('pdf'), parseForm*/, a
 			const key = item.y + '';
 			const kyi = keys.indexOf(key);
 			const kyp = keys[kyi - 1];
+			const kyt = keys[kyi - 2];
 			if (
 				kyp &&
 				/(easting)/ig.test(rows[kyp].join('')) &&
-				/(northing)/ig.test(rows[kyp].join(''))
+				/(northing)/ig.test(rows[kyp].join('')) && 
+				item.text.length < 50
+				// &&
+				// /($\d{1,3}\s)/.test(item.text)
 			) {
-				console.log('has table')
-				console.log(item, rows[kyp])
+				// console.log('has table')
+				
+				isTable = true;
+				tableTitle = rows[kyt]
+				str += '\n'+tableTitle+'\n'
+				nbCols = rows[kyp].length
+				// nbCols = (!item || !rows[kyi] || !rows[kyi] ? 1 : rows[kyi].length);
 
-				table.processItem(item, columnQuantitizer(item));
+			}
+			if (item.text.length > 50) {
+				isTable = false;
+			}
+			if (isTable) {
+				// console.log('the text is: '+item.text)
+				
+				await table.processItem(item, columnQuantitizer(item));
+				// console.log(table.rows[item.y].false, rows[item.y], nbCols)
+
+				if (table && table.rows && item && table.rows[item.y]
+					 && table.rows[item.y].false.length === nbCols
+				) {
+					str += table.rows[item.y].false.map(p => p.text.trim()).join('\t')
+				} else {
+					
+				}
+				// console.log(item, table.rows[item.y])
+				// if (table && table.rows && item && table.rows[item.y] && table.rows[item.y].false) {
+				// 	console.log(table.rows[item.y])
+				// 	str += table.rows[item.y].false.map(p => p.text.trim()).join('\t')
+				// }
+
 			}
 		}
 	});
