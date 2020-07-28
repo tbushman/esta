@@ -926,7 +926,7 @@ var mapFunctions = {
 			], 
 			zoom: (!self.position ? 6 : self.position.zoom),
 			zoomControl: false,
-			minZoom: 2,
+			minZoom: 0,
 			maxZoom: 18,
 			editable: true,
 			renderer: L.canvas(),
