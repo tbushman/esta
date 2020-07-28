@@ -662,6 +662,9 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 			console.log('matching records')
 			const dkeys = Object.keys(data[0])
 			// console.log(dkeys)
+			// console.log(json)
+			// console.log(/^(SLC)/i.test(newJson.name), /(SLC)$/i.test(newJson.name), /^(Salt\ Lake\ City)/i.test(newJson.name), /^(UT)/.test(newJson.name), /^(Utah)/i.test(newJson.name))
+			console.log(dkeys)
 			for (var k = 0; k < data.length; k++) {
 				var d = data[k];
 				if (!isUTEviction) {
@@ -675,27 +678,72 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 				}
 				// console.log(d, d.name, d[nameKey])
 				let existing = (newJson.features && newJson.features.length > 0 ? await newJson.features.map(function(f){return f.properties.label}) : [] )
-				let casetype = null;
-				dkeys.forEach(dk => {
+				let casetype = null, key, state, date, partycode, locndescr, firstname, source, address, casenum;
+				// [
+				// 	'﻿case_type',
+				// 	'case_num',
+				// 	'locn_descr',
+				// 	'filing_date',
+				// 	'party_code',
+				// 	'last_name',
+				// 	'first_name'
+				// ]
+				await dkeys.forEach(dk => {
 					switch(dk) {
 						case '﻿case_type': 
 							casetype = d[dk].trim()+'';
 							break;
-				
+						case 'case_num':
+							casenum = (!d[dk] ? null : d[dk].trim()+'');
+							break;
+						case 'locn_descr':
+							locndescr = (!d[dk] ? null : d[dk].trim()+'');
+							break;
+						case 'filing_date':
+							date = (!d[dk] ? null : d[dk].trim()+'');
+							break;
+						case 'party_code':
+							partycode = (!d[dk] ? null : d[dk].trim()+'');
+							break;
+						case 'last_name':
+							key = (!d[dk] ? null : d[dk].trim()+'');
+							break;
+						case 'name':
+							key = (!d[dk] ? null : d[dk].trim()+'');
+							break;
+						case 'first_name':
+							firstname = (!d.first_name || d.first_name === '' ? null : d.first_name.trim());
+							break;
+						case 'source':
+							source = (!d.source ? null : d.source.trim());
+							break;
+						case 'address':
+							address = (!d.address ? null : d.address.trim());
+							break;
+						
 						default:
 					}
 				})
-				const key = (!d[nameKey] ? null : d[nameKey].trim() +'')
-				const state = (!d.state ? 'Utah' : d.state.trim() +'');
-				const date = (!d[dateKey] ? '' : d[dateKey].trim() +'');
-				const partycode = (!d[partyKey] ? '' : d[partyKey].trim() +'');
-				const locndescr = (!d[locnKey] ? '' : d[locnKey].trim() +'');
-				const firstname = (!d.first_name || d.first_name === '' ? null : d.first_name)
-				const source = (!d.source ? null : d.source);
-				const address = (!d.address ? null : d.address);
-				const casenum = (!d[caseNumKey] ? null : d[caseNumKey])
-				
-				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)
+				// const key = (!d[nameKey] ? null : d[nameKey].trim() +'')
+				// console.log(d)
+				// const state = (!d.state ? 'Utah' : d.state.trim() +'');
+				// const date = (!d[dateKey] ? '' : d[dateKey].trim() +'');
+				// const partycode = (!d[partyKey] ? '' : d[partyKey].trim() +'');
+				// const locndescr = (!d[locnKey] ? '' : d[locnKey].trim() +'');
+				// const firstname = (!d.first_name || d.first_name === '' ? null : d.first_name)
+				// const source = (!d.source ? null : d.source);
+				// const address = (!d.address ? null : d.address);
+				// const casenum = (!d[caseNumKey] ? null : d[caseNumKey])
+				let locn = true;
+				let isSlc = (/^(SLC)/i.test(newJson.name) || /(SLC)$/i.test(newJson.name) || /^(Salt\ Lake\ City)/i.test(newJson.name));
+				let isUt = (/^(UT)/.test(newJson.name) || /^(Utah)/i.test(newJson.name));
+				if (isSlc) {
+					locn = /(Salt\ Lake\ City)/.test(locndescr)
+				} 
+				/*else if (isUt) {
+					locn = /(Utah)/.test(locndescr)
+				}*/
+				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && locn
 				if (match && existing.indexOf(key) !== -1) {
 					newJson.features[existing.indexOf(key)].properties.count++;
 					newJson.features[existing.indexOf(key)].properties.dates.push(date)
@@ -709,6 +757,7 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 							if (existing.indexOf(key) === -1) {
 								await existing.push(key)
 							}
+							console.log(entryTransformed)
 							await newJson.features.push(entryTransformed)
 						} else {
 							console.log(key, ',', date, ',', casenum)
@@ -718,7 +767,7 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 						// console.log(newJson)
 						// console.log(err)
 					})
-				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && /(Salt\ Lake\ City)/.test(locndescr)) {
+				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && locn) {
 					console.log(d.first_name, ',', d[nameKey], ',', date, ',', casenum)
 				} else {
 				
@@ -773,6 +822,7 @@ const places = (date, key, state, isUTEviction, source, address, casenum) => {
 		}, function (err, response) {
 			if (err) console.log(err)
 			// if (/(SOLARA)/g.test(key)) console.log(response)
+			// console.log(response)
 			if (response.json.candidates[0]) {
 				var ent = response.json.candidates[0];
 				const entryEviction = {
