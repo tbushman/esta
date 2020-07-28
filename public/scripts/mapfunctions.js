@@ -455,20 +455,23 @@ var mapFunctions = {
 		var buckets = style.buckets;
 		var colors = style.colors;
 		// get object keys corresponding with Number values
-		var theseKeys = Object.keys(item.features[0].properties).filter(function(it){
+		var numberKeys = Object.keys(item.features[0].properties).filter(function(it){
 			
 			return self.exclude.indexOf(it) === -1 && +(item.features[0].properties[it]) === item.features[0].properties[it] 
 		})
 		// if no number values, get boolean-type values
-		if (theseKeys.length === 0) {
-			theseKeys = Object.keys(item.features[0].properties).filter(function(it){
-				return self.exclude.indexOf(it) === -1 && /(yes|no|true|false)/i.test(item.features[0].properties[it])
-			})
-		}
-		if (theseKeys.length === 0) {
-			theseKeys = ['source']
-			style.key = 'source';
-		}
+		var booleanKeys = Object.keys(item.features[0].properties).filter(function(it){
+			return self.exclude.indexOf(it) === -1 && /(yes|no|true|false)/i.test(item.features[0].properties[it])
+		})
+		// if no number or boolean keys, categorical
+		// if (theseKeys.length === 0) {
+		// 	theseKeys = ['source']
+		// 	style.key = 'source';
+		// }
+		var categoricalKeys = Object.keys(item.features[0].properties).filter(function(it){
+			return self.exclude.indexOf(it) === -1 && isNaN(+(item.features[0].properties[it])) && !/(yes|no|true|false)/i.test(item.features[0].properties[it])
+		})
+		var theseKeys = numberKeys.concat(booleanKeys, categoricalKeys);
 		// get new key
 		style.key = (!style.key || style.key === "" ? theseKeys[theseKeys.length-1] : style.key);
 		var thisKey = style.key;
@@ -535,7 +538,7 @@ var mapFunctions = {
 			style.set = set;
 		} else {
 			console.log(item.features[0].properties[thisKey])
-			style.set = distinct.filter(item=>isNaN(parseFloat(item)));
+			style.set = distinct.filter(item=>isNaN(+(item)));
 			var inc = 1;
 			style.inc = inc;
 			style.buckets = style.set.length;
@@ -546,7 +549,10 @@ var mapFunctions = {
 			}
 		}
 		style.isInt = count === 0;
-		if (style) self.doc.properties.layers[ind] = style;
+		if (style) {
+			self.doc.properties.layers[ind] = style;
+			self.doc.properties.keys = theseKeys;
+		}
 		cb(item, style)
 	},
 	initDragLayer: function(i, e) {

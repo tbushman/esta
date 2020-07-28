@@ -62,7 +62,7 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 					span.row
 						span.tb-08-m0
 							select#key.tb-10-m0(@change="changeAttribute(layer._id, $event)", :value="style.key", style="margin:0;pointer-events:all;")
-								option(v-for="(item,l) in layer.properties.keys", v-if="style && !isNaN(parseFloat(json[style.lid].features[0].properties[item])) && exclude.indexOf(item) === -1 && item !== 'address'" v-text="item.replace(/^r_/, '').replace(/^el_/, '').split('_').join(' ')", :value="item", :selected="item === style.key")
+								option(v-for="(item,l) in layer.properties.keys", v-if="style && exclude.indexOf(item) === -1 && item !== 'address'" v-text="item.replace(/^r_/, '').replace(/^el_/, '').split('_').join(' ')", :value="item", :selected="item === style.key")
 								option(v-for="(item,l) in layer.properties.keys", v-if="style && exclude.indexOf(item) === -1 && item === 'source'" v-text="item.replace(/^r_/, '').replace(/^el_/, '').split('_').join(' ')", :value="item", :selected="item === style.key")
 						span.tb-02-m0
 							input.tb-10-m0#buckets(type="number", min="1", max="11", style="margin:0;pointer-events:all;", :value="style.buckets", @change="numberColorBucket(style.lid, $event)", @blur="numberColorBucket(style.lid, $event)")
@@ -71,7 +71,8 @@ fieldset.lcontrol(style="padding:0;border:none;width:65px;min-inline-size:auto;"
 				:class="!mapCtrl ? 'res' : 'ctrl' "
 				)
 				
-				div(v-if="style.colors && style.colors.length > 0 && style.set && style.set.length > 0", v-for="(cl,j) in style.colors", :class="!mapCtrl ? 'res' : 'ctrl'", 
+				div(
+					v-if="style.colors && style.colors.length > 0 && style.set && style.set.length > 0", v-for="(cl,j) in style.colors", :class="!mapCtrl ? 'res' : 'ctrl'", 
 				style="pointer-events:auto;",
 				:style="{height: 'calc(65px / '+style.colors.length+')', height: 'calc(var(--thumbw) / '+style.colors.length+' )' }"
 				)

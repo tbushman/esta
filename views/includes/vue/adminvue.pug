@@ -202,7 +202,7 @@ script(type="text/javascript").
 				censusLoad: {tempGeo:[],placetype:'',cats:null,cat:null} ,
 				json: {},
 				mapCtrl: false,
-				exclude: ['visibility', 'extrude', 'tessellate', 'INTPTLAT10', 'INTPTLON10', 'STATEFP10', 'COUNTYFP10', 'TRACTCE10', 'BLKGRPCE10', 'GEOID10', 'ST_KEY', 'CIMID', 'SITEADDRES', 'ZIPCODE', 'NORTHING', 'EASTING'],
+				exclude: ['visibility', 'extrude', 'tessellate', 'INTPTLAT10', 'INTPTLON10', 'STATEFP10', 'COUNTYFP10', 'TRACTCE10', 'BLKGRPCE10', 'GEOID10', 'easting', 'elng', 'westing', 'wlng', 'northing', 'nlat', 'southing', 'slat'],
 				files: []
 
 			}
@@ -408,7 +408,7 @@ script(type="text/javascript").
 					self.resetMap(true)
 				})
 
-				if (self.tinymce === ''  && $('#description')[0] && typeof tinymce === 'object') {
+				if (self.tinymce === ''  && $('#description')[0] && typeof tinymce === 'object' && !self.mapActive) {
 					//- console.log($('#description')[0])
 					self.tinymce = tinymce.init({
 						menubar: false,

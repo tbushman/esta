@@ -2,8 +2,8 @@
 //- 
 //- each mn, k in menus
 //:style="{maxHeight: (res ? 'auto' : 'calc(60vh - 65px)'), maxHeight: (res ? 'auto' : 'calc(60vh - var(--thumbw))')}"
-div.menu(:class="res ? '' : 'static'")
-	a.mainmenu(v-if="res", title="Menu", style="pointer-events: auto;", @click="drop('drop', $event)")
+div.menu(:class="res ? '' : 'static'" style="vertical-align:top;")
+	a.mainmenu(v-if="res", title="Menu", style="pointer-events: auto;vertical-align:top;display:inline-block;", @click="drop('drop', $event)")
 		
 		svg(version="1.1", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px", width="30.1px", height="25px", viewBox="0 0 30.1 28", style="enable-background:new 0 0 30.1 28; padding: 0 0 0 8px;", xml:space="preserve")
 			path(style="fill:#000;", d="M1.103,4.464c-0.606,0-1.1-0.493-1.1-1.1v-2.3c0-0.606,0.493-1.1,1.1-1.1h27.893  c0.607,0,1.1,0.494,1.1,1.1v2.3c0,0.606-0.492,1.1-1.1,1.1H1.103z")
@@ -11,15 +11,15 @@ div.menu(:class="res ? '' : 'static'")
 			path(style="fill:#000;", d="M1.103,27.962c-0.606,0-1.1-0.494-1.1-1.1v-2.301c0-0.605,0.493-1.1,1.1-1.1h27.893  c0.607,0,1.1,0.494,1.1,1.1v2.301c0,0.605-0.492,1.1-1.1,1.1H1.103z")
 
 
-	div.dropdown.static.left(v-cloak)
+	div.dropdown.static.left(v-cloak style="display:inline-block;")
 		if (doc && doc !== '')
-			div.submenu.drop(:class="res ? '' : 'static'", style="display:inline-block;")
+			div.submenu.drop(:class="res ? '' : 'static'", style="display:inline-block;vertical-align:top;")
 				include inputs.pug
 			//- include search.pug
-			a.submenu.drop(v-if="res" href="/", :class="res ? '' : 'static'", style="max-height:65px;display:inline-block;")
+			a.submenu.drop(v-if="res" href="/", :class="res ? '' : 'static'", style="max-height:55px;display:inline-block;vertical-align:top;")
 				span esta.bli.sh
 		else
-			a.submenu.drop(v-if="res" href="/", :class="res ? '' : 'static'", style="max-height:65px;display:inline-block;")
+			a.submenu.drop(v-if="res" href="/", :class="res ? '' : 'static'", style="max-height:55px;display:inline-block;vertical-align:top;")
 				span esta.bli.sh
 					
 	//- :style="{display: (dropped.drop && res ? 'block' : (!res ? 'flex' : 'none'))}"
