@@ -644,6 +644,8 @@ function getDocxBlob(now, doc, sig, cb){
 }
 
 const iteratePlaces = (data, pathh, json, isUTEviction) => {
+  console.log('isUTEviction');
+  console.log(isUTEviction)
 	return new Promise(async resolve => {
 		var jsonExists = await fs.existsSync(pathh);
 		var count = 0;
@@ -688,9 +690,11 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 				// 	'last_name',
 				// 	'first_name'
 				// ]
-				await dkeys.forEach(dk => {
+				await dkeys.forEach(ddk => {
+          // console.log(dk)
+          const dk = ddk.toString().normalize()
 					switch(dk) {
-						case '﻿case_type': 
+						case 'case_type': 
 							casetype = d[dk].trim()+'';
 							break;
 						case 'case_num':
@@ -712,13 +716,13 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 							key = (!d[dk] ? null : d[dk].trim()+'');
 							break;
 						case 'first_name':
-							firstname = (!d.first_name || d.first_name === '' ? null : d.first_name.trim());
+							firstname = (!d[dk] || d[dk] === '' ? null : d[dk].trim());
 							break;
 						case 'source':
-							source = (!d.source ? null : d.source.trim());
+							source = (!d[dk] ? null : d[dk].trim());
 							break;
 						case 'address':
-							address = (!d.address ? null : d.address.trim());
+							address = (!d[dk] ? null : d[dk].trim());
 							break;
 						
 						default:
@@ -743,8 +747,13 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 				/*else if (isUt) {
 					locn = /(Utah)/.test(locndescr)
 				}*/
-				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && locn
+				const match = !firstname && casetype === 'EV' && partycode === 'PLA' && locn;
+        // if (match) {
+        //   console.log('match')
+        //   console.log(match, firstname, casetype, partycode, locn)
+        // }
 				if (match && existing.indexOf(key) !== -1) {
+          console.log('additive')
 					newJson.features[existing.indexOf(key)].properties.count++;
 					newJson.features[existing.indexOf(key)].properties.dates.push(date)
 					newJson.features[existing.indexOf(key)].properties.cases.push(casenum)
@@ -760,12 +769,13 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 							console.log(entryTransformed)
 							await newJson.features.push(entryTransformed)
 						} else {
+              console.log('no entryTransformed')
 							console.log(key, ',', date, ',', casenum)
 						}
 					})
 					.catch(err => {
 						// console.log(newJson)
-						// console.log(err)
+						console.log(err)
 					})
 				} else if (firstname && casetype === 'EV' && partycode === 'PLA' && locn) {
 					console.log(d.first_name, ',', d[nameKey], ',', date, ',', casenum)
@@ -779,7 +789,7 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 			
 			
 		} else {
-			// console.log('wtf no data')
+			console.log('wtf no data')
 		}
 		if (count === data.length) {
 			if (data.length > 0) {
@@ -805,8 +815,12 @@ const places = (date, key, state, isUTEviction, source, address, casenum) => {
 		// ) 
 		+ ' ' + 
 		// // escape(
-			state
+			(!state || state === undefined || state === 'undefined' ? '' : state)
 		// );
+    
+    if (state === '' && isUTEviction) {
+      state = 'Utah'
+    }
 		await googleMaps.findPlace({
 			input: input,
 			inputtype: 'textquery',

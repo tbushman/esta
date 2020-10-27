@@ -648,33 +648,74 @@ router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
 			latestWeek = ''+lw
 		}
 		const courtUri = `https://www.utcourts.gov/records/weeklyreports/current/filings/Week_${latestWeek}-Filing_Report-${new Date().getFullYear()}.csv`
+		// const got = require('got');
 		// const fetch = require('node-fetch');
 		// console.log(courtUri)
 		// const data = await d3.tsv(courtUri, d => d);
+//TODO request / request-promise is deprecated
 		const data = await require('request-promise')({
 			uri: courtUri,
 			// resolveWithFullResponse: true,
 			// encoding: null
 			encoding: 'utf16le'
 		})
+		// let result;
+		// try {
+		// 	result = await got(courtUri);
+		// 	if (result) {
+		// 		console.log(result.body);
+		// 	}
+		// 	//=> '<!doctype html> ...'
+		// } catch (error) {
+		// 	console.log(error);
+		// 	//=> 'Internal server error ...'
+		// }
+		// const resultPromise = got(courtUri);
+		// const result = await Promise.all([resultPromise]).then(values=>values);
+		// , {
+		//     hooks: {
+		//         beforeError: [
+		//             error => {
+		//                 const {response} = error;
+		//                 if (response && response.body) {
+		//                     error.name = 'court uri error';
+		//                     error.message = `${response.body.message} (${response.statusCode})`;
+		//                 }
+		// 
+		//                 return error;
+		//             }
+		//         ]
+		//     }
+		// })
+// .json().catch(err=>next(err));
+		// console.log(result)
+		// const data = await fetch(courtUri)
+		// .then(res => res.textConverted())
 		.then(async result => {
-			console.log(courtUri, result.toString()[1], /\W/.test(result.toString('utf16l3')[1]))
-			if (!/\W/.test(result.toString('utf16l3')[1])) {
-				const dc = await d3.tsvParse(result.toString('utf16le'));
-				return dc
+			const rx = new RegExp("case", "g");
+			const substr = result.toString().normalize().substr(0,18);
+			if (/case_type/g.test(substr)) {
+				const dc = await d3.tsvParse(result.toString('utf16l3').normalize(), (d) => {
+					const j = Object.keys(d);
+					const o = {};
+					j.forEach((s, i)=>{
+						const key = s.toString().normalize().trim()
+						o[key] = d[s].toString().normalize().trim()
+					})
+					return o;
+				});
+				return dc;
 			} else {
 				return null;
 			}
 		})
-		//  function(result){
-		// 
-		// })
 		.catch(function(err){
 			console.log(err)
 		});
 		if (data) {
-			// console.log('data length');
-			// console.log(data.length);
+			console.log('data length');
+			console.log(data.length);
+			// console.log(data)
 			var p = ''+publishers+'/pu/publishers/esta/json';
 			var pathh = await path.join(p, '/json_'+req.params.id+'.json');
 			var jsonExists = await fs.existsSync(pathh);
@@ -687,7 +728,7 @@ router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
 				} : await JSON.parse(fs.readFileSync(pathh, 'utf8'))
 			);
 			let newJson = json;
-			await iteratePlaces(data, pathh, newJson).then(async (js) => {
+			await iteratePlaces(data, pathh, newJson, true).then(async (js) => {
 				if (!js || js.features.length === 0 || js[0] === {} ) {
 					// console.log(js, data)
 					return next(new Error('didn\'t work'))
