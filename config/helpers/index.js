@@ -753,7 +753,7 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
         //   console.log(match, firstname, casetype, partycode, locn)
         // }
 				if (match && existing.indexOf(key) !== -1) {
-          console.log('additive')
+          // console.log('additive')
 					newJson.features[existing.indexOf(key)].properties.count++;
 					newJson.features[existing.indexOf(key)].properties.dates.push(date)
 					newJson.features[existing.indexOf(key)].properties.cases.push(casenum)
@@ -766,7 +766,7 @@ const iteratePlaces = (data, pathh, json, isUTEviction) => {
 							if (existing.indexOf(key) === -1) {
 								await existing.push(key)
 							}
-							console.log(entryTransformed)
+							// console.log(entryTransformed)
 							await newJson.features.push(entryTransformed)
 						} else {
               console.log('no entryTransformed')
