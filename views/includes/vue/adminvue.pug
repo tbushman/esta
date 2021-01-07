@@ -436,7 +436,7 @@ script(type="text/javascript").
 						selection_toolbar: 'bold italic underline strikethrough | bullist numlist | outdent indent blockquote | subscript superscript | footnote'
 					});
 				}
-				var latestWeek = (!self.doc || !self.doc.properties.credit || self.doc.properties.credit === '' || self.doc.properties.credit.indexOf('records/weeklyreports/current/filings/Week_') === -1 ? null : 0 /*+(self.doc.properties.credit.split('current/filings/Week_')[1].split('-Filing_Report')[0])*/ )
+				var latestWeek = (!self.doc || !self.doc.properties.credit || self.doc.properties.credit === '' || self.doc.properties.credit.indexOf('records/weeklyreports/current/filings/Week_') === -1 ? null : +(self.doc.properties.credit.split('current/filings/Week_')[1].split('-Filing_Report')[0]) )
 				console.log('latestWeek')
 				console.log(latestWeek)
 				if (latestWeek !== null) {
