@@ -648,6 +648,7 @@ router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
 			latestWeek = ''+lw
 		}
 		const courtUri = `https://www.utcourts.gov/records/weeklyreports/current/filings/Week_${latestWeek}-Filing_Report-${new Date().getFullYear()}.csv`
+		console.log(courtUri)
 		// const got = require('got');
 		// const fetch = require('node-fetch');
 		// console.log(courtUri)

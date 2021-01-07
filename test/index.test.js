@@ -55,7 +55,7 @@ describe('API calls', () => {
     await app.listen(config.port, async() => {
       console.log('connected');
       agent = request.agent(app);
-      await ContentTest.deleteMany({}).catch(err => console.log(err));
+      // await ContentTest.deleteMany({}).catch(err => console.log(err));
       // agent.get('/').expect(200, done)
       // console.log(agent)
     })
