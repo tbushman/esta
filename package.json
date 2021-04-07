@@ -67,7 +67,7 @@
     "passport-slack": "0.0.7",
     "pdfreader": "^1.2.8",
     "promise": "^8.1.0",
-    "pug": "^2.0.4",
+    "pug": "^3.0.1",
     "pug-runtime": "^2.0.5",
     "randomcolor": "^0.5.4",
     "request": "^2.88.2",
