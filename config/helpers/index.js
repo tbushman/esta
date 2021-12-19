@@ -638,8 +638,8 @@ function getDocxBlob(now, doc, sig, cb){
 		doc: doc,
 		sig: sig
 	});
-	var docx = 
-	HtmlDocx.asBlob(str);
+	var docx = ''
+	// HtmlDocx.asBlob(str);
   cb(docx)
 }
 
@@ -989,5 +989,5 @@ const importMany = async (files, id, cb) => {
 	})
 }
 
-module.exports = {isJurisdiction, usleg, tis, geoLocate, storage, uploadmedia, removeExtras, curly, renameEachImgDir, emptyDirs, getDat64, tokenHandler, mkdirpIfNeeded, getDocxBlob, iteratePlaces, places, saveJsonDb, importMany }
+module.exports = {isJurisdiction, usleg, tis, geoLocate, storage, uploadmedia, removeExtras, curly, renameEachImgDir, emptyDirs, getDat64, tokenHandler, mkdirpIfNeeded/*, getDocxBlob*/, iteratePlaces, places, saveJsonDb, importMany }
 

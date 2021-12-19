@@ -43,7 +43,6 @@
     "googleapis": "^61.0.0",
     "got": "^11.8.1",
     "html-differ": "^1.4.0",
-    "html-docx-js": "^0.1.0",
     "html-pdf": "^3.0.1",
     "http": "0.0.0",
     "joi": "^14.3.1",

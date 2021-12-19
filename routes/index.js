@@ -22,7 +22,7 @@ const { Publisher, Content, Signature, PublisherTest, ContentTest, SignatureTest
 // var Content = require('../models/content.js');
 // var Diffs = require('../models/diffs.js');
 // var Signature = require('../models/signatures.js');
-var HtmlDocx = require('html-docx-js');
+// var HtmlDocx = require('html-docx-js');
 var HtmlDiffer = require('html-differ').HtmlDiffer;
 var csrfProtection = csrf({ cookie: true });
 var publishers = path.join(__dirname, '/../../..');
@@ -39,7 +39,7 @@ const PublisherDB = (!testenv ? Publisher : PublisherTest);
 const ContentDB = (!testenv ? Content : ContentTest);
 const SignatureDB = (!testenv ? Signature : SignatureTest);
 const { getBundle, ifExistsReturn, ensureSequentialSectionInd, ensureLocation, ensureCurly, rmFile, ensureStyle, resetLayers, getLayers, getGeo, ensureContent, getDat, ensureAuthenticated, ensureAdmin, ensureApiTokens, ensureGpo } = require('../config/middleware');
-const {isJurisdiction, usleg, tis, geoLocate, storage, uploadmedia, removeExtras, curly, renameEachImgDir, emptyDirs, getDat64, tokenHandler, mkdirpIfNeeded, getDocxBlob, iteratePlaces, places, saveJsonDb, importMany } = require('../config/helpers');
+const {isJurisdiction, usleg, tis, geoLocate, storage, uploadmedia, removeExtras, curly, renameEachImgDir, emptyDirs, getDat64, tokenHandler, mkdirpIfNeeded, /*getDocxBlob,*/ iteratePlaces, places, saveJsonDb, importMany } = require('../config/helpers');
 
 dotenv.load();
 var upload = multer({fieldSize: 25 * 1024 * 1024});
@@ -1472,39 +1472,39 @@ router.get('/api/exportword/:id', async function(req, res, next){
 			if (doc) {
 				var now = Date.now();
 
-				getDocxBlob(now, doc, sig, async function(docx){
-					var p = ''+publishers+'/pu/publishers/esta/word';
-							
-					await fs.access(p, async function(err) {
-						if (err && err.code === 'ENOENT') {
-							await fs.mkdir(p, {recursive: true}, function(err){
-								if (err) {
-									console.log("err", err);
-								}
-							})
-						}
-					});
-					
-					var pathh = await path.join(p, '/'+now+'.docx');
-					fs.writeFile(pathh, docx, function(err){
-						if (err) {
-							return next(err)
-						}
-						//this doesnt work on server:
-						// return res.redirect('/publishers/esta/word/'+now+'.docx');
-						//need to use:
-						var pugpath = path.join(__dirname, '../views/includes/exportwordview.pug');
-						var str = pug.renderFile(pugpath, {
-							md: require('marked'),
-							moment: require('moment'),
-							doctype: 'strict',
-							hrf: '/publishers/esta/word/'+now+'.docx',
-							doc: doc,
-							sig: sig
-						});
-						res.send(str)
-					});
-				})
+				// getDocxBlob(now, doc, sig, async function(docx){
+				// 	var p = ''+publishers+'/pu/publishers/esta/word';
+				// 
+				// 	await fs.access(p, async function(err) {
+				// 		if (err && err.code === 'ENOENT') {
+				// 			await fs.mkdir(p, {recursive: true}, function(err){
+				// 				if (err) {
+				// 					console.log("err", err);
+				// 				}
+				// 			})
+				// 		}
+				// 	});
+				// 
+				// 	var pathh = await path.join(p, '/'+now+'.docx');
+				// 	fs.writeFile(pathh, docx, function(err){
+				// 		if (err) {
+				// 			return next(err)
+				// 		}
+				// 		//this doesnt work on server:
+				// 		// return res.redirect('/publishers/esta/word/'+now+'.docx');
+				// 		//need to use:
+				// 		var pugpath = path.join(__dirname, '../views/includes/exportwordview.pug');
+				// 		var str = pug.renderFile(pugpath, {
+				// 			md: require('marked'),
+				// 			moment: require('moment'),
+				// 			doctype: 'strict',
+				// 			hrf: '/publishers/esta/word/'+now+'.docx',
+				// 			doc: doc,
+				// 			sig: sig
+				// 		});
+				// 		res.send(str)
+				// 	});
+				// })
 			}
 		})
 		
