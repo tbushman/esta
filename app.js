@@ -44,7 +44,7 @@ if (app.get('env') === 'production') {
 	app.enable('trust proxy');
 	app.set('trust proxy', true); // trust first proxy	
 	app.use(cors());
-	app.options('*', cors());
+	app.options('*', cors({origin: '/bli\.sh$/'}));
 	app.use(function(req, res, next) {
 		app.locals.env = process.env.NODE_ENV
 		app.locals.appURL = (process.env.NODE_ENV === 'production' ? 'esta.bli.sh' : 'localhost:'+process.env.PORT+'')
