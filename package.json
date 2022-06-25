@@ -56,7 +56,7 @@
     "mongoose": "^5.11.11",
     "mongoose-geojson-schema": "^2.1.5",
     "multer": "^1.4.2",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "node-htmldiff": "^0.9.3",
     "open": "^6.4.0",
     "passport": "^0.4.1",
