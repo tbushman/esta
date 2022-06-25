@@ -8,7 +8,7 @@ var dotenv = require('dotenv');
 var MongoDBStore = require('connect-mongodb-session')(session);
 var path = require('path');
 var mongoose = require('mongoose');
-var promise = require('bluebird');
+// var promise = require('bluebird');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 // var HtmlDocx = require('html-docx-js');
@@ -30,7 +30,7 @@ var publishers = path.join(__dirname, '/../..');
 var spawn = require('child_process').exec;
 var routes = require('./routes/index');
 
-mongoose.Promise = promise;
+// mongoose.Promise = promise;
 dotenv.load();
 var parseForm = bodyParser.urlencoded({ extended: false });
 var parseJSONBody = bodyParser.json();
