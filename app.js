@@ -306,12 +306,14 @@ app.use(function (err, req, res) {
 
 var uri = process.env.DEVDB;
 // if (mongoose.connection.readyState === 0) {
-	var promise = mongoose.connect(uri, {
-		// native_parser: true,
-		// useMongoClient: true,
-		useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false
-	}/*, {authMechanism: 'ScramSHA1'}*/);
-	promise.then(function(){
+const promise = async () => {
+	return await new mongoose.connect(uri, { 
+		useNewUrlParser: true, 
+		useUnifiedTopology: true,
+		useFindAndModify: false 
+	})
+};
+	promise().then(function(){
 		console.log('connected esta')
 		// db.on('error', 
 		// console.error.bind(console, 'connection error:')
