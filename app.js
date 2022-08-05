@@ -310,7 +310,8 @@ const promise = async () => {
 	return await new mongoose.connect(uri, { 
 		useNewUrlParser: true, 
 		useUnifiedTopology: true,
-		useFindAndModify: false 
+		useFindAndModify: false,
+		useCreateIndex: true
 	})
 };
 	promise().then(function(){
