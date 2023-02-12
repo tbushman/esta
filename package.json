@@ -42,7 +42,7 @@
     "google-auth-library": "^6.1.6",
     "google-geolocation": "^1.0.2",
     "googleapis": "^61.0.0",
-    "got": "^11.8.5",
+    "got": "^12.5.3",
     "html-differ": "^1.4.0",
     "html-pdf": "^3.0.1",
     "http": "0.0.0",
