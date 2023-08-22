@@ -405,6 +405,7 @@ router.post('/register', function(req, res, next) {
 });
 
 router.get('/login', function(req, res, next){
+	return res.redirect('/')
 	res.cookie('XSRF-TOKEN', req.csrfToken())
 	var referrer = req.get('Referrer');
 	req.session.referrer = referrer;
