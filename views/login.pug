@@ -15,32 +15,32 @@ block content
 						div.centerall
 							div.tb-10-m0.shift-00(style="padding: 50px")
 								//
-								span.tb-font-l Enter username and password
-								form.row(enctype="multipart/form-data", method="POST", action="/login" )
-									input(type="hidden", name="_csrf", value= csrfToken)
-
-									div
-										label(for="username") Username
-										input(type="text", name="username", id="username", autocomplete="username")
-									div
-										label(for="password") Password
-										input(type="password", name="password", id="password", autocomplete="current-password")
-									p
-									button.tb-10-m0.tb-03-m2.block(type="submit", ariaDescription="Log in")
-										span Log in
-									//-
-										p.tb-font-xl.head First time here?
-										a.block(href="/register", role="button", ariaDescription="Register") 
-											span Register
-								
-								p.tb-font-xl or connect using Slack:
-								p &nbsp
-								a.tb-font-xl(href="/auth/slack", ariaDescription="Sign in with Slack", style="display:inline-block;height:auto;")
-									img(src="https://api.slack.com/img/sign_in_with_slack.png")
-								p &nbsp
-								p.tb-font-xl First time authenticating?
-								a.tb-10-m0.tb-03-m2.block.spacer.success(href="/register", title="Register")
-									span(style="color:#fff;") Register
+								//- span.tb-font-l Enter username and password
+								//- form.row(enctype="multipart/form-data", method="POST", action="/login" )
+								//- 	input(type="hidden", name="_csrf", value= csrfToken)
+								//- 
+								//- 	div
+								//- 		label(for="username") Username
+								//- 		input(type="text", name="username", id="username", autocomplete="username")
+								//- 	div
+								//- 		label(for="password") Password
+								//- 		input(type="password", name="password", id="password", autocomplete="current-password")
+								//- 	p
+								//- 	button.tb-10-m0.tb-03-m2.block(type="submit", ariaDescription="Log in")
+								//- 		span Log in
+								//- 	//-
+								//- 		p.tb-font-xl.head First time here?
+								//- 		a.block(href="/register", role="button", ariaDescription="Register") 
+								//- 			span Register
+								//- 
+								//- p.tb-font-xl or connect using Slack:
+								//- p &nbsp
+								//- a.tb-font-xl(href="/auth/slack", ariaDescription="Sign in with Slack", style="display:inline-block;height:auto;")
+								//- 	img(src="https://api.slack.com/img/sign_in_with_slack.png")
+								//- p &nbsp
+								//- p.tb-font-xl First time authenticating?
+								//- a.tb-10-m0.tb-03-m2.block.spacer.success(href="/register", title="Register")
+								//- 	span(style="color:#fff;") Register
 									
 								//
 									p.tb-font-xl Or 

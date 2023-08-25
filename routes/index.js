@@ -317,7 +317,7 @@ router.get('/auth/slack/callback',
 });
 
 router.get('/register', function(req, res, next){
-	res.cookie('XSRF-TOKEN', req.csrfToken())
+	// res.cookie('XSRF-TOKEN', req.csrfToken())
 	// var str = pug.renderFile(path.join(__dirname, '../views/includes/profile/puedit.pug'), {
 	// 	doctype: 'xml',
 	// 	csrfToken: req.csrfToken(),
@@ -331,7 +331,7 @@ router.get('/register', function(req, res, next){
 	// 	info: 'Welcome',
 	// 	str: str
 	// });
-	return res.render('register', { csrfToken: req.csrfToken(), menu: 'register' } );
+	return res.render('register', { /*csrfToken: req.csrfToken(),*/ menu: 'register', info: 'registration temporarily closed' } );
 })
 
 router.post('/register', function(req, res, next) {
@@ -754,27 +754,27 @@ router.post('/utahcourts/:id/:latestweek', async function(req, res, next){
 	}
 })
 
-router.post('/evictionlabload', async function(req, res, next){
-	const AWS = require('aws-sdk');
-	AWS.config.logger = console;
-	AWS.config.update({credentials:{
-		accessKeyId: config.accessKeyId,
-		secretAccessKey: config.secretAccessKey
-	}});
-	const s3 = new AWS.S3();
-	await getObject({
-    Bucket: "eviction-lab-data-downloads",
-		Key: "UT/block-groups.geojson"
-  }).then( (result) => {
-    console.log('Retrieved object from S3');
-    return res.status(200).send(result.Body.toString())//res.Body.toString();
-  })
-	.catch((err)=>console.log(err))
- 
-	async function getObject(params){
-	  return await s3.getObject(params).promise();
-	}
-})
+// router.post('/evictionlabload', async function(req, res, next){
+// 	const AWS = require('aws-sdk');
+// 	AWS.config.logger = console;
+// 	AWS.config.update({credentials:{
+// 		accessKeyId: config.accessKeyId,
+// 		secretAccessKey: config.secretAccessKey
+// 	}});
+// 	const s3 = new AWS.S3();
+// 	await getObject({
+//     Bucket: "eviction-lab-data-downloads",
+// 		Key: "UT/block-groups.geojson"
+//   }).then( (result) => {
+//     console.log('Retrieved object from S3');
+//     return res.status(200).send(result.Body.toString())//res.Body.toString();
+//   })
+// 	.catch((err)=>console.log(err))
+// 
+// 	async function getObject(params){
+// 	  return await s3.getObject(params).promise();
+// 	}
+// })
 
 router.post('/censusload/:code', async function(req, res, next){
 	var outputPath = url.parse(req.url).pathname;
